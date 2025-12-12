@@ -6,6 +6,21 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
+import {
+  DndContext,
+  DragOverlay,
+  useSensor,
+  useSensors,
+  PointerSensor,
+  TouchSensor,
+  DragStartEvent,
+  DragEndEvent,
+  DragOverEvent,
+  closestCenter,
+  useDroppable,
+  useDraggable,
+} from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import { parseDestinations, stringifyDestinations, parseTripNotes, stringifyTripNotes, type TripNoteItem, type ActivityData, type ActivityType } from '@/types/trip';
@@ -97,6 +112,42 @@ export default function TripPage() {
   const [weatherByDate, setWeatherByDate] = useState<Record<string, DayWeather>>({});
   const [weatherLoading, setWeatherLoading] = useState(false);
 
+  // Drag and drop state
+  const [draggedDestination, setDraggedDestination] = useState<Destination | null>(null);
+  const [overDayNumber, setOverDayNumber] = useState<number | null>(null);
+  const [showPalette, setShowPalette] = useState(false);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+  );
+
+  // DnD event handlers
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const destination = event.active.data.current?.destination as Destination | undefined;
+    if (destination) {
+      setDraggedDestination(destination);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    const dayNumber = event.over?.data.current?.dayNumber as number | undefined;
+    setOverDayNumber(dayNumber ?? null);
+  }, []);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const destination = draggedDestination;
+    const dayNumber = event.over?.data.current?.dayNumber as number | undefined;
+
+    setDraggedDestination(null);
+    setOverDayNumber(null);
+
+    if (destination && dayNumber) {
+      addPlace(destination, dayNumber);
+      setSelectedDayNumber(dayNumber);
+    }
+  }, [draggedDestination, addPlace]);
 
   // Parse destinations
   const destinations = useMemo(() => parseDestinations(trip?.destination ?? null), [trip?.destination]);
@@ -393,6 +444,13 @@ export default function TripPage() {
   const tripNotes = trip.notes || '';
 
   return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+    >
     <UndoProvider>
     <main className="w-full px-4 sm:px-6 pt-16 pb-24 sm:py-20 min-h-screen bg-white dark:bg-gray-950">
       <div className="max-w-6xl mx-auto">
@@ -536,6 +594,7 @@ export default function TripPage() {
                 onToggleItem={toggleItem}
                 onReorder={(items) => reorderItems(day.dayNumber, items)}
                 isEditMode={isEditMode}
+                isDropTarget={overDayNumber === day.dayNumber}
                 nightlyHotel={nightlyHotel}
                 checkoutHotel={checkoutHotel}
                 checkInHotel={checkInHotel}
@@ -735,8 +794,26 @@ export default function TripPage() {
         </div>
         {/* End desktop flex layout */}
       </div>
+
+      {/* Destination Palette - Fixed at bottom */}
+      <TripDestinationPalette
+        city={primaryCity}
+        isOpen={showPalette}
+        onToggle={() => setShowPalette(!showPalette)}
+      />
     </main>
+
+    {/* Drag Overlay */}
+    <DragOverlay dropAnimation={{ duration: 200, easing: 'ease-out' }}>
+      {draggedDestination && (
+        <DragPreviewCard
+          destination={draggedDestination}
+          isOverTarget={overDayNumber !== null}
+        />
+      )}
+    </DragOverlay>
     </UndoProvider>
+    </DndContext>
   );
 }
 
@@ -1248,6 +1325,7 @@ function DaySection({
   onAddActivity,
   weather,
   isEditMode = false,
+  isDropTarget = false,
   nightlyHotel,
   checkoutHotel,
   checkInHotel,
@@ -1272,12 +1350,23 @@ function DaySection({
   onAddActivity: (data: ActivityData) => void;
   weather?: DayWeather;
   isEditMode?: boolean;
+  isDropTarget?: boolean;
   nightlyHotel?: EnrichedItineraryItem | null;
   checkoutHotel?: EnrichedItineraryItem | null;
   checkInHotel?: EnrichedItineraryItem | null;
   breakfastHotel?: EnrichedItineraryItem | null;
   onSelectItem?: (item: EnrichedItineraryItem) => void;
 }) {
+  // Make this day a drop target
+  const { setNodeRef, isOver } = useDroppable({
+    id: `day-drop-${dayNumber}`,
+    data: {
+      dayNumber,
+      type: 'day',
+    },
+  });
+  const showDropState = isOver || isDropTarget;
+
   const [orderedItems, setOrderedItems] = useState(items);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -1647,7 +1736,15 @@ function DaySection({
     : null;
 
   return (
-    <div id={`day-${dayNumber}`} className="scroll-mt-20">
+    <div
+      ref={setNodeRef}
+      id={`day-${dayNumber}`}
+      className={`scroll-mt-20 rounded-xl transition-all duration-200 ${
+        showDropState
+          ? 'bg-green-50 dark:bg-green-900/20 ring-2 ring-green-500/50 ring-inset p-3 -mx-3'
+          : ''
+      }`}
+    >
       {/* Day header - reference style */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -3767,4 +3864,237 @@ function nearestNeighborOptimize(items: EnrichedItineraryItem[]): EnrichedItiner
   }
 
   return result;
+}
+
+/**
+ * Destination Palette - Fixed at bottom for drag-drop
+ */
+function TripDestinationPalette({
+  city,
+  isOpen,
+  onToggle,
+}: {
+  city: string;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!city || !isOpen) return;
+
+    const fetchDestinations = async () => {
+      setIsLoading(true);
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('destinations')
+        .select('id, slug, name, city, category, image_thumbnail, image, rating')
+        .eq('city', city)
+        .order('rating', { ascending: false })
+        .limit(15);
+
+      setDestinations((data as Destination[]) || []);
+      setIsLoading(false);
+    };
+
+    fetchDestinations();
+  }, [city, isOpen]);
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-lg">
+      {/* Toggle button */}
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-center gap-2 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+      >
+        <Sparkles className="w-4 h-4 text-amber-500" />
+        <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">
+          {isOpen ? 'Hide Places' : 'Drag Places to Add'}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {/* Expandable destination list */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0 }}
+            animate={{ height: 'auto' }}
+            exit={{ height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 max-h-48 overflow-x-auto">
+              {isLoading ? (
+                <div className="py-4 text-center text-[12px] text-gray-400">
+                  Loading suggestions...
+                </div>
+              ) : destinations.length === 0 ? (
+                <div className="py-4 text-center text-[12px] text-gray-400">
+                  No destinations found for {city}
+                </div>
+              ) : (
+                <div className="flex gap-2 pb-2">
+                  {destinations.map((destination) => (
+                    <DraggablePaletteCard
+                      key={destination.id}
+                      destination={destination}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/**
+ * Draggable card in the palette
+ */
+function DraggablePaletteCard({ destination }: { destination: Destination }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `palette-${destination.id}`,
+    data: {
+      destination,
+      source: 'palette',
+    },
+  });
+
+  const style = transform
+    ? {
+        transform: CSS.Translate.toString(transform),
+        opacity: isDragging ? 0.5 : 1,
+      }
+    : undefined;
+
+  const hasImage = destination.image_thumbnail || destination.image;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className={`
+        flex-shrink-0 w-32 p-2 rounded-lg
+        bg-gray-50 dark:bg-gray-800
+        hover:bg-gray-100 dark:hover:bg-gray-700
+        cursor-grab active:cursor-grabbing
+        transition-all duration-150
+        ${isDragging ? 'shadow-xl ring-2 ring-gray-900/20 dark:ring-white/20 z-50' : ''}
+      `}
+    >
+      {/* Thumbnail */}
+      <div className="w-full h-16 rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700 mb-2">
+        {hasImage ? (
+          <Image
+            src={destination.image_thumbnail || destination.image || ''}
+            alt={destination.name}
+            width={128}
+            height={64}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <MapPin className="w-4 h-4 text-gray-400" />
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <p className="text-[11px] font-medium text-gray-900 dark:text-white truncate">
+        {destination.name}
+      </p>
+      <p className="text-[10px] text-gray-500 truncate capitalize">
+        {destination.category}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Drag preview card shown during drag
+ */
+function DragPreviewCard({
+  destination,
+  isOverTarget,
+}: {
+  destination: Destination;
+  isOverTarget: boolean;
+}) {
+  const hasImage = destination.image_thumbnail || destination.image;
+
+  return (
+    <div
+      className={`
+        pointer-events-none
+        transition-all duration-200 ease-out
+        ${isOverTarget ? 'scale-105 rotate-1' : 'scale-100 rotate-0'}
+      `}
+    >
+      <div
+        className={`
+          flex items-center gap-3 p-3 rounded-xl
+          bg-white dark:bg-gray-800
+          shadow-2xl border-2
+          transition-all duration-200
+          ${isOverTarget
+            ? 'border-green-500 dark:border-green-400 ring-4 ring-green-500/20'
+            : 'border-gray-200 dark:border-gray-700'
+          }
+        `}
+        style={{ width: isOverTarget ? 240 : 180 }}
+      >
+        {/* Thumbnail */}
+        <div
+          className={`
+            rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0
+            transition-all duration-200
+            ${isOverTarget ? 'w-12 h-12' : 'w-10 h-10'}
+          `}
+        >
+          {hasImage ? (
+            <Image
+              src={destination.image_thumbnail || destination.image || ''}
+              alt={destination.name}
+              width={48}
+              height={48}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <MapPin className="w-4 h-4 text-gray-400" />
+            </div>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <p className="text-[12px] font-semibold text-gray-900 dark:text-white truncate">
+            {destination.name}
+          </p>
+          <p className="text-[10px] text-gray-500 truncate capitalize">
+            {destination.category}
+          </p>
+
+          {/* Drop indicator */}
+          {isOverTarget && (
+            <p className="text-[10px] text-green-600 dark:text-green-400 mt-0.5">
+              Drop to add to day
+            </p>
+          )}
+        </div>
+
+        {/* Plus indicator */}
+        {isOverTarget && (
+          <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+            <Plus className="w-3 h-3 text-white" />
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
