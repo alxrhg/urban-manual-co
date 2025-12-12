@@ -1,13 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, AuthError } from '@/lib/adminAuth';
 
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
+const PLACE_TYPE_TO_CATEGORY: Record<string, string> = {
+  'restaurant': 'Dining',
+  'cafe': 'Cafe',
+  'bar': 'Bar',
+  'lodging': 'Hotel',
+  'museum': 'Culture',
+  'art_gallery': 'Culture',
+  'shopping_mall': 'Shopping',
+  'store': 'Shopping',
+  'park': 'Culture',
+  'tourist_attraction': 'Culture',
+  'church': 'Culture',
+  'temple': 'Culture',
+};
+
+function getCategoryFromTypes(types: string[]): string {
+  for (const type of types) {
+    if (PLACE_TYPE_TO_CATEGORY[type]) {
+      return PLACE_TYPE_TO_CATEGORY[type];
+    }
+  }
+  return 'Other';
+}
+
 export async function POST(request: NextRequest) {
   try {
-    // Optional: require authentication if needed, but for now allow logged-in users
-    // await requireAdmin(request); 
-
     const body = await request.json();
     const { query } = body;
 
@@ -65,31 +85,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Determine category
-      let category = 'Other';
-      if (place.types && place.types.length > 0) {
-         const categoryMap: Record<string, string> = {
-          'restaurant': 'Dining',
-          'cafe': 'Cafe',
-          'bar': 'Bar',
-          'lodging': 'Hotel',
-          'museum': 'Culture',
-          'art_gallery': 'Culture',
-          'shopping_mall': 'Shopping',
-          'store': 'Shopping',
-          'park': 'Culture',
-          'tourist_attraction': 'Culture',
-          'church': 'Culture',
-          'temple': 'Culture',
-        };
-        
-        for (const type of place.types) {
-          if (categoryMap[type]) {
-            category = categoryMap[type];
-            break;
-          }
-        }
-      }
+      const category = getCategoryFromTypes(place.types || []);
 
       return {
         id: place.id,
