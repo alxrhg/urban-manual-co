@@ -6,6 +6,7 @@ import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData, TrainData, Ac
 import { parseItineraryNotes, stringifyItineraryNotes } from '@/types/trip';
 import type { Destination } from '@/types/destination';
 import { recalculateDayTimes, calculateTripDays, addDaysToDate } from '@/lib/utils/time-calculations';
+import { toast } from '@/lib/toast';
 
 export interface TripDay {
   dayNumber: number;
@@ -118,6 +119,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       setDays(daysArray);
     } catch (err) {
       console.error('Error fetching trip:', err);
+      toast.safeError(err, { operation: 'load', context: 'trip' });
       onError?.(err instanceof Error ? err : new Error('Failed to fetch trip'));
     } finally {
       setLoading(false);
@@ -161,6 +163,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       }
     } catch (err) {
       console.error('Error updating trip:', err);
+      toast.safeError(err, { operation: 'save', context: 'trip' });
       onError?.(err instanceof Error ? err : new Error('Failed to update trip'));
     } finally {
       setSaving(false);
@@ -221,6 +224,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       console.error('Error reordering:', err);
       // Revert to previous state on error
       setDays(previousDays);
+      toast.error('Failed to reorder items. Please try again.');
       onError?.(err instanceof Error ? err : new Error('Failed to reorder items'));
     }
   }, [days, onError]);
@@ -317,6 +321,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
             : d
         )
       );
+      toast.error('Failed to add place. Please check your connection and try again.');
       onError?.(err instanceof Error ? err : new Error('Failed to add place'));
     } finally {
       setSaving(false);
@@ -415,6 +420,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
             : d
         )
       );
+      toast.error('Failed to add flight. Please check your connection and try again.');
       onError?.(err instanceof Error ? err : new Error('Failed to add flight'));
     } finally {
       setSaving(false);
@@ -516,6 +522,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
             : d
         )
       );
+      toast.error('Failed to add train. Please check your connection and try again.');
       onError?.(err instanceof Error ? err : new Error('Failed to add train'));
     } finally {
       setSaving(false);
@@ -620,6 +627,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
             : d
         )
       );
+      toast.error('Failed to add hotel. Please check your connection and try again.');
       onError?.(err instanceof Error ? err : new Error('Failed to add hotel'));
     } finally {
       setSaving(false);
@@ -710,6 +718,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
             : d
         )
       );
+      toast.error('Failed to add activity. Please check your connection and try again.');
       onError?.(err instanceof Error ? err : new Error('Failed to add activity'));
     } finally {
       setSaving(false);
@@ -744,6 +753,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       console.error('Error removing item:', err);
       // Revert optimistic update
       setDays(previousDays);
+      toast.error('Failed to remove item. Please try again.');
       onError?.(err instanceof Error ? err : new Error('Failed to remove item'));
     } finally {
       setSaving(false);
@@ -774,6 +784,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       );
     } catch (err) {
       console.error('Error updating time:', err);
+      toast.error('Failed to update time. Please try again.');
     }
   }, []);
 
@@ -815,6 +826,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       if (error) throw error;
     } catch (err) {
       console.error('Error updating duration:', err);
+      toast.error('Failed to update duration. Please try again.');
     }
   }, [days]);
 
@@ -859,6 +871,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       if (error) throw error;
     } catch (err) {
       console.error('Error updating notes:', err);
+      toast.error('Failed to update notes. Please try again.');
     }
   }, [days]);
 
@@ -903,6 +916,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       if (error) throw error;
     } catch (err) {
       console.error('Error updating item:', err);
+      toast.error('Failed to update item. Please try again.');
     }
   }, [days]);
 
@@ -957,6 +971,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       console.error('Error moving item:', err);
       // Revert on error - refresh to get correct state
       fetchTrip();
+      toast.error('Failed to move item. Please try again.');
       onError?.(err instanceof Error ? err : new Error('Failed to move item'));
     }
   }, [days, fetchTrip, onError]);
