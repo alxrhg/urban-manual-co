@@ -191,13 +191,12 @@ export async function executeToolCall(
       case 'search_curated_destinations': {
         const { query, city, category, priceLevel, minRating, michelinStars, limit = 10 } = args;
 
-        // Build Supabase query
+        // Build Supabase query (removed parent_destination_id filter to include nested destinations)
         let dbQuery = supabase
           .from('destinations')
           .select(
             'id, slug, name, city, country, category, description, micro_description, image, rating, price_level, michelin_stars, latitude, longitude, address, neighborhood'
           )
-          .is('parent_destination_id', null) // Only top-level destinations
           .limit(Math.min(limit, 20)); // Cap at 20 for performance
 
         // Apply city filter - simple ilike (matches working ai-chat implementation)

@@ -1341,7 +1341,6 @@ async function processAIChatRequest(
         let keywordQuery = supabase
           .from('destinations')
           .select('*, parent_destination_id')
-          .is('parent_destination_id', null) // Only top-level destinations in search
           .limit(100);
 
         if (intent.city) {
@@ -1403,7 +1402,6 @@ async function processAIChatRequest(
         const { data: cityResults } = await supabase
           .from('destinations')
           .select('*, parent_destination_id')
-          .is('parent_destination_id', null) // Only top-level destinations
           .ilike('city', `%${intent.city}%`)
           .order('rating', { ascending: false })
           .limit(50);
