@@ -8,6 +8,7 @@ import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, R
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
+import { useHotelLogic } from '@/lib/hooks/useHotelLogic';
 import { parseDestinations, stringifyDestinations, parseTripNotes, stringifyTripNotes, type TripNoteItem, type ActivityData, type ActivityType } from '@/types/trip';
 import { calculateDayNumberFromDate } from '@/lib/utils/time-calculations';
 import { getAirportCoordinates } from '@/lib/utils/airports';
@@ -107,152 +108,15 @@ export default function TripPage() {
     return days.reduce((sum, day) => sum + day.items.length, 0);
   }, [days]);
 
-  // Extract all hotels from itinerary
-  // Include new style hotels (no hotelItemType) and old style check_in items (they have the checkInDate)
-  // Exclude old style checkout/breakfast items since they're sub-activities
-  const hotels = useMemo(() => {
-    return days.flatMap(d =>
-      d.items.filter(item => {
-        if (item.parsedNotes?.type !== 'hotel') return false;
-        const hotelItemType = item.parsedNotes?.hotelItemType;
-        // New style hotel (no hotelItemType) or old style check_in item
-        return !hotelItemType || hotelItemType === 'check_in';
-      })
-    );
-  }, [days]);
-
-  // Compute which hotel covers each night based on check-in/check-out dates
-  // Note: Parse all dates as local time to avoid timezone shifts
-  // For same-day checkout/checkin, the CHECK-IN hotel is the "stay" for that night
-  const nightlyHotelByDay = useMemo(() => {
-    const hotelMap: Record<number, EnrichedItineraryItem | null> = {};
-    if (!trip?.start_date) return hotelMap;
-
-    const tripStart = new Date(trip.start_date + 'T00:00:00');
-
-    // Sort hotels by check-in date so later check-ins override earlier ones for same night
-    const sortedHotels = [...hotels].sort((a, b) => {
-      const aCheckIn = a.parsedNotes?.checkInDate;
-      const bCheckIn = b.parsedNotes?.checkInDate;
-      if (aCheckIn && bCheckIn) {
-        return new Date(aCheckIn + 'T00:00:00').getTime() - new Date(bCheckIn + 'T00:00:00').getTime();
-      }
-      if (aCheckIn) return -1;
-      if (bCheckIn) return 1;
-      return a.day - b.day;
-    });
-
-    sortedHotels.forEach(hotel => {
-      const checkInDate = hotel.parsedNotes?.checkInDate;
-      const checkOutDate = hotel.parsedNotes?.checkOutDate;
-
-      // Fallback to item's day number if no explicit checkInDate
-      let checkInDayNum: number;
-      if (checkInDate) {
-        const inDate = new Date(checkInDate + 'T00:00:00');
-        checkInDayNum = Math.floor((inDate.getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-      } else {
-        // Use the day the hotel item is on
-        checkInDayNum = hotel.day;
-      }
-
-      let nights = 1;
-      if (checkOutDate) {
-        try {
-          const outDate = new Date(checkOutDate + 'T00:00:00');
-          const inDate = checkInDate ? new Date(checkInDate + 'T00:00:00') : tripStart;
-          nights = Math.max(1, Math.ceil((outDate.getTime() - inDate.getTime()) / (1000 * 60 * 60 * 24)));
-        } catch {
-          nights = 1;
-        }
-      }
-
-      // Mark this hotel for the check-in day and each subsequent night
-      // Later check-ins override earlier ones (for same-day checkout/checkin scenarios)
-      for (let i = 0; i < nights; i++) {
-        const nightDay = checkInDayNum + i;
-        if (nightDay > 0) {
-          hotelMap[nightDay] = hotel;
-        }
-      }
-    });
-
-    return hotelMap;
-  }, [hotels, trip?.start_date]);
-
-  // Compute which hotel is checking out on each day
-  const checkoutHotelByDay = useMemo(() => {
-    const checkoutMap: Record<number, EnrichedItineraryItem | null> = {};
-    if (!trip?.start_date) return checkoutMap;
-
-    const tripStart = new Date(trip.start_date + 'T00:00:00');
-
-    hotels.forEach(hotel => {
-      const checkOutDate = hotel.parsedNotes?.checkOutDate;
-      const checkInDate = hotel.parsedNotes?.checkInDate;
-
-      let checkOutDayNum: number;
-      if (checkOutDate) {
-        const outDate = new Date(checkOutDate + 'T00:00:00');
-        checkOutDayNum = Math.floor((outDate.getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-      } else {
-        // Fallback: checkout is the day after check-in (or day after hotel's day)
-        const checkInDayNum = checkInDate
-          ? Math.floor((new Date(checkInDate + 'T00:00:00').getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
-          : hotel.day;
-        checkOutDayNum = checkInDayNum + 1;
-      }
-
-      if (checkOutDayNum > 0) {
-        checkoutMap[checkOutDayNum] = hotel;
-      }
-    });
-
-    return checkoutMap;
-  }, [hotels, trip?.start_date]);
-
-  // Compute which hotel is checking in on each day
-  const checkInHotelByDay = useMemo(() => {
-    const checkInMap: Record<number, EnrichedItineraryItem | null> = {};
-    if (!trip?.start_date) return checkInMap;
-
-    const tripStart = new Date(trip.start_date + 'T00:00:00');
-
-    hotels.forEach(hotel => {
-      const checkInDate = hotel.parsedNotes?.checkInDate;
-
-      let checkInDayNum: number;
-      if (checkInDate) {
-        const inDate = new Date(checkInDate + 'T00:00:00');
-        checkInDayNum = Math.floor((inDate.getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-      } else {
-        // Fallback: use the day the hotel item is on
-        checkInDayNum = hotel.day;
-      }
-
-      if (checkInDayNum > 0) {
-        checkInMap[checkInDayNum] = hotel;
-      }
-    });
-
-    return checkInMap;
-  }, [hotels, trip?.start_date]);
-
-  // Compute which hotel provides breakfast on each day (previous night's hotel with breakfast included)
-  const breakfastHotelByDay = useMemo(() => {
-    const breakfastMap: Record<number, EnrichedItineraryItem | null> = {};
-
-    // For each day, if there was a hotel the previous night with breakfast, show it
-    Object.entries(nightlyHotelByDay).forEach(([dayNum, hotel]) => {
-      if (hotel && hotel.parsedNotes?.breakfastIncluded) {
-        // Breakfast is served the morning AFTER staying at the hotel
-        const nextDay = parseInt(dayNum) + 1;
-        breakfastMap[nextDay] = hotel;
-      }
-    });
-
-    return breakfastMap;
-  }, [nightlyHotelByDay]);
+  // Use optimized hotel logic hook - prevents cascading recalculations
+  // when non-hotel items are added/removed/reordered
+  const {
+    hotels,
+    nightlyHotelByDay,
+    checkoutHotelByDay,
+    checkInHotelByDay,
+    breakfastHotelByDay,
+  } = useHotelLogic(days, trip?.start_date);
 
   // Auto-fix items on wrong days
   const hasAutoFixed = useRef(false);
