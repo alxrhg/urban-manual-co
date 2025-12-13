@@ -6,7 +6,7 @@ import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminEditModeProvider } from "@/contexts/AdminEditModeContext";
 import { TripBuilderProvider } from "@/contexts/TripBuilderContext";
-import TripBuilderPanel from "@/components/trip/TripBuilderPanel";
+import { ResponsiveTripUI } from "@/components/trip/TripBuilder";
 import { IntelligentDrawerProvider, IntelligentDrawer } from "@/components/IntelligentDrawer";
 import { DrawerProvider } from "@/contexts/DrawerContext";
 import { ChristmasThemeProvider } from "@/contexts/ChristmasThemeContext";
@@ -261,7 +261,7 @@ export default function RootLayout({
                               <CookieConsent />
                               <NotificationPrompt />
                               <DrawerMount />
-                              <TripBuilderPanel />
+                              <ResponsiveTripUI />
                               <IntelligentDrawer />
                             </IntelligentDrawerProvider>
                           </TripBuilderProvider>

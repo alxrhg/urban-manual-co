@@ -487,7 +487,7 @@ const DestinationContent = memo(function DestinationContent({
   onShowSimilar,
 }: DestinationContentProps) {
   const { user } = useAuth();
-  const { activeTrip, addToTrip } = useTripBuilder();
+  const { activeTrip, addToTrip, startTrip } = useTripBuilder();
 
   // Smart category detection
   const categoryType = getCategoryType(destination.category);
@@ -1010,7 +1010,7 @@ const DestinationContent = memo(function DestinationContent({
   const hasParent = !!parentDestination;
   const hasSimilar = similarPlaces.length > 0;
   const hasRelated = related.length > 0;
-  const hasTrip = !!activeTrip;
+  const hasTrip = true; // Always show trip section
 
   // Build available sections with their priorities
   type SectionKey = 'description' | 'hours' | 'contact' | 'architecture' | 'nested' | 'parent' | 'map' | 'trip' | 'similar' | 'related';
@@ -1269,7 +1269,29 @@ const DestinationContent = memo(function DestinationContent({
         );
 
       case 'trip':
-        return activeTrip && (
+        // Show "Start Trip" button if no active trip
+        if (!activeTrip) {
+          return (
+            <div key="trip" className="mt-6">
+              <p className="text-[11px] uppercase tracking-wider text-gray-400 mb-3">
+                Add to Trip
+              </p>
+              <button
+                onClick={() => {
+                  startTrip(destination.city || 'New Trip', 3);
+                  handleAddToTrip(1);
+                }}
+                disabled={isAddingToTrip}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[14px] font-medium transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
+              >
+                <Plus className="w-4 h-4" />
+                Start {destination.city ? `${destination.city} Trip` : 'New Trip'}
+              </button>
+            </div>
+          );
+        }
+
+        return (
           <div key="trip" className="mt-6">
             <div className="flex items-center justify-between mb-3">
               <p className="text-[11px] uppercase tracking-wider text-gray-400">
