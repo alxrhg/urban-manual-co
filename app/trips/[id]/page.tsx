@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal, Trash2 } from 'lucide-react';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal, Trash2, Armchair, Wifi, ParkingSquare } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import {
   DndContext,
@@ -2601,10 +2601,14 @@ function ItemRow({
       const depTime = item.parsedNotes?.departureTime;
       const arrTime = item.parsedNotes?.arrivalTime;
       const airline = [item.parsedNotes?.airline, item.parsedNotes?.flightNumber].filter(Boolean).join(' ');
-      const terminal = item.parsedNotes?.terminal;
+      const depTerminal = item.parsedNotes?.departureTerminal || item.parsedNotes?.terminal;
+      const arrTerminal = item.parsedNotes?.arrivalTerminal;
       const gate = item.parsedNotes?.gate;
       const seat = item.parsedNotes?.seatNumber;
+      const seatClass = item.parsedNotes?.seatClass;
       const confirmation = item.parsedNotes?.confirmationNumber;
+      const loungeAccess = item.parsedNotes?.loungeAccess;
+      const loungeName = item.parsedNotes?.loungeName;
 
       // Inline times: "10:30 dep → 14:45 arr"
       const timeDisplay = [
@@ -2612,11 +2616,21 @@ function ItemRow({
         arrTime && `${formatTime(arrTime)} arr`
       ].filter(Boolean).join(' → ');
 
+      // Terminal display (departure T1 → arrival T3)
+      const terminalDisplay = [
+        depTerminal && `T${depTerminal}`,
+        arrTerminal && `T${arrTerminal}`
+      ].filter(Boolean);
+      const terminalInfo = terminalDisplay.length === 2
+        ? `${terminalDisplay[0]} → ${terminalDisplay[1]}`
+        : terminalDisplay[0] || '';
+
       // Extra info line
       const extraInfo = [
-        terminal && `T${terminal}`,
+        terminalInfo,
         gate && `Gate ${gate}`,
-        seat && `Seat ${seat}`
+        seat && `Seat ${seat}`,
+        seatClass && seatClass !== 'economy' && seatClass.replace('_', ' ')
       ].filter(Boolean).join(' · ');
 
       return {
@@ -2625,7 +2639,9 @@ function ItemRow({
         inlineTimes: timeDisplay,
         subtitle: airline || undefined,
         extraInfo: extraInfo || undefined,
-        confirmation
+        confirmation,
+        loungeAccess,
+        loungeName
       };
     }
 
@@ -2647,14 +2663,32 @@ function ItemRow({
         nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
       }
 
+      // Get amenity flags
+      const hasWifi = item.parsedNotes?.wifiIncluded;
+      const hasParking = item.parsedNotes?.parkingIncluded;
+      const hasBreakfast = item.parsedNotes?.breakfastIncluded;
+      const hasPool = item.parsedNotes?.hasPool;
+      const hasGym = item.parsedNotes?.hasGym;
+      const hasLounge = item.parsedNotes?.hasLounge;
+
       // Handle specific hotel activity types
       if (hotelItemType === 'check_in') {
+        // Build amenities hint
+        const amenityHints = [
+          hasBreakfast && 'Breakfast',
+          hasPool && 'Pool',
+          hasGym && 'Gym',
+          hasLounge && 'Lounge'
+        ].filter(Boolean).slice(0, 3);
+
         return {
           iconType: 'checkin' as const,
           title: `Check in · ${item.title || 'Hotel'}`,
           inlineTimes: checkIn ? formatTime(checkIn) : undefined,
           subtitle: address ? address.split(',')[0] : undefined,
-          confirmation
+          confirmation,
+          amenityHints: amenityHints.length > 0 ? amenityHints : undefined,
+          roomType: item.parsedNotes?.roomType
         };
       }
 
@@ -2664,7 +2698,8 @@ function ItemRow({
           title: `Check out · ${item.title || 'Hotel'}`,
           inlineTimes: checkOut ? formatTime(checkOut) : undefined,
           subtitle: address ? address.split(',')[0] : undefined,
-          confirmation
+          confirmation,
+          nights
         };
       }
 
@@ -2770,6 +2805,9 @@ function ItemRow({
   const confirmation = (extraData as any).confirmation;
   const nights = (extraData as any).nights;
   const rating = (extraData as any).rating;
+  const loungeAccess = (extraData as any).loungeAccess;
+  const loungeName = (extraData as any).loungeName;
+  const amenityHints = (extraData as any).amenityHints as string[] | undefined;
 
   // Quick actions data
   const phone = item.parsedNotes?.phone;
@@ -2885,6 +2923,13 @@ function ItemRow({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
               <p className="text-[15px] font-medium text-gray-900 dark:text-white truncate">{title}</p>
+              {/* Lounge access badge for flights */}
+              {iconType === 'flight' && loungeAccess && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[10px] font-medium flex-shrink-0">
+                  <Armchair className="w-3 h-3" />
+                  Lounge
+                </span>
+              )}
               {/* Crowd indicator for places with time */}
               {iconType === 'place' && item.time && (
                 <CrowdBadge
@@ -2896,6 +2941,31 @@ function ItemRow({
             <p className="text-[13px] text-gray-400 truncate">
               {subtitle || inlineTimes || (item.destination?.category) || 'Place'}
             </p>
+            {/* Extra info line for flights (terminals, gate, seat) */}
+            {iconType === 'flight' && extraInfo && (
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate mt-0.5">
+                {extraInfo}
+              </p>
+            )}
+            {/* Amenity hints for check-in */}
+            {iconType === 'checkin' && amenityHints && amenityHints.length > 0 && (
+              <div className="flex items-center gap-1 mt-1">
+                {amenityHints.map((hint) => (
+                  <span
+                    key={hint}
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400"
+                  >
+                    {hint}
+                  </span>
+                ))}
+              </div>
+            )}
+            {/* Nights count for checkout */}
+            {iconType === 'checkout' && nights && nights > 0 && (
+              <p className="text-[11px] text-orange-500 dark:text-orange-400 mt-0.5">
+                {nights} {nights === 1 ? 'night' : 'nights'} stay
+              </p>
+            )}
           </div>
 
           {/* More options button with dropdown */}
