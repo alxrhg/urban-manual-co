@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { withErrorHandling } from '@/lib/errors';
+import { dispatchInteractionRecord, isInngestConfigured } from '@/lib/inngest/dispatch';
 
 // ============================================
 // TYPES
@@ -160,6 +161,34 @@ async function recordInteraction(
   if (error) {
     console.error('[Behavior Track] Insert error:', error);
     throw error;
+  }
+
+  // Dispatch background job for taste profile update (for significant interactions)
+  if (isInngestConfigured() && destinationId && ['save', 'visit'].includes(interactionType)) {
+    try {
+      // Get destination details for the background job
+      const { data: destination } = await supabase
+        .from('destinations')
+        .select('slug, name, city, category')
+        .eq('id', destinationId)
+        .single();
+
+      if (destination) {
+        await dispatchInteractionRecord(userId, {
+          type: interactionType as 'save' | 'visit',
+          destination: {
+            id: destinationId,
+            slug: destination.slug,
+            name: destination.name,
+            city: destination.city,
+            category: destination.category,
+          },
+        });
+      }
+    } catch (jobError) {
+      // Non-critical - log but don't fail the request
+      console.warn('[Behavior Track] Failed to dispatch taste profile job:', jobError);
+    }
   }
 
   return data;
