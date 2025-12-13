@@ -221,7 +221,7 @@ export type TravelIntelligenceRequest = z.infer<typeof TravelIntelligenceRequest
  */
 export const SmartChatRequestSchema = z.object({
   message: z.string().min(2, 'Message too short'),
-  sessionId: z.string().nullable().optional(),
+  sessionId: z.string().nullable().optional().transform((v) => v ?? null),
   includeProactiveActions: z.boolean().optional().default(true),
   maxDestinations: z.number().min(1).max(50).optional().default(10),
 });
@@ -246,8 +246,8 @@ export type BehaviorTrackingRequest = z.infer<typeof BehaviorTrackingRequestSche
 export const ItineraryBuildRequestSchema = z.object({
   city: z.string().min(1, 'City is required'),
   duration: z.enum(['day', 'half_day', 'multi_day']).optional().default('day'),
-  neighborhood: z.string().nullable().optional(),
-  sessionId: z.string().nullable().optional(),
+  neighborhood: z.string().nullable().optional().transform((v) => v ?? null),
+  sessionId: z.string().nullable().optional().transform((v) => v ?? null),
 });
 
 export type ItineraryBuildRequest = z.infer<typeof ItineraryBuildRequestSchema>;
@@ -258,7 +258,7 @@ export type ItineraryBuildRequest = z.infer<typeof ItineraryBuildRequestSchema>;
 export const SimilarPlacesRequestSchema = z.object({
   destinationSlug: z.string().optional(),
   destinationName: z.string().optional(),
-  sessionId: z.string().nullable().optional(),
+  sessionId: z.string().nullable().optional().transform((v) => v ?? null),
   limit: z.number().min(1).max(50).optional().default(10),
 }).refine((data) => data.destinationSlug || data.destinationName, {
   message: 'Either destinationSlug or destinationName is required',
@@ -272,7 +272,7 @@ export type SimilarPlacesRequest = z.infer<typeof SimilarPlacesRequestSchema>;
 export const MultiCityPlanRequestSchema = z.object({
   cities: z.array(z.string()).min(2, 'At least 2 cities are required').max(5, 'Maximum 5 cities allowed'),
   daysPerCity: z.number().min(1).max(7).optional().default(2),
-  sessionId: z.string().nullable().optional(),
+  sessionId: z.string().nullable().optional().transform((v) => v ?? null),
 });
 
 export type MultiCityPlanRequest = z.infer<typeof MultiCityPlanRequestSchema>;
