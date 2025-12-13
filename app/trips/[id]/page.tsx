@@ -1346,6 +1346,8 @@ function DaySection({
   // Track previous state to detect changes
   const prevItemsLengthRef = useRef(items.length);
   const initializedRef = useRef(false);
+  // Track the latest reorder to avoid stale closure issues
+  const latestReorderRef = useRef<EnrichedItineraryItem[] | null>(null);
 
   useEffect(() => {
     // Filter items to exclude:
@@ -1569,8 +1571,13 @@ function DaySection({
   };
 
   const handleReorderComplete = useCallback(() => {
+    // Use the latest reorder from ref to avoid stale closure issues
+    // When onDragEnd is called, orderedItems may still have the old value due to React's batched state updates
+    const currentOrder = latestReorderRef.current || orderedItems;
+    latestReorderRef.current = null; // Clear the ref after use
+
     // Save hotel activity positions to hotel notes
-    orderedItems.forEach((item, index) => {
+    currentOrder.forEach((item, index) => {
       const hotelActivityType = (item as EnrichedItineraryItem & { hotelActivityType?: string }).hotelActivityType;
       if (hotelActivityType) {
         // Get the actual hotel ID from the virtual item ID (e.g., "checkin-abc123" -> "abc123")
@@ -1588,8 +1595,8 @@ function DaySection({
       }
     });
 
-    if (JSON.stringify(orderedItems.map(i => i.id)) !== JSON.stringify(items.map(i => i.id))) {
-      onReorder(orderedItems);
+    if (JSON.stringify(currentOrder.map(i => i.id)) !== JSON.stringify(items.map(i => i.id))) {
+      onReorder(currentOrder);
     }
   }, [orderedItems, items, onReorder, onUpdateItem]);
 
@@ -1966,7 +1973,10 @@ function DaySection({
 
       {/* Items (including hotel activities which are now always part of orderedItems) */}
       {orderedItems.length > 0 ? (
-        <Reorder.Group axis="y" values={orderedItems} onReorder={setOrderedItems} className="space-y-0">
+        <Reorder.Group axis="y" values={orderedItems} onReorder={(newOrder) => {
+          latestReorderRef.current = newOrder;
+          setOrderedItems(newOrder);
+        }} className="space-y-0">
           {/* Drop zone at the beginning */}
           <DropZoneBetweenItems
             dayNumber={dayNumber}
