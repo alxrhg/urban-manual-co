@@ -1,48 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  withErrorHandling,
+  createValidationError,
+  createNotFoundError,
+} from '@/lib/errors';
+import {
+  proxyRatelimit,
+  memoryProxyRatelimit,
+  enforceRateLimit,
+} from '@/lib/rate-limit';
 
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
-export async function GET(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams;
-    const photoName = searchParams.get('name');
-    const maxWidth = searchParams.get('maxWidth') || '800';
+export const GET = withErrorHandling(async (request: NextRequest) => {
+  // Rate limiting for external API proxy
+  const rateLimitResponse = await enforceRateLimit({
+    request,
+    message: 'Too many photo requests. Please try again later.',
+    limiter: proxyRatelimit,
+    memoryLimiter: memoryProxyRatelimit,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
 
-    if (!photoName) {
-      return NextResponse.json({ error: 'Photo name is required' }, { status: 400 });
-    }
+  const searchParams = request.nextUrl.searchParams;
+  const photoName = searchParams.get('name');
+  const maxWidth = searchParams.get('maxWidth') || '800';
 
-    if (!GOOGLE_API_KEY) {
-      return NextResponse.json({ error: 'Google API key not configured' }, { status: 500 });
-    }
-
-    // Fetch photo from Google Places API (New)
-    const photoUrl = `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=${maxWidth}`;
-
-    const response = await fetch(photoUrl, {
-      headers: {
-        'X-Goog-Api-Key': GOOGLE_API_KEY,
-      },
-    });
-
-    if (!response.ok) {
-      console.error('Google Places Photo error:', response.status);
-      return NextResponse.json({ error: 'Failed to fetch photo' }, { status: response.status });
-    }
-
-    // Get the image data
-    const imageBuffer = await response.arrayBuffer();
-    const contentType = response.headers.get('content-type') || 'image/jpeg';
-
-    // Return the image with proper headers
-    return new NextResponse(imageBuffer, {
-      headers: {
-        'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
-      },
-    });
-  } catch (error: any) {
-    console.error('Google Place Photo error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to fetch photo' }, { status: 500 });
+  if (!photoName) {
+    throw createValidationError('Photo name is required');
   }
-}
+
+  if (!GOOGLE_API_KEY) {
+    throw createValidationError('Google API key not configured');
+  }
+
+  // Fetch photo from Google Places API (New)
+  const photoUrl = `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=${maxWidth}`;
+
+  const response = await fetch(photoUrl, {
+    headers: {
+      'X-Goog-Api-Key': GOOGLE_API_KEY,
+    },
+  });
+
+  if (!response.ok) {
+    console.error('[Google Places Photo] API error:', response.status);
+    throw createNotFoundError('Photo');
+  }
+
+  // Get the image data
+  const imageBuffer = await response.arrayBuffer();
+  const contentType = response.headers.get('content-type') || 'image/jpeg';
+
+  // Return the image with proper headers (binary response, not JSON)
+  return new NextResponse(imageBuffer, {
+    headers: {
+      'Content-Type': contentType,
+      'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
+    },
+  });
+})

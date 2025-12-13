@@ -8,7 +8,8 @@ import {
   isUpstashConfigured,
 } from '@/lib/rate-limit';
 import { createServerClient } from '@/lib/supabase/server';
-import { withErrorHandling } from '@/lib/errors';
+import { withErrorHandling, createSuccessResponse } from '@/lib/errors';
+import { sanitizeForIlike, sanitizeSearchQuery } from '@/lib/sanitize';
 
 // Generate embedding for a query using OpenAI embeddings via provider-agnostic helper
 async function generateEmbedding(query: string): Promise<number[] | null> {
@@ -139,13 +140,18 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       // Context is optional
     }
 
-    if (!query || query.trim().length < 2) {
-      return NextResponse.json({ 
-        results: [], 
+    // Sanitize and validate query
+    const sanitizedQuery = sanitizeSearchQuery(query);
+    if (!sanitizedQuery || sanitizedQuery.length < 2) {
+      return createSuccessResponse({
+        results: [],
         searchTier: 'basic',
-        error: 'Query too short' 
+        error: 'Query too short',
       });
     }
+
+    // Escape for ILIKE queries (prevents SQL wildcard injection)
+    const safeQuery = sanitizeForIlike(sanitizedQuery);
 
     // Extract structured filters using AI (with conversation context)
     const intent = await understandQuery(query);
@@ -192,10 +198,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       }
     }
     
-    console.log('[Search API] Query:', query, 'Intent:', JSON.stringify(intent, null, 2));
+    console.log('[Search API] Query:', sanitizedQuery, 'Intent:', JSON.stringify(intent, null, 2));
 
     // Generate embedding for vector search
-    const queryEmbedding = await generateEmbedding(query);
+    const queryEmbedding = await generateEmbedding(sanitizedQuery);
 
     let results: any[] = [];
     let searchTier = 'basic';
@@ -263,21 +269,22 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
         // Full-text search - use ILIKE on search_text as fallback (textSearch requires tsvector column)
         // If search_text column exists but no tsvector, use pattern matching
-        fullTextQuery = fullTextQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,content.ilike.%${query}%,search_text.ilike.%${query}%`);
+        // Using safeQuery to prevent SQL wildcard injection
+        fullTextQuery = fullTextQuery.or(`name.ilike.%${safeQuery}%,description.ilike.%${safeQuery}%,content.ilike.%${safeQuery}%,search_text.ilike.%${safeQuery}%`);
 
-        // Apply filters
+        // Apply filters (sanitized)
         if (intent.city || filters.city) {
-          const cityFilter = intent.city || filters.city;
+          const cityFilter = sanitizeForIlike(intent.city || filters.city);
           fullTextQuery = fullTextQuery.ilike('city', `%${cityFilter}%`);
         }
 
         if (intent.category || filters.category) {
-          const categoryFilter = intent.category || filters.category;
+          const categoryFilter = sanitizeForIlike(intent.category || filters.category);
           fullTextQuery = fullTextQuery.ilike('category', `%${categoryFilter}%`);
         }
 
         if (intent.brand || filters.brand) {
-          const brandFilter = intent.brand || filters.brand;
+          const brandFilter = sanitizeForIlike(intent.brand || filters.brand);
           fullTextQuery = fullTextQuery.ilike('brand', `%${brandFilter}%`);
         }
 
@@ -359,31 +366,32 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         .select('slug, name, city, category, micro_description, description, content, image, image_thumbnail, michelin_stars, crown, rating, price_level, brand, latitude, longitude')
         .limit(PAGE_SIZE);
 
-      // Apply filters
+      // Apply filters (sanitized)
       if (intent.city || filters.city) {
-        const cityFilter = intent.city || filters.city;
+        const cityFilter = sanitizeForIlike(intent.city || filters.city);
         fallbackQuery = fallbackQuery.ilike('city', `%${cityFilter}%`);
       }
 
       if (intent.category || filters.category) {
-        const categoryFilter = intent.category || filters.category;
+        const categoryFilter = sanitizeForIlike(intent.category || filters.category);
         fallbackQuery = fallbackQuery.ilike('category', `%${categoryFilter}%`);
       }
 
       if (intent.brand || filters.brand) {
-        const brandFilter = intent.brand || filters.brand;
+        const brandFilter = sanitizeForIlike(intent.brand || filters.brand);
         fallbackQuery = fallbackQuery.ilike('brand', `%${brandFilter}%`);
       }
 
-      // Keyword matching - search across multiple fields
+      // Keyword matching - search across multiple fields (sanitized)
       if (intent.keywords && intent.keywords.length > 0) {
         const conditions: string[] = [];
         for (const keyword of intent.keywords) {
-          conditions.push(`name.ilike.%${keyword}%`);
-          conditions.push(`description.ilike.%${keyword}%`);
-          conditions.push(`content.ilike.%${keyword}%`);
-          conditions.push(`search_text.ilike.%${keyword}%`);
-          conditions.push(`category.ilike.%${keyword}%`);
+          const safeKeyword = sanitizeForIlike(keyword);
+          conditions.push(`name.ilike.%${safeKeyword}%`);
+          conditions.push(`description.ilike.%${safeKeyword}%`);
+          conditions.push(`content.ilike.%${safeKeyword}%`);
+          conditions.push(`search_text.ilike.%${safeKeyword}%`);
+          conditions.push(`category.ilike.%${safeKeyword}%`);
         }
         if (conditions.length > 0) {
           fallbackQuery = fallbackQuery.or(conditions.join(','));
@@ -391,19 +399,22 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       } else {
         // Extract keywords from query as fallback
         const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'best', 'good', 'great', 'top', 'find', 'show', 'me', 'my', 'looking', 'want', 'like']);
-        const words = query.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2 && !stopWords.has(w));
+        const words = sanitizedQuery.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2 && !stopWords.has(w));
 
         if (words.length > 0) {
-          const conditions = words.flatMap((w: string) => [
-            `name.ilike.%${w}%`,
-            `description.ilike.%${w}%`,
-            `content.ilike.%${w}%`,
-            `search_text.ilike.%${w}%`,
-            `category.ilike.%${w}%`,
-          ]);
+          const conditions = words.flatMap((w: string) => {
+            const safeWord = sanitizeForIlike(w);
+            return [
+              `name.ilike.%${safeWord}%`,
+              `description.ilike.%${safeWord}%`,
+              `content.ilike.%${safeWord}%`,
+              `search_text.ilike.%${safeWord}%`,
+              `category.ilike.%${safeWord}%`,
+            ];
+          });
           fallbackQuery = fallbackQuery.or(conditions.join(','));
         } else {
-          fallbackQuery = fallbackQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,content.ilike.%${query}%`);
+          fallbackQuery = fallbackQuery.or(`name.ilike.%${safeQuery}%,description.ilike.%${safeQuery}%,content.ilike.%${safeQuery}%`);
         }
       }
 
@@ -446,7 +457,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     }
 
     // Rank and sort results
-    const lowerQuery = query.toLowerCase();
+    const lowerQuery = sanitizedQuery.toLowerCase();
     const rankedResults = results
       .map((dest: any) => {
         let score = dest.similarity || dest.rank || 0;
@@ -515,7 +526,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
           user_id: authenticatedUserId,
           destination_id: null,
           metadata: {
-            query,
+            query: sanitizedQuery,
             intent,
             count: rankedResults.length,
             source: 'api/search',
@@ -524,7 +535,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       } catch {}
     }
 
-    return NextResponse.json({
+    return createSuccessResponse({
       results: rankedResults,
       searchTier: searchTier,
       conversationContext: conversationContext || undefined,
@@ -534,11 +545,11 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     });
 
   } catch (error: any) {
-    console.error('Search API error:', error);
-    return NextResponse.json({
+    console.error('[Search API] Error:', error);
+    return createSuccessResponse({
       results: [],
       searchTier: 'basic',
       error: error.message || 'Search failed',
-    }, { status: 500 });
+    });
   }
 });
