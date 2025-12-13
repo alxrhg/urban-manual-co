@@ -2790,6 +2790,170 @@ function ItemRow({
     }
   }, [showActions]);
 
+  // Parse airport code helper for flights
+  const parseAirportCode = (value?: string) => {
+    if (!value) return '---';
+    const parts = value.split(/[-–—]/);
+    return parts[0]?.trim().toUpperCase().slice(0, 3) || '---';
+  };
+
+  // Special premium flight card rendering
+  if (itemType === 'flight') {
+    const notes = item.parsedNotes;
+    const originCode = parseAirportCode(notes?.from);
+    const destCode = parseAirportCode(notes?.to);
+    const airline = notes?.airline || '';
+    const flightNum = notes?.flightNumber || '';
+    const depTime = notes?.departureTime;
+    const arrTime = notes?.arrivalTime;
+    const terminal = notes?.terminal;
+    const gate = notes?.gate;
+    const seat = notes?.seatNumber;
+    const flightConfirmation = notes?.confirmationNumber;
+
+    return (
+      <Reorder.Item
+        value={item}
+        onDragStart={() => setIsDragging(true)}
+        onDragEnd={() => { setIsDragging(false); onDragEnd(); }}
+        className={`${isEditMode ? 'cursor-grab active:cursor-grabbing' : ''} ${isDragging ? 'z-10' : ''}`}
+        dragListener={isEditMode}
+      >
+        <div
+          className={`
+            relative rounded-2xl overflow-hidden transition-all cursor-pointer
+            bg-stone-50 dark:bg-gray-800/60
+            ring-1 ring-stone-200/60 dark:ring-gray-700/50
+            hover:ring-stone-300 dark:hover:ring-gray-600
+            ${isDragging ? 'shadow-xl ring-2 ring-stone-400 dark:ring-gray-500' : ''}
+          `}
+          onClick={() => {
+            const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+            if (isDesktop && onSelect) {
+              onSelect();
+            } else {
+              onToggle();
+            }
+          }}
+        >
+          {/* Main Card Content */}
+          <div className="p-4">
+            {/* Header Row: Route + Status */}
+            <div className="flex items-start justify-between mb-3">
+              {/* Large Route Display */}
+              <div className="flex items-center gap-2">
+                <div className="text-center">
+                  <p className="text-xl font-semibold tracking-tight text-stone-900 dark:text-white font-mono">
+                    {originCode}
+                  </p>
+                </div>
+
+                {/* Flight Path */}
+                <div className="flex items-center gap-1 px-1.5">
+                  <div className="w-1 h-1 rounded-full bg-stone-300 dark:bg-gray-600" />
+                  <div className="w-8 h-px bg-stone-300 dark:bg-gray-600 relative">
+                    <Plane className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 text-stone-400 dark:text-gray-500" />
+                  </div>
+                  <div className="w-1 h-1 rounded-full bg-stone-300 dark:bg-gray-600" />
+                </div>
+
+                <div className="text-center">
+                  <p className="text-xl font-semibold tracking-tight text-stone-900 dark:text-white font-mono">
+                    {destCode}
+                  </p>
+                </div>
+              </div>
+
+              {/* Status Badge */}
+              <div className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-50 text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                Confirmed
+              </div>
+            </div>
+
+            {/* Dotted Perforation Line */}
+            <div className="relative my-3">
+              <div className="w-full border-t border-dashed border-stone-200 dark:border-gray-700" />
+              <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-2 h-4 bg-white dark:bg-gray-900 rounded-r-full" />
+              <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-2 h-4 bg-white dark:bg-gray-900 rounded-l-full" />
+            </div>
+
+            {/* Time Row */}
+            <div className="flex items-center justify-between">
+              {/* Departure */}
+              <div>
+                <p className="text-[9px] uppercase tracking-wider text-stone-400 dark:text-gray-500">Depart</p>
+                <p className="text-base font-semibold text-stone-900 dark:text-white font-mono tabular-nums">
+                  {depTime ? formatTime(depTime) : '--:--'}
+                </p>
+              </div>
+
+              {/* Nonstop indicator */}
+              <div className="text-center">
+                <p className="text-[9px] text-stone-400 dark:text-gray-500">Nonstop</p>
+              </div>
+
+              {/* Arrival */}
+              <div className="text-right">
+                <p className="text-[9px] uppercase tracking-wider text-stone-400 dark:text-gray-500">Arrive</p>
+                <p className="text-base font-semibold text-stone-900 dark:text-white font-mono tabular-nums">
+                  {arrTime ? formatTime(arrTime) : '--:--'}
+                </p>
+              </div>
+            </div>
+
+            {/* Flight Identity Row */}
+            <div className="flex items-center justify-between mt-3 pt-2 border-t border-stone-100 dark:border-gray-700/50">
+              <div className="flex items-center gap-2">
+                <p className="text-xs font-medium text-stone-600 dark:text-gray-400">
+                  {airline}
+                </p>
+                {flightNum && (
+                  <p className="text-xs text-stone-400 dark:text-gray-500 font-mono">
+                    {flightNum}
+                  </p>
+                )}
+              </div>
+
+              {/* Terminal/Gate/Seat */}
+              <div className="flex items-center gap-2 text-[10px] text-stone-400 dark:text-gray-500 font-mono">
+                {terminal && <span>T{terminal}</span>}
+                {gate && <span>Gate {gate}</span>}
+                {seat && <span>{seat}</span>}
+              </div>
+            </div>
+          </div>
+
+          {/* Edit mode drag handle indicator */}
+          {isEditMode && (
+            <div className="absolute top-2 left-2 opacity-60">
+              <GripVertical className="w-4 h-4 text-stone-400" />
+            </div>
+          )}
+        </div>
+
+        {/* Expanded details (mobile) */}
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden lg:hidden"
+            >
+              <ItemDetails
+                item={item}
+                itemType={itemType}
+                onUpdateItem={onUpdateItem}
+                onUpdateTime={onUpdateTime}
+                onClose={onToggle}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Reorder.Item>
+    );
+  }
+
   return (
     <Reorder.Item
       value={item}
@@ -2820,11 +2984,7 @@ function ItemRow({
 
           {/* Circle image or icon */}
           <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-            {iconType === 'flight' ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <Plane className="w-5 h-5 text-gray-500" />
-              </div>
-            ) : iconType === 'hotel' ? (
+            {iconType === 'hotel' ? (
               <div className="w-full h-full flex items-center justify-center">
                 <Hotel className="w-5 h-5 text-gray-500" />
               </div>

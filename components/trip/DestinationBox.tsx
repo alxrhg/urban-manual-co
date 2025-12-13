@@ -73,6 +73,15 @@ export default function DestinationBox({
   const [editTags, setEditTags] = useState<string[]>(item.parsedNotes?.tags || []);
   const [imageError, setImageError] = useState(false);
 
+  // Flight-specific fields
+  const [editTerminal, setEditTerminal] = useState(item.parsedNotes?.terminal || '');
+  const [editGate, setEditGate] = useState(item.parsedNotes?.gate || '');
+  const [editSeat, setEditSeat] = useState(item.parsedNotes?.seatNumber || '');
+  const [editLoungeAccess, setEditLoungeAccess] = useState(item.parsedNotes?.loungeAccess || false);
+  const [editLoungeLocation, setEditLoungeLocation] = useState(
+    (item.parsedNotes as any)?.loungeLocation || ''
+  );
+
   const destination = item.destination;
   const parsedNotes = item.parsedNotes;
   const itemType = parsedNotes?.type || 'place';
@@ -102,6 +111,11 @@ export default function DestinationBox({
     setEditPriority(item.parsedNotes?.priority || '');
     setEditBookingStatus(item.parsedNotes?.bookingStatus || '');
     setEditTags(item.parsedNotes?.tags || []);
+    setEditTerminal(item.parsedNotes?.terminal || '');
+    setEditGate(item.parsedNotes?.gate || '');
+    setEditSeat(item.parsedNotes?.seatNumber || '');
+    setEditLoungeAccess(item.parsedNotes?.loungeAccess || false);
+    setEditLoungeLocation((item.parsedNotes as any)?.loungeLocation || '');
     setShowMore(false);
     setImageError(false);
   }, [item.id]);
@@ -152,6 +166,21 @@ export default function DestinationBox({
         } else {
           updates.confirmationNumber = value as string;
         }
+        break;
+      case 'terminal':
+        updates.terminal = value as string;
+        break;
+      case 'gate':
+        updates.gate = value as string;
+        break;
+      case 'seatNumber':
+        updates.seatNumber = value as string;
+        break;
+      case 'loungeAccess':
+        updates.loungeAccess = value as boolean;
+        break;
+      case 'loungeLocation':
+        (updates as any).loungeLocation = value as string;
         break;
     }
 
@@ -246,8 +275,199 @@ export default function DestinationBox({
 
       {/* Content */}
       <div className="p-4 space-y-4">
-        {/* Flight/Train route display */}
-        {(itemType === 'flight' || itemType === 'train') && (
+        {/* Premium Flight Editor */}
+        {itemType === 'flight' && (
+          <div className="space-y-4">
+            {/* Ticket-style Route Display */}
+            <div className="relative rounded-xl bg-stone-50 dark:bg-gray-800/60 p-4 ring-1 ring-stone-200/60 dark:ring-gray-700/50">
+              {/* Route Header */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <p className="text-2xl font-semibold text-stone-900 dark:text-white font-mono tracking-tight">
+                    {parsedNotes?.from?.split(/[-–—]/)[0]?.trim().toUpperCase().slice(0, 3) || '---'}
+                  </p>
+                  <div className="flex items-center gap-1 px-2">
+                    <div className="w-1 h-1 rounded-full bg-stone-300 dark:bg-gray-600" />
+                    <div className="w-6 h-px bg-stone-300 dark:bg-gray-600" />
+                    <Plane className="w-3.5 h-3.5 text-stone-400 dark:text-gray-500" />
+                    <div className="w-6 h-px bg-stone-300 dark:bg-gray-600" />
+                    <div className="w-1 h-1 rounded-full bg-stone-300 dark:bg-gray-600" />
+                  </div>
+                  <p className="text-2xl font-semibold text-stone-900 dark:text-white font-mono tracking-tight">
+                    {parsedNotes?.to?.split(/[-–—]/)[0]?.trim().toUpperCase().slice(0, 3) || '---'}
+                  </p>
+                </div>
+                <div className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-50 text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                  Confirmed
+                </div>
+              </div>
+
+              {/* Dotted Perforation */}
+              <div className="relative my-3">
+                <div className="w-full border-t border-dashed border-stone-200 dark:border-gray-700" />
+              </div>
+
+              {/* Times Row */}
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-[9px] uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-0.5">Depart</p>
+                  <p className="text-lg font-semibold text-stone-900 dark:text-white font-mono tabular-nums">
+                    {editDepartureTime || '--:--'}
+                  </p>
+                </div>
+                <div className="text-center pb-1">
+                  <p className="text-[9px] text-stone-400 dark:text-gray-500">Nonstop</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-0.5">Arrive</p>
+                  <p className="text-lg font-semibold text-stone-900 dark:text-white font-mono tabular-nums">
+                    {editArrivalTime || '--:--'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Airline Badge */}
+              <div className="mt-3 pt-2 border-t border-stone-100 dark:border-gray-700/50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-stone-600 dark:text-gray-400">
+                    {parsedNotes?.airline || 'Airline'}
+                  </span>
+                  <span className="text-xs text-stone-400 dark:text-gray-500 font-mono">
+                    {parsedNotes?.flightNumber || ''}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-[10px] text-stone-400 dark:text-gray-500 font-mono">
+                  {editTerminal && <span>T{editTerminal}</span>}
+                  {editGate && <span>Gate {editGate}</span>}
+                  {editSeat && <span>{editSeat}</span>}
+                </div>
+              </div>
+            </div>
+
+            {/* Flight Details Editor */}
+            <div className="space-y-3">
+              {/* Times */}
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="text-[10px] text-gray-400 mb-1 block">Departure</label>
+                  <input
+                    type="time"
+                    value={editDepartureTime}
+                    onChange={(e) => setEditDepartureTime(e.target.value)}
+                    onBlur={() => saveChanges('departureTime', editDepartureTime)}
+                    className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg font-mono"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-[10px] text-gray-400 mb-1 block">Arrival</label>
+                  <input
+                    type="time"
+                    value={editArrivalTime}
+                    onChange={(e) => setEditArrivalTime(e.target.value)}
+                    onBlur={() => saveChanges('arrivalTime', editArrivalTime)}
+                    className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Terminal, Gate, Seat */}
+              <div className="flex gap-2">
+                <div className="w-20">
+                  <label className="text-[10px] text-gray-400 mb-1 block">Terminal</label>
+                  <input
+                    type="text"
+                    value={editTerminal}
+                    onChange={(e) => setEditTerminal(e.target.value.toUpperCase())}
+                    onBlur={() => saveChanges('terminal', editTerminal)}
+                    placeholder="A"
+                    className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg font-mono text-center"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-[10px] text-gray-400 mb-1 block">Gate</label>
+                  <input
+                    type="text"
+                    value={editGate}
+                    onChange={(e) => setEditGate(e.target.value.toUpperCase())}
+                    onBlur={() => saveChanges('gate', editGate)}
+                    placeholder="B22"
+                    className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg font-mono"
+                  />
+                </div>
+                <div className="w-20">
+                  <label className="text-[10px] text-gray-400 mb-1 block">Seat</label>
+                  <input
+                    type="text"
+                    value={editSeat}
+                    onChange={(e) => setEditSeat(e.target.value.toUpperCase())}
+                    onBlur={() => saveChanges('seatNumber', editSeat)}
+                    placeholder="12A"
+                    className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg font-mono text-center"
+                  />
+                </div>
+              </div>
+
+              {/* Confirmation */}
+              <div>
+                <label className="text-[10px] text-gray-400 mb-1 block">Confirmation #</label>
+                <input
+                  type="text"
+                  value={editConfirmation}
+                  onChange={(e) => setEditConfirmation(e.target.value.toUpperCase())}
+                  onBlur={() => saveChanges('confirmation', editConfirmation)}
+                  placeholder="ABC123"
+                  className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg font-mono tracking-wider"
+                />
+              </div>
+
+              {/* Lounge Access */}
+              <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editLoungeAccess}
+                    onChange={(e) => {
+                      setEditLoungeAccess(e.target.checked);
+                      saveChanges('loungeAccess', e.target.checked);
+                    }}
+                    className="w-4 h-4 rounded border-gray-300 text-stone-900 focus:ring-stone-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Lounge access included</span>
+                </label>
+
+                {editLoungeAccess && (
+                  <div className="mt-3">
+                    <label className="text-[10px] text-gray-400 mb-1 block">Accessible lounges</label>
+                    <textarea
+                      value={editLoungeLocation}
+                      onChange={(e) => setEditLoungeLocation(e.target.value)}
+                      onBlur={() => saveChanges('loungeLocation', editLoungeLocation)}
+                      placeholder="e.g., United Club (Terminal C, near Gate 45), Centurion Lounge..."
+                      rows={2}
+                      className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg resize-none"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="text-[10px] text-gray-400 mb-1 block">Notes</label>
+                <textarea
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  onBlur={() => saveChanges('notes', editNotes)}
+                  placeholder="Add flight notes..."
+                  rows={2}
+                  className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg resize-none"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Train route display */}
+        {itemType === 'train' && (
           <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <div className="text-center">
               <p className="text-lg font-semibold text-gray-900 dark:text-white">{parsedNotes?.from || '—'}</p>
@@ -255,7 +475,7 @@ export default function DestinationBox({
             </div>
             <div className="flex items-center gap-2 px-3">
               <div className="w-8 h-px bg-gray-300 dark:bg-gray-600" />
-              <TypeIcon className="w-4 h-4 text-gray-400" />
+              <Train className="w-4 h-4 text-gray-400" />
               <div className="w-8 h-px bg-gray-300 dark:bg-gray-600" />
             </div>
             <div className="text-center">
