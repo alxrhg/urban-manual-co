@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { MapPin, ImagePlus, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
+import MapboxTripMap from '@/components/maps/MapboxTripMap';
 
 interface TripData {
   id: string;
@@ -20,7 +21,7 @@ interface TripEditorHeaderProps {
   primaryCity: string;
   totalItems: number;
   userId?: string;
-  days: Array<{ items: EnrichedItineraryItem[] }>;
+  days: Array<{ dayNumber: number; items: EnrichedItineraryItem[] }>;
   onUpdate: (updates: Record<string, unknown>) => void;
   onDelete: () => void;
 }
@@ -49,43 +50,37 @@ export function TripEditorHeader({
   const titleRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Calculate map center from all items with coordinates
-  const mapCenter = useMemo(() => {
-    const allItems = days.flatMap(d => d.items);
-    const coords = allItems
-      .map(item => ({
-        lat: item.destination?.latitude || item.parsedNotes?.latitude,
-        lng: item.destination?.longitude || item.parsedNotes?.longitude,
-      }))
-      .filter(c => c.lat && c.lng) as { lat: number; lng: number }[];
+  // Extract markers from all days for the map
+  const mapMarkers = useMemo(() => {
+    const markers: Array<{
+      id: string;
+      lat: number;
+      lng: number;
+      label: string;
+      dayNumber: number;
+      index: number;
+    }> = [];
 
-    if (coords.length === 0) return null;
+    days.forEach((day) => {
+      day.items.forEach((item, index) => {
+        const lat = item.parsedNotes?.latitude ?? item.destination?.latitude;
+        const lng = item.parsedNotes?.longitude ?? item.destination?.longitude;
 
-    const sumLat = coords.reduce((sum, c) => sum + c.lat, 0);
-    const sumLng = coords.reduce((sum, c) => sum + c.lng, 0);
-    return {
-      lat: sumLat / coords.length,
-      lng: sumLng / coords.length,
-    };
+        if (lat && lng) {
+          markers.push({
+            id: item.id,
+            lat,
+            lng,
+            label: item.title || `Stop ${index + 1}`,
+            dayNumber: day.dayNumber,
+            index: markers.length + 1,
+          });
+        }
+      });
+    });
+
+    return markers;
   }, [days]);
-
-  // State for map image error
-  const [mapError, setMapError] = useState(false);
-
-  // Generate static map URL
-  const staticMapUrl = useMemo(() => {
-    if (!mapCenter) return null;
-    const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
-    if (!token) return null;
-
-    const pin = `pin-s+ef4444(${mapCenter.lng},${mapCenter.lat})`;
-    return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${pin}/${mapCenter.lng},${mapCenter.lat},11,0/600x200@2x?access_token=${token}`;
-  }, [mapCenter]);
-
-  // Reset error when URL changes
-  useEffect(() => {
-    setMapError(false);
-  }, [staticMapUrl]);
 
   useEffect(() => {
     if (isEditing && titleRef.current) {
@@ -288,31 +283,20 @@ export function TripEditorHeader({
 
   return (
     <div className="group">
-      {/* Static map cover */}
-      <div className="relative aspect-[3/1] rounded-xl overflow-hidden mb-4">
-        {staticMapUrl && !mapError ? (
-          <>
-            <Image
-              src={staticMapUrl}
-              alt={`Map of ${primaryCity}`}
-              fill
-              className="object-cover"
-              unoptimized
-              onError={() => setMapError(true)}
-            />
-            {/* City overlay */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-900 rounded-full px-3 py-1.5 shadow-lg flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-red-500" />
-              <span className="text-xs font-medium text-gray-900 dark:text-white">{primaryCity}</span>
-              <span className="text-xs text-gray-400">{totalItems} pinned</span>
-            </div>
-          </>
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 flex items-center justify-center">
-            <div className="text-center">
-              <MapPin className="w-8 h-8 text-blue-400 mx-auto mb-1" />
-              <span className="text-xs text-blue-500 dark:text-blue-400">{primaryCity || 'Add places to see map'}</span>
-            </div>
+      {/* Interactive map cover */}
+      <div className="relative mb-4">
+        <MapboxTripMap
+          markers={mapMarkers}
+          aspectRatio="wide"
+          showControls={true}
+          interactive={true}
+        />
+        {/* City overlay */}
+        {mapMarkers.length > 0 && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-900 rounded-full px-3 py-1.5 shadow-lg flex items-center gap-1.5 z-10">
+            <MapPin className="w-3.5 h-3.5 text-red-500" />
+            <span className="text-xs font-medium text-gray-900 dark:text-white">{primaryCity}</span>
+            <span className="text-xs text-gray-400">{totalItems} pinned</span>
           </div>
         )}
       </div>
