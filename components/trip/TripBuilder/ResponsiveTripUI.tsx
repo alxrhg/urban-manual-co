@@ -9,6 +9,10 @@ const TripFloatingBar = dynamic(() => import('./TripFloatingBar'), { ssr: false 
 const MobileTripSheet = dynamic(() => import('./MobileTripSheet'), { ssr: false });
 const MobileTripFloatingBar = dynamic(() => import('./MobileTripFloatingBar'), { ssr: false });
 
+// Planning mode components
+const PlanningBar = dynamic(() => import('../PlanningBar'), { ssr: false });
+const PlanningSheet = dynamic(() => import('../PlanningSheet'), { ssr: false });
+
 /**
  * ResponsiveTripUI - Automatically uses mobile or desktop trip components
  *
@@ -19,6 +23,10 @@ const MobileTripFloatingBar = dynamic(() => import('./MobileTripFloatingBar'), {
  * On desktop (>= 768px):
  * - TripFloatingBar (minimal pill)
  * - TripDrawer (bottom sheet)
+ *
+ * Planning Mode (all devices):
+ * - PlanningBar (collapsed) - bottom pill showing trip context
+ * - PlanningSheet (expanded) - city scope, day picker, quick actions
  *
  * This component handles the switching automatically based on viewport width.
  */
@@ -45,6 +53,10 @@ export default function ResponsiveTripUI() {
   if (isMobile) {
     return (
       <>
+        {/* Planning mode UI - shown when planning mode is active */}
+        <PlanningBar />
+        <PlanningSheet />
+        {/* Trip builder panel */}
         <MobileTripFloatingBar />
         <MobileTripSheet />
       </>
@@ -53,6 +65,10 @@ export default function ResponsiveTripUI() {
 
   return (
     <>
+      {/* Planning mode UI - shown when planning mode is active */}
+      <PlanningBar />
+      <PlanningSheet />
+      {/* Trip builder panel */}
       <TripFloatingBar />
       <TripDrawer />
     </>

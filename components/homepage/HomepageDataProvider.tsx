@@ -6,6 +6,7 @@ import { Destination } from '@/types/destination';
 import { createClient } from '@/lib/supabase/client';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useDestinationDrawer } from '@/components/IntelligentDrawer';
+import { useTripBuilder } from '@/contexts/TripBuilderContext';
 
 /**
  * Homepage Data Provider with Full Features
@@ -47,6 +48,11 @@ interface HomepageDataContextType {
   // Advanced filters
   michelinOnly: boolean;
   crownOnly: boolean;
+
+  // Planning mode integration
+  isPlanningMode: boolean;
+  planningCity: string | null;
+  tripCities: string[];
 
   // Actions
   setCurrentPage: (page: number) => void;
@@ -108,6 +114,14 @@ function HomepageDataProviderInner({
 }: HomepageDataProviderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Planning mode integration
+  const {
+    isPlanningMode,
+    planningCity,
+    getTripCities,
+  } = useTripBuilder();
+  const tripCities = getTripCities();
 
   // Core data state
   const [destinations, setDestinations] = useState<Destination[]>(serverDestinations);
@@ -188,14 +202,31 @@ function HomepageDataProviderInner({
     fetchClientData();
   }, [serverDestinations]);
 
+  // Effective city filter - use planning city when in planning mode
+  const effectiveCityFilter = useMemo(() => {
+    // If planning mode is ON and we have a planning city, use it
+    if (isPlanningMode && planningCity) {
+      return planningCity;
+    }
+    // Otherwise use the selected city (if any)
+    return selectedCity;
+  }, [isPlanningMode, planningCity, selectedCity]);
+
   // Filter destinations based on selected filters
   const filteredDestinations = useMemo(() => {
     let filtered = [...destinations];
 
-    // Filter by city
-    if (selectedCity) {
+    // Filter by city (respects planning mode)
+    if (effectiveCityFilter) {
       filtered = filtered.filter(d =>
-        d.city?.toLowerCase() === selectedCity.toLowerCase()
+        d.city?.toLowerCase() === effectiveCityFilter.toLowerCase()
+      );
+    } else if (isPlanningMode && tripCities.length > 0) {
+      // If planning mode but no specific city selected, show all trip cities
+      filtered = filtered.filter(d =>
+        tripCities.some(city =>
+          d.city?.toLowerCase() === city.toLowerCase()
+        )
       );
     }
 
@@ -231,7 +262,7 @@ function HomepageDataProviderInner({
     }
 
     return filtered;
-  }, [destinations, selectedCity, selectedCategory, searchTerm, michelinOnly, crownOnly]);
+  }, [destinations, effectiveCityFilter, isPlanningMode, tripCities, selectedCategory, searchTerm, michelinOnly, crownOnly]);
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredDestinations.length / itemsPerPage);
@@ -309,6 +340,11 @@ function HomepageDataProviderInner({
     aiChatInitialQuery,
     michelinOnly,
     crownOnly,
+    // Planning mode integration
+    isPlanningMode,
+    planningCity,
+    tripCities,
+    // Actions
     setCurrentPage,
     setSelectedCity,
     setSelectedCategory,

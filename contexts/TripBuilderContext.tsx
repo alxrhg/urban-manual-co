@@ -98,6 +98,12 @@ export interface TripBuilderContextType {
   isLoadingTrips: boolean;
   isSuggestingNext: boolean;
 
+  // Planning Mode State
+  isPlanningMode: boolean;
+  planningCity: string | null; // Current city scope for planning
+  defaultDay: number; // Default day for "Add to Day X"
+  isPlanningSheetOpen: boolean;
+
   // Actions
   startTrip: (city: string, days?: number, startDate?: string) => void;
   addToTrip: (destination: Destination, day?: number, timeSlot?: string) => void;
@@ -119,6 +125,15 @@ export interface TripBuilderContextType {
   openPanel: () => void;
   closePanel: () => void;
   togglePanel: () => void;
+
+  // Planning Mode Actions
+  setPlanningMode: (enabled: boolean) => void;
+  setPlanningCity: (city: string | null) => void;
+  setDefaultDay: (day: number) => void;
+  openPlanningSheet: () => void;
+  closePlanningSheet: () => void;
+  togglePlanningSheet: () => void;
+  getTripCities: () => string[]; // Get all cities in the trip
 
   // AI Actions
   generateItinerary: (city: string, days: number, preferences?: {
@@ -240,6 +255,12 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
   const [isLoadingTrips, setIsLoadingTrips] = useState(false);
   const [isSuggestingNext, setIsSuggestingNext] = useState(false);
 
+  // Planning Mode State
+  const [isPlanningMode, setIsPlanningMode] = useState(false);
+  const [planningCity, setPlanningCityState] = useState<string | null>(null);
+  const [defaultDay, setDefaultDayState] = useState(1);
+  const [isPlanningSheetOpen, setIsPlanningSheetOpen] = useState(false);
+
   // Fetch saved trips from server
   const refreshSavedTrips = useCallback(async () => {
     if (!user) {
@@ -277,6 +298,19 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
         console.error('Failed to load saved trip:', e);
       }
     }
+
+    // Load planning mode state
+    const planningModeState = localStorage.getItem('urban-manual-planning-mode');
+    if (planningModeState) {
+      try {
+        const { enabled, city, day } = JSON.parse(planningModeState);
+        setIsPlanningMode(enabled ?? false);
+        setPlanningCityState(city ?? null);
+        setDefaultDayState(day ?? 1);
+      } catch (e) {
+        console.error('Failed to load planning mode state:', e);
+      }
+    }
   }, []);
 
   // Save to localStorage on changes
@@ -288,12 +322,52 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
     }
   }, [activeTrip]);
 
+  // Save planning mode state to localStorage
+  useEffect(() => {
+    localStorage.setItem('urban-manual-planning-mode', JSON.stringify({
+      enabled: isPlanningMode,
+      city: planningCity,
+      day: defaultDay,
+    }));
+  }, [isPlanningMode, planningCity, defaultDay]);
+
   // Auto-open panel when trip has items
   useEffect(() => {
     if (activeTrip && activeTrip.days.some(d => d.items.length > 0) && !isPanelOpen) {
       setIsPanelOpen(true);
     }
   }, [activeTrip?.days]);
+
+  // Auto-set planning city when trip changes (if not already set)
+  useEffect(() => {
+    if (activeTrip && isPlanningMode && !planningCity) {
+      setPlanningCityState(activeTrip.city);
+    }
+    // Reset default day if it exceeds trip days
+    if (activeTrip && defaultDay > activeTrip.days.length) {
+      setDefaultDayState(1);
+    }
+  }, [activeTrip, isPlanningMode, planningCity, defaultDay]);
+
+  // Get all unique cities in the trip (for multi-city support)
+  const getTripCities = useCallback((): string[] => {
+    if (!activeTrip) return [];
+
+    // Get city from trip itself
+    const cities = new Set<string>();
+    if (activeTrip.city) cities.add(activeTrip.city);
+
+    // Also get cities from all items (for multi-city trips)
+    activeTrip.days.forEach(day => {
+      day.items.forEach(item => {
+        if (item.destination.city) {
+          cities.add(item.destination.city);
+        }
+      });
+    });
+
+    return Array.from(cities);
+  }, [activeTrip]);
 
   // Start a new trip
   const startTrip = useCallback((city: string, days: number = 1, startDate?: string) => {
@@ -1286,6 +1360,31 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
   const closePanel = useCallback(() => setIsPanelOpen(false), []);
   const togglePanel = useCallback(() => setIsPanelOpen(p => !p), []);
 
+  // Planning Mode controls
+  const setPlanningMode = useCallback((enabled: boolean) => {
+    setIsPlanningMode(enabled);
+    // When enabling planning mode, auto-set the planning city if we have a trip
+    if (enabled && activeTrip?.city && !planningCity) {
+      setPlanningCityState(activeTrip.city);
+    }
+    // When disabling, clear the planning city
+    if (!enabled) {
+      setPlanningCityState(null);
+    }
+  }, [activeTrip, planningCity]);
+
+  const setPlanningCity = useCallback((city: string | null) => {
+    setPlanningCityState(city);
+  }, []);
+
+  const setDefaultDay = useCallback((day: number) => {
+    setDefaultDayState(day);
+  }, []);
+
+  const openPlanningSheet = useCallback(() => setIsPlanningSheetOpen(true), []);
+  const closePlanningSheet = useCallback(() => setIsPlanningSheetOpen(false), []);
+  const togglePlanningSheet = useCallback(() => setIsPlanningSheetOpen(p => !p), []);
+
   // Computed values
   const totalItems = useMemo(() =>
     activeTrip?.days.reduce((sum, day) => sum + day.items.length, 0) || 0
@@ -1309,6 +1408,12 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
     isBuilding,
     isLoadingTrips,
     isSuggestingNext,
+    // Planning Mode
+    isPlanningMode,
+    planningCity,
+    defaultDay,
+    isPlanningSheetOpen,
+    // Actions
     startTrip,
     addToTrip,
     removeFromTrip,
@@ -1327,6 +1432,15 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
     openPanel,
     closePanel,
     togglePanel,
+    // Planning Mode Actions
+    setPlanningMode,
+    setPlanningCity,
+    setDefaultDay,
+    openPlanningSheet,
+    closePlanningSheet,
+    togglePlanningSheet,
+    getTripCities,
+    // AI Actions
     generateItinerary,
     optimizeDay,
     suggestNextItem,
