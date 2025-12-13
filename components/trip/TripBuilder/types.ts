@@ -5,6 +5,7 @@
  */
 
 import { Destination } from '@/types/destination';
+import type { DayFatigue, IntensityMarathon } from '@/lib/trip-intelligence';
 
 // ============================================
 // CORE TYPES
@@ -86,6 +87,14 @@ export interface TripHealth {
   totalWalkingTime: number;
   hasTimeConflicts: boolean;
   missingMeals: number[];
+  // Energy & fatigue metrics
+  energyAnalysis?: {
+    averageDailyFatigue: number;
+    peakFatigueDay: number | null;
+    totalWalkingKm: number;
+    intensityMarathons: IntensityMarathon[];
+    dayFatigueScores: Array<{ day: number; fatigue: DayFatigue }>;
+  };
 }
 
 // ============================================
