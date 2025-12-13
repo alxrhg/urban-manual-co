@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Maximize2, Minimize2, Navigation, AlertTriangle } from 'lucide-react';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import type mapboxglType from 'mapbox-gl';
+import type { Map as MapboxMap, Marker as MapboxMarker } from 'mapbox-gl';
 
 // Store mapbox-gl module after dynamic import
-let mapboxgl: typeof mapboxglType | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let mapboxgl: any = null;
 
 interface MapMarker {
   id: string;
@@ -41,8 +42,8 @@ export default function MapboxTripMap({
   interactive = true,
 }: MapboxTripMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxglType.Map | null>(null);
-  const markersRef = useRef<mapboxglType.Marker[]>([]);
+  const mapRef = useRef<MapboxMap | null>(null);
+  const markersRef = useRef<MapboxMarker[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
