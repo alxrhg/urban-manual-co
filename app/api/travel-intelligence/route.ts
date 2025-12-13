@@ -57,6 +57,37 @@ interface TravelIntelligenceRequest {
   limit?: number;
 }
 
+// Deterministic UI types
+type RefinementKind = 'vibe' | 'price' | 'neighborhood' | 'category' | 'city' | 'misc';
+
+interface ContextChip {
+  key: string;
+  label: string;
+  removable?: boolean;
+  patch?: Partial<SearchFilters>;
+}
+
+interface RefinementChip {
+  label: string;
+  patch: Partial<SearchFilters>;
+  kind: RefinementKind;
+}
+
+interface QuestionCard {
+  prompt: string;
+  options: Array<{
+    label: string;
+    patch: Partial<SearchFilters>;
+  }>;
+}
+
+interface DeterministicUI {
+  contextChips: ContextChip[];
+  refinements: RefinementChip[];
+  question?: QuestionCard;
+  whyBySlug?: Record<string, string[]>;
+}
+
 interface ParsedIntent {
   searchQuery: string;
   filters: SearchFilters;
@@ -989,6 +1020,224 @@ async function updateTasteProfile(
   }
 }
 
+/**
+ * Build deterministic UI elements (chips, refinements, questions)
+ * No LLM calls - pure logic based on intent, results, and context
+ */
+function buildDeterministicUI(
+  intent: ParsedIntent,
+  finalResults: any[],
+  conversationHistory: ConversationMessage[]
+): DeterministicUI {
+  const contextChips: ContextChip[] = [];
+  const refinements: RefinementChip[] = [];
+  let question: QuestionCard | undefined;
+  const whyBySlug: Record<string, string[]> = {};
+
+  const city = intent.filters.city;
+  const category = intent.filters.category;
+
+  // === Build Context Chips (what the system assumed) ===
+  if (city) {
+    contextChips.push({
+      key: 'city',
+      label: city,
+      removable: true,
+      patch: { city: null },
+    });
+  }
+
+  if (category) {
+    contextChips.push({
+      key: 'category',
+      label: category.charAt(0).toUpperCase() + category.slice(1),
+      removable: true,
+      patch: { category: null },
+    });
+  }
+
+  if (intent.filters.michelin) {
+    contextChips.push({
+      key: 'michelin',
+      label: 'Michelin starred',
+      removable: true,
+      patch: { michelin: false },
+    });
+  }
+
+  if (intent.filters.priceMin || intent.filters.priceMax) {
+    const priceLabel = intent.priceContext === 'budget' ? 'Budget-friendly'
+      : intent.priceContext === 'splurge' ? 'High-end'
+      : intent.priceContext === 'mid_range' ? 'Mid-range'
+      : 'Price filtered';
+    contextChips.push({
+      key: 'price',
+      label: priceLabel,
+      removable: true,
+      patch: { priceMin: null, priceMax: null },
+    });
+  }
+
+  // Add vibe chips to context
+  for (const vibe of intent.vibes) {
+    contextChips.push({
+      key: `vibe-${vibe}`,
+      label: vibe.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+      removable: true,
+      patch: { vibe: intent.vibes.filter(v => v !== vibe) },
+    });
+  }
+
+  if (intent.filters.neighborhood) {
+    contextChips.push({
+      key: 'neighborhood',
+      label: intent.filters.neighborhood,
+      removable: true,
+      patch: { neighborhood: null },
+    });
+  }
+
+  // === Build Question Card (when ambiguous) ===
+  // Missing city but has category
+  if (!city && category) {
+    const topCities = Object.keys(CITY_VARIATIONS).slice(0, 6);
+    question = {
+      prompt: 'Which city?',
+      options: topCities.map(c => ({
+        label: c.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+        patch: { city: c.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') },
+      })),
+    };
+  }
+
+  // Has city but missing category
+  if (city && !category && finalResults.length > 0) {
+    const categories = ['restaurant', 'hotel', 'cafe', 'bar', 'shop'];
+    question = {
+      prompt: `What are you looking for in ${city}?`,
+      options: categories.map(cat => ({
+        label: cat.charAt(0).toUpperCase() + cat.slice(1) + 's',
+        patch: { category: cat },
+      })),
+    };
+  }
+
+  // === Build Refinement Chips ===
+  // Price refinements
+  if (!intent.filters.priceMax || intent.filters.priceMax > 2) {
+    refinements.push({
+      label: 'More budget',
+      patch: { priceMax: 2, priceMin: null },
+      kind: 'price',
+    });
+  }
+
+  if (!intent.filters.priceMin || intent.filters.priceMin < 3) {
+    refinements.push({
+      label: 'More premium',
+      patch: { priceMin: 3, priceMax: null },
+      kind: 'price',
+    });
+  }
+
+  // Michelin refinement (only for dining-related categories)
+  const diningCategories = ['restaurant', 'dining', 'food'];
+  const isDining = category && diningCategories.some(dc => category.toLowerCase().includes(dc));
+  if (isDining && !intent.filters.michelin && finalResults.some(r => r.michelin_stars > 0)) {
+    refinements.push({
+      label: 'Michelin only',
+      patch: { michelin: true },
+      kind: 'misc',
+    });
+  }
+
+  // Extract top neighborhoods from results
+  const neighborhoodCounts = new Map<string, number>();
+  for (const dest of finalResults) {
+    const hood = dest.neighborhood;
+    if (hood && typeof hood === 'string') {
+      neighborhoodCounts.set(hood, (neighborhoodCounts.get(hood) || 0) + 1);
+    }
+  }
+  const topNeighborhoods = [...neighborhoodCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([name]) => name);
+
+  for (const hood of topNeighborhoods) {
+    if (hood !== intent.filters.neighborhood) {
+      refinements.push({
+        label: hood,
+        patch: { neighborhood: hood },
+        kind: 'neighborhood',
+      });
+    }
+  }
+
+  // Add vibe refinement chips (2-4 vibes not already applied)
+  const availableVibes = Object.keys(VIBE_KEYWORDS).filter(
+    vibe => !intent.vibes.includes(vibe)
+  );
+  const vibeRefinements = availableVibes.slice(0, 4);
+  for (const vibe of vibeRefinements) {
+    refinements.push({
+      label: vibe.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+      patch: { vibe: [...intent.vibes, vibe] },
+      kind: 'vibe',
+    });
+  }
+
+  // === Build "Why" chips per destination ===
+  for (const dest of finalResults.slice(0, 20)) {
+    const reasons: string[] = [];
+
+    // Michelin star reason
+    if (dest.michelin_stars > 0) {
+      reasons.push(`${dest.michelin_stars} Michelin star${dest.michelin_stars > 1 ? 's' : ''}`);
+    }
+
+    // High rating reason
+    if (dest.rating && dest.rating >= 4.5) {
+      reasons.push(`Highly rated (${dest.rating})`);
+    }
+
+    // Vibe match reasons
+    if (intent.vibes.length > 0 && dest.vibe_tags) {
+      const matchedVibes = intent.vibes.filter(v =>
+        dest.vibe_tags.some((dv: string) => dv.toLowerCase().includes(v))
+      );
+      if (matchedVibes.length > 0) {
+        reasons.push(`${matchedVibes[0].replace(/_/g, ' ')} vibe`);
+      }
+    }
+
+    // Rank explanation reason (if available)
+    if (dest.rankExplanation && reasons.length < 2) {
+      // Take first sentence or short phrase
+      const explanation = dest.rankExplanation.split('.')[0];
+      if (explanation && explanation.length < 40) {
+        reasons.push(explanation);
+      }
+    }
+
+    // Neighborhood match
+    if (dest.neighborhood && intent.filters.neighborhood === dest.neighborhood) {
+      reasons.push(`In ${dest.neighborhood}`);
+    }
+
+    if (reasons.length > 0 && dest.slug) {
+      whyBySlug[dest.slug] = reasons.slice(0, 2);
+    }
+  }
+
+  return {
+    contextChips,
+    refinements: refinements.slice(0, 8), // Limit to 8 refinements
+    question,
+    whyBySlug: Object.keys(whyBySlug).length > 0 ? whyBySlug : undefined,
+  };
+}
+
 export const POST = withErrorHandling(async (request: NextRequest) => {
   // Rate limiting
   const identifier = getIdentifier(request);
@@ -1014,10 +1263,36 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     // 1. Parse query intent
     const intent = parseQueryIntent(query, conversationHistory);
 
-    // Merge explicit filters
-    if (explicitFilters.city) intent.filters.city = explicitFilters.city;
-    if (explicitFilters.category) intent.filters.category = explicitFilters.category;
-    if (explicitFilters.michelin) intent.filters.michelin = explicitFilters.michelin;
+    // Merge explicit filters (expanded to support all patchable fields)
+    if (explicitFilters.city !== undefined) {
+      intent.filters.city = explicitFilters.city;
+    }
+    if (explicitFilters.category !== undefined) {
+      intent.filters.category = explicitFilters.category;
+    }
+    if (explicitFilters.michelin !== undefined) {
+      intent.filters.michelin = explicitFilters.michelin;
+    }
+    if (explicitFilters.priceMin !== undefined) {
+      intent.filters.priceMin = explicitFilters.priceMin;
+    }
+    if (explicitFilters.priceMax !== undefined) {
+      intent.filters.priceMax = explicitFilters.priceMax;
+    }
+    if (explicitFilters.neighborhood !== undefined) {
+      intent.filters.neighborhood = explicitFilters.neighborhood;
+    }
+    if (explicitFilters.vibe !== undefined) {
+      intent.vibes = explicitFilters.vibe || [];
+      intent.filters.vibe = explicitFilters.vibe;
+    }
+    if (explicitFilters.openNow !== undefined) {
+      intent.filters.openNow = explicitFilters.openNow;
+    }
+    if (explicitFilters.occasion !== undefined) {
+      intent.filters.occasion = explicitFilters.occasion;
+      intent.occasion = explicitFilters.occasion || undefined;
+    }
 
     // 2. Check if clarification is needed
     const clarification = checkNeedsClarification(query, intent, conversationHistory);
@@ -1038,6 +1313,27 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         };
       });
 
+      // Build deterministic UI for clarification
+      const clarificationUI: DeterministicUI = {
+        contextChips: [],
+        refinements: [],
+        question: clarification.clarificationType === 'city'
+          ? {
+              prompt: 'Which city?',
+              options: Object.keys(CITY_VARIATIONS).slice(0, 6).map(c => ({
+                label: c.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+                patch: { city: c.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') },
+              })),
+            }
+          : {
+              prompt: 'What are you looking for?',
+              options: ['restaurant', 'hotel', 'cafe', 'bar', 'shop'].map(cat => ({
+                label: cat.charAt(0).toUpperCase() + cat.slice(1) + 's',
+                patch: { category: cat },
+              })),
+            },
+      };
+
       return NextResponse.json({
         response: clarification.clarificationQuestion,
         destinations: [],
@@ -1046,6 +1342,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         intent: 'clarification',
         needsClarification: true,
         clarificationType: clarification.clarificationType,
+        ui: clarificationUI,
         meta: { query },
       });
     }
@@ -1126,6 +1423,9 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
       const followUps = generateFollowUps(intent, destinations, conversationHistory, tasteProfile);
 
+      // Build deterministic UI for itinerary
+      const itineraryUI = buildDeterministicUI(intent, destinations, conversationHistory);
+
       // Update taste profile
       if (userId) {
         await updateTasteProfile(userId, intent, destinations, supabase);
@@ -1139,6 +1439,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         followUps,
         intent: intent.intent,
         vibes: intent.vibes,
+        ui: itineraryUI,
         meta: {
           query,
           totalResults: destinations.length,
@@ -1282,6 +1583,9 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         },
       ];
 
+      // Build deterministic UI for group recommendations
+      const groupUI = buildDeterministicUI(intent, finalResults, conversationHistory);
+
       return NextResponse.json({
         response: groupResponse,
         destinations: finalResults,
@@ -1289,6 +1593,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         followUps,
         intent: intent.intent,
         groupPreferences: intent.groupPreferences,
+        ui: groupUI,
         meta: {
           query,
           totalResults: finalResults.length,
@@ -1327,6 +1632,9 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
             );
             const followUps = generateFollowUps(intent, similarDests, conversationHistory, tasteProfile);
 
+            // Build deterministic UI for similar results
+            const similarUI = buildDeterministicUI(intent, similarDests, conversationHistory);
+
             if (userId) {
               await updateTasteProfile(userId, intent, similarDests, supabase);
             }
@@ -1337,6 +1645,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
               filters: intent.filters,
               followUps,
               intent: intent.intent,
+              ui: similarUI,
               meta: { similarTo: refDest.name },
             });
           }
@@ -1387,6 +1696,9 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
           }
           if (intent.filters.priceMin) {
             dbQuery = dbQuery.gte('price_level', intent.filters.priceMin);
+          }
+          if (intent.filters.neighborhood) {
+            dbQuery = dbQuery.ilike('neighborhood', `%${intent.filters.neighborhood}%`);
           }
 
           dbQuery = dbQuery.limit(100);
@@ -1537,7 +1849,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     // 12. Generate follow-ups
     const followUps = generateFollowUps(intent, finalResults, conversationHistory, tasteProfile);
 
-    // 13. Update taste profile
+    // 13. Build deterministic UI (no LLM calls)
+    const ui = buildDeterministicUI(intent, finalResults, conversationHistory);
+
+    // 14. Update taste profile
     if (userId) {
       await updateTasteProfile(userId, intent, finalResults, supabase);
     }
@@ -1549,6 +1864,8 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       followUps,
       intent: intent.intent,
       vibes: intent.vibes,
+      // Deterministic UI layer (new)
+      ui,
       // Intelligence layer data
       intelligence: {
         // Contextual hints for UI

@@ -12,6 +12,47 @@ import { useRouter } from 'next/navigation';
 import { useTripBuilder } from '@/contexts/TripBuilderContext';
 import AddToTripButton from '@/components/trip/AddToTripButton';
 
+// Deterministic UI types from travel-intelligence API
+interface SearchFilters {
+  city?: string | null;
+  category?: string | null;
+  neighborhood?: string | null;
+  priceMin?: number | null;
+  priceMax?: number | null;
+  michelin?: boolean;
+  occasion?: string | null;
+  vibe?: string[];
+  openNow?: boolean;
+}
+
+interface ContextChip {
+  key: string;
+  label: string;
+  removable?: boolean;
+  patch?: Partial<SearchFilters>;
+}
+
+interface RefinementChip {
+  label: string;
+  patch: Partial<SearchFilters>;
+  kind: 'vibe' | 'price' | 'neighborhood' | 'category' | 'city' | 'misc';
+}
+
+interface QuestionCard {
+  prompt: string;
+  options: Array<{
+    label: string;
+    patch: Partial<SearchFilters>;
+  }>;
+}
+
+interface DeterministicUI {
+  contextChips: ContextChip[];
+  refinements: RefinementChip[];
+  question?: QuestionCard;
+  whyBySlug?: Record<string, string[]>;
+}
+
 // Instant search result type
 interface InstantResult {
   type: 'destination' | 'saved' | 'visited' | 'trip' | 'suggestion';
@@ -153,6 +194,8 @@ export default function InteractiveHero() {
   const [itinerary, setItinerary] = useState<Array<{ timeSlot: string; label: string; destination?: Destination }>>([]);
   const [isItinerary, setIsItinerary] = useState(false);
   const [needsClarification, setNeedsClarification] = useState(false);
+  const [deterministicUI, setDeterministicUI] = useState<DeterministicUI | null>(null);
+  const [activeFilters, setActiveFilters] = useState<Partial<SearchFilters>>({});
 
   // Close chat results but keep grid filters
   const handleCloseChatResults = useCallback((resetFilters = false) => {
@@ -165,6 +208,8 @@ export default function InteractiveHero() {
     setItinerary([]);
     setIsItinerary(false);
     setNeedsClarification(false);
+    setDeterministicUI(null);
+    setActiveFilters({});
 
     // Optionally reset grid filters
     if (resetFilters) {
@@ -319,11 +364,16 @@ export default function InteractiveHero() {
     ? [...featuredCities, ...remainingCities]
     : featuredCities;
 
-  // Handle AI search
-  const handleSearch = useCallback(async (e?: React.FormEvent, queryOverride?: string) => {
+  // Handle AI search with optional filter patch
+  const handleSearch = useCallback(async (e?: React.FormEvent, queryOverride?: string, filterPatch?: Partial<SearchFilters>) => {
     if (e) e.preventDefault();
     const query = queryOverride || localSearchTerm.trim();
     if (!query) return;
+
+    // Merge filter patch with active filters
+    const newFilters = filterPatch
+      ? { ...activeFilters, ...filterPatch }
+      : activeFilters;
 
     // Close instant results and start full AI search
     setShowInstantResults(false);
@@ -336,15 +386,17 @@ export default function InteractiveHero() {
     setItinerary([]);
     setIsItinerary(false);
     setNeedsClarification(false);
+    setDeterministicUI(null);
 
     try {
-      // Use the new Travel Intelligence endpoint
+      // Use the new Travel Intelligence endpoint with filters
       const response = await fetch('/api/travel-intelligence', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query,
           conversationHistory,
+          filters: Object.keys(newFilters).length > 0 ? newFilters : undefined,
           limit: 20,
         }),
       });
@@ -359,6 +411,10 @@ export default function InteractiveHero() {
       // Handle clarification requests
       if (data.needsClarification) {
         setNeedsClarification(true);
+        // Store deterministic UI for clarification questions
+        if (data.ui) {
+          setDeterministicUI(data.ui);
+        }
         // Follow-ups are city suggestions for clarification
         setFollowUpSuggestions(data.followUps || []);
         setLocalSearchTerm('');
@@ -399,6 +455,14 @@ export default function InteractiveHero() {
         setMichelinOnly(true);
       }
 
+      // Store deterministic UI
+      if (data.ui) {
+        setDeterministicUI(data.ui);
+      }
+
+      // Store active filters for refinement
+      setActiveFilters(newFilters);
+
       // Use follow-ups from API (intelligent suggestions)
       setFollowUpSuggestions(data.followUps || generateFollowUps(query, data.destinations || [], filters));
 
@@ -418,13 +482,32 @@ export default function InteractiveHero() {
     } finally {
       setIsSearching(false);
     }
-  }, [localSearchTerm, conversationHistory, setSelectedCity, setSelectedCategory, setMichelinOnly, activeTrip, startTrip, addToTrip]);
+  }, [localSearchTerm, conversationHistory, setSelectedCity, setSelectedCategory, setMichelinOnly, activeTrip, startTrip, addToTrip, activeFilters]);
 
   // Handle follow-up suggestion click
   const handleFollowUp = useCallback((suggestion: string) => {
     setLocalSearchTerm(suggestion);
     handleSearch(undefined, suggestion);
   }, [handleSearch]);
+
+  // Handle context chip removal (re-run search without that filter)
+  const handleRemoveContextChip = useCallback((patch: Partial<SearchFilters>) => {
+    // Clean null values to undefined for merging
+    const cleanPatch = Object.fromEntries(
+      Object.entries(patch).map(([k, v]) => [k, v === null ? undefined : v])
+    ) as Partial<SearchFilters>;
+    handleSearch(undefined, lastQuery, cleanPatch);
+  }, [handleSearch, lastQuery]);
+
+  // Handle refinement chip click (apply filter patch)
+  const handleRefinementClick = useCallback((patch: Partial<SearchFilters>) => {
+    handleSearch(undefined, lastQuery, patch);
+  }, [handleSearch, lastQuery]);
+
+  // Handle question option click
+  const handleQuestionOptionClick = useCallback((patch: Partial<SearchFilters>) => {
+    handleSearch(undefined, lastQuery, patch);
+  }, [handleSearch, lastQuery]);
 
   // Handle city filter
   const handleCityClick = useCallback((city: string) => {
@@ -747,9 +830,56 @@ export default function InteractiveHero() {
 
               {/* AI Response text */}
               {chatResponse && (
-                <p className="text-[15px] text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
+                <p className="text-[15px] text-gray-700 dark:text-gray-300 mb-3 leading-relaxed">
                   {chatResponse}
                 </p>
+              )}
+
+              {/* Context chips - what the system assumed */}
+              {deterministicUI?.contextChips && deterministicUI.contextChips.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {deterministicUI.contextChips.map((chip) => (
+                    <span
+                      key={chip.key}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium
+                                 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 rounded-full"
+                    >
+                      {chip.label}
+                      {chip.removable && chip.patch && (
+                        <button
+                          onClick={() => handleRemoveContextChip(chip.patch!)}
+                          className="ml-0.5 p-0.5 hover:bg-gray-200 dark:hover:bg-white/20 rounded-full transition-colors"
+                          aria-label={`Remove ${chip.label} filter`}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Question card - for ambiguous queries */}
+              {deterministicUI?.question && (
+                <div className="mb-4 p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
+                  <p className="text-[13px] font-medium text-gray-900 dark:text-white mb-2">
+                    {deterministicUI.question.prompt}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {deterministicUI.question.options.map((option, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleQuestionOptionClick(option.patch)}
+                        className="px-3 py-1.5 text-[12px] font-medium text-gray-700 dark:text-gray-200
+                                   bg-white dark:bg-white/10 rounded-full border border-gray-200 dark:border-white/10
+                                   hover:bg-gray-100 dark:hover:bg-white/20 hover:border-gray-300 dark:hover:border-white/20
+                                   transition-colors"
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
 
               {/* Itinerary results - timeline view */}
@@ -836,6 +966,20 @@ export default function InteractiveHero() {
                           <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
                             {dest.city} • {capitalizeCategory(dest.category)}
                           </p>
+                          {/* "Why" chips - reasons this result was recommended */}
+                          {deterministicUI?.whyBySlug?.[dest.slug] && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {deterministicUI.whyBySlug[dest.slug].slice(0, 2).map((reason, idx) => (
+                                <span
+                                  key={idx}
+                                  className="text-[10px] px-1.5 py-0.5 bg-amber-50 dark:bg-amber-900/20
+                                             text-amber-700 dark:text-amber-300 rounded"
+                                >
+                                  {reason}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </button>
                       {/* Add to Trip button */}
@@ -858,8 +1002,29 @@ export default function InteractiveHero() {
                 </button>
               )}
 
+              {/* Refinement chips - apply filter patches */}
+              {deterministicUI?.refinements && deterministicUI.refinements.length > 0 && !deterministicUI.question && (
+                <div className="mb-3">
+                  <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-2">Refine results</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {deterministicUI.refinements.map((refinement, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleRefinementClick(refinement.patch)}
+                        className="px-2.5 py-1 text-[11px] font-medium text-gray-600 dark:text-gray-300
+                                   bg-white dark:bg-white/5 rounded-full border border-gray-200 dark:border-white/10
+                                   hover:bg-gray-50 dark:hover:bg-white/10 hover:border-gray-300 dark:hover:border-white/20
+                                   transition-colors"
+                      >
+                        {refinement.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Follow-up suggestions */}
-              {followUpSuggestions.length > 0 && (
+              {followUpSuggestions.length > 0 && !deterministicUI?.question && (
                 <div className="flex flex-wrap gap-2">
                   {followUpSuggestions.map((suggestion, index) => (
                     <button
