@@ -17,6 +17,10 @@ import { isClosedOnDay, getHoursForDay } from '@/lib/utils/opening-hours';
 // TYPES
 // ============================================
 
+export type ItemPriority = 'must_do' | 'want_to' | 'if_time';
+export type BookingStatus = 'not_set' | 'booked' | 'need_to_book' | 'walk_in' | 'waitlist';
+export type ItemTag = 'romantic' | 'kid_friendly' | 'outdoor' | 'foodie' | 'photo_spot' | 'local_favorite';
+
 export interface TripItem {
   id: string;
   destination: Destination;
@@ -25,6 +29,10 @@ export interface TripItem {
   timeSlot?: string; // "09:00"
   duration: number; // minutes
   notes?: string;
+  // New fields for enhanced editor
+  priority?: ItemPriority;
+  booking?: BookingStatus;
+  tags?: ItemTag[];
   // Computed
   travelTimeFromPrev?: number;
   crowdLevel?: number;
@@ -104,7 +112,11 @@ export interface TripBuilderContextType {
   removeFromTrip: (itemId: string) => void;
   moveItem: (itemId: string, toDay: number, toIndex: number) => void;
   updateItemTime: (itemId: string, timeSlot: string) => void;
+  updateItemDuration: (itemId: string, duration: number) => void;
   updateItemNotes: (itemId: string, notes: string) => void;
+  updateItemPriority: (itemId: string, priority: ItemPriority | undefined) => void;
+  updateItemBooking: (itemId: string, booking: BookingStatus | undefined) => void;
+  updateItemTags: (itemId: string, tags: ItemTag[]) => void;
   addDay: () => void;
   removeDay: (dayNumber: number) => void;
   updateTripDetails: (updates: { title?: string; startDate?: string; travelers?: number }) => void;
@@ -494,6 +506,86 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
         ...day,
         items: day.items.map(item =>
           item.id === itemId ? { ...item, notes } : item
+        ),
+      }));
+
+      return {
+        ...prev,
+        days,
+        isModified: true,
+      };
+    });
+  }, []);
+
+  // Update item duration
+  const updateItemDuration = useCallback((itemId: string, duration: number) => {
+    setActiveTrip(prev => {
+      if (!prev) return null;
+
+      const days = prev.days.map(day => ({
+        ...day,
+        items: day.items.map(item =>
+          item.id === itemId ? { ...item, duration } : item
+        ),
+      }));
+
+      return {
+        ...prev,
+        days: calculateTripMetrics(days),
+        isModified: true,
+      };
+    });
+  }, []);
+
+  // Update item priority
+  const updateItemPriority = useCallback((itemId: string, priority: ItemPriority | undefined) => {
+    setActiveTrip(prev => {
+      if (!prev) return null;
+
+      const days = prev.days.map(day => ({
+        ...day,
+        items: day.items.map(item =>
+          item.id === itemId ? { ...item, priority } : item
+        ),
+      }));
+
+      return {
+        ...prev,
+        days,
+        isModified: true,
+      };
+    });
+  }, []);
+
+  // Update item booking status
+  const updateItemBooking = useCallback((itemId: string, booking: BookingStatus | undefined) => {
+    setActiveTrip(prev => {
+      if (!prev) return null;
+
+      const days = prev.days.map(day => ({
+        ...day,
+        items: day.items.map(item =>
+          item.id === itemId ? { ...item, booking } : item
+        ),
+      }));
+
+      return {
+        ...prev,
+        days,
+        isModified: true,
+      };
+    });
+  }, []);
+
+  // Update item tags
+  const updateItemTags = useCallback((itemId: string, tags: ItemTag[]) => {
+    setActiveTrip(prev => {
+      if (!prev) return null;
+
+      const days = prev.days.map(day => ({
+        ...day,
+        items: day.items.map(item =>
+          item.id === itemId ? { ...item, tags } : item
         ),
       }));
 
@@ -1314,7 +1406,11 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
     removeFromTrip,
     moveItem,
     updateItemTime,
+    updateItemDuration,
     updateItemNotes,
+    updateItemPriority,
+    updateItemBooking,
+    updateItemTags,
     addDay,
     removeDay,
     updateTripDetails,
