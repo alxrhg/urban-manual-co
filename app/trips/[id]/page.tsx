@@ -2991,175 +2991,171 @@ function ItemRow({
       className={`${isEditMode ? 'cursor-grab active:cursor-grabbing' : ''} ${isDragging ? 'z-10' : ''}`}
       dragListener={isEditMode}
     >
-      <div className={`rounded-xl transition-all ${isDragging ? 'shadow-lg bg-white dark:bg-gray-900' : ''}`}>
-        {/* Main row - reference design style */}
-        <div
-          className="flex items-center gap-3 py-3 hover:bg-gray-50 dark:hover:bg-gray-900/50 active:bg-gray-100 dark:active:bg-gray-800/50 rounded-xl group cursor-pointer"
-          onClick={() => {
-            const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
-            if (isDesktop && onSelect) {
-              onSelect();
-            } else {
-              onToggle();
-            }
-          }}
-        >
-          {/* Drag handle - only visible in edit mode */}
-          {isEditMode && (
-            <div className="flex-shrink-0 px-1 touch-none cursor-grab active:cursor-grabbing">
-              <GripVertical className="w-4 h-4 text-gray-400 opacity-60 group-hover:opacity-100 transition-opacity" />
-            </div>
-          )}
-
-          {/* Circle image or icon */}
-          <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-            {iconType === 'hotel' ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <Hotel className="w-5 h-5 text-gray-500" />
-              </div>
-            ) : iconType === 'checkin' ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <DoorOpen className="w-5 h-5 text-gray-500" />
-              </div>
-            ) : iconType === 'checkout' ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <LogOut className="w-5 h-5 text-gray-500" />
-              </div>
-            ) : iconType === 'breakfast' ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <UtensilsCrossed className="w-5 h-5 text-gray-500" />
-              </div>
-            ) : iconType === 'train' ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <TrainIcon className="w-5 h-5 text-gray-500" />
-              </div>
-            ) : iconType === 'activity' ? (
-              <div className="w-full h-full flex items-center justify-center">
-                {(() => {
-                  const aType = (extraData as any).activityType;
-                  switch (aType) {
-                    case 'nap': return <BedDouble className="w-5 h-5 text-gray-500" />;
-                    case 'pool': return <Waves className="w-5 h-5 text-gray-500" />;
-                    case 'spa': return <Sparkles className="w-5 h-5 text-gray-500" />;
-                    case 'gym': return <Dumbbell className="w-5 h-5 text-gray-500" />;
-                    case 'breakfast-at-hotel': return <Coffee className="w-5 h-5 text-gray-500" />;
-                    case 'getting-ready': return <Shirt className="w-5 h-5 text-gray-500" />;
-                    case 'packing': case 'checkout-prep': return <Package className="w-5 h-5 text-gray-500" />;
-                    case 'sunset': return <Sun className="w-5 h-5 text-gray-500" />;
-                    case 'work': return <Briefcase className="w-5 h-5 text-gray-500" />;
-                    case 'call': return <Phone className="w-5 h-5 text-gray-500" />;
-                    case 'shopping-time': return <ShoppingBag className="w-5 h-5 text-gray-500" />;
-                    case 'photo-walk': return <Camera className="w-5 h-5 text-gray-500" />;
-                    default: return <Clock className="w-5 h-5 text-gray-500" />;
-                  }
-                })()}
-              </div>
-            ) : image && !imageError ? (
-              <Image
-                src={image}
-                alt=""
-                width={48}
-                height={48}
-                className="w-full h-full object-cover"
-                onError={() => setImageError(true)}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-gray-400" />
+      <div
+        className={`
+          relative rounded-2xl overflow-hidden transition-all cursor-pointer
+          bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800
+          ${isDragging ? 'shadow-xl ring-2 ring-stone-400 dark:ring-gray-500' : 'hover:shadow-md'}
+        `}
+        onClick={() => {
+          const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+          if (isDesktop && onSelect) {
+            onSelect();
+          } else {
+            onToggle();
+          }
+        }}
+      >
+        <div className="p-4">
+          <div className="flex items-center gap-3">
+            {/* Drag handle - only visible in edit mode */}
+            {isEditMode && (
+              <div className="flex-shrink-0 touch-none cursor-grab active:cursor-grabbing">
+                <GripVertical className="w-4 h-4 text-gray-400 opacity-60" />
               </div>
             )}
-          </div>
 
-          {/* Content - name and category */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <p className="text-[15px] font-medium text-gray-900 dark:text-white truncate">{title}</p>
-              {/* Crowd indicator for places with time */}
-              {iconType === 'place' && item.time && (
-                <CrowdBadge
-                  category={item.destination?.category || item.parsedNotes?.category}
-                  time={item.time}
+            {/* Icon */}
+            <div className="w-10 h-10 rounded-xl overflow-hidden bg-stone-100 dark:bg-gray-800 flex-shrink-0 flex items-center justify-center">
+              {iconType === 'hotel' ? (
+                <Hotel className="w-4 h-4 text-stone-500 dark:text-gray-400" />
+              ) : iconType === 'checkin' ? (
+                <DoorOpen className="w-4 h-4 text-stone-500 dark:text-gray-400" />
+              ) : iconType === 'checkout' ? (
+                <LogOut className="w-4 h-4 text-stone-500 dark:text-gray-400" />
+              ) : iconType === 'breakfast' ? (
+                <UtensilsCrossed className="w-4 h-4 text-stone-500 dark:text-gray-400" />
+              ) : iconType === 'train' ? (
+                <TrainIcon className="w-4 h-4 text-stone-500 dark:text-gray-400" />
+              ) : iconType === 'activity' ? (
+                (() => {
+                  const aType = (extraData as any).activityType;
+                  switch (aType) {
+                    case 'nap': return <BedDouble className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
+                    case 'pool': return <Waves className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
+                    case 'spa': return <Sparkles className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
+                    case 'gym': return <Dumbbell className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
+                    case 'breakfast-at-hotel': return <Coffee className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
+                    case 'getting-ready': return <Shirt className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
+                    case 'packing': case 'checkout-prep': return <Package className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
+                    case 'sunset': return <Sun className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
+                    case 'work': return <Briefcase className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
+                    case 'call': return <Phone className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
+                    case 'shopping-time': return <ShoppingBag className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
+                    case 'photo-walk': return <Camera className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
+                    default: return <Clock className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
+                  }
+                })()
+              ) : image && !imageError ? (
+                <Image
+                  src={image}
+                  alt=""
+                  width={40}
+                  height={40}
+                  className="w-full h-full object-cover"
+                  onError={() => setImageError(true)}
                 />
+              ) : (
+                <MapPin className="w-4 h-4 text-stone-500 dark:text-gray-400" />
               )}
             </div>
-            <p className="text-[13px] text-gray-400 truncate">
-              {subtitle || inlineTimes || (item.destination?.category) || 'Place'}
-            </p>
-          </div>
 
-          {/* More options button with dropdown */}
-          <div className="relative" ref={actionsRef}>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowActions(!showActions);
-              }}
-              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <MoreHorizontal className="w-5 h-5 text-gray-400" />
-            </button>
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-stone-900 dark:text-white truncate">{title}</p>
+              <p className="text-xs text-stone-500 dark:text-gray-400 truncate">
+                {subtitle || (item.destination?.category) || 'Place'}
+              </p>
+            </div>
 
-            {/* Actions dropdown */}
-            <AnimatePresence>
-              {showActions && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden min-w-[140px]"
-                >
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowActions(false);
-                      onToggle();
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            {/* Rating badge */}
+            {rating && (
+              <div className="flex items-center gap-0.5 mr-2">
+                <span className="text-xs text-red-500">●</span>
+              </div>
+            )}
+
+            {/* More options button */}
+            <div className="relative" ref={actionsRef}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowActions(!showActions);
+                }}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <MoreHorizontal className="w-5 h-5 text-gray-400" />
+              </button>
+
+              {/* Actions dropdown */}
+              <AnimatePresence>
+                {showActions && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden min-w-[140px]"
                   >
-                    <Pencil className="w-4 h-4" />
-                    Edit
-                  </button>
-                  {onRemove && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowActions(false);
-                        onRemove();
+                        onToggle();
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     >
-                      <Trash2 className="w-4 h-4" />
-                      Delete
+                      <Pencil className="w-4 h-4" />
+                      Edit
                     </button>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                    {onRemove && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowActions(false);
+                          onRemove();
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete
+                      </button>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
 
-        {/* Expanded edit form - mobile only (desktop uses sidebar) */}
-        <AnimatePresence>
-          {isExpanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden lg:hidden"
-            >
-              <ItemDetails
-                item={item}
-                itemType={itemType}
-                onUpdateItem={onUpdateItem}
-                onUpdateTime={onUpdateTime}
-                onRemove={onRemove}
-                onClose={onToggle}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Edit mode drag handle indicator */}
+        {isEditMode && (
+          <div className="absolute top-2 left-2 opacity-60">
+            <GripVertical className="w-4 h-4 text-stone-400" />
+          </div>
+        )}
       </div>
+
+      {/* Expanded edit form - mobile only (desktop uses sidebar) */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden lg:hidden"
+          >
+            <ItemDetails
+              item={item}
+              itemType={itemType}
+              onUpdateItem={onUpdateItem}
+              onUpdateTime={onUpdateTime}
+              onRemove={onRemove}
+              onClose={onToggle}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Reorder.Item>
   );
 }
