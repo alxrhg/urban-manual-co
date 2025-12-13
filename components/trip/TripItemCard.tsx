@@ -5,7 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X } from 'lucide-react';
 import { formatTimeDisplay } from '@/lib/utils/time-calculations';
-import FlightStatusCard from '@/components/trips/FlightStatusCard';
+import FlightCard from '@/components/trip/cards/FlightCard';
 import LodgingCard from '@/components/trips/LodgingCard';
 import PlaceCard from '@/components/trips/PlaceCard';
 import TransportCard from '@/components/trips/TransportCard';
@@ -185,13 +185,12 @@ export default function TripItemCard({
 
   // Render the appropriate card based on item type
   const renderCardContent = () => {
-    // Render FlightStatusCard for flights
+    // Render FlightCard (boarding pass design) for flights
     if (itemType === 'flight' && item.parsedNotes) {
       return (
-        <FlightStatusCard
-          flight={item.parsedNotes}
-          departureDate={item.parsedNotes.departureDate}
-          compact
+        <FlightCard
+          item={item}
+          isSelected={isActive}
         />
       );
     }

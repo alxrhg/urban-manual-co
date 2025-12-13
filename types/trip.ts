@@ -697,6 +697,37 @@ export interface FlightData {
 }
 
 /**
+ * FlightSegment - Simplified flight data for boarding pass display
+ * Used by the FlightCard (boarding pass) component
+ */
+export interface FlightSegment {
+  id: string;
+  type: 'flight';
+  airline: string;
+  airlineCode?: string; // e.g., UA, AA, DL
+  flightNumber: string;
+  departure: {
+    code: string; // IATA airport code e.g., SFO
+    city: string; // e.g., San Francisco
+    time: string; // ISO datetime or time string
+    terminal?: string;
+    gate?: string;
+  };
+  arrival: {
+    code: string; // IATA airport code e.g., LHR
+    city: string; // e.g., London
+    time: string; // ISO datetime or time string
+    terminal?: string;
+  };
+  seat?: string;
+  class?: 'Economy' | 'Premium Economy' | 'Business' | 'First';
+  boardingGroup?: string;
+  boardingTime?: string;
+  confirmationNumber?: string;
+  durationMinutes?: number;
+}
+
+/**
  * Train data structure
  */
 export interface TrainData {
