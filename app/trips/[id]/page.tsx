@@ -27,6 +27,7 @@ import { useHotelLogic } from '@/lib/hooks/useHotelLogic';
 import { parseDestinations, stringifyDestinations, parseTripNotes, stringifyTripNotes, type TripNoteItem, type ActivityData, type ActivityType } from '@/types/trip';
 import { calculateDayNumberFromDate } from '@/lib/utils/time-calculations';
 import { getAirportCoordinates } from '@/lib/utils/airports';
+import { calculateDurationFromTimes, isOvernightFromTimes } from '@/lib/intelligence/flight-utils';
 import { PageLoader } from '@/components/LoadingStates';
 import { createClient } from '@/lib/supabase/client';
 import type { Destination } from '@/types/destination';
@@ -2590,23 +2591,42 @@ function ItemRow({
       const to = item.parsedNotes?.to || '?';
       const depTime = item.parsedNotes?.departureTime;
       const arrTime = item.parsedNotes?.arrivalTime;
+      const depDate = item.parsedNotes?.departureDate;
+      const arrDate = item.parsedNotes?.arrivalDate || depDate;
       const airline = [item.parsedNotes?.airline, item.parsedNotes?.flightNumber].filter(Boolean).join(' ');
       const terminal = item.parsedNotes?.terminal;
       const gate = item.parsedNotes?.gate;
       const seat = item.parsedNotes?.seatNumber;
       const confirmation = item.parsedNotes?.confirmationNumber;
 
-      // Inline times: "10:30 dep → 14:45 arr"
+      // Calculate flight duration using flight-utils
+      let durationDisplay = '';
+      let isOvernight = false;
+      if (depDate && depTime && arrTime) {
+        try {
+          const departureISO = `${depDate}T${depTime}:00`;
+          const arrivalISO = `${arrDate}T${arrTime}:00`;
+          const duration = calculateDurationFromTimes(departureISO, arrivalISO);
+          durationDisplay = duration.formatted;
+          isOvernight = isOvernightFromTimes(departureISO, arrivalISO);
+        } catch {
+          // Ignore calculation errors
+        }
+      }
+
+      // Inline times: "10:30 dep → 14:45 arr · 2h 30m"
       const timeDisplay = [
         depTime && `${formatTime(depTime)} dep`,
-        arrTime && `${formatTime(arrTime)} arr`
-      ].filter(Boolean).join(' → ');
+        arrTime && `${formatTime(arrTime)} arr`,
+        durationDisplay
+      ].filter(Boolean).join(' → ').replace(' → ' + durationDisplay, durationDisplay ? ` · ${durationDisplay}` : '');
 
       // Extra info line
       const extraInfo = [
         terminal && `T${terminal}`,
         gate && `Gate ${gate}`,
-        seat && `Seat ${seat}`
+        seat && `Seat ${seat}`,
+        isOvernight && '+1 day'
       ].filter(Boolean).join(' · ');
 
       return {
@@ -2615,7 +2635,8 @@ function ItemRow({
         inlineTimes: timeDisplay,
         subtitle: airline || undefined,
         extraInfo: extraInfo || undefined,
-        confirmation
+        confirmation,
+        isOvernight
       };
     }
 
