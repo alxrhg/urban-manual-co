@@ -16,22 +16,22 @@
 // INTELLIGENT DRAWER SYSTEM
 // Unified, context-aware drawer for all detail views
 // ============================================================================
-export { IntelligentDrawer } from "@/components/IntelligentDrawer/IntelligentDrawer";
+export { default as IntelligentDrawer } from "@/components/IntelligentDrawer/IntelligentDrawer";
 export { IntelligentDrawerProvider, useIntelligentDrawer } from "@/components/IntelligentDrawer/IntelligentDrawerContext";
-export { DrawerShell } from "@/components/IntelligentDrawer/DrawerShell";
+export { default as DrawerShell } from "@/components/IntelligentDrawer/DrawerShell";
 
 // ============================================================================
 // CONTENT COMPONENTS
 // Individual content types for the IntelligentDrawer
 // ============================================================================
-export { DestinationContent } from "@/components/IntelligentDrawer/DestinationContent";
-export { TripContent } from "@/components/IntelligentDrawer/TripContent";
-export { TripSelectorContent } from "@/components/IntelligentDrawer/TripSelectorContent";
-export { AddToTripContent } from "@/components/IntelligentDrawer/AddToTripContent";
-export { SimilarContent } from "@/components/IntelligentDrawer/SimilarContent";
-export { WhyThisContent } from "@/components/IntelligentDrawer/WhyThisContent";
-export { AccountContent } from "@/components/IntelligentDrawer/AccountContent";
-export { AuthContent } from "@/components/IntelligentDrawer/AuthContent";
+export { default as DestinationContent } from "@/components/IntelligentDrawer/DestinationContent";
+export { default as TripContent } from "@/components/IntelligentDrawer/TripContent";
+export { default as TripSelectorContent } from "@/components/IntelligentDrawer/TripSelectorContent";
+export { default as AddToTripContent } from "@/components/IntelligentDrawer/AddToTripContent";
+export { default as SimilarContent } from "@/components/IntelligentDrawer/SimilarContent";
+export { default as WhyThisContent } from "@/components/IntelligentDrawer/WhyThisContent";
+export { default as AccountContent } from "@/components/IntelligentDrawer/AccountContent";
+export { default as AuthContent } from "@/components/IntelligentDrawer/AuthContent";
 
 // ============================================================================
 // DESTINATION COMPONENTS
