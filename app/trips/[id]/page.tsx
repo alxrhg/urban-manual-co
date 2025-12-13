@@ -38,17 +38,11 @@ import DayIntelligence from '@/components/trip/DayIntelligence';
 import { CrowdBadge } from '@/components/trip/CrowdIndicator';
 import { UndoProvider } from '@/components/trip/UndoToast';
 import { SavingFeedback } from '@/components/trip/SavingFeedback';
+import { TripEditorHeader } from '@/components/trip/editor/TripEditorHeader';
+import { TripChecklist } from '@/components/trip/editor/TripChecklist';
+import { useWeather, type DayWeather } from '@/lib/hooks/useWeather';
+import { isFeatureEnabled } from '@/lib/feature-flags';
 import { Settings, Moon } from 'lucide-react';
-
-// Weather type
-interface DayWeather {
-  date: string;
-  tempMax: number;
-  tempMin: number;
-  weatherCode: number;
-  description: string;
-  precipProbability: number;
-}
 
 /**
  * TripPage - Completely rethought
@@ -149,33 +143,12 @@ export default function TripPage() {
     setOverDayNumber(null);
 
     if (destination && dayNumber) {
-      // Add the place with optional time hint
-      addPlace(destination, dayNumber, insertTime);
+      // Add the place with optional time hint and insert position
+      // The insertIndex parameter handles positioning directly, no setTimeout needed
+      addPlace(destination, dayNumber, insertTime, insertIndex);
       setSelectedDayNumber(dayNumber);
-
-      // If we have an insert index, we need to reorder after adding
-      // The new item will be at the end, so we move it to insertIndex
-      if (insertIndex !== undefined) {
-        const day = days.find(d => d.dayNumber === dayNumber);
-        if (day) {
-          // New item will be added at the end
-          const newItems = [...day.items];
-          // We'll trigger reorder in a moment after the item is added
-          setTimeout(() => {
-            const currentDay = days.find(d => d.dayNumber === dayNumber);
-            if (currentDay && currentDay.items.length > 0) {
-              const items = [...currentDay.items];
-              const lastItem = items.pop();
-              if (lastItem) {
-                items.splice(insertIndex, 0, lastItem);
-                reorderItems(dayNumber, items);
-              }
-            }
-          }, 100);
-        }
-      }
     }
-  }, [draggedDestination, addPlace, days, reorderItems]);
+  }, [draggedDestination, addPlace]);
 
   // Parse destinations
   const destinations = useMemo(() => parseDestinations(trip?.destination ?? null), [trip?.destination]);
@@ -359,7 +332,7 @@ export default function TripPage() {
           {/* Main content column */}
           <div className="flex-1 min-w-0 max-w-xl lg:max-w-none">
             {/* Header - tap to edit */}
-            <TripHeader
+            <TripEditorHeader
               trip={trip}
               primaryCity={primaryCity}
               totalItems={totalItems}
@@ -419,7 +392,7 @@ export default function TripPage() {
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden"
               >
-                <TripNotesChecklist
+                <TripChecklist
                   notes={tripNotes}
                   onSave={(notes) => updateTrip({ notes })}
                 />
@@ -684,7 +657,7 @@ export default function TripPage() {
               {!sidebarAddDay && (
                 <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
                   <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-3">Checklist</h3>
-                  <TripNotesChecklist
+                  <TripChecklist
                     notes={tripNotes}
                     onSave={(notes) => updateTrip({ notes })}
                   />
@@ -1033,7 +1006,7 @@ function TripHeader({
 /**
  * Trip notes checklist with drag-drop and progress tracking
  */
-function TripNotesChecklist({ notes, onSave }: { notes: string; onSave: (notes: string) => void }) {
+function TripChecklist({ notes, onSave }: { notes: string; onSave: (notes: string) => void }) {
   const parsed = parseTripNotes(notes);
   const [items, setItems] = useState<TripNoteItem[]>(parsed.items);
   const [newItemText, setNewItemText] = useState('');

@@ -206,7 +206,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     }
   }, [trip, userId, fetchTrip, onError]);
 
-  // Reorder items within a day
+  // Reorder items within a day - uses batched update for performance
   const reorderItems = useCallback(async (dayNumber: number, newItems: EnrichedItineraryItem[]) => {
     // Store previous state for potential revert
     const previousDays = days;
@@ -222,39 +222,49 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       const supabase = createClient();
       if (!supabase) return;
 
-      // Update order_index for each item (skip temp IDs and invalid IDs)
+      // Filter items to update (skip temp IDs and invalid IDs)
       const itemsToUpdate = newItems.filter(item => {
         const idStr = String(item.id);
         // Skip temp IDs, empty IDs, or non-UUID-like IDs
         if (idStr.startsWith('temp-') || !idStr || idStr === 'undefined' || idStr === 'null') {
-          console.log('Skipping reorder for temp/invalid ID:', idStr);
+          return false;
+        }
+        // Skip virtual hotel activity items (e.g., "breakfast-xxx", "checkout-xxx")
+        if (idStr.startsWith('breakfast-') || idStr.startsWith('checkout-') || idStr.startsWith('checkin-')) {
           return false;
         }
         // Check if it looks like a valid UUID (basic check)
         if (idStr.length < 10) {
-          console.log('Skipping reorder for short ID:', idStr);
           return false;
         }
         return true;
       });
 
       if (itemsToUpdate.length === 0) {
-        console.log('No valid items to reorder');
         return;
       }
 
-      // Update items sequentially to avoid race conditions
-      for (let i = 0; i < itemsToUpdate.length; i++) {
-        const item = itemsToUpdate[i];
-        const { error } = await supabase
-          .from('itinerary_items')
-          .update({ order_index: i })
-          .eq('id', item.id);
+      // Prepare batch update data
+      const updates = itemsToUpdate.map((item, index) => ({
+        id: item.id,
+        order_index: index,
+      }));
 
-        if (error) {
-          console.error('Error updating item order:', item.id, error);
-          throw error;
-        }
+      // Batched update using upsert - much faster than sequential updates
+      const { error } = await supabase
+        .from('itinerary_items')
+        .upsert(
+          updates.map(u => ({
+            id: u.id,
+            order_index: u.order_index,
+            trip_id: tripId, // Required for upsert
+          })),
+          { onConflict: 'id', ignoreDuplicates: false }
+        );
+
+      if (error) {
+        console.error('Error batch updating item order:', error);
+        throw error;
       }
     } catch (err) {
       console.error('Error reordering:', err);
@@ -263,14 +273,17 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       toast.error('Failed to reorder items. Please try again.');
       onError?.(err instanceof Error ? err : new Error('Failed to reorder items'));
     }
-  }, [days, onError]);
+  }, [days, tripId, onError]);
 
   // Add a place to the itinerary
-  const addPlace = useCallback(async (destination: Destination, dayNumber: number, time?: string) => {
+  // insertIndex: optional position to insert at (otherwise appends to end)
+  const addPlace = useCallback(async (destination: Destination, dayNumber: number, time?: string, insertIndex?: number) => {
     if (!trip || !userId) return;
 
     const currentDay = days.find((d) => d.dayNumber === dayNumber);
-    const orderIndex = currentDay?.items.length || 0;
+    const currentItems = currentDay?.items || [];
+    // If insertIndex provided, use it; otherwise append to end
+    const orderIndex = insertIndex !== undefined ? insertIndex : currentItems.length;
 
     // Determine item type based on destination category
     const categoryLower = (destination.category || '').toLowerCase();
@@ -306,12 +319,20 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       parsedNotes: notesData,
     };
 
+    // Insert at specific position or append
     setDays((prev) =>
-      prev.map((d) =>
-        d.dayNumber === dayNumber
-          ? { ...d, items: [...d.items, newItem] }
-          : d
-      )
+      prev.map((d) => {
+        if (d.dayNumber !== dayNumber) return d;
+
+        if (insertIndex !== undefined) {
+          // Insert at specific position and update order_index for subsequent items
+          const newItems = [...d.items];
+          newItems.splice(insertIndex, 0, newItem);
+          return { ...d, items: newItems.map((item, idx) => ({ ...item, order_index: idx })) };
+        }
+        // Append to end
+        return { ...d, items: [...d.items, newItem] };
+      })
     );
 
     try {
@@ -330,6 +351,26 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
         description: destination.city,
         notes: stringifyItineraryNotes(notesData),
       }).select().single();
+
+      // If inserting at a specific position, update order_index for subsequent items
+      if (!error && data && insertIndex !== undefined) {
+        const updatedDay = days.find(d => d.dayNumber === dayNumber);
+        if (updatedDay) {
+          const itemsToReindex = updatedDay.items
+            .filter(item => item.order_index >= insertIndex && item.id !== data.id)
+            .map((item, idx) => ({
+              id: item.id,
+              order_index: insertIndex + idx + 1,
+              trip_id: tripId,
+            }));
+
+          if (itemsToReindex.length > 0) {
+            await supabase
+              .from('itinerary_items')
+              .upsert(itemsToReindex, { onConflict: 'id', ignoreDuplicates: false });
+          }
+        }
+      }
 
       if (error) throw error;
 
@@ -365,7 +406,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     } finally {
       setSaving(false);
     }
-  }, [trip, userId, days, onError, updateSavingStatus]);
+  }, [trip, tripId, userId, days, onError, updateSavingStatus]);
 
   // Add a flight
   const addFlight = useCallback(async (flightData: FlightData, dayNumber: number) => {
