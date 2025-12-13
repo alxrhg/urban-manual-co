@@ -167,6 +167,15 @@ export default function TimelineLinkedMapLayout({
     onEditItem?.(item);
   }, [setActiveItem, flyToItem, onEditItem]);
 
+  // Handle item hover (desktop only)
+  const handleItemHover = useCallback((item: EnrichedItineraryItem | null) => {
+    if (item) {
+      setActiveItem(item.id);
+      flyToItem(item.id);
+    }
+    // Don't clear on mouse leave - keep last hovered item active
+  }, [setActiveItem, flyToItem]);
+
   // Handle day change
   const handleDayChange = useCallback((dayNumber: number) => {
     onSelectDay(dayNumber);
@@ -271,6 +280,7 @@ export default function TimelineLinkedMapLayout({
             onRemoveItem={onRemoveItem}
             registerItemRef={registerItemRef}
             onItemIntersect={handleItemIntersect}
+            useHoverSelection={false}
           />
         </div>
 
@@ -331,10 +341,11 @@ export default function TimelineLinkedMapLayout({
             day={selectedDay}
             activeItemId={activeItemId}
             onItemClick={handleItemClick}
+            onItemHover={handleItemHover}
             onAddItem={onAddItem}
             onRemoveItem={onRemoveItem}
             registerItemRef={registerItemRef}
-            onItemIntersect={handleItemIntersect}
+            useHoverSelection={true}
           />
         </div>
       </div>

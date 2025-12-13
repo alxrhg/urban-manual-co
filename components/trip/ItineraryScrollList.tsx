@@ -25,10 +25,12 @@ interface ItineraryScrollListProps {
   day?: TripDay;
   activeItemId?: string | null;
   onItemClick?: (item: EnrichedItineraryItem) => void;
+  onItemHover?: (item: EnrichedItineraryItem | null) => void;
   onAddItem?: (dayNumber: number) => void;
   onRemoveItem?: (itemId: string) => void;
   registerItemRef?: (itemId: string, element: HTMLElement | null) => void;
   onItemIntersect?: (itemId: string, isIntersecting: boolean) => void;
+  useHoverSelection?: boolean; // Desktop: use hover, Mobile: use intersection
 }
 
 // Category icons
@@ -56,17 +58,19 @@ export function ItineraryScrollList({
   day,
   activeItemId,
   onItemClick,
+  onItemHover,
   onAddItem,
   onRemoveItem,
   registerItemRef,
   onItemIntersect,
+  useHoverSelection = false,
 }: ItineraryScrollListProps) {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const itemElementsRef = useRef<Map<string, HTMLElement>>(new Map());
 
-  // Set up intersection observer
+  // Set up intersection observer (only for mobile/scroll-based selection)
   useEffect(() => {
-    if (!onItemIntersect) return;
+    if (!onItemIntersect || useHoverSelection) return;
 
     observerRef.current = new IntersectionObserver(
       (entries) => {
@@ -157,6 +161,8 @@ export function ItineraryScrollList({
                     ref={(el) => handleItemRef(item.id, el)}
                     data-item-id={item.id}
                     onClick={() => onItemClick?.(item)}
+                    onMouseEnter={useHoverSelection ? () => onItemHover?.(item) : undefined}
+                    onMouseLeave={useHoverSelection ? () => onItemHover?.(null) : undefined}
                     className={`
                       relative pl-10 cursor-pointer transition-all duration-200
                       ${activeItemId === item.id ? 'scale-[1.02]' : 'hover:scale-[1.01]'}
