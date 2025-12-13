@@ -45,6 +45,7 @@ import type {
   FilterChip,
   ProactiveAction,
   BehaviorSignal,
+  RecommendationReasoning,
 } from '@/types/search-session';
 
 // ============================================
@@ -603,8 +604,8 @@ export class SearchSessionEngine {
     }));
   }
 
-  private buildReasoningFactors(ranked: RankedResult): RankedDestination['reasoning']['factors'] {
-    const factors: RankedDestination['reasoning']['factors'] = [];
+  private buildReasoningFactors(ranked: RankedResult): RecommendationReasoning['factors'] {
+    const factors: RecommendationReasoning['factors'] = [];
 
     if (ranked.factors.personalization > 0.5) {
       factors.push({
