@@ -756,3 +756,212 @@ export function parseItineraryNotes(notes: string | null): ItineraryItemNotes | 
 export function stringifyItineraryNotes(notes: ItineraryItemNotes): string {
   return JSON.stringify(notes);
 }
+
+// ============================================
+// POLYMORPHIC ITINERARY ITEMS
+// ============================================
+
+/**
+ * Discriminated union type for polymorphic itinerary items.
+ * Supports: 'flight' | 'transit' | 'location'
+ */
+export type PolymorphicItemType = 'flight' | 'transit' | 'location';
+
+/**
+ * Base properties shared by all polymorphic items
+ */
+export interface PolymorphicItemBase {
+  /** Unique identifier */
+  id: string;
+  /** Trip ID this item belongs to */
+  tripId: string;
+  /** Day number in the trip (1-indexed) */
+  day: number;
+  /** Order within the day */
+  orderIndex: number;
+  /** Display title */
+  title: string;
+  /** Optional notes */
+  notes?: string;
+  /** Created timestamp */
+  createdAt: string;
+  /** Updated timestamp */
+  updatedAt: string;
+}
+
+/**
+ * Flight-specific itinerary item
+ * Integrates with flight-utils for duration calculations
+ */
+export interface FlightItineraryItem extends PolymorphicItemBase {
+  type: 'flight';
+  /** Airline information */
+  airline: {
+    code: string;
+    name: string;
+  };
+  /** Flight number */
+  flightNumber: string;
+  /** Departure details */
+  departure: {
+    airport: string;
+    city: string;
+    terminal?: string;
+    gate?: string;
+    /** ISO datetime */
+    time: string;
+  };
+  /** Arrival details */
+  arrival: {
+    airport: string;
+    city: string;
+    terminal?: string;
+    gate?: string;
+    /** ISO datetime */
+    time: string;
+  };
+  /** Calculated duration in minutes (from flight-utils) */
+  durationMinutes?: number;
+  /** Whether flight crosses midnight */
+  isOvernight?: boolean;
+  /** Seat information */
+  seat?: {
+    number: string;
+    class: 'economy' | 'premium_economy' | 'business' | 'first';
+  };
+  /** Booking confirmation */
+  confirmationNumber?: string;
+  /** Leg type */
+  legType: 'outbound' | 'return' | 'multi_city';
+  /** Lounge access */
+  loungeAccess?: boolean;
+}
+
+/**
+ * Transit-specific itinerary item
+ * For travel between locations (not flights)
+ */
+export interface TransitItineraryItem extends PolymorphicItemBase {
+  type: 'transit';
+  /** Transit mode */
+  mode: 'walk' | 'transit' | 'car' | 'taxi' | 'train' | 'bus' | 'bike' | 'ferry';
+  /** Origin location */
+  from: {
+    name: string;
+    address?: string;
+    latitude?: number;
+    longitude?: number;
+  };
+  /** Destination location */
+  to: {
+    name: string;
+    address?: string;
+    latitude?: number;
+    longitude?: number;
+  };
+  /** Duration in minutes */
+  durationMinutes: number;
+  /** Distance in kilometers */
+  distanceKm?: number;
+  /** Departure time (ISO datetime or HH:MM) */
+  departureTime?: string;
+  /** Arrival time (ISO datetime or HH:MM) */
+  arrivalTime?: string;
+  /** For trains/buses: service identifier */
+  serviceNumber?: string;
+  /** For trains: train line/name */
+  trainLine?: string;
+  /** Booking confirmation if applicable */
+  confirmationNumber?: string;
+  /** Estimated cost */
+  estimatedCost?: number;
+  /** Currency for cost */
+  currency?: string;
+}
+
+/**
+ * Location-specific itinerary item
+ * For places to visit (restaurants, attractions, hotels, etc.)
+ */
+export interface LocationItineraryItem extends PolymorphicItemBase {
+  type: 'location';
+  /** Location category */
+  category: 'restaurant' | 'hotel' | 'attraction' | 'bar' | 'cafe' | 'museum' | 'shop' | 'event' | 'activity' | 'custom';
+  /** Sub-category or activity type */
+  subCategory?: string;
+  /** Location name */
+  name: string;
+  /** Address */
+  address?: string;
+  /** City */
+  city?: string;
+  /** Coordinates */
+  latitude?: number;
+  longitude?: number;
+  /** Link to Urban Manual destination */
+  destinationSlug?: string;
+  /** Start time (HH:MM) */
+  startTime?: string;
+  /** End time (HH:MM) */
+  endTime?: string;
+  /** Duration in minutes */
+  durationMinutes?: number;
+  /** Image URL */
+  imageUrl?: string;
+  /** Booking status */
+  bookingStatus?: 'not_booked' | 'pending' | 'confirmed' | 'cancelled';
+  /** Booking confirmation */
+  confirmationNumber?: string;
+  /** Reservation party size */
+  partySize?: number;
+  /** Price range */
+  priceRange?: '$' | '$$' | '$$$' | '$$$$';
+  /** Whether activity is weather-dependent */
+  isWeatherDependent?: boolean;
+  /** Whether activity is indoor */
+  isIndoor?: boolean;
+  /** For hotels: check-in date */
+  checkInDate?: string;
+  /** For hotels: check-out date */
+  checkOutDate?: string;
+  /** For hotels: check-in time */
+  checkInTime?: string;
+  /** For hotels: check-out time */
+  checkOutTime?: string;
+}
+
+/**
+ * Polymorphic itinerary item - discriminated union
+ */
+export type PolymorphicItineraryItem =
+  | FlightItineraryItem
+  | TransitItineraryItem
+  | LocationItineraryItem;
+
+/**
+ * Type guard for FlightItineraryItem
+ */
+export function isFlightItem(item: PolymorphicItineraryItem): item is FlightItineraryItem {
+  return item.type === 'flight';
+}
+
+/**
+ * Type guard for TransitItineraryItem
+ */
+export function isTransitItem(item: PolymorphicItineraryItem): item is TransitItineraryItem {
+  return item.type === 'transit';
+}
+
+/**
+ * Type guard for LocationItineraryItem
+ */
+export function isLocationItem(item: PolymorphicItineraryItem): item is LocationItineraryItem {
+  return item.type === 'location';
+}
+
+/**
+ * Create a new polymorphic item ID
+ */
+export function createPolymorphicItemId(type: PolymorphicItemType): string {
+  return `${type}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}

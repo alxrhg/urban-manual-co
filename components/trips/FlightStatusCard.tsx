@@ -1,8 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { ArrowRight, RefreshCw, Loader2, CheckCircle2, Clock, AlertCircle, Plane } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { ArrowRight, RefreshCw, Loader2, CheckCircle2, Clock, AlertCircle, Plane, Moon } from 'lucide-react';
 import type { ItineraryItemNotes } from '@/types/trip';
+import {
+  calculateDurationFromTimes,
+  isOvernightFromTimes,
+  type FlightDuration,
+} from '@/lib/intelligence/flight-utils';
 
 interface FlightStatusCardProps {
   flight: ItineraryItemNotes;
@@ -112,6 +117,43 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
   const origin = parseAirport(flight.from);
   const destination = parseAirport(flight.to);
 
+  // Calculate flight duration using flight-utils
+  const flightDuration: FlightDuration | null = useMemo(() => {
+    const depDate = departureDate || flight.departureDate;
+    const depTime = flight.departureTime;
+    const arrDate = flight.arrivalDate || depDate;
+    const arrTime = flight.arrivalTime;
+
+    if (!depDate || !depTime || !arrTime) return null;
+
+    try {
+      // Construct ISO datetime strings
+      const departureISO = `${depDate}T${depTime}:00`;
+      const arrivalISO = `${arrDate}T${arrTime}:00`;
+      return calculateDurationFromTimes(departureISO, arrivalISO);
+    } catch {
+      return null;
+    }
+  }, [departureDate, flight.departureDate, flight.departureTime, flight.arrivalDate, flight.arrivalTime]);
+
+  // Check if flight is overnight
+  const isOvernight = useMemo(() => {
+    const depDate = departureDate || flight.departureDate;
+    const depTime = flight.departureTime;
+    const arrDate = flight.arrivalDate || depDate;
+    const arrTime = flight.arrivalTime;
+
+    if (!depDate || !depTime || !arrTime) return false;
+
+    try {
+      const departureISO = `${depDate}T${depTime}:00`;
+      const arrivalISO = `${arrDate}T${arrTime}:00`;
+      return isOvernightFromTimes(departureISO, arrivalISO);
+    } catch {
+      return false;
+    }
+  }, [departureDate, flight.departureDate, flight.departureTime, flight.arrivalDate, flight.arrivalTime]);
+
   // Format date for display
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
@@ -210,6 +252,20 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
         <span>{formatTime(flightInfo?.actualDeparture || flight.departureTime)}</span>
         <span className="text-stone-400 px-0.5">—</span>
         <span>{formatTime(flightInfo?.actualArrival || flight.arrivalTime)}</span>
+        {/* Duration from flight-utils */}
+        {flightDuration && (
+          <>
+            <span className="text-stone-400">•</span>
+            <span className="font-medium">{flightDuration.formatted}</span>
+          </>
+        )}
+        {/* Overnight indicator */}
+        {isOvernight && (
+          <span className="inline-flex items-center gap-0.5 text-indigo-500 dark:text-indigo-400" title="Overnight flight">
+            <Moon className="w-3 h-3" />
+            <span className="text-[10px]">+1</span>
+          </span>
+        )}
         {flightInfo?.delay && flightInfo.delay > 0 && (
           <span className="text-orange-500 ml-1">+{flightInfo.delay}m</span>
         )}
