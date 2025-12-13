@@ -51,7 +51,7 @@ export default function MapboxTripMap({
     if (typeof window === 'undefined') return;
 
     import('mapbox-gl').then((mb) => {
-      mapboxgl = mb.default;
+      mapboxgl = mb;
       // Import CSS
       import('mapbox-gl/dist/mapbox-gl.css');
       setMapboxLoaded(true);
