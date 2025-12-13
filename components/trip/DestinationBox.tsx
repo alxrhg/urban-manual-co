@@ -491,7 +491,7 @@ export default function DestinationBox({
           <div className="space-y-4">
             {/* Hotel Image */}
             {image && !imageError && (
-              <div className="relative h-32 rounded-xl overflow-hidden bg-stone-200 dark:bg-gray-700">
+              <div className="relative h-40 rounded-xl overflow-hidden bg-stone-200 dark:bg-gray-700">
                 <Image
                   src={image}
                   alt={name}
@@ -500,24 +500,58 @@ export default function DestinationBox({
                   onError={() => setImageError(true)}
                   unoptimized={image.includes('googleusercontent.com') || image.includes('maps.googleapis.com')}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 {/* Rating badge */}
                 {rating && (
-                  <div className="absolute top-2 right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-black/40 backdrop-blur-sm">
-                    <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                    <span className="text-xs font-medium text-white">{rating.toFixed(1)}</span>
+                  <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-lg bg-black/50 backdrop-blur-sm">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                    <span className="text-sm font-semibold text-white">{rating.toFixed(1)}</span>
                   </div>
                 )}
-                {/* Hotel name overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-3">
-                  <h4 className="font-semibold text-white text-sm">{name}</h4>
-                  {address && (
-                    <p className="text-xs text-white/70 flex items-center gap-1 mt-0.5">
-                      <MapPin className="w-3 h-3" />
-                      <span className="line-clamp-1">{address}</span>
-                    </p>
+                {/* Hotel info overlay */}
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <h4 className="font-semibold text-white text-base">{name}</h4>
+                  {neighborhood && (
+                    <p className="text-sm text-white/80 mt-0.5">{neighborhood}</p>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Quick Actions */}
+            {(phone || website || (lat && lng)) && (
+              <div className="flex gap-2">
+                {phone && (
+                  <a
+                    href={`tel:${phone}`}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <Phone className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Call</span>
+                  </a>
+                )}
+                {website && (
+                  <a
+                    href={website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <Globe className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Website</span>
+                  </a>
+                )}
+                {lat && lng && (
+                  <a
+                    href={`https://maps.apple.com/?q=${lat},${lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <Navigation className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Directions</span>
+                  </a>
+                )}
               </div>
             )}
 
@@ -528,7 +562,55 @@ export default function DestinationBox({
               </p>
             )}
 
-            {/* Stay Details */}
+            {/* Database Info - Rating, Price, Tags */}
+            <div className="border-t border-gray-100 dark:border-gray-800 pt-4 space-y-3">
+              {/* Rating row */}
+              {rating && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Rating</span>
+                  <div className="flex items-center gap-1">
+                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">{rating.toFixed(1)}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Price Level */}
+              {priceLevel && priceLevel > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Price</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {'$'.repeat(priceLevel)}
+                  </span>
+                </div>
+              )}
+
+              {/* Address */}
+              {address && (
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{address}</span>
+                </div>
+              )}
+
+              {/* Tags */}
+              {destination?.tags && destination.tags.length > 0 && (
+                <div className="pt-2">
+                  <div className="flex flex-wrap gap-1.5">
+                    {destination.tags.slice(0, 6).map((tag, i) => (
+                      <span
+                        key={i}
+                        className="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-400"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Your Stay Section */}
             <div className="bg-stone-50 dark:bg-gray-800/50 rounded-xl p-4">
               <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-3">
                 Your Stay
@@ -604,51 +686,14 @@ export default function DestinationBox({
               )}
             </div>
 
-            {/* Database Info Section */}
-            {(destination?.tags?.length || priceLevel) && (
-              <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
-                {/* Price Level */}
-                {priceLevel && priceLevel > 0 && (
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">Price</span>
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      {'$'.repeat(priceLevel)}
-                    </span>
-                  </div>
-                )}
-
-                {/* Tags */}
-                {destination?.tags && destination.tags.length > 0 && (
-                  <div className="py-2">
-                    <span className="text-sm text-gray-500 dark:text-gray-400 block mb-2">Tags</span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {destination.tags.slice(0, 5).map((tag, i) => (
-                        <span
-                          key={i}
-                          className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-400"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* View Full Page Link */}
+            {/* View Full Page Link - subtle at bottom */}
             {destination?.slug && (
               <Link
                 href={`/destination/${destination.slug}`}
-                className="flex items-center justify-between w-full py-3 px-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="flex items-center justify-center gap-2 w-full py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
               >
-                <div className="flex items-center gap-2">
-                  <ExternalLink className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    View full details
-                  </span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-gray-400" />
+                <ExternalLink className="w-3.5 h-3.5" />
+                View on Urban Manual
               </Link>
             )}
           </div>
