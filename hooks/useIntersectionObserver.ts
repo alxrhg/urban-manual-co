@@ -13,8 +13,8 @@ interface UseIntersectionObserverOptions {
   enabled?: boolean;
 }
 
-interface UseIntersectionObserverReturn {
-  ref: React.RefObject<HTMLElement | null>;
+interface UseIntersectionObserverReturn<T extends Element> {
+  ref: React.RefObject<T | null>;
   isIntersecting: boolean;
   entry: IntersectionObserverEntry | null;
 }
@@ -24,16 +24,16 @@ interface UseIntersectionObserverReturn {
  * Used for fade-in-view and lazy loading animations
  *
  * @example
- * const { ref, isIntersecting } = useIntersectionObserver();
+ * const { ref, isIntersecting } = useIntersectionObserver<HTMLDivElement>();
  * return <div ref={ref} className={cn('fade-in-view', isIntersecting && 'in-view')}>...</div>
  */
-export function useIntersectionObserver({
+export function useIntersectionObserver<T extends Element = HTMLDivElement>({
   threshold = 0.1,
   rootMargin = '0px 0px -50px 0px',
   triggerOnce = true,
   enabled = true,
-}: UseIntersectionObserverOptions = {}): UseIntersectionObserverReturn {
-  const ref = useRef<HTMLElement | null>(null);
+}: UseIntersectionObserverOptions = {}): UseIntersectionObserverReturn<T> {
+  const ref = useRef<T | null>(null);
   const [isIntersecting, setIsIntersecting] = useState(false);
   const [entry, setEntry] = useState<IntersectionObserverEntry | null>(null);
 

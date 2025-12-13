@@ -1643,11 +1643,11 @@ html.christmas-mode.dark::before,
 }
 
 /* Back navigation uses different animation */
-::view-transition-old(root).going-back {
+:root.going-back::view-transition-old(root) {
   animation: view-transition-slide-out-right 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-::view-transition-new(root).going-back {
+:root.going-back::view-transition-new(root) {
   animation: view-transition-slide-in-left 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 

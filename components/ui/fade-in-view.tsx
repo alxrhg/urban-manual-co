@@ -43,7 +43,7 @@ export function FadeInView({
   style,
   ...props
 }: FadeInViewProps) {
-  const { ref, isIntersecting } = useIntersectionObserver({
+  const { ref, isIntersecting } = useIntersectionObserver<HTMLDivElement>({
     threshold,
     triggerOnce,
   });
@@ -95,7 +95,7 @@ export function FadeInViewCSS({
   className,
   ...props
 }: Omit<FadeInViewProps, 'direction' | 'delay' | 'duration' | 'as'>) {
-  const { ref, isIntersecting } = useIntersectionObserver({
+  const { ref, isIntersecting } = useIntersectionObserver<HTMLDivElement>({
     threshold: props.threshold ?? 0.1,
     triggerOnce: props.triggerOnce ?? true,
   });
