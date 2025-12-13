@@ -1,9 +1,28 @@
 'use client';
 
 import { useState } from 'react';
-import { Plane, Pencil, Trash2 } from 'lucide-react';
+import { Plane, Pencil, Trash2, Clock, Car, AlertTriangle } from 'lucide-react';
 import type { FlightSegment, ItineraryItemNotes } from '@/types/trip';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
+
+// ============================================================================
+// Flight Intelligence Types
+// ============================================================================
+
+export interface FlightIntelligence {
+  /** Time needed to travel to the airport from previous location (in minutes) */
+  timeToAirport?: number;
+  /** Layover duration when this flight follows another (in minutes) */
+  layoverDuration?: number;
+  /** Previous flight arrival airport code (for layover display) */
+  previousArrivalCode?: string;
+  /** Whether user needs to change terminals during layover */
+  terminalChange?: boolean;
+  /** Suggested departure time from previous location */
+  suggestedDepartureTime?: string;
+  /** Warning if time to airport is tight */
+  isTightConnection?: boolean;
+}
 
 // Legacy Flight type from ItineraryCard for backwards compatibility
 interface LegacyFlight {
@@ -68,6 +87,8 @@ interface FlightCardProps {
   className?: string;
   /** Legacy trip settings (ignored but kept for API compatibility) */
   tripSettings?: TripSettings;
+  /** Flight intelligence data (time to airport, layover duration, etc.) */
+  intelligence?: FlightIntelligence;
 }
 
 /**
@@ -89,6 +110,7 @@ export default function FlightCard({
   onEdit,
   onRemove,
   className = '',
+  intelligence,
 }: FlightCardProps) {
   const [showActions, setShowActions] = useState(false);
 
@@ -120,6 +142,11 @@ export default function FlightCard({
     confirmationNumber,
   } = flightData;
 
+  // Determine if we have intelligence to display
+  const hasTimeToAirport = intelligence?.timeToAirport !== undefined && intelligence.timeToAirport > 0;
+  const hasLayover = intelligence?.layoverDuration !== undefined && intelligence.layoverDuration > 0;
+  const hasIntelligence = hasTimeToAirport || hasLayover;
+
   return (
     <div
       role="button"
@@ -135,6 +162,26 @@ export default function FlightCard({
         ${className}
       `}
     >
+      {/* Intelligence Banner - Time to Airport or Layover */}
+      {hasIntelligence && (
+        <div className="mb-2">
+          {hasLayover ? (
+            <LayoverBanner
+              duration={intelligence.layoverDuration!}
+              arrivalCode={intelligence.previousArrivalCode}
+              terminalChange={intelligence.terminalChange}
+              isTight={intelligence.isTightConnection}
+            />
+          ) : hasTimeToAirport ? (
+            <TimeToAirportBanner
+              travelTime={intelligence.timeToAirport!}
+              suggestedDeparture={intelligence.suggestedDepartureTime}
+              isTight={intelligence.isTightConnection}
+            />
+          ) : null}
+        </div>
+      )}
+
       {/* Main Card Container with Boarding Pass Shape */}
       <div
         className={`
@@ -566,4 +613,198 @@ function formatBoardingTime(departureTime?: string): string {
   }
 
   return '—';
+}
+
+// ============================================================================
+// Intelligence Banner Components
+// ============================================================================
+
+interface TimeToAirportBannerProps {
+  travelTime: number;
+  suggestedDeparture?: string;
+  isTight?: boolean;
+}
+
+/**
+ * TimeToAirportBanner - Shows travel time from previous location to airport
+ */
+function TimeToAirportBanner({ travelTime, suggestedDeparture, isTight }: TimeToAirportBannerProps) {
+  const formattedTime = formatDuration(travelTime);
+
+  return (
+    <div
+      className={`
+        flex items-center gap-2 px-3 py-2 rounded-xl text-xs
+        ${isTight
+          ? 'bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800'
+          : 'bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700'
+        }
+      `}
+    >
+      <div className={`flex-shrink-0 ${isTight ? 'text-orange-500' : 'text-gray-500 dark:text-gray-400'}`}>
+        {isTight ? <AlertTriangle className="w-3.5 h-3.5" /> : <Car className="w-3.5 h-3.5" />}
+      </div>
+      <div className="flex-1">
+        <span className={`font-medium ${isTight ? 'text-orange-700 dark:text-orange-400' : 'text-gray-700 dark:text-gray-300'}`}>
+          {formattedTime} to airport
+        </span>
+        {suggestedDeparture && (
+          <span className="text-gray-500 dark:text-gray-400 ml-1">
+            · Leave by {suggestedDeparture}
+          </span>
+        )}
+      </div>
+      {isTight && (
+        <span className="flex-shrink-0 px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-[10px] font-medium uppercase tracking-wider">
+          Tight
+        </span>
+      )}
+    </div>
+  );
+}
+
+interface LayoverBannerProps {
+  duration: number;
+  arrivalCode?: string;
+  terminalChange?: boolean;
+  isTight?: boolean;
+}
+
+/**
+ * LayoverBanner - Shows layover duration between connecting flights
+ */
+function LayoverBanner({ duration, arrivalCode, terminalChange, isTight }: LayoverBannerProps) {
+  const formattedDuration = formatDuration(duration);
+  const isShortLayover = duration < 90; // Less than 1.5 hours
+  const isLongLayover = duration > 240; // More than 4 hours
+  const showWarning = isTight || isShortLayover;
+
+  return (
+    <div
+      className={`
+        flex items-center gap-2 px-3 py-2 rounded-xl text-xs
+        ${showWarning
+          ? 'bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800'
+          : isLongLayover
+            ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
+            : 'bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700'
+        }
+      `}
+    >
+      <div className={`flex-shrink-0 ${showWarning ? 'text-orange-500' : isLongLayover ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'}`}>
+        {showWarning ? <AlertTriangle className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
+      </div>
+      <div className="flex-1">
+        <span className={`font-medium ${showWarning ? 'text-orange-700 dark:text-orange-400' : isLongLayover ? 'text-blue-700 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
+          {formattedDuration} layover
+        </span>
+        {arrivalCode && (
+          <span className="text-gray-500 dark:text-gray-400 ml-1">
+            at {arrivalCode}
+          </span>
+        )}
+        {terminalChange && (
+          <span className="text-gray-500 dark:text-gray-400 ml-1">
+            · Terminal change
+          </span>
+        )}
+      </div>
+      {showWarning && (
+        <span className="flex-shrink-0 px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-[10px] font-medium uppercase tracking-wider">
+          {isShortLayover ? 'Short' : 'Tight'}
+        </span>
+      )}
+      {isLongLayover && !showWarning && (
+        <span className="flex-shrink-0 px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-medium uppercase tracking-wider">
+          Long
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// Intelligence Calculation Utilities (exported for use by parent components)
+// ============================================================================
+
+/**
+ * Calculate layover duration between two flights
+ * @param arrivalTime - Arrival time of the first flight (ISO string or time string)
+ * @param departureTime - Departure time of the second flight (ISO string or time string)
+ * @param arrivalDate - Arrival date (optional, for cross-day calculations)
+ * @param departureDate - Departure date (optional, for cross-day calculations)
+ * @returns Layover duration in minutes, or undefined if cannot be calculated
+ */
+export function calculateLayoverDuration(
+  arrivalTime?: string,
+  departureTime?: string,
+  arrivalDate?: string,
+  departureDate?: string
+): number | undefined {
+  if (!arrivalTime || !departureTime) return undefined;
+
+  const parseTimeToMinutes = (time: string, date?: string): number | undefined => {
+    // Handle "HH:MM" format
+    if (/^\d{1,2}:\d{2}$/.test(time)) {
+      const [hours, minutes] = time.split(':').map(Number);
+      const baseMinutes = hours * 60 + minutes;
+      // If we have a date, add days offset
+      if (date) {
+        const d = new Date(date);
+        if (!isNaN(d.getTime())) {
+          const dayOffset = Math.floor(d.getTime() / (24 * 60 * 60 * 1000));
+          return baseMinutes + (dayOffset * 24 * 60);
+        }
+      }
+      return baseMinutes;
+    }
+
+    // Handle ISO string
+    try {
+      const d = new Date(time);
+      if (!isNaN(d.getTime())) {
+        return d.getHours() * 60 + d.getMinutes();
+      }
+    } catch {
+      // Fall through
+    }
+
+    return undefined;
+  };
+
+  const arrivalMinutes = parseTimeToMinutes(arrivalTime, arrivalDate);
+  const departureMinutes = parseTimeToMinutes(departureTime, departureDate);
+
+  if (arrivalMinutes === undefined || departureMinutes === undefined) {
+    return undefined;
+  }
+
+  // Calculate difference, handling day boundary
+  let diff = departureMinutes - arrivalMinutes;
+  if (diff < 0) {
+    // Departure is next day
+    diff += 24 * 60;
+  }
+
+  return diff;
+}
+
+/**
+ * Determine if a connection is tight based on layover duration
+ * @param layoverMinutes - Layover duration in minutes
+ * @param isInternational - Whether this is an international connection
+ * @param terminalChange - Whether a terminal change is required
+ * @returns true if the connection is considered tight
+ */
+export function isTightConnection(
+  layoverMinutes: number,
+  isInternational: boolean = false,
+  terminalChange: boolean = false
+): boolean {
+  // Minimum recommended layover times
+  const minDomestic = terminalChange ? 75 : 45;
+  const minInternational = terminalChange ? 120 : 90;
+  const threshold = isInternational ? minInternational : minDomestic;
+
+  return layoverMinutes < threshold;
 }

@@ -9,7 +9,7 @@ export { default as TransportCard } from './TransportCard';
 export { default as FreeTimeGap } from './FreeTimeGap';
 export { default as CustomCard } from './CustomCard';
 
-// Types
+// Types from ItineraryCard
 export type {
   ItineraryItem,
   Flight,
@@ -17,3 +17,10 @@ export type {
   TripSettings,
   ItineraryCardProps,
 } from './ItineraryCard';
+
+// Types and utilities from FlightCard
+export type { FlightIntelligence } from './FlightCard';
+export {
+  calculateLayoverDuration,
+  isTightConnection,
+} from './FlightCard';
