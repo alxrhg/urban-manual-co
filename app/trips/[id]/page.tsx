@@ -2009,7 +2009,6 @@ function DaySection({
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
         </div>
       </div>
 
