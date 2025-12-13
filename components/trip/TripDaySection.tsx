@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ChevronDown, Plus, Pencil, Check } from 'lucide-react';
 import {
@@ -23,6 +23,7 @@ import TripItemCard from './TripItemCard';
 import TransitConnector from './TransitConnector';
 import DayIntelligence from './DayIntelligence';
 import { NeighborhoodTags } from './NeighborhoodBreakdown';
+import { ItineraryTicket } from './tickets';
 import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import { getAirportCoordinates } from '@/lib/utils/airports';
 
@@ -39,6 +40,12 @@ interface TripDaySectionProps {
   activeItemId?: string | null;
   isOptimizing?: boolean;
   isAutoFilling?: boolean;
+  /** Current night number for overnight hotel display (1-indexed) */
+  nightNumber?: number;
+  /** Total number of nights in the trip */
+  totalNights?: number;
+  /** Whether to use the new Premium Ticket design */
+  useTicketDesign?: boolean;
 }
 
 /**
@@ -58,9 +65,28 @@ export default function TripDaySection({
   activeItemId,
   isOptimizing = false,
   isAutoFilling = false,
+  nightNumber,
+  totalNights,
+  useTicketDesign = true,
 }: TripDaySectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
+
+  // Find the overnight hotel for this day (to render as Night Pass footer)
+  const overnightHotel = useMemo(() => {
+    return day.items.find((item) => {
+      const type = item.parsedNotes?.type;
+      const hotelItemType = item.parsedNotes?.hotelItemType;
+      // An overnight hotel is either explicitly marked or is the main hotel entry
+      return type === 'hotel' && (hotelItemType === 'overnight' || !hotelItemType || item.parsedNotes?.isHotel);
+    });
+  }, [day.items]);
+
+  // Filter items for the main list (exclude overnight hotel which goes in footer)
+  const mainItems = useMemo(() => {
+    if (!overnightHotel) return day.items;
+    return day.items.filter((item) => item.id !== overnightHotel.id);
+  }, [day.items, overnightHotel]);
 
   // Sensors configured for both touch and pointer with appropriate delays
   const sensors = useSensors(
@@ -167,10 +193,10 @@ export default function TripDaySection({
     return undefined;
   };
 
-  // Render items with TransitConnector between them
-  const renderItemsWithConnectors = () => {
-    return day.items.map((item, index) => {
-      const nextItem = day.items[index + 1];
+  // Render items with TransitConnector between them (using new ticket design)
+  const renderTicketsWithConnectors = () => {
+    return mainItems.map((item, index) => {
+      const nextItem = mainItems[index + 1];
 
       // For connector between current item and next item:
       // - from: where we're leaving (current item's "from" location)
@@ -179,6 +205,38 @@ export default function TripDaySection({
       const toLocation = nextItem ? getToLocation(nextItem) : undefined;
 
       // Debug logging in development only
+      if (process.env.NODE_ENV === 'development' && nextItem && (!fromLocation || !toLocation)) {
+        console.debug('Transit connector missing coords:', item.title, '→', nextItem.title);
+      }
+
+      return (
+        <div key={item.id} className="mb-2">
+          <ItineraryTicket
+            item={item}
+            isActive={item.id === activeItemId}
+            onClick={() => onEditItem?.(item)}
+          />
+          {/* Transit connector between items */}
+          {index < mainItems.length - 1 && (
+            <TransitConnector
+              from={fromLocation}
+              to={toLocation}
+              mode="walking"
+            />
+          )}
+        </div>
+      );
+    });
+  };
+
+  // Legacy render function using TripItemCard
+  const renderItemsWithConnectors = () => {
+    return day.items.map((item, index) => {
+      const nextItem = day.items[index + 1];
+
+      const fromLocation = getFromLocation(item);
+      const toLocation = nextItem ? getToLocation(nextItem) : undefined;
+
       if (process.env.NODE_ENV === 'development' && nextItem && (!fromLocation || !toLocation)) {
         console.debug('Transit connector missing coords:', item.title, '→', nextItem.title);
       }
@@ -193,7 +251,6 @@ export default function TripDaySection({
             isActive={item.id === activeItemId}
             isViewOnly={true}
           />
-          {/* Transit connector between items */}
           {index < day.items.length - 1 && (
             <TransitConnector
               from={fromLocation}
@@ -349,9 +406,21 @@ export default function TripDaySection({
               </SortableContext>
             </DndContext>
           ) : (
-            /* View Mode - With Transit Connectors */
+            /* View Mode - With Transit Connectors (Premium Ticket Design) */
             <div className="p-2 sm:p-2">
-              {renderItemsWithConnectors()}
+              {useTicketDesign ? renderTicketsWithConnectors() : renderItemsWithConnectors()}
+
+              {/* Night Pass Footer - Shows where you sleep */}
+              {useTicketDesign && overnightHotel && (
+                <ItineraryTicket
+                  item={overnightHotel}
+                  isActive={overnightHotel.id === activeItemId}
+                  onClick={() => onEditItem?.(overnightHotel)}
+                  isNightPass
+                  nightNumber={nightNumber}
+                  totalNights={totalNights}
+                />
+              )}
             </div>
           )}
 
