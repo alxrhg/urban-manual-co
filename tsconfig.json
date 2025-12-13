@@ -23,9 +23,13 @@
       }
     ],
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"],
+      "@/ui": ["./src/ui"],
+      "@/ui/*": ["./src/ui/*"],
+      "@/features": ["./src/features"],
+      "@/features/*": ["./src/features/*"],
+      "@/domain": ["./src/domain"],
+      "@/domain/*": ["./src/domain/*"]
     }
   },
   "include": [
