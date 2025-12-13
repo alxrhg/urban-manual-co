@@ -30,6 +30,10 @@ interface UseViewTransitionResult {
   isSupported: boolean;
   /** Navigate with view transition */
   navigate: (href: string, options?: ViewTransitionOptions) => void;
+  /** Navigate back with view transition (uses back animation) */
+  navigateBack: (options?: ViewTransitionOptions) => void;
+  /** Replace current route with view transition */
+  replace: (href: string, options?: ViewTransitionOptions) => void;
   /** Start a view transition for any DOM update */
   startTransition: (callback: () => void | Promise<void>, options?: ViewTransitionOptions) => Promise<void>;
   /** Check if reduced motion is preferred */
@@ -135,10 +139,50 @@ export function useViewTransition(): UseViewTransitionResult {
     [router, startTransition]
   );
 
+  /**
+   * Navigate back with view transition (uses reverse animation)
+   */
+  const navigateBack = useCallback(
+    (options: ViewTransitionOptions = {}) => {
+      // Add class for back navigation animation
+      if (isSupported && !prefersReducedMotion) {
+        document.documentElement.classList.add('going-back');
+      }
+
+      startTransition(
+        () => {
+          router.back();
+        },
+        {
+          ...options,
+          onAfter: () => {
+            document.documentElement.classList.remove('going-back');
+            options.onAfter?.();
+          },
+        }
+      );
+    },
+    [router, startTransition, isSupported, prefersReducedMotion]
+  );
+
+  /**
+   * Replace current route with view transition
+   */
+  const replace = useCallback(
+    (href: string, options: ViewTransitionOptions = {}) => {
+      startTransition(() => {
+        router.replace(href);
+      }, options);
+    },
+    [router, startTransition]
+  );
+
   return {
     isTransitioning,
     isSupported,
     navigate,
+    navigateBack,
+    replace,
     startTransition,
     prefersReducedMotion,
   };

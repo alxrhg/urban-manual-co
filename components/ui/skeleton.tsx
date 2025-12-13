@@ -1,10 +1,21 @@
 import { cn } from "@/lib/utils"
 
-function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
+interface SkeletonProps extends React.ComponentProps<"div"> {
+  /** Animation variant: 'pulse' for standard, 'shimmer' for Ubiquiti-style */
+  variant?: 'pulse' | 'shimmer';
+}
+
+function Skeleton({ className, variant = 'pulse', ...props }: SkeletonProps) {
   return (
     <div
       data-slot="skeleton"
-      className={cn("bg-gray-200 dark:bg-gray-800 animate-pulse rounded-md", className)}
+      className={cn(
+        "rounded-md",
+        variant === 'shimmer'
+          ? "skeleton-pulse"
+          : "bg-gray-200 dark:bg-gray-800 animate-pulse",
+        className
+      )}
       {...props}
     />
   )

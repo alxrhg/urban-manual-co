@@ -154,3 +154,190 @@
   @apply flex h-9 w-9 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400;
 }
 
+/* ============================================
+   UBIQUITI-STYLE ENHANCED COMPONENTS
+   Polished interactions and micro-animations
+   ============================================ */
+
+/* INTERACTIVE BUTTON - Full Ubiquiti-style polish
+   Usage: <button class="um-btn-interactive">...</button>
+*/
+.um-btn-interactive {
+  @apply px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl text-sm font-medium;
+  transition: transform var(--duration-fast) var(--ease-smooth),
+              box-shadow var(--duration-fast) var(--ease-smooth),
+              background-color var(--duration-fast) var(--ease-smooth);
+  transform-origin: center;
+}
+
+.um-btn-interactive:hover {
+  @apply bg-gray-900 dark:bg-gray-100;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.um-btn-interactive:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: none;
+}
+
+.um-btn-interactive:focus-visible {
+  @apply outline-none ring-2 ring-black dark:ring-white ring-offset-2;
+}
+
+.um-btn-interactive:disabled {
+  @apply opacity-50 cursor-not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* INTERACTIVE CARD - Lift effect on hover
+   Usage: <div class="um-card-interactive">...</div>
+*/
+.um-card-interactive {
+  @apply border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-[#1A1C1F];
+  transition: transform var(--duration-normal) var(--ease-smooth),
+              box-shadow var(--duration-normal) var(--ease-smooth),
+              border-color var(--duration-normal) var(--ease-smooth);
+}
+
+.um-card-interactive:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+  @apply border-gray-300 dark:border-gray-700;
+}
+
+.um-card-interactive:active {
+  transform: translateY(-2px) scale(0.99);
+}
+
+/* SUBTLE CARD - Less aggressive hover
+   Usage: <div class="um-card-subtle">...</div>
+*/
+.um-card-subtle {
+  @apply border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-[#1A1C1F];
+  transition: transform var(--duration-normal) var(--ease-smooth),
+              box-shadow var(--duration-normal) var(--ease-smooth);
+}
+
+.um-card-subtle:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* LINK WITH UNDERLINE ANIMATION
+   Usage: <a class="um-link-animated">...</a>
+*/
+.um-link-animated {
+  @apply text-gray-900 dark:text-white relative;
+  text-decoration: none;
+}
+
+.um-link-animated::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background-color: currentColor;
+  transition: width var(--duration-normal) var(--ease-smooth);
+}
+
+.um-link-animated:hover::after {
+  width: 100%;
+}
+
+/* INPUT WITH FOCUS ANIMATION
+   Usage: <input class="um-input-animated" />
+*/
+.um-input-animated {
+  @apply w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 text-sm;
+  transition: border-color var(--duration-fast) var(--ease-smooth),
+              box-shadow var(--duration-fast) var(--ease-smooth);
+}
+
+.um-input-animated:focus {
+  @apply outline-none border-black dark:border-white;
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.1);
+}
+
+/* CHIP/TAG WITH INTERACTION
+   Usage: <span class="um-chip-interactive">Tag</span>
+*/
+.um-chip-interactive {
+  @apply inline-flex items-center px-3 py-1 text-xs font-medium rounded-full border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900;
+  transition: transform var(--duration-fast) var(--ease-smooth),
+              background-color var(--duration-fast) var(--ease-smooth),
+              border-color var(--duration-fast) var(--ease-smooth);
+  cursor: pointer;
+}
+
+.um-chip-interactive:hover {
+  @apply bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700;
+  transform: scale(1.02);
+}
+
+.um-chip-interactive:active {
+  transform: scale(0.98);
+}
+
+/* ICON BUTTON - Minimal style with hover background
+   Usage: <button class="um-icon-btn">...</button>
+*/
+.um-icon-btn {
+  @apply flex items-center justify-center w-10 h-10 rounded-full text-gray-600 dark:text-gray-400;
+  transition: background-color var(--duration-fast) var(--ease-smooth),
+              color var(--duration-fast) var(--ease-smooth),
+              transform var(--duration-fast) var(--ease-smooth);
+}
+
+.um-icon-btn:hover {
+  @apply bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white;
+}
+
+.um-icon-btn:active {
+  transform: scale(0.95);
+}
+
+.um-icon-btn:focus-visible {
+  @apply outline-none ring-2 ring-black dark:ring-white ring-offset-2;
+}
+
+/* LOADING SPINNER - Smooth rotation
+   Usage: <div class="um-spinner">...</div>
+*/
+.um-spinner {
+  @apply w-5 h-5 border-2 border-gray-200 dark:border-gray-700 border-t-black dark:border-t-white rounded-full;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* PROGRESS BAR - Smooth animation
+   Usage: <div class="um-progress"><div class="um-progress-bar" style="width: 50%"></div></div>
+*/
+.um-progress {
+  @apply w-full h-1 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden;
+}
+
+.um-progress-bar {
+  @apply h-full bg-black dark:bg-white rounded-full;
+  transition: width var(--duration-slow) var(--ease-smooth);
+}
+
+/* TOOLTIP TRIGGER - Subtle hover effect
+   Usage: <button class="um-tooltip-trigger">...</button>
+*/
+.um-tooltip-trigger {
+  @apply relative;
+  transition: color var(--duration-fast) var(--ease-smooth);
+}
+
+.um-tooltip-trigger:hover {
+  @apply text-black dark:text-white;
+}
+

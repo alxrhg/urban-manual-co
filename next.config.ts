@@ -90,6 +90,9 @@ const nextConfig: NextConfig = {
       '@supabase/supabase-js',
       'date-fns',
       'lodash',
+      'framer-motion',
+      '@amcharts/amcharts5',
+      'recharts',
     ],
   },
 
@@ -183,6 +186,9 @@ const nextConfig: NextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60 * 60 * 24 * 7, // Cache for 7 days (604800 seconds)
+    // Default quality for optimal file size vs visual quality balance
+    // Ubiquiti uses q=75, we use 85 for travel imagery where quality matters
+    qualities: [75, 85, 95],
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     unoptimized: false, // Ensure image optimization is enabled

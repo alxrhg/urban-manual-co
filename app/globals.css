@@ -422,7 +422,7 @@
     --input: 0 0% 89.8%;
     --ring: 0 0% 3.9%;
     --radius: 0.5rem;
-    
+
     /* Unified layout container system */
     --container-max: 1280px;
     --container-padding-mobile: 16px;
@@ -430,9 +430,63 @@
     --container-padding-desktop: 48px;
     --gutter-nav: 12px;
     --gutter-grid: 20px;
-    
+
     /* Ensure container uses 1280px max-width */
     --tw-container-max-width: 1280px;
+
+    /* ============================================
+       UBIQUITI-STYLE PERFORMANCE TOKENS
+       Standardized easing & timing for snappy feel
+       ============================================ */
+
+    /* Easing functions - Ubiquiti uses smooth, natural motion */
+    --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-snappy: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-in: cubic-bezier(0.4, 0, 1, 1);
+    --ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+    /* Duration tokens - keep interactions under 300ms */
+    --duration-instant: 50ms;
+    --duration-fast: 150ms;
+    --duration-normal: 250ms;
+    --duration-slow: 400ms;
+    --duration-page: 500ms;
+
+    /* Typography scale - consistent sizing */
+    --font-size-xs: 0.75rem;    /* 12px */
+    --font-size-sm: 0.875rem;   /* 14px */
+    --font-size-base: 1rem;     /* 16px */
+    --font-size-lg: 1.125rem;   /* 18px */
+    --font-size-xl: 1.25rem;    /* 20px */
+    --font-size-2xl: 1.5rem;    /* 24px */
+    --font-size-3xl: 1.875rem;  /* 30px */
+    --font-size-4xl: 2.25rem;   /* 36px */
+    --font-size-5xl: 3rem;      /* 48px */
+
+    /* Line heights */
+    --line-height-tight: 1.2;
+    --line-height-snug: 1.35;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.75;
+
+    /* Letter spacing */
+    --letter-spacing-tighter: -0.05em;
+    --letter-spacing-tight: -0.025em;
+    --letter-spacing-normal: 0;
+    --letter-spacing-wide: 0.025em;
+    --letter-spacing-wider: 0.05em;
+
+    /* Shadow tokens for consistent depth */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.04);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1), 0 8px 10px rgba(0, 0, 0, 0.04);
+    --shadow-hover: 0 12px 24px rgba(0, 0, 0, 0.12);
+
+    /* Stagger delay base for animations */
+    --stagger-delay: 50ms;
   }
 
   .dark {
@@ -455,6 +509,14 @@
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
+
+    /* Dark mode shadows - more subtle */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4), 0 4px 6px rgba(0, 0, 0, 0.3);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.4), 0 8px 10px rgba(0, 0, 0, 0.3);
+    --shadow-hover: 0 12px 24px rgba(0, 0, 0, 0.5);
   }
 
   * {
@@ -1729,4 +1791,212 @@ html.christmas-mode.dark::before,
   .native-scroll::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* ============================================
+   UBIQUITI-STYLE INTERACTION UTILITIES
+   Snappy, polished micro-interactions
+   ============================================ */
+
+/* Unified transition using CSS variables */
+.transition-token {
+  transition-property: transform, box-shadow, opacity, background-color, border-color;
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-smooth);
+}
+
+.transition-token-fast {
+  transition-property: transform, box-shadow, opacity, background-color, border-color;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-smooth);
+}
+
+/* Interactive card with lift effect - Ubiquiti style */
+.interactive-card {
+  transition: transform var(--duration-normal) var(--ease-smooth),
+              box-shadow var(--duration-normal) var(--ease-smooth);
+  will-change: transform, box-shadow;
+}
+
+.interactive-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+.interactive-card:active {
+  transform: translateY(-2px) scale(0.99);
+}
+
+/* Subtle card hover - less aggressive */
+.subtle-card-hover {
+  transition: transform var(--duration-normal) var(--ease-smooth),
+              box-shadow var(--duration-normal) var(--ease-smooth);
+}
+
+.subtle-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Button polish - comprehensive interactive states */
+.btn-polish {
+  transition: transform var(--duration-fast) var(--ease-smooth),
+              box-shadow var(--duration-fast) var(--ease-smooth),
+              background-color var(--duration-fast) var(--ease-smooth);
+  transform-origin: center;
+}
+
+.btn-polish:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-polish:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: none;
+}
+
+/* Focus ring using CSS variables */
+.focus-ring-token {
+  outline: none;
+}
+
+.focus-ring-token:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Image container with smooth load transition */
+.img-load-smooth {
+  opacity: 0;
+  transition: opacity var(--duration-slow) var(--ease-smooth);
+}
+
+.img-load-smooth.loaded {
+  opacity: 1;
+}
+
+/* Staggered animation helper classes using CSS variables */
+.stagger-item {
+  animation: fadeInUp var(--duration-slow) var(--ease-smooth) backwards;
+}
+
+.stagger-item:nth-child(1) { animation-delay: calc(var(--stagger-delay) * 0); }
+.stagger-item:nth-child(2) { animation-delay: calc(var(--stagger-delay) * 1); }
+.stagger-item:nth-child(3) { animation-delay: calc(var(--stagger-delay) * 2); }
+.stagger-item:nth-child(4) { animation-delay: calc(var(--stagger-delay) * 3); }
+.stagger-item:nth-child(5) { animation-delay: calc(var(--stagger-delay) * 4); }
+.stagger-item:nth-child(6) { animation-delay: calc(var(--stagger-delay) * 5); }
+.stagger-item:nth-child(7) { animation-delay: calc(var(--stagger-delay) * 6); }
+.stagger-item:nth-child(8) { animation-delay: calc(var(--stagger-delay) * 7); }
+.stagger-item:nth-child(9) { animation-delay: calc(var(--stagger-delay) * 8); }
+.stagger-item:nth-child(10) { animation-delay: calc(var(--stagger-delay) * 9); }
+.stagger-item:nth-child(11) { animation-delay: calc(var(--stagger-delay) * 10); }
+.stagger-item:nth-child(12) { animation-delay: calc(var(--stagger-delay) * 11); }
+
+/* Text selection styling */
+::selection {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: inherit;
+}
+
+.dark ::selection {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Improved skeleton pulse - more subtle like Ubiquiti */
+.skeleton-pulse {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--muted) / 0.7) 50%,
+    hsl(var(--muted)) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeletonPulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Link hover effect - subtle underline animation */
+.link-hover-effect {
+  position: relative;
+  text-decoration: none;
+}
+
+.link-hover-effect::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background-color: currentColor;
+  transition: width var(--duration-normal) var(--ease-smooth);
+}
+
+.link-hover-effect:hover::after {
+  width: 100%;
+}
+
+/* Input focus effect */
+.input-focus-effect {
+  transition: border-color var(--duration-fast) var(--ease-smooth),
+              box-shadow var(--duration-fast) var(--ease-smooth);
+}
+
+.input-focus-effect:focus {
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.1);
+}
+
+/* Loading spinner with smooth animation */
+.spinner-smooth {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Fade in on scroll intersection */
+.fade-in-view {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity var(--duration-slow) var(--ease-smooth),
+              transform var(--duration-slow) var(--ease-smooth);
+}
+
+.fade-in-view.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Responsive typography using clamp for fluid sizing */
+.text-fluid-sm {
+  font-size: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+}
+
+.text-fluid-base {
+  font-size: clamp(0.875rem, 0.8rem + 0.4vw, 1rem);
+}
+
+.text-fluid-lg {
+  font-size: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);
+}
+
+.text-fluid-xl {
+  font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+}
+
+.text-fluid-2xl {
+  font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem);
+}
+
+.text-fluid-3xl {
+  font-size: clamp(1.875rem, 1.5rem + 2vw, 3rem);
 }
