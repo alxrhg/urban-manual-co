@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, memo } from 'react';
+import { useDroppable } from '@dnd-kit/core';
 import {
   ChevronDown,
   ChevronUp,
@@ -13,6 +14,7 @@ import {
   Route,
   Timer,
   Loader2,
+  Plus,
 } from 'lucide-react';
 import { TripDayCardProps } from './types';
 import { formatDuration, formatDate } from './utils';
@@ -34,6 +36,7 @@ const TripDayCard = memo(function TripDayCard({
   day,
   dayCount,
   isExpanded,
+  isDropTarget = false,
   insights,
   isSuggesting,
   onToggle,
@@ -51,6 +54,18 @@ const TripDayCard = memo(function TripDayCard({
 }: TripDayCardProps) {
   // Drag and drop state
   const { fromIndex, startDrag, updateDragOver, endDrag } = useDragDrop();
+
+  // Make this day a drop target
+  const { setNodeRef, isOver } = useDroppable({
+    id: `day-${day.dayNumber}`,
+    data: {
+      dayNumber: day.dayNumber,
+      type: 'day',
+    },
+  });
+
+  // Show drop state from either isOver (dnd-kit) or isDropTarget (prop)
+  const showDropState = isOver || isDropTarget;
 
   // Handle drag end with reorder callback
   const handleDragEnd = useCallback(() => {
@@ -72,7 +87,15 @@ const TripDayCard = memo(function TripDayCard({
 
   return (
     <section
-      className="border-b border-gray-100 dark:border-gray-800 last:border-0"
+      ref={setNodeRef}
+      className={`
+        border-b border-gray-100 dark:border-gray-800 last:border-0
+        transition-all duration-200
+        ${showDropState
+          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700 ring-2 ring-inset ring-green-500/30'
+          : ''
+        }
+      `}
       aria-labelledby={`day-${day.dayNumber}-heading`}
     >
       {/* Day header */}
@@ -85,10 +108,23 @@ const TripDayCard = memo(function TripDayCard({
         >
           <div className="flex items-center gap-3">
             {/* Day number badge */}
-            <div className="w-9 h-9 rounded-full bg-gray-900 dark:bg-white flex items-center justify-center">
-              <span className="text-[13px] font-bold text-white dark:text-gray-900">
-                {day.dayNumber}
-              </span>
+            <div
+              className={`
+                w-9 h-9 rounded-full flex items-center justify-center
+                transition-all duration-200
+                ${showDropState
+                  ? 'bg-green-500 scale-110'
+                  : 'bg-gray-900 dark:bg-white'
+                }
+              `}
+            >
+              {showDropState ? (
+                <Plus className="w-4 h-4 text-white" />
+              ) : (
+                <span className="text-[13px] font-bold text-white dark:text-gray-900">
+                  {day.dayNumber}
+                </span>
+              )}
             </div>
 
             {/* Day info */}

@@ -6,6 +6,21 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
+import {
+  DndContext,
+  DragOverlay,
+  useSensor,
+  useSensors,
+  PointerSensor,
+  TouchSensor,
+  DragStartEvent,
+  DragEndEvent,
+  DragOverEvent,
+  closestCenter,
+  useDroppable,
+  useDraggable,
+} from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import { useHotelLogic } from '@/lib/hooks/useHotelLogic';
@@ -101,6 +116,66 @@ export default function TripPage() {
   const [weatherByDate, setWeatherByDate] = useState<Record<string, DayWeather>>({});
   const [weatherLoading, setWeatherLoading] = useState(false);
 
+  // Drag and drop state
+  const [draggedDestination, setDraggedDestination] = useState<Destination | null>(null);
+  const [overDayNumber, setOverDayNumber] = useState<number | null>(null);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+  );
+
+  // DnD event handlers
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const destination = event.active.data.current?.destination as Destination | undefined;
+    if (destination) {
+      setDraggedDestination(destination);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    const dayNumber = event.over?.data.current?.dayNumber as number | undefined;
+    setOverDayNumber(dayNumber ?? null);
+  }, []);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const destination = draggedDestination;
+    const dayNumber = event.over?.data.current?.dayNumber as number | undefined;
+    const insertIndex = event.over?.data.current?.insertIndex as number | undefined;
+    const insertTime = event.over?.data.current?.insertTime as string | undefined;
+
+    setDraggedDestination(null);
+    setOverDayNumber(null);
+
+    if (destination && dayNumber) {
+      // Add the place with optional time hint
+      addPlace(destination, dayNumber, insertTime);
+      setSelectedDayNumber(dayNumber);
+
+      // If we have an insert index, we need to reorder after adding
+      // The new item will be at the end, so we move it to insertIndex
+      if (insertIndex !== undefined) {
+        const day = days.find(d => d.dayNumber === dayNumber);
+        if (day) {
+          // New item will be added at the end
+          const newItems = [...day.items];
+          // We'll trigger reorder in a moment after the item is added
+          setTimeout(() => {
+            const currentDay = days.find(d => d.dayNumber === dayNumber);
+            if (currentDay && currentDay.items.length > 0) {
+              const items = [...currentDay.items];
+              const lastItem = items.pop();
+              if (lastItem) {
+                items.splice(insertIndex, 0, lastItem);
+                reorderItems(dayNumber, items);
+              }
+            }
+          }, 100);
+        }
+      }
+    }
+  }, [draggedDestination, addPlace, days, reorderItems]);
 
   // Parse destinations
   const destinations = useMemo(() => parseDestinations(trip?.destination ?? null), [trip?.destination]);
@@ -260,6 +335,13 @@ export default function TripPage() {
   const tripNotes = trip.notes || '';
 
   return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+    >
     <UndoProvider>
     <main className="w-full px-4 sm:px-6 pt-16 pb-24 sm:py-20 min-h-screen bg-white dark:bg-gray-950">
       <div className="max-w-6xl mx-auto">
@@ -404,6 +486,7 @@ export default function TripPage() {
                 onToggleItem={toggleItem}
                 onReorder={(items) => reorderItems(day.dayNumber, items)}
                 isEditMode={isEditMode}
+                isDropTarget={overDayNumber === day.dayNumber}
                 nightlyHotel={nightlyHotel}
                 checkoutHotel={checkoutHotel}
                 checkInHotel={checkInHotel}
@@ -588,6 +671,15 @@ export default function TripPage() {
                 </div>
               )}
 
+              {/* Drag & Drop Palette */}
+              {!sidebarAddDay && !selectedItem && (
+                <SidebarDestinationPalette
+                  city={primaryCity}
+                  selectedDayNumber={selectedDayNumber}
+                  onAddPlace={(dest, dayNum) => addPlace(dest, dayNum)}
+                />
+              )}
+
               {/* Checklist */}
               {!sidebarAddDay && (
                 <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
@@ -607,7 +699,18 @@ export default function TripPage() {
       {/* Saving feedback indicator */}
       <SavingFeedback status={savingStatus} />
     </main>
+
+    {/* Drag Overlay */}
+    <DragOverlay dropAnimation={{ duration: 200, easing: 'ease-out' }}>
+      {draggedDestination && (
+        <DragPreviewCard
+          destination={draggedDestination}
+          isOverTarget={overDayNumber !== null}
+        />
+      )}
+    </DragOverlay>
     </UndoProvider>
+    </DndContext>
   );
 }
 
@@ -1120,6 +1223,7 @@ function DaySection({
   onAddActivity,
   weather,
   isEditMode = false,
+  isDropTarget = false,
   nightlyHotel,
   checkoutHotel,
   checkInHotel,
@@ -1145,12 +1249,23 @@ function DaySection({
   onAddActivity: (data: ActivityData) => void;
   weather?: DayWeather;
   isEditMode?: boolean;
+  isDropTarget?: boolean;
   nightlyHotel?: EnrichedItineraryItem | null;
   checkoutHotel?: EnrichedItineraryItem | null;
   checkInHotel?: EnrichedItineraryItem | null;
   breakfastHotel?: EnrichedItineraryItem | null;
   onSelectItem?: (item: EnrichedItineraryItem) => void;
 }) {
+  // Make this day a drop target
+  const { setNodeRef, isOver } = useDroppable({
+    id: `day-drop-${dayNumber}`,
+    data: {
+      dayNumber,
+      type: 'day',
+    },
+  });
+  const showDropState = isOver || isDropTarget;
+
   const [orderedItems, setOrderedItems] = useState(items);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -1520,7 +1635,15 @@ function DaySection({
     : null;
 
   return (
-    <div id={`day-${dayNumber}`} className="scroll-mt-20">
+    <div
+      ref={setNodeRef}
+      id={`day-${dayNumber}`}
+      className={`scroll-mt-20 rounded-xl transition-all duration-200 ${
+        showDropState
+          ? 'bg-green-50 dark:bg-green-900/20 ring-2 ring-green-500/50 ring-inset p-3 -mx-3'
+          : ''
+      }`}
+    >
       {/* Day header - reference style */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -1844,6 +1967,12 @@ function DaySection({
       {/* Items (including hotel activities which are now always part of orderedItems) */}
       {orderedItems.length > 0 ? (
         <Reorder.Group axis="y" values={orderedItems} onReorder={setOrderedItems} className="space-y-0">
+          {/* Drop zone at the beginning */}
+          <DropZoneBetweenItems
+            dayNumber={dayNumber}
+            insertIndex={0}
+            insertTime={orderedItems[0]?.time || undefined}
+          />
           {orderedItems.map((item, index) => {
             // Check if this is a virtual hotel activity item
             const hotelActivityType = (item as EnrichedItineraryItem & { hotelActivityType?: string }).hotelActivityType;
@@ -1873,6 +2002,12 @@ function DaySection({
                     onSelect={onSelectItem ? () => onSelectItem(item) : undefined}
                   />
                 )}
+                {/* Drop zone after each item */}
+                <DropZoneBetweenItems
+                  dayNumber={dayNumber}
+                  insertIndex={index + 1}
+                  insertTime={orderedItems[index + 1]?.time || undefined}
+                />
                 {index < orderedItems.length - 1 && (
                   <TravelTime from={item} to={orderedItems[index + 1]} />
                 )}
@@ -3640,4 +3775,275 @@ function nearestNeighborOptimize(items: EnrichedItineraryItem[]): EnrichedItiner
   }
 
   return result;
+}
+
+/**
+ * Drop zone between items - Shows when dragging to allow insertion at specific positions
+ */
+function DropZoneBetweenItems({
+  dayNumber,
+  insertIndex,
+  insertTime,
+}: {
+  dayNumber: number;
+  insertIndex: number;
+  insertTime?: string;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `drop-zone-${dayNumber}-${insertIndex}`,
+    data: {
+      dayNumber,
+      insertIndex,
+      insertTime,
+      type: 'insertion-point',
+    },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`
+        transition-all duration-200 ease-out
+        ${isOver
+          ? 'h-12 bg-green-100 dark:bg-green-900/30 border-2 border-dashed border-green-500 rounded-lg my-1 flex items-center justify-center'
+          : 'h-1 hover:h-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full mx-8'
+        }
+      `}
+    >
+      {isOver && (
+        <span className="text-[11px] font-medium text-green-600 dark:text-green-400">
+          Drop here to insert
+        </span>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Sidebar Destination Palette - Drag destinations to add to trip
+ */
+function SidebarDestinationPalette({
+  city,
+  selectedDayNumber,
+  onAddPlace,
+}: {
+  city: string;
+  selectedDayNumber: number;
+  onAddPlace: (destination: Destination, dayNumber: number) => void;
+}) {
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!city) return;
+
+    const fetchDestinations = async () => {
+      setIsLoading(true);
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('destinations')
+        .select('id, slug, name, city, category, image_thumbnail, image, rating')
+        .eq('city', city)
+        .order('rating', { ascending: false })
+        .limit(12);
+
+      setDestinations((data as Destination[]) || []);
+      setIsLoading(false);
+    };
+
+    fetchDestinations();
+  }, [city]);
+
+  if (!city) return null;
+
+  return (
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-amber-500" />
+          <h3 className="text-[12px] font-semibold text-gray-900 dark:text-white">
+            Our Curated List in {city}
+          </h3>
+        </div>
+        <p className="text-[11px] text-gray-500 mt-0.5">
+          Drag to add to your trip
+        </p>
+      </div>
+
+      {/* Destination list */}
+      <div className="p-2 max-h-64 overflow-y-auto space-y-1">
+        {isLoading ? (
+          <div className="py-6 text-center">
+            <Loader2 className="w-5 h-5 animate-spin text-gray-400 mx-auto" />
+            <p className="text-[11px] text-gray-400 mt-2">Loading places...</p>
+          </div>
+        ) : destinations.length === 0 ? (
+          <div className="py-6 text-center text-[11px] text-gray-400">
+            No places found for {city}
+          </div>
+        ) : (
+          destinations.map((destination) => (
+            <DraggablePaletteCard
+              key={destination.id}
+              destination={destination}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Draggable card in the palette - Row layout for sidebar
+ */
+function DraggablePaletteCard({ destination }: { destination: Destination }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `palette-${destination.id}`,
+    data: {
+      destination,
+      source: 'palette',
+    },
+  });
+
+  const style = transform
+    ? {
+        transform: CSS.Translate.toString(transform),
+        opacity: isDragging ? 0.5 : 1,
+      }
+    : undefined;
+
+  const hasImage = destination.image_thumbnail || destination.image;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className={`
+        flex items-center gap-2.5 p-2 rounded-lg
+        bg-gray-50 dark:bg-gray-800
+        hover:bg-gray-100 dark:hover:bg-gray-700
+        cursor-grab active:cursor-grabbing
+        transition-all duration-150
+        ${isDragging ? 'shadow-xl ring-2 ring-gray-900/20 dark:ring-white/20 z-50' : ''}
+      `}
+    >
+      {/* Drag handle */}
+      <GripVertical className="w-3 h-3 text-gray-300 flex-shrink-0" />
+
+      {/* Thumbnail */}
+      <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
+        {hasImage ? (
+          <Image
+            src={destination.image_thumbnail || destination.image || ''}
+            alt={destination.name}
+            width={40}
+            height={40}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <MapPin className="w-4 h-4 text-gray-400" />
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] font-medium text-gray-900 dark:text-white truncate">
+          {destination.name}
+        </p>
+        <p className="text-[10px] text-gray-500 truncate capitalize">
+          {destination.category}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Drag preview card shown during drag
+ */
+function DragPreviewCard({
+  destination,
+  isOverTarget,
+}: {
+  destination: Destination;
+  isOverTarget: boolean;
+}) {
+  const hasImage = destination.image_thumbnail || destination.image;
+
+  return (
+    <div
+      className={`
+        pointer-events-none
+        transition-all duration-200 ease-out
+        ${isOverTarget ? 'scale-105 rotate-1' : 'scale-100 rotate-0'}
+      `}
+    >
+      <div
+        className={`
+          flex items-center gap-3 p-3 rounded-xl
+          bg-white dark:bg-gray-800
+          shadow-2xl border-2
+          transition-all duration-200
+          ${isOverTarget
+            ? 'border-green-500 dark:border-green-400 ring-4 ring-green-500/20'
+            : 'border-gray-200 dark:border-gray-700'
+          }
+        `}
+        style={{ width: isOverTarget ? 240 : 180 }}
+      >
+        {/* Thumbnail */}
+        <div
+          className={`
+            rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0
+            transition-all duration-200
+            ${isOverTarget ? 'w-12 h-12' : 'w-10 h-10'}
+          `}
+        >
+          {hasImage ? (
+            <Image
+              src={destination.image_thumbnail || destination.image || ''}
+              alt={destination.name}
+              width={48}
+              height={48}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <MapPin className="w-4 h-4 text-gray-400" />
+            </div>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <p className="text-[12px] font-semibold text-gray-900 dark:text-white truncate">
+            {destination.name}
+          </p>
+          <p className="text-[10px] text-gray-500 truncate capitalize">
+            {destination.category}
+          </p>
+
+          {/* Drop indicator */}
+          {isOverTarget && (
+            <p className="text-[10px] text-green-600 dark:text-green-400 mt-0.5">
+              Drop to add to day
+            </p>
+          )}
+        </div>
+
+        {/* Plus indicator */}
+        {isOverTarget && (
+          <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+            <Plus className="w-3 h-3 text-white" />
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
