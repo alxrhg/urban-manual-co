@@ -121,7 +121,7 @@ const IntelligentDrawer = memo(function IntelligentDrawer() {
       case 'similar':
         return context.destination ? `Places like ${context.destination.name}` : '';
       case 'why-this':
-        return 'AI Recommendation';
+        return 'Why This Pick';
       case 'trip':
         return activeTrip?.city || '';
       case 'trip-select':

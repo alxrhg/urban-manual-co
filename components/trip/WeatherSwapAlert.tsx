@@ -103,6 +103,7 @@ export default function WeatherSwapAlert({
 
 /**
  * Compact inline weather warning for day headers
+ * Uses standardized InsightChip for consistent styling
  */
 export function DayWeatherBadge({
   condition,
@@ -113,9 +114,25 @@ export function DayWeatherBadge({
 }) {
   if (precipitation < 5) return null;
 
+  // Determine variant based on precipitation level
+  const getVariant = (mm: number): 'info' | 'warning' | 'danger' => {
+    if (mm < 15) return 'info';
+    if (mm < 30) return 'warning';
+    return 'danger';
+  };
+
+  const variant = getVariant(precipitation);
+
   return (
-    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded">
-      <CloudRain className="w-2.5 h-2.5" />
+    <span
+      className={`
+        inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-full
+        ${variant === 'info' ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30' : ''}
+        ${variant === 'warning' ? 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30' : ''}
+        ${variant === 'danger' ? 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30' : ''}
+      `}
+    >
+      <CloudRain className="w-3 h-3" />
       {precipitation}mm
     </span>
   );

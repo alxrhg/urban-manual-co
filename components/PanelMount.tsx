@@ -30,7 +30,7 @@ const DRAWER_TITLES: Record<string, string> = {
   'place-selector': 'Add Place',
   'trip-add-hotel': 'Select Hotel',
   'add-flight': 'Add Flight',
-  'trip-ai': 'AI Suggestions',
+  'trip-ai': 'Suggestions',
 };
 
 interface PanelLayoutProps {

@@ -1,7 +1,12 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Users } from 'lucide-react';
+import {
+  InsightChip,
+  InsightDot,
+  getCrowdVariant,
+  getCrowdLabel,
+} from '@/components/ui/InsightChip';
 
 interface CrowdIndicatorProps {
   category?: string;
@@ -67,6 +72,7 @@ function getBetterTime(category: string, currentHour: number): string | null {
 
 /**
  * CrowdIndicator - Shows crowd level and suggests better times
+ * Uses standardized InsightChip for consistent styling
  */
 export default function CrowdIndicator({
   category = '',
@@ -89,48 +95,28 @@ export default function CrowdIndicator({
   if (!analysis) return null;
 
   const { level, betterTime } = analysis;
-
-  // Colors and labels
-  const config = {
-    quiet: {
-      color: 'text-green-600 dark:text-green-400',
-      bg: 'bg-green-100 dark:bg-green-900/30',
-      label: 'Quiet',
-    },
-    moderate: {
-      color: 'text-gray-500 dark:text-gray-400',
-      bg: 'bg-gray-100 dark:bg-gray-800',
-      label: 'Moderate',
-    },
-    busy: {
-      color: 'text-amber-600 dark:text-amber-400',
-      bg: 'bg-amber-100 dark:bg-amber-900/30',
-      label: 'Busy',
-    },
-    peak: {
-      color: 'text-red-600 dark:text-red-400',
-      bg: 'bg-red-100 dark:bg-red-900/30',
-      label: 'Peak',
-    },
-  };
-
-  const { color, bg, label } = config[level];
+  const variant = getCrowdVariant(level);
+  const label = getCrowdLabel(level);
 
   if (compact) {
     return (
-      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium ${bg} ${color} ${className}`}>
-        <Users className="w-2.5 h-2.5" />
-        {label}
-      </span>
+      <InsightChip
+        type="crowd"
+        variant={variant}
+        label={label}
+        compact
+        className={className}
+      />
     );
   }
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${bg} ${color}`}>
-        <Users className="w-3 h-3" />
-        {label}
-      </span>
+      <InsightChip
+        type="crowd"
+        variant={variant}
+        label={label}
+      />
       {betterTime && (
         <span className="text-[10px] text-gray-400 dark:text-gray-500">
           Try {betterTime} instead
@@ -142,6 +128,7 @@ export default function CrowdIndicator({
 
 /**
  * Inline crowd badge for item cards
+ * Uses standardized InsightDot for consistent styling
  */
 export function CrowdBadge({ category, time }: { category?: string; time?: string | null }) {
   const hour = getHourFromTime(time);
@@ -152,16 +139,10 @@ export function CrowdBadge({ category, time }: { category?: string; time?: strin
   // Only show for busy/peak
   if (level === 'quiet' || level === 'moderate') return null;
 
-  const config = {
-    busy: { color: 'text-amber-600', icon: '●' },
-    peak: { color: 'text-red-500', icon: '●' },
-  };
-
-  const { color, icon } = config[level as 'busy' | 'peak'];
+  const variant = getCrowdVariant(level);
+  const title = level === 'peak' ? 'Peak time' : 'Busy';
 
   return (
-    <span className={`text-[8px] ${color}`} title={`${level === 'peak' ? 'Peak time' : 'Busy'}`}>
-      {icon}
-    </span>
+    <InsightDot variant={variant} title={title} />
   );
 }

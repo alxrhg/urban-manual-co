@@ -115,7 +115,7 @@ export default function AISuggestionsDrawer({
       {/* TITLE */}
       <div className="space-y-1">
         <h1 className="text-2xl font-light text-gray-900 dark:text-white">
-          AI Suggestions
+          Suggestions
         </h1>
         <p className="text-xs text-gray-500 dark:text-gray-400">
           Based on your itinerary and location flow
