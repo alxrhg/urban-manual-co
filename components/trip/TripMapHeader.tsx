@@ -83,7 +83,7 @@ export default function TripMapHeader({
 
   // Handle marker click
   const handleMarkerClick = useCallback((item: EnrichedItineraryItem) => {
-    syncMarkerClick(item);
+    syncMarkerClick(item.id);
     setActiveItem(item.id);
     flyToItem(item.id);
     onMarkerClick?.(item);
