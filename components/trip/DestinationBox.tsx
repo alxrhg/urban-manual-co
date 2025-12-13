@@ -72,7 +72,7 @@ export default function DestinationBox({
   const description = destination?.micro_description || destination?.description;
   const address = destination?.formatted_address || parsedNotes?.address;
   const website = destination?.website || parsedNotes?.website;
-  const phone = parsedNotes?.phone || destination?.phone;
+  const phone = parsedNotes?.phone;
   const rating = destination?.rating;
   const priceLevel = destination?.price_level;
 
