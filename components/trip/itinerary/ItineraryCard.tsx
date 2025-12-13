@@ -6,27 +6,27 @@ import {
   Plane,
   Building2,
   MapPin,
-  UtensilsCrossed,
-  Wine,
-  Coffee,
   Ticket,
-  ChevronRight,
+  Star,
+  Globe,
+  Navigation,
+  ExternalLink,
+  Clock,
+  Calendar,
 } from 'lucide-react';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
-import type { ItineraryItemNotes } from '@/types/trip';
 
 interface ItineraryCardProps {
   item: EnrichedItineraryItem;
   isActive?: boolean;
   onClick?: () => void;
   onUpdateNotes?: (itemId: string, notes: Record<string, unknown>) => void;
-  mapIndex?: number; // Map marker number (1, 2, 3...) - only for items with coordinates
+  mapIndex?: number;
   className?: string;
 }
 
 /**
- * ItineraryCard - Full visual card with image
- * Used for: flights, hotels, restaurants, attractions, bars, events
+ * ItineraryCard - Clean sidebar card design
  */
 export default function ItineraryCard({
   item,
@@ -38,7 +38,6 @@ export default function ItineraryCard({
 }: ItineraryCardProps) {
   const itemType = item.parsedNotes?.type || 'place';
 
-  // Route to specialized card based on type
   switch (itemType) {
     case 'flight':
       return <FlightCard item={item} isActive={isActive} onClick={onClick} onUpdateNotes={onUpdateNotes} className={className} />;
@@ -49,101 +48,6 @@ export default function ItineraryCard({
     default:
       return <PlaceCard item={item} isActive={isActive} onClick={onClick} mapIndex={mapIndex} className={className} />;
   }
-}
-
-// ============================================================================
-// Map Marker Badge - Shows the marker number matching the map
-// ============================================================================
-
-function MapMarkerBadge({ index, isActive }: { index: number; isActive?: boolean }) {
-  return (
-    <div
-      className={`
-        w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0
-        ${isActive
-          ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-          : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-900 dark:border-gray-600'
-        }
-      `}
-      title={`Stop ${index} on map`}
-    >
-      {index}
-    </div>
-  );
-}
-
-// ============================================================================
-// Inline Edit Field for Flight Details
-// ============================================================================
-
-function InlineEditField({
-  label,
-  value,
-  placeholder,
-  onSave,
-}: {
-  label: string;
-  value: string;
-  placeholder: string;
-  onSave: (value: string) => void;
-}) {
-  const [isEditing, setIsEditing] = React.useState(false);
-  const [editValue, setEditValue] = React.useState(value);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-
-  React.useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [isEditing]);
-
-  const handleSave = () => {
-    setIsEditing(false);
-    if (editValue !== value) {
-      onSave(editValue);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSave();
-    } else if (e.key === 'Escape') {
-      setEditValue(value);
-      setIsEditing(false);
-    }
-  };
-
-  if (isEditing) {
-    return (
-      <span className="inline-flex items-center" onClick={(e) => e.stopPropagation()}>
-        <span className="text-stone-400 mr-1">{label}</span>
-        <input
-          ref={inputRef}
-          type="text"
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value.toUpperCase())}
-          onBlur={handleSave}
-          onKeyDown={handleKeyDown}
-          className="w-12 bg-white dark:bg-gray-800 border border-stone-300 dark:border-gray-600 rounded px-1 py-0.5 text-xs font-mono text-stone-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-stone-400"
-          placeholder={placeholder}
-        />
-      </span>
-    );
-  }
-
-  return (
-    <span
-      onClick={(e) => {
-        e.stopPropagation();
-        setIsEditing(true);
-      }}
-      className="cursor-text hover:bg-stone-200 dark:hover:bg-gray-700 px-1 py-0.5 rounded transition-colors"
-      title="Click to edit"
-    >
-      {label} {value || <span className="text-stone-400">---</span>}
-    </span>
-  );
 }
 
 // ============================================================================
@@ -159,7 +63,6 @@ function FlightCard({
 }: ItineraryCardProps & { onUpdateNotes?: (itemId: string, notes: Record<string, unknown>) => void }) {
   const notes = item.parsedNotes;
 
-  // Parse airport codes
   const parseAirport = (value?: string) => {
     if (!value) return { code: '---', name: '' };
     const parts = value.split(/[-–—]/);
@@ -170,110 +73,113 @@ function FlightCard({
 
   const origin = parseAirport(notes?.from);
   const destination = parseAirport(notes?.to);
-  const duration = notes?.duration || '--';
+  const duration = notes?.duration || '';
   const flightNumber = notes?.flightNumber
     ? `${notes?.airline || ''} ${notes.flightNumber}`.trim()
-    : notes?.airline || '--';
-
-  const handleUpdateField = (field: string, value: string) => {
-    if (onUpdateNotes) {
-      onUpdateNotes(item.id, { [field]: value });
-    }
-  };
+    : notes?.airline || '';
 
   return (
     <div
       onClick={onClick}
       className={`
-        rounded-2xl bg-white dark:bg-gray-900/80 border overflow-hidden cursor-pointer transition-all
-        ${isActive ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10' : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'}
+        rounded-2xl bg-white dark:bg-gray-900 border overflow-hidden cursor-pointer transition-all
+        ${isActive
+          ? 'border-stone-300 dark:border-gray-600 shadow-lg'
+          : 'border-stone-200 dark:border-gray-800 hover:shadow-md'
+        }
         ${className}
       `}
     >
-      {/* Flight Header */}
-      <div className="px-4 pt-4 pb-3">
-        <div className="flex items-center gap-2 text-stone-500 dark:text-gray-400 text-sm mb-4">
-          <Plane className="w-4 h-4" />
-          <span>Flight to {destination.name || destination.code}</span>
+      {/* Header */}
+      <div className="px-4 pt-4 pb-3 border-b border-stone-100 dark:border-gray-800">
+        <div className="flex items-center gap-2 text-stone-400 dark:text-gray-500 text-xs uppercase tracking-wide mb-1">
+          <Plane className="w-3.5 h-3.5" />
+          <span>Flight</span>
         </div>
-
-        {/* Route Display */}
-        <div className="flex items-center justify-between">
-          {/* Origin */}
-          <div>
-            <div className="text-3xl font-bold text-stone-900 dark:text-white tracking-tight">
-              {origin.code}
-            </div>
-            <div className="text-xs text-stone-500 mt-1">
-              {origin.name || 'Departure'}
-            </div>
-            <div className="text-sm font-medium text-stone-900 dark:text-white mt-1">
-              {notes?.departureTime || '--:--'}
-            </div>
-          </div>
-
-          {/* Flight Path */}
-          <div className="flex-1 flex flex-col items-center px-4">
-            <div className="text-xs text-stone-500 mb-1">{duration}</div>
-            <div className="w-full flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-stone-300 dark:bg-gray-600" />
-              <div className="flex-1 h-px bg-stone-200 dark:bg-gray-700 relative">
-                <Plane className="w-4 h-4 text-stone-400 dark:text-gray-500 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
-              </div>
-              <div className="w-2 h-2 rounded-full bg-stone-300 dark:bg-gray-600" />
-            </div>
-            <div className="px-2 py-0.5 bg-stone-100 dark:bg-gray-800 rounded text-xs text-stone-500 dark:text-gray-400 mt-2">
-              {flightNumber}
-            </div>
-          </div>
-
-          {/* Destination */}
-          <div className="text-right">
-            <div className="text-3xl font-bold text-stone-900 dark:text-white tracking-tight">
-              {destination.code}
-            </div>
-            <div className="text-xs text-stone-500 mt-1">
-              {destination.name || 'Arrival'}
-            </div>
-            <div className="text-sm font-medium text-stone-900 dark:text-white mt-1">
-              {notes?.arrivalTime || '--:--'}
-            </div>
-          </div>
-        </div>
+        <h3 className="font-semibold text-stone-900 dark:text-white">
+          {origin.code} → {destination.code}
+        </h3>
+        {flightNumber && (
+          <p className="text-sm text-stone-500 dark:text-gray-400">{flightNumber}</p>
+        )}
       </div>
 
-      {/* Footer with editable details */}
-      <div className="px-4 py-3 bg-stone-50 dark:bg-gray-900/50 border-t border-stone-100 dark:border-gray-800 flex items-center justify-between">
-        <div className="flex items-center gap-4 text-xs text-stone-500 font-mono">
-          <InlineEditField
-            label="TERMINAL"
-            value={notes?.terminal || ''}
-            placeholder="T1"
-            onSave={(v) => handleUpdateField('terminal', v)}
-          />
-          <InlineEditField
-            label="GATE"
-            value={notes?.gate || ''}
-            placeholder="A1"
-            onSave={(v) => handleUpdateField('gate', v)}
-          />
-          <InlineEditField
-            label="SEAT"
-            value={notes?.seatNumber || ''}
-            placeholder="1A"
-            onSave={(v) => handleUpdateField('seatNumber', v)}
-          />
+      {/* Flight Route */}
+      <div className="p-4">
+        <div className="flex items-center justify-between gap-4">
+          {/* Departure */}
+          <div className="flex-1">
+            <p className="text-xs text-stone-400 dark:text-gray-500 uppercase tracking-wide mb-1">Departure</p>
+            <p className="text-2xl font-bold text-stone-900 dark:text-white">{origin.code}</p>
+            <p className="text-xs text-stone-500 dark:text-gray-400 truncate">{origin.name || 'Origin'}</p>
+            {notes?.departureTime && (
+              <p className="text-sm font-medium text-stone-900 dark:text-white mt-1">{notes.departureTime}</p>
+            )}
+          </div>
+
+          {/* Flight path indicator */}
+          <div className="flex flex-col items-center px-2">
+            {duration && (
+              <span className="text-xs text-stone-400 dark:text-gray-500 mb-1">{duration}</span>
+            )}
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full bg-stone-300 dark:bg-gray-600" />
+              <div className="w-12 h-px bg-stone-200 dark:bg-gray-700" />
+              <Plane className="w-3 h-3 text-stone-400 dark:text-gray-500" />
+              <div className="w-12 h-px bg-stone-200 dark:bg-gray-700" />
+              <div className="w-2 h-2 rounded-full bg-stone-300 dark:bg-gray-600" />
+            </div>
+          </div>
+
+          {/* Arrival */}
+          <div className="flex-1 text-right">
+            <p className="text-xs text-stone-400 dark:text-gray-500 uppercase tracking-wide mb-1">Arrival</p>
+            <p className="text-2xl font-bold text-stone-900 dark:text-white">{destination.code}</p>
+            <p className="text-xs text-stone-500 dark:text-gray-400 truncate">{destination.name || 'Destination'}</p>
+            {notes?.arrivalTime && (
+              <p className="text-sm font-medium text-stone-900 dark:text-white mt-1">{notes.arrivalTime}</p>
+            )}
+          </div>
         </div>
-        <button className="text-xs text-stone-500 hover:text-stone-900 dark:hover:text-white transition-colors">
-          Details
-        </button>
+
+        {/* Flight details */}
+        {(notes?.terminal || notes?.gate || notes?.seatNumber) && (
+          <div className="flex gap-4 mt-4 pt-4 border-t border-stone-100 dark:border-gray-800">
+            {notes?.terminal && (
+              <div>
+                <p className="text-xs text-stone-400 dark:text-gray-500">Terminal</p>
+                <p className="text-sm font-medium text-stone-900 dark:text-white">{notes.terminal}</p>
+              </div>
+            )}
+            {notes?.gate && (
+              <div>
+                <p className="text-xs text-stone-400 dark:text-gray-500">Gate</p>
+                <p className="text-sm font-medium text-stone-900 dark:text-white">{notes.gate}</p>
+              </div>
+            )}
+            {notes?.seatNumber && (
+              <div>
+                <p className="text-xs text-stone-400 dark:text-gray-500">Seat</p>
+                <p className="text-sm font-medium text-stone-900 dark:text-white">{notes.seatNumber}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Confirmation */}
+        {notes?.confirmationNumber && (
+          <div className="mt-4 pt-4 border-t border-stone-100 dark:border-gray-800">
+            <p className="text-xs text-stone-400 dark:text-gray-500">Confirmation #</p>
+            <p className="text-sm font-mono font-medium text-stone-900 dark:text-white">{notes.confirmationNumber}</p>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 // ============================================================================
-// Hotel Card
+// Hotel Card - Matching the screenshot design
 // ============================================================================
 
 function HotelCard({
@@ -285,78 +191,176 @@ function HotelCard({
 }: ItineraryCardProps) {
   const notes = item.parsedNotes;
   const image = item.destination?.image || item.parsedNotes?.image;
-  const checkInTime = notes?.checkInTime || item.time;
-  const nights = notes?.checkInDate && notes?.checkOutDate
-    ? Math.ceil((new Date(notes.checkOutDate).getTime() - new Date(notes.checkInDate).getTime()) / (1000 * 60 * 60 * 24))
-    : 1;
+  const checkInTime = notes?.checkInTime || '15:00';
+  const checkOutTime = notes?.checkOutTime || '11:00';
+  const rating = item.destination?.rating;
+  const address = notes?.address || item.destination?.formatted_address;
+  const website = notes?.website || item.destination?.website;
+  const description = item.destination?.description || item.destination?.micro_description;
+
+  // Format time for display (e.g., "15:00" -> "15:00")
+  const formatTime = (time: string) => {
+    if (!time) return '';
+    // Already in correct format
+    return time;
+  };
 
   return (
-    <button
+    <div
       onClick={onClick}
       className={`
-        w-full text-left rounded-2xl overflow-hidden transition-all
-        bg-white dark:bg-gray-900 border
+        rounded-2xl bg-white dark:bg-gray-900 border overflow-hidden cursor-pointer transition-all
         ${isActive
-          ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10'
-          : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'
+          ? 'border-stone-300 dark:border-gray-600 shadow-lg'
+          : 'border-stone-200 dark:border-gray-800 hover:shadow-md'
         }
         ${className}
       `}
     >
-      {/* Image */}
-      {image && (
-        <div className="relative h-32 w-full">
+      {/* Header */}
+      <div className="px-4 pt-4 pb-3">
+        <div className="flex items-center gap-2 text-stone-400 dark:text-gray-500 text-xs uppercase tracking-wide mb-1">
+          <Building2 className="w-3.5 h-3.5" />
+          <span>Hotel</span>
+        </div>
+        <h3 className="font-semibold text-stone-900 dark:text-white text-lg">
+          {item.title || 'Hotel'}
+        </h3>
+        <p className="text-sm text-stone-500 dark:text-gray-400">Hotel</p>
+      </div>
+
+      {/* Hero Image */}
+      <div className="relative h-44 w-full bg-stone-100 dark:bg-gray-800 mx-4 rounded-xl overflow-hidden" style={{ width: 'calc(100% - 32px)' }}>
+        {image ? (
           <Image
             src={image}
             alt={item.title || 'Hotel'}
             fill
             className="object-cover"
-            sizes="(max-width: 768px) 100vw, 400px"
+            sizes="400px"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-          {/* Map marker badge */}
-          {mapIndex && (
-            <div className="absolute top-3 left-3">
-              <MapMarkerBadge index={mapIndex} isActive={isActive} />
-            </div>
-          )}
-          {/* Badges */}
-          <div className="absolute bottom-3 left-4 flex items-center gap-1.5">
-            <span className="px-2 py-0.5 rounded-full bg-gray-900/80 text-white text-xs font-medium">
-              {nights} {nights === 1 ? 'night' : 'nights'}
-            </span>
-            {notes?.breakfastIncluded && (
-              <span className="px-2 py-0.5 rounded-full bg-gray-900/80 text-white text-xs font-medium">
-                Breakfast
-              </span>
-            )}
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Building2 className="w-12 h-12 text-stone-300 dark:text-gray-600" />
           </div>
-        </div>
-      )}
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-      {/* Content */}
-      <div className="p-4">
-        <div className="flex items-start gap-3">
-          {!image && mapIndex && (
-            <MapMarkerBadge index={mapIndex} isActive={isActive} />
-          )}
-          {!image && !mapIndex && (
-            <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-              <Building2 className="w-5 h-5 text-stone-500 dark:text-gray-400" />
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-stone-900 dark:text-white truncate">
-              {item.title || 'Hotel'}
-            </h4>
-            <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
-              {checkInTime ? `Check-in ${checkInTime}` : 'Check-in time not set'}
-            </p>
+        {/* Rating badge */}
+        {rating && (
+          <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-lg bg-stone-800/80 backdrop-blur-sm">
+            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+            <span className="text-sm font-medium text-white">{rating.toFixed(1)}</span>
           </div>
-          <ChevronRight className="w-4 h-4 text-stone-400 flex-shrink-0" />
+        )}
+
+        {/* Hotel name overlay */}
+        <div className="absolute bottom-3 left-3 right-3">
+          <h4 className="text-white font-semibold text-base">{item.title || 'Hotel'}</h4>
         </div>
       </div>
-    </button>
+
+      <div className="p-4">
+        {/* Action buttons */}
+        <div className="flex gap-2 mb-4">
+          {website && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(website, '_blank');
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-stone-200 dark:border-gray-700 text-sm text-stone-700 dark:text-gray-300 hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <Globe className="w-4 h-4" />
+              Website
+            </button>
+          )}
+          {(item.destination?.latitude && item.destination?.longitude) && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const lat = item.destination?.latitude;
+                const lng = item.destination?.longitude;
+                window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-stone-200 dark:border-gray-700 text-sm text-stone-700 dark:text-gray-300 hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <Navigation className="w-4 h-4" />
+              Directions
+            </button>
+          )}
+        </div>
+
+        {/* Description */}
+        {description && (
+          <p className="text-sm text-stone-600 dark:text-gray-400 mb-4 line-clamp-3">
+            {description}
+          </p>
+        )}
+
+        {/* Rating row */}
+        {rating && (
+          <div className="flex items-center justify-between py-3 border-t border-stone-100 dark:border-gray-800">
+            <span className="text-sm text-stone-500 dark:text-gray-400">Rating</span>
+            <div className="flex items-center gap-1">
+              <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+              <span className="text-sm font-medium text-stone-900 dark:text-white">{rating.toFixed(1)}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Address */}
+        {address && (
+          <div className="flex items-start gap-2 py-3 border-t border-stone-100 dark:border-gray-800">
+            <MapPin className="w-4 h-4 text-stone-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-stone-600 dark:text-gray-400">{address}</p>
+          </div>
+        )}
+
+        {/* YOUR STAY Section */}
+        <div className="mt-2 pt-4 border-t border-stone-100 dark:border-gray-800">
+          <p className="text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-3">
+            Your Stay
+          </p>
+
+          <div className="flex gap-3">
+            {/* Check-in */}
+            <div className="flex-1 bg-stone-50 dark:bg-gray-800/50 rounded-xl p-3">
+              <p className="text-xs text-stone-400 dark:text-gray-500 uppercase tracking-wide mb-1">
+                Check-in
+              </p>
+              <p className="text-xl font-semibold text-stone-900 dark:text-white">
+                {formatTime(checkInTime)}
+              </p>
+            </div>
+
+            {/* Check-out */}
+            <div className="flex-1 bg-stone-50 dark:bg-gray-800/50 rounded-xl p-3">
+              <p className="text-xs text-stone-400 dark:text-gray-500 uppercase tracking-wide mb-1">
+                Check-out
+              </p>
+              <p className="text-xl font-semibold text-stone-900 dark:text-white">
+                {formatTime(checkOutTime)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* View on Urban Manual link */}
+        {item.destination?.slug && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              window.open(`/destinations/${item.destination?.slug}`, '_blank');
+            }}
+            className="w-full flex items-center justify-center gap-2 mt-4 py-3 text-sm text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors"
+          >
+            <ExternalLink className="w-4 h-4" />
+            View on Urban Manual
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -375,69 +379,76 @@ function EventCard({
   const image = item.destination?.image || item.parsedNotes?.image;
 
   return (
-    <button
+    <div
       onClick={onClick}
       className={`
-        w-full text-left rounded-2xl overflow-hidden transition-all
-        bg-white dark:bg-gray-900 border
+        rounded-2xl bg-white dark:bg-gray-900 border overflow-hidden cursor-pointer transition-all
         ${isActive
-          ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10'
-          : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'
+          ? 'border-stone-300 dark:border-gray-600 shadow-lg'
+          : 'border-stone-200 dark:border-gray-800 hover:shadow-md'
         }
         ${className}
       `}
     >
+      {/* Header */}
+      <div className="px-4 pt-4 pb-3">
+        <div className="flex items-center gap-2 text-stone-400 dark:text-gray-500 text-xs uppercase tracking-wide mb-1">
+          <Ticket className="w-3.5 h-3.5" />
+          <span>Event</span>
+        </div>
+        <h3 className="font-semibold text-stone-900 dark:text-white text-lg">
+          {item.title || 'Event'}
+        </h3>
+        {notes?.eventType && (
+          <p className="text-sm text-stone-500 dark:text-gray-400 capitalize">{notes.eventType}</p>
+        )}
+      </div>
+
       {/* Image */}
       {image && (
-        <div className="relative h-28 w-full">
+        <div className="relative h-40 w-full bg-stone-100 dark:bg-gray-800 mx-4 rounded-xl overflow-hidden" style={{ width: 'calc(100% - 32px)' }}>
           <Image
             src={image}
             alt={item.title || 'Event'}
             fill
             className="object-cover"
-            sizes="(max-width: 768px) 100vw, 400px"
+            sizes="400px"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-          {/* Map marker badge */}
-          {mapIndex && (
-            <div className="absolute top-3 left-3">
-              <MapMarkerBadge index={mapIndex} isActive={isActive} />
-            </div>
-          )}
-          {notes?.eventType && (
-            <div className="absolute bottom-3 left-4">
-              <span className="px-2 py-0.5 rounded-full bg-gray-900/80 text-white text-xs font-medium capitalize">
-                {notes.eventType}
-              </span>
-            </div>
-          )}
         </div>
       )}
 
-      {/* Content */}
       <div className="p-4">
-        <div className="flex items-start gap-3">
-          {!image && mapIndex && (
-            <MapMarkerBadge index={mapIndex} isActive={isActive} />
-          )}
-          {!image && !mapIndex && (
-            <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-              <Ticket className="w-5 h-5 text-stone-500 dark:text-gray-400" />
+        {/* Event Details */}
+        <div className="space-y-3">
+          {notes?.venue && (
+            <div className="flex items-start gap-2">
+              <MapPin className="w-4 h-4 text-stone-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-stone-600 dark:text-gray-400">{notes.venue}</p>
             </div>
           )}
-          <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-stone-900 dark:text-white truncate">
-              {item.title || 'Event'}
-            </h4>
-            <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
-              {notes?.venue && `${notes.venue} · `}
-              {notes?.eventTime || item.time || 'Time not set'}
-            </p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-stone-400 flex-shrink-0" />
+          {(notes?.eventTime || item.time) && (
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-stone-400 dark:text-gray-500 flex-shrink-0" />
+              <p className="text-sm text-stone-600 dark:text-gray-400">{notes?.eventTime || item.time}</p>
+            </div>
+          )}
+          {notes?.eventDate && (
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-stone-400 dark:text-gray-500 flex-shrink-0" />
+              <p className="text-sm text-stone-600 dark:text-gray-400">{notes.eventDate}</p>
+            </div>
+          )}
         </div>
+
+        {/* Confirmation */}
+        {notes?.confirmationNumber && (
+          <div className="mt-4 pt-4 border-t border-stone-100 dark:border-gray-800">
+            <p className="text-xs text-stone-400 dark:text-gray-500">Confirmation #</p>
+            <p className="text-sm font-mono font-medium text-stone-900 dark:text-white">{notes.confirmationNumber}</p>
+          </div>
+        )}
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -455,6 +466,10 @@ function PlaceCard({
   const image = item.destination?.image || item.destination?.image_thumbnail;
   const category = item.parsedNotes?.category || item.destination?.category;
   const time = item.time;
+  const rating = item.destination?.rating;
+  const address = item.destination?.formatted_address;
+  const description = item.destination?.description || item.destination?.micro_description;
+  const website = item.destination?.website;
 
   // Format time display
   const formatTime = (timeStr?: string | null) => {
@@ -462,7 +477,7 @@ function PlaceCard({
     const [hours, minutes] = timeStr.split(':').map(Number);
     const period = hours >= 12 ? 'PM' : 'AM';
     const displayHours = hours % 12 || 12;
-    return { time: `${displayHours}:${minutes?.toString().padStart(2, '0')}`, period };
+    return `${displayHours}:${minutes?.toString().padStart(2, '0')} ${period}`;
   };
 
   const formattedTime = formatTime(time);
@@ -471,54 +486,133 @@ function PlaceCard({
     <div
       onClick={onClick}
       className={`
-        rounded-2xl bg-white dark:bg-gray-900/80 border overflow-hidden cursor-pointer transition-all
-        ${isActive ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10' : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'}
+        rounded-2xl bg-white dark:bg-gray-900 border overflow-hidden cursor-pointer transition-all
+        ${isActive
+          ? 'border-stone-300 dark:border-gray-600 shadow-lg'
+          : 'border-stone-200 dark:border-gray-800 hover:shadow-md'
+        }
         ${className}
       `}
     >
+      {/* Header */}
+      <div className="px-4 pt-4 pb-3">
+        <div className="flex items-center gap-2 text-stone-400 dark:text-gray-500 text-xs uppercase tracking-wide mb-1">
+          <MapPin className="w-3.5 h-3.5" />
+          <span>{category?.replace(/_/g, ' ') || 'Place'}</span>
+        </div>
+        <h3 className="font-semibold text-stone-900 dark:text-white text-lg">
+          {item.title || 'Place'}
+        </h3>
+        {category && (
+          <p className="text-sm text-stone-500 dark:text-gray-400 capitalize">{category.replace(/_/g, ' ')}</p>
+        )}
+      </div>
+
+      {/* Image */}
       {image && (
-        <div className="relative h-32 w-full">
+        <div className="relative h-44 w-full bg-stone-100 dark:bg-gray-800 mx-4 rounded-xl overflow-hidden" style={{ width: 'calc(100% - 32px)' }}>
           <Image
             src={image}
             alt={item.title || 'Place'}
             fill
             className="object-cover"
-            sizes="(max-width: 768px) 100vw, 50vw"
+            sizes="400px"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-          {/* Map marker badge on image */}
-          {mapIndex && (
-            <div className="absolute top-3 left-3">
-              <MapMarkerBadge index={mapIndex} isActive={isActive} />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+          {/* Rating badge */}
+          {rating && (
+            <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-lg bg-stone-800/80 backdrop-blur-sm">
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              <span className="text-sm font-medium text-white">{rating.toFixed(1)}</span>
             </div>
           )}
+
+          {/* Title overlay */}
+          <div className="absolute bottom-3 left-3 right-3">
+            <h4 className="text-white font-semibold text-base">{item.title || 'Place'}</h4>
+          </div>
         </div>
       )}
 
       <div className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            {/* Map marker badge (when no image) */}
-            {!image && mapIndex && (
-              <MapMarkerBadge index={mapIndex} isActive={isActive} />
-            )}
-            <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-stone-900 dark:text-white truncate">
-                {item.title || 'Place'}
-              </h4>
-              {category && (
-                <p className="text-xs text-stone-500 capitalize mt-0.5">
-                  {category.replace(/_/g, ' ')}
-                </p>
-              )}
-            </div>
-          </div>
-          {formattedTime && (
-            <div className="text-sm text-stone-600 dark:text-gray-400 flex-shrink-0">
-              {formattedTime.time} {formattedTime.period}
-            </div>
+        {/* Action buttons */}
+        <div className="flex gap-2 mb-4">
+          {website && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(website, '_blank');
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-stone-200 dark:border-gray-700 text-sm text-stone-700 dark:text-gray-300 hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <Globe className="w-4 h-4" />
+              Website
+            </button>
+          )}
+          {(item.destination?.latitude && item.destination?.longitude) && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const lat = item.destination?.latitude;
+                const lng = item.destination?.longitude;
+                window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-stone-200 dark:border-gray-700 text-sm text-stone-700 dark:text-gray-300 hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <Navigation className="w-4 h-4" />
+              Directions
+            </button>
           )}
         </div>
+
+        {/* Description */}
+        {description && (
+          <p className="text-sm text-stone-600 dark:text-gray-400 mb-4 line-clamp-3">
+            {description}
+          </p>
+        )}
+
+        {/* Rating row */}
+        {rating && (
+          <div className="flex items-center justify-between py-3 border-t border-stone-100 dark:border-gray-800">
+            <span className="text-sm text-stone-500 dark:text-gray-400">Rating</span>
+            <div className="flex items-center gap-1">
+              <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+              <span className="text-sm font-medium text-stone-900 dark:text-white">{rating.toFixed(1)}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Time */}
+        {formattedTime && (
+          <div className="flex items-center justify-between py-3 border-t border-stone-100 dark:border-gray-800">
+            <span className="text-sm text-stone-500 dark:text-gray-400">Time</span>
+            <span className="text-sm font-medium text-stone-900 dark:text-white">{formattedTime}</span>
+          </div>
+        )}
+
+        {/* Address */}
+        {address && (
+          <div className="flex items-start gap-2 py-3 border-t border-stone-100 dark:border-gray-800">
+            <MapPin className="w-4 h-4 text-stone-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-stone-600 dark:text-gray-400">{address}</p>
+          </div>
+        )}
+
+        {/* View on Urban Manual link */}
+        {item.destination?.slug && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              window.open(`/destinations/${item.destination?.slug}`, '_blank');
+            }}
+            className="w-full flex items-center justify-center gap-2 mt-2 py-3 text-sm text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors"
+          >
+            <ExternalLink className="w-4 h-4" />
+            View on Urban Manual
+          </button>
+        )}
       </div>
     </div>
   );
