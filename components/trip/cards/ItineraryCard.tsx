@@ -187,4 +187,3 @@ export default function ItineraryCard({
 
 // Re-export role utilities for use by parent components
 export { ItemRoleBadge, RoleIndicatorDot, getRoleBorderClass } from './ItemRoleBadge';
-export { getItemRole };
