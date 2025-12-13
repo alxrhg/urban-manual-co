@@ -471,7 +471,7 @@ export interface InferredPreferences {
 // ============================================
 
 export interface UserAction {
-  type: 'click' | 'save' | 'hover' | 'scroll' | 'share' | 'book' | 'reject';
+  type: 'click' | 'save' | 'hover' | 'scroll' | 'scroll_past' | 'share' | 'book' | 'reject' | 'dwell';
   target: string;
   timestamp: Date;
   context?: Record<string, unknown>;
