@@ -2982,6 +2982,9 @@ function ItemRow({
     );
   }
 
+  // Get time display for left column
+  const timeDisplay = item.time ? formatTime(item.time) : '';
+
   return (
     <Reorder.Item
       value={item}
@@ -2990,149 +2993,87 @@ function ItemRow({
       className={`${isEditMode ? 'cursor-grab active:cursor-grabbing' : ''} ${isDragging ? 'z-10' : ''}`}
       dragListener={isEditMode}
     >
-      <div
-        className={`
-          relative rounded-2xl overflow-hidden transition-all cursor-pointer
-          bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800
-          ${isDragging ? 'shadow-xl ring-2 ring-stone-400 dark:ring-gray-500' : 'hover:shadow-md'}
-        `}
-        onClick={() => {
-          const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
-          if (isDesktop && onSelect) {
-            onSelect();
-          } else {
-            onToggle();
-          }
-        }}
-      >
-        <div className="p-4">
-          <div className="flex items-center gap-3">
-            {/* Drag handle - only visible in edit mode */}
-            {isEditMode && (
-              <div className="flex-shrink-0 touch-none cursor-grab active:cursor-grabbing">
-                <GripVertical className="w-4 h-4 text-gray-400 opacity-60" />
-              </div>
-            )}
-
-            {/* Icon */}
-            <div className="w-10 h-10 rounded-xl overflow-hidden bg-stone-100 dark:bg-gray-800 flex-shrink-0 flex items-center justify-center">
-              {iconType === 'hotel' ? (
-                <Hotel className="w-4 h-4 text-stone-500 dark:text-gray-400" />
-              ) : iconType === 'checkin' ? (
-                <DoorOpen className="w-4 h-4 text-stone-500 dark:text-gray-400" />
-              ) : iconType === 'checkout' ? (
-                <LogOut className="w-4 h-4 text-stone-500 dark:text-gray-400" />
-              ) : iconType === 'breakfast' ? (
-                <UtensilsCrossed className="w-4 h-4 text-stone-500 dark:text-gray-400" />
-              ) : iconType === 'train' ? (
-                <TrainIcon className="w-4 h-4 text-stone-500 dark:text-gray-400" />
-              ) : iconType === 'activity' ? (
-                (() => {
-                  const aType = (extraData as any).activityType;
-                  switch (aType) {
-                    case 'nap': return <BedDouble className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'pool': return <Waves className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'spa': return <Sparkles className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'gym': return <Dumbbell className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'breakfast-at-hotel': return <Coffee className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'getting-ready': return <Shirt className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'packing': case 'checkout-prep': return <Package className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'sunset': return <Sun className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'work': return <Briefcase className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'call': return <Phone className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'shopping-time': return <ShoppingBag className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'photo-walk': return <Camera className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    default: return <Clock className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                  }
-                })()
-              ) : image && !imageError ? (
-                <Image
-                  src={image}
-                  alt=""
-                  width={40}
-                  height={40}
-                  className="w-full h-full object-cover"
-                  onError={() => setImageError(true)}
-                />
-              ) : (
-                <MapPin className="w-4 h-4 text-stone-500 dark:text-gray-400" />
-              )}
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-stone-900 dark:text-white truncate">{title}</p>
-              <p className="text-xs text-stone-500 dark:text-gray-400 truncate">
-                {subtitle || (item.destination?.category) || 'Place'}
-              </p>
-            </div>
-
-            {/* Rating badge */}
-            {rating && (
-              <div className="flex items-center gap-0.5 mr-2">
-                <span className="text-xs text-red-500">●</span>
-              </div>
-            )}
-
-            {/* More options button */}
-            <div className="relative" ref={actionsRef}>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowActions(!showActions);
-                }}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                <MoreHorizontal className="w-5 h-5 text-gray-400" />
-              </button>
-
-              {/* Actions dropdown */}
-              <AnimatePresence>
-                {showActions && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden min-w-[140px]"
-                  >
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowActions(false);
-                        onToggle();
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <Pencil className="w-4 h-4" />
-                      Edit
-                    </button>
-                    {onRemove && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowActions(false);
-                          onRemove();
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Delete
-                      </button>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
+      {/* Timeline layout: time on left, card on right */}
+      <div className="flex items-center gap-4">
+        {/* Time column */}
+        <div className="w-12 flex-shrink-0 text-right">
+          <span className="text-sm text-gray-400 dark:text-gray-500 font-medium tabular-nums">
+            {timeDisplay}
+          </span>
         </div>
 
-        {/* Edit mode drag handle indicator */}
-        {isEditMode && (
-          <div className="absolute top-2 left-2 opacity-60">
-            <GripVertical className="w-4 h-4 text-stone-400" />
+        {/* Card */}
+        <div
+          className={`
+            flex-1 flex items-center gap-3 cursor-pointer group
+            ${isDragging ? 'opacity-50' : ''}
+          `}
+          onClick={() => {
+            const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+            if (isDesktop && onSelect) {
+              onSelect();
+            } else {
+              onToggle();
+            }
+          }}
+        >
+          {/* Drag handle - only visible in edit mode */}
+          {isEditMode && (
+            <div className="flex-shrink-0 touch-none cursor-grab active:cursor-grabbing opacity-60">
+              <GripVertical className="w-4 h-4 text-gray-400" />
+            </div>
+          )}
+
+          {/* Image/Icon */}
+          <div className="w-12 h-12 rounded-xl overflow-hidden bg-stone-100 dark:bg-gray-800 flex-shrink-0 flex items-center justify-center">
+            {iconType === 'hotel' ? (
+              <Hotel className="w-5 h-5 text-stone-500 dark:text-gray-400" />
+            ) : iconType === 'checkin' ? (
+              <DoorOpen className="w-5 h-5 text-stone-500 dark:text-gray-400" />
+            ) : iconType === 'checkout' ? (
+              <LogOut className="w-5 h-5 text-stone-500 dark:text-gray-400" />
+            ) : iconType === 'breakfast' ? (
+              <UtensilsCrossed className="w-5 h-5 text-stone-500 dark:text-gray-400" />
+            ) : iconType === 'train' ? (
+              <TrainIcon className="w-5 h-5 text-stone-500 dark:text-gray-400" />
+            ) : iconType === 'activity' ? (
+              (() => {
+                const aType = (extraData as any).activityType;
+                switch (aType) {
+                  case 'nap': return <BedDouble className="w-5 h-5 text-stone-500 dark:text-gray-400" />;
+                  case 'pool': return <Waves className="w-5 h-5 text-stone-500 dark:text-gray-400" />;
+                  case 'spa': return <Sparkles className="w-5 h-5 text-stone-500 dark:text-gray-400" />;
+                  case 'gym': return <Dumbbell className="w-5 h-5 text-stone-500 dark:text-gray-400" />;
+                  case 'breakfast-at-hotel': return <Coffee className="w-5 h-5 text-stone-500 dark:text-gray-400" />;
+                  case 'getting-ready': return <Shirt className="w-5 h-5 text-stone-500 dark:text-gray-400" />;
+                  case 'packing': case 'checkout-prep': return <Package className="w-5 h-5 text-stone-500 dark:text-gray-400" />;
+                  case 'sunset': return <Sun className="w-5 h-5 text-stone-500 dark:text-gray-400" />;
+                  case 'work': return <Briefcase className="w-5 h-5 text-stone-500 dark:text-gray-400" />;
+                  case 'call': return <Phone className="w-5 h-5 text-stone-500 dark:text-gray-400" />;
+                  case 'shopping-time': return <ShoppingBag className="w-5 h-5 text-stone-500 dark:text-gray-400" />;
+                  case 'photo-walk': return <Camera className="w-5 h-5 text-stone-500 dark:text-gray-400" />;
+                  default: return <Clock className="w-5 h-5 text-stone-500 dark:text-gray-400" />;
+                }
+              })()
+            ) : image && !imageError ? (
+              <Image
+                src={image}
+                alt=""
+                width={48}
+                height={48}
+                className="w-full h-full object-cover"
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <MapPin className="w-5 h-5 text-stone-500 dark:text-gray-400" />
+            )}
           </div>
-        )}
+
+          {/* Title */}
+          <div className="flex-1 min-w-0">
+            <p className="text-[15px] font-medium text-stone-900 dark:text-white truncate">{title}</p>
+          </div>
+        </div>
       </div>
 
       {/* Expanded edit form - mobile only (desktop uses sidebar) */}
