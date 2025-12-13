@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { generateSearchResponseContext } from '@/lib/search/generateSearchContext';
-import { generateSuggestions } from '@/lib/search/generateSuggestions';
+import { generateSuggestions, actionPatchToLegacySuggestion } from '@/lib/search/generateSuggestions';
 import { withErrorHandling } from '@/lib/errors';
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
@@ -169,12 +169,13 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     // Generate suggestions
     let suggestions: Array<{ label: string; refinement: string }> = [];
     try {
-      suggestions = await generateSuggestions({
+      const actionPatches = await generateSuggestions({
         query: originalQuery,
         results: filtered,
         refinements,
         filters: {},
       }) || [];
+      suggestions = actionPatches.map(actionPatchToLegacySuggestion);
     } catch (error) {
       console.error('Error generating suggestions:', error);
       suggestions = [];

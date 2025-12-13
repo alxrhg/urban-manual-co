@@ -1551,8 +1551,8 @@ async function processAIChatRequest(
                 // Generate follow-up suggestions
                 let followUpSuggestions: Array<{ text: string; icon?: 'location' | 'time' | 'price' | 'rating' | 'default'; type?: 'refine' | 'expand' | 'related' }> = [];
                 try {
-                  const { generateFollowUpSuggestions } = await import('@/lib/chat/generateFollowUpSuggestions');
-                  
+                  const { generateFollowUpSuggestions, actionPatchToLegacy } = await import('@/lib/chat/generateFollowUpSuggestions');
+
                   // Get user context if available
                   let userContextData: any = undefined;
                   if (userId) {
@@ -1562,7 +1562,7 @@ async function processAIChatRequest(
                         .select('favorite_cities, favorite_categories')
                         .eq('user_id', userId)
                         .single();
-                      
+
                       if (profile) {
                         userContextData = {
                           favoriteCities: profile.favorite_cities || [],
@@ -1573,7 +1573,7 @@ async function processAIChatRequest(
                       // Silently fail - user context is optional
                     }
                   }
-                  
+
                   // Normalize intent filters for suggestions (convert priceLevel number to string if needed)
                   const normalizedIntent = intent ? {
                     ...intent,
@@ -1582,14 +1582,16 @@ async function processAIChatRequest(
                       priceLevel: intent.filters.priceLevel ? String(intent.filters.priceLevel) : undefined,
                     } : undefined,
                   } : undefined;
-                  
-                  followUpSuggestions = generateFollowUpSuggestions({
+
+                  // Generate ActionPatch suggestions and convert to legacy format for backwards compatibility
+                  const actionPatches = generateFollowUpSuggestions({
                     query,
                     intent: normalizedIntent,
                     destinations: limitedResults,
                     conversationHistory,
                     userContext: userContextData,
                   });
+                  followUpSuggestions = actionPatches.map(actionPatchToLegacy);
                 } catch (error) {
                   // Silently fail - suggestions are optional
                   console.debug('[AI Chat] Failed to generate suggestions:', error);

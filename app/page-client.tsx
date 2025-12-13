@@ -2574,7 +2574,7 @@ export default function HomePageClient({
                                       followUpSuggestions.length > 0 &&
                                       !message.tripId && (
                                         <FollowUpSuggestions
-                                          suggestions={followUpSuggestions}
+                                          legacySuggestions={followUpSuggestions}
                                           onSuggestionClick={suggestion => {
                                             // Only set searchTerm - the useEffect will handle the search
                                             // This prevents duplicate searches

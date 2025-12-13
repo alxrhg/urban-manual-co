@@ -3,7 +3,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { embedText } from '@/lib/llm';
 import { rerankDestinations } from '@/lib/search/reranker';
 import { generateSearchResponseContext } from '@/lib/search/generateSearchContext';
-import { generateSuggestions } from '@/lib/search/generateSuggestions';
+import { generateSuggestions, actionPatchToLegacySuggestion } from '@/lib/search/generateSuggestions';
 import { getUserLocation } from '@/lib/location/getUserLocation';
 import { expandNearbyLocations, getLocationContext, findLocationByName } from '@/lib/search/expandLocations';
 import { withErrorHandling } from '@/lib/errors';
@@ -170,14 +170,16 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     }
     
     // Generate suggestions (always ensure it's an array)
+    // Convert ActionPatch[] to legacy format for backwards compatibility
     let suggestions: Array<{ label: string; refinement: string }> = [];
     try {
-      suggestions = await generateSuggestions({ 
-        query, 
-        results: limited, 
+      const actionPatches = await generateSuggestions({
+        query,
+        results: limited,
         filters: { openNow },
         refinements: [],
       }) || [];
+      suggestions = actionPatches.map(actionPatchToLegacySuggestion);
     } catch (error) {
       console.error('Error generating suggestions:', error);
       // Fallback to empty array
