@@ -678,15 +678,6 @@ export default function TripPage() {
                   destination={primaryCity}
                   startDate={trip.start_date}
                   endDate={trip.end_date || null}
-                  itineraryDays={days.map(day => ({
-                    dayNumber: day.dayNumber,
-                    date: day.date || undefined,
-                    hasOutdoorActivities: day.items.some(item => {
-                      const category = (item.destination?.category || item.parsedNotes?.category || '').toLowerCase();
-                      return ['park', 'garden', 'beach', 'outdoor', 'walk', 'market', 'tour'].some(c => category.includes(c));
-                    }),
-                    activities: day.items.map(item => item.title),
-                  }))}
                 />
               )}
 
