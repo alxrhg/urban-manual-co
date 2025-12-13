@@ -861,7 +861,7 @@ export default function HomepageClient({
                                 {index === chatMessages.length - 1 &&
                                   followUpSuggestions.length > 0 && (
                                     <FollowUpSuggestions
-                                      suggestions={followUpSuggestions}
+                                      legacySuggestions={followUpSuggestions}
                                       onSuggestionClick={(suggestion) => {
                                         setSearchTerm(suggestion);
                                         setFollowUpInput("");

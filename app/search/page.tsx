@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CompactResponseSection, type Message } from '@/src/features/search/CompactResponseSection';
-import { generateSuggestions } from '@/lib/search/generateSuggestions';
+import { generateSuggestions, actionPatchToLegacySuggestion } from '@/lib/search/generateSuggestions';
 import { DestinationCard } from '@/components/DestinationCard';
 import { EditModeToggle } from '@/components/EditModeToggle';
 import { IntentConfirmationChips } from '@/components/IntentConfirmationChips';
@@ -123,12 +123,13 @@ function SearchPageContent() {
   // Recompute suggestions whenever filtered results or refinements change
   useEffect(() => {
     async function updateSuggestions() {
-      const newSuggestions = await generateSuggestions({
+      const actionPatches = await generateSuggestions({
         query: searchState.originalQuery,
         results: searchState.filteredResults,
         refinements: searchState.refinements,
         filters: { /* could pass openNow/price if present */ },
       });
+      const newSuggestions = (actionPatches || []).map(actionPatchToLegacySuggestion);
       setSearchState((prev) => ({
         ...prev,
         suggestions: newSuggestions,

@@ -3,7 +3,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { embedText } from '@/lib/llm';
 import { rerankDestinations } from '@/lib/search/reranker';
 import { generateSearchResponseContext } from '@/lib/search/generateSearchContext';
-import { generateSuggestions } from '@/lib/search/generateSuggestions';
+import { generateSuggestions, actionPatchToLegacySuggestion } from '@/lib/search/generateSuggestions';
 import { getUserLocation } from '@/lib/location/getUserLocation';
 import { expandNearbyLocations, getLocationContext, findLocationByName } from '@/lib/search/expandLocations';
 import { withErrorHandling } from '@/lib/errors';
@@ -199,13 +199,14 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       }
     }
 
-    const suggestions = await generateSuggestions({
+    const actionPatches = await generateSuggestions({
       query: combinedQuery,
       results: limited,
       filters: {
         openNow: isOpenNowRefinement(followUpMessage),
       },
     });
+    const suggestions = (actionPatches || []).map(actionPatchToLegacySuggestion);
 
     // Log search interaction
     try {
