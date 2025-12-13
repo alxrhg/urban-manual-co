@@ -138,15 +138,40 @@ export default function TripPage() {
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const destination = draggedDestination;
     const dayNumber = event.over?.data.current?.dayNumber as number | undefined;
+    const insertIndex = event.over?.data.current?.insertIndex as number | undefined;
+    const insertTime = event.over?.data.current?.insertTime as string | undefined;
 
     setDraggedDestination(null);
     setOverDayNumber(null);
 
     if (destination && dayNumber) {
-      addPlace(destination, dayNumber);
+      // Add the place with optional time hint
+      addPlace(destination, dayNumber, insertTime);
       setSelectedDayNumber(dayNumber);
+
+      // If we have an insert index, we need to reorder after adding
+      // The new item will be at the end, so we move it to insertIndex
+      if (insertIndex !== undefined) {
+        const day = days.find(d => d.dayNumber === dayNumber);
+        if (day) {
+          // New item will be added at the end
+          const newItems = [...day.items];
+          // We'll trigger reorder in a moment after the item is added
+          setTimeout(() => {
+            const currentDay = days.find(d => d.dayNumber === dayNumber);
+            if (currentDay && currentDay.items.length > 0) {
+              const items = [...currentDay.items];
+              const lastItem = items.pop();
+              if (lastItem) {
+                items.splice(insertIndex, 0, lastItem);
+                reorderItems(dayNumber, items);
+              }
+            }
+          }, 100);
+        }
+      }
     }
-  }, [draggedDestination, addPlace]);
+  }, [draggedDestination, addPlace, days, reorderItems]);
 
   // Parse destinations
   const destinations = useMemo(() => parseDestinations(trip?.destination ?? null), [trip?.destination]);
@@ -2069,6 +2094,12 @@ function DaySection({
       {/* Items (including hotel activities which are now always part of orderedItems) */}
       {orderedItems.length > 0 ? (
         <Reorder.Group axis="y" values={orderedItems} onReorder={setOrderedItems} className="space-y-0">
+          {/* Drop zone at the beginning */}
+          <DropZoneBetweenItems
+            dayNumber={dayNumber}
+            insertIndex={0}
+            insertTime={orderedItems[0]?.time || undefined}
+          />
           {orderedItems.map((item, index) => {
             // Check if this is a virtual hotel activity item
             const hotelActivityType = (item as EnrichedItineraryItem & { hotelActivityType?: string }).hotelActivityType;
@@ -2098,6 +2129,12 @@ function DaySection({
                     onSelect={onSelectItem ? () => onSelectItem(item) : undefined}
                   />
                 )}
+                {/* Drop zone after each item */}
+                <DropZoneBetweenItems
+                  dayNumber={dayNumber}
+                  insertIndex={index + 1}
+                  insertTime={orderedItems[index + 1]?.time || undefined}
+                />
                 {index < orderedItems.length - 1 && (
                   <TravelTime from={item} to={orderedItems[index + 1]} />
                 )}
@@ -3865,6 +3902,48 @@ function nearestNeighborOptimize(items: EnrichedItineraryItem[]): EnrichedItiner
   }
 
   return result;
+}
+
+/**
+ * Drop zone between items - Shows when dragging to allow insertion at specific positions
+ */
+function DropZoneBetweenItems({
+  dayNumber,
+  insertIndex,
+  insertTime,
+}: {
+  dayNumber: number;
+  insertIndex: number;
+  insertTime?: string;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `drop-zone-${dayNumber}-${insertIndex}`,
+    data: {
+      dayNumber,
+      insertIndex,
+      insertTime,
+      type: 'insertion-point',
+    },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`
+        transition-all duration-200 ease-out
+        ${isOver
+          ? 'h-12 bg-green-100 dark:bg-green-900/30 border-2 border-dashed border-green-500 rounded-lg my-1 flex items-center justify-center'
+          : 'h-1 hover:h-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full mx-8'
+        }
+      `}
+    >
+      {isOver && (
+        <span className="text-[11px] font-medium text-green-600 dark:text-green-400">
+          Drop here to insert
+        </span>
+      )}
+    </div>
+  );
 }
 
 /**
