@@ -19,36 +19,36 @@
 // ============================================================================
 
 // Account drawer (canonical version from root components)
-export { default as AccountDrawer } from "@/components/AccountDrawer";
+export { AccountDrawer } from "@/components/AccountDrawer";
 
 // Settings drawer
-export { default as SettingsDrawer } from "@/components/SettingsDrawer";
+export { SettingsDrawer } from "@/components/SettingsDrawer";
 
 // ============================================================================
 // AUTHENTICATION
 // Login and auth-related components
 // ============================================================================
-export { default as LoginDrawer } from "@/components/LoginDrawer";
-export { default as LoginModal } from "@/components/LoginModal";
+export { LoginDrawer } from "@/components/LoginDrawer";
+export { LoginModal } from "@/components/LoginModal";
 
 // ============================================================================
 // SAVED & VISITED PLACES
 // User's place collections
 // ============================================================================
-export { default as SavedPlacesDrawer } from "@/components/SavedPlacesDrawer";
-export { default as VisitedPlacesDrawer } from "@/components/VisitedPlacesDrawer";
+export { SavedPlacesDrawer } from "@/components/SavedPlacesDrawer";
+export { VisitedPlacesDrawer } from "@/components/VisitedPlacesDrawer";
 
 // ============================================================================
 // TRIPS OVERVIEW
 // User's trip management
 // ============================================================================
-export { default as TripsDrawer } from "@/components/TripsDrawer";
+export { TripsDrawer } from "@/components/TripsDrawer";
 
 // ============================================================================
 // REPORTING & FEEDBACK
 // User feedback components
 // ============================================================================
-export { default as ReportIssueModal } from "@/components/ReportIssueModal";
+export { ReportIssueModal } from "@/components/ReportIssueModal";
 
 // ============================================================================
 // AUTH CONTEXT
