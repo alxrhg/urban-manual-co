@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Maximize2, Minimize2, Navigation, AlertTriangle } from 'lucide-react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+
+// Import mapbox-gl dynamically to avoid SSR issues
+let mapboxgl: typeof import('mapbox-gl') | null = null;
 
 interface MapMarker {
   id: string;
@@ -38,19 +39,42 @@ export default function MapboxTripMap({
   interactive = true,
 }: MapboxTripMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const mapRef = useRef<import('mapbox-gl').Map | null>(null);
+  const markersRef = useRef<import('mapbox-gl').Marker[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [mapboxLoaded, setMapboxLoaded] = useState(false);
+
+  // Load mapbox-gl dynamically on client side
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    import('mapbox-gl').then((mb) => {
+      mapboxgl = mb.default;
+      // Import CSS
+      import('mapbox-gl/dist/mapbox-gl.css');
+      setMapboxLoaded(true);
+    }).catch((err) => {
+      console.error('Failed to load mapbox-gl:', err);
+      setMapError('Failed to load map library');
+    });
+  }, []);
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current || mapRef.current) return;
+    if (!mapContainer.current || mapRef.current || !mapboxLoaded || !mapboxgl) return;
 
     const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
     if (!token) {
       setMapError('Map not configured');
+      return;
+    }
+
+    // Validate token type - Mapbox GL requires public tokens (pk.*)
+    if (token.startsWith('sk.')) {
+      console.error('Mapbox GL requires a public access token (pk.*), not a secret token (sk.*)');
+      setMapError('Invalid map token type');
       return;
     }
 
@@ -123,7 +147,7 @@ export default function MapboxTripMap({
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [interactive, showControls]);
+  }, [interactive, showControls, mapboxLoaded]);
 
   // Update markers when data changes
   useEffect(() => {
@@ -288,13 +312,54 @@ export default function MapboxTripMap({
         </div>
       )}
 
-      {/* Error state */}
+      {/* Error state - fallback to static map if possible */}
       {mapError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900">
-          <AlertTriangle className="w-6 h-6 text-gray-300 dark:text-gray-700 mb-2" />
-          <p className="text-gray-400 dark:text-gray-500 text-xs">{mapError}</p>
-        </div>
+        <StaticMapFallback markers={markers} />
       )}
+    </div>
+  );
+}
+
+// Fallback static map using Mapbox Static Images API (works with sk.* tokens)
+function StaticMapFallback({ markers }: { markers: MapMarker[] }) {
+  const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+
+  if (!token || markers.length === 0) {
+    return (
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <AlertTriangle className="w-6 h-6 text-gray-300 dark:text-gray-700 mb-2" />
+        <p className="text-gray-400 dark:text-gray-500 text-xs">Map unavailable</p>
+      </div>
+    );
+  }
+
+  // Calculate center from markers
+  const sumLat = markers.reduce((sum, m) => sum + m.lat, 0);
+  const sumLng = markers.reduce((sum, m) => sum + m.lng, 0);
+  const center = {
+    lat: sumLat / markers.length,
+    lng: sumLng / markers.length,
+  };
+
+  // Create pins for static map
+  const pins = markers
+    .slice(0, 50) // Static API limit
+    .map((m) => `pin-s-${m.index}+111827(${m.lng},${m.lat})`)
+    .join(',');
+
+  const staticUrl = `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${pins}/${center.lng},${center.lat},11,0/600x200@2x?access_token=${token}`;
+
+  return (
+    <div className="absolute inset-0">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={staticUrl}
+        alt="Trip map"
+        className="w-full h-full object-cover"
+        onError={(e) => {
+          e.currentTarget.style.display = 'none';
+        }}
+      />
     </div>
   );
 }
