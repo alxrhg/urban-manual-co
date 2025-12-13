@@ -38,6 +38,7 @@ import DayIntelligence from '@/components/trip/DayIntelligence';
 import { CrowdBadge } from '@/components/trip/CrowdIndicator';
 import { UndoProvider } from '@/components/trip/UndoToast';
 import { SavingFeedback } from '@/components/trip/SavingFeedback';
+import { ConflictResolution, type ConflictInfo } from '@/components/trip/ConflictResolution';
 import { Settings, Moon } from 'lucide-react';
 
 // Weather type
@@ -302,6 +303,42 @@ export default function TripPage() {
     }
   }, [user, trip, router]);
 
+  // Conflict resolution: Swap order of two items within a day
+  const handleSwapOrder = useCallback((dayNumber: number, item1Id: string, item2Id: string) => {
+    const day = days.find(d => d.dayNumber === dayNumber);
+    if (!day) return;
+
+    const items = [...day.items];
+    const idx1 = items.findIndex(i => i.id === item1Id);
+    const idx2 = items.findIndex(i => i.id === item2Id);
+
+    if (idx1 === -1 || idx2 === -1) return;
+
+    // Swap the items
+    [items[idx1], items[idx2]] = [items[idx2], items[idx1]];
+
+    // Also swap their times if both have times
+    const time1 = items[idx1].time;
+    const time2 = items[idx2].time;
+    if (time1 && time2) {
+      updateItemTime(item1Id, time2);
+      updateItemTime(item2Id, time1);
+    }
+
+    // Reorder will update the order_index
+    reorderItems(dayNumber, items);
+  }, [days, reorderItems, updateItemTime]);
+
+  // Conflict resolution: Move item to another day
+  const handleConflictMoveToDay = useCallback((itemId: string, toDayNumber: number) => {
+    moveItemToDay(itemId, toDayNumber);
+  }, [moveItemToDay]);
+
+  // Conflict resolution: Clear time from item (make it flexible)
+  const handleClearTime = useCallback((itemId: string) => {
+    updateItemTime(itemId, '');
+  }, [updateItemTime]);
+
   // Show loader while auth or trip is loading
   if (authLoading || loading) {
     return (
@@ -435,6 +472,9 @@ export default function TripPage() {
             city={primaryCity}
             weatherByDate={weatherByDate}
             onOptimizeRoute={(dayNumber, optimizedItems) => reorderItems(dayNumber, optimizedItems)}
+            onSwapOrder={handleSwapOrder}
+            onMoveToDay={handleConflictMoveToDay}
+            onClearTime={handleClearTime}
           />
         </div>
 
@@ -666,6 +706,9 @@ export default function TripPage() {
                     city={primaryCity}
                     weatherByDate={weatherByDate}
                     onOptimizeRoute={(dayNumber, optimizedItems) => reorderItems(dayNumber, optimizedItems)}
+                    onSwapOrder={handleSwapOrder}
+                    onMoveToDay={handleConflictMoveToDay}
+                    onClearTime={handleClearTime}
                     compact
                   />
                 </div>
@@ -3660,29 +3703,44 @@ function WeatherWarning({ item, date }: { item: EnrichedItineraryItem; date?: st
 }
 
 /**
- * Trip Intelligence - Only critical warnings
+ * Trip Intelligence - Actionable conflict resolution
  *
- * Philosophy: Silent until needed. Only shows when there's an actual problem.
- * No suggestions, no info, no optimizations - just warnings that need attention.
+ * Philosophy: Conflicts are a system failure, not a user error.
+ * Instead of passive warnings, we offer actionable resolutions.
  */
 function TripIntelligence({
   days,
   weatherByDate,
+  onSwapOrder,
+  onMoveToDay,
+  onClearTime,
 }: {
   days: Array<{ dayNumber: number; date: string | null; items: EnrichedItineraryItem[] }>;
   city: string;
   weatherByDate: Record<string, DayWeather>;
   onOptimizeRoute: (dayNumber: number, items: EnrichedItineraryItem[]) => void;
+  onSwapOrder: (dayNumber: number, item1Id: string, item2Id: string) => void;
+  onMoveToDay: (itemId: string, toDayNumber: number) => void;
+  onClearTime: (itemId: string) => void;
   compact?: boolean;
 }) {
-  const warnings = useMemo(() => {
-    const result: Array<{ id: string; title: string }> = [];
+  // Track acknowledged conflicts (user chose "keep both")
+  const [acknowledgedConflicts, setAcknowledgedConflicts] = useState<Set<string>>(new Set());
+
+  const handleAcknowledge = useCallback((conflictId: string) => {
+    setAcknowledgedConflicts(prev => new Set([...prev, conflictId]));
+  }, []);
+
+  // Detect conflicts with full item info for resolution
+  const { conflicts, weatherWarnings } = useMemo(() => {
+    const conflicts: ConflictInfo[] = [];
+    const weatherWarnings: Array<{ id: string; title: string }> = [];
 
     days.forEach((day) => {
       const items = day.items;
       if (items.length < 2) return;
 
-      // 1. TIMING CONFLICT - activities overlap
+      // 1. TIMING CONFLICT - detect all overlapping pairs
       const sortedItems = [...items].filter(i => i.time).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
       for (let i = 0; i < sortedItems.length - 1; i++) {
@@ -3697,17 +3755,19 @@ function TripIntelligence({
         const currentEndMins = curH * 60 + curM + duration;
         const nextStartMins = nextH * 60 + nextM;
 
-        // Only warn if activities actually overlap (negative time between)
+        // Only flag if activities actually overlap
         if (nextStartMins < currentEndMins) {
-          result.push({
-            id: `timing-${day.dayNumber}-${i}`,
-            title: `Day ${day.dayNumber}: Schedule conflict`,
+          const overlapMinutes = Math.round(currentEndMins - nextStartMins);
+          conflicts.push({
+            dayNumber: day.dayNumber,
+            item1: current,
+            item2: next,
+            overlapMinutes,
           });
-          break; // One warning per day is enough
         }
       }
 
-      // 2. WEATHER WARNING - rain + outdoor activities
+      // 2. WEATHER WARNING - rain + outdoor activities (keep as simple warning)
       const dayWeather = day.date ? weatherByDate[day.date] : undefined;
       if (dayWeather && dayWeather.precipProbability > 50) {
         const hasOutdoor = items.some(i => {
@@ -3716,7 +3776,7 @@ function TripIntelligence({
         });
 
         if (hasOutdoor) {
-          result.push({
+          weatherWarnings.push({
             id: `weather-${day.dayNumber}`,
             title: `Day ${day.dayNumber}: Rain likely`,
           });
@@ -3724,18 +3784,50 @@ function TripIntelligence({
       }
     });
 
-    return result;
+    return { conflicts, weatherWarnings };
   }, [days, weatherByDate]);
 
-  // Nothing to warn about? Show nothing.
-  if (warnings.length === 0) return null;
+  // Filter out acknowledged conflicts
+  const activeConflicts = conflicts.filter(
+    c => !acknowledgedConflicts.has(`${c.item1.id}-${c.item2.id}`)
+  );
+
+  const availableDays = days.map(d => d.dayNumber);
+
+  // Nothing to show? Return null
+  if (activeConflicts.length === 0 && weatherWarnings.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-      <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-      <span className="text-[12px] text-amber-700 dark:text-amber-300">
-        {warnings.length === 1 ? warnings[0].title : `${warnings.length} issues need attention`}
-      </span>
+    <div className="space-y-2 mt-4">
+      {/* Conflict resolutions - interactive */}
+      {activeConflicts.map((conflict, index) => (
+        <div
+          key={`conflict-${conflict.dayNumber}-${index}`}
+          className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg"
+        >
+          <ConflictResolution
+            conflict={conflict}
+            availableDays={availableDays}
+            onSwapOrder={onSwapOrder}
+            onMoveToDay={onMoveToDay}
+            onClearTime={onClearTime}
+            onAcknowledge={handleAcknowledge}
+          />
+        </div>
+      ))}
+
+      {/* Weather warnings - simple display */}
+      {weatherWarnings.map((warning) => (
+        <div
+          key={warning.id}
+          className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
+        >
+          <CloudRain className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+          <span className="text-[12px] text-blue-700 dark:text-blue-300">
+            {warning.title}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
