@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal, Trash2, Map, List } from 'lucide-react';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import {
   DndContext,
@@ -43,7 +43,7 @@ import { TripChecklist } from '@/components/trip/editor/TripChecklist';
 import { useWeather, type DayWeather } from '@/lib/hooks/useWeather';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { Settings, Moon } from 'lucide-react';
-import TimelineLinkedMapLayout from '@/components/trip/TimelineLinkedMapLayout';
+import TripMapHeader from '@/components/trip/TripMapHeader';
 
 /**
  * TripPage - Completely rethought
@@ -101,9 +101,6 @@ export default function TripPage() {
 
   // Edit mode state
   const [isEditMode, setIsEditMode] = useState(false);
-
-  // View mode state (list vs map)
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   // Sidebar states (desktop)
   const [showTripSettings, setShowTripSettings] = useState(false);
@@ -370,31 +367,6 @@ export default function TripPage() {
                   )}
                 </button>
 
-                {/* View Mode Toggle */}
-                <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-0.5">
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`flex items-center gap-1 px-3 py-1.5 text-[11px] font-medium rounded-full transition-colors ${
-                      viewMode === 'list'
-                        ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
-                        : 'text-gray-500 dark:text-gray-400'
-                    }`}
-                  >
-                    <List className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">List</span>
-                  </button>
-                  <button
-                    onClick={() => setViewMode('map')}
-                    className={`flex items-center gap-1 px-3 py-1.5 text-[11px] font-medium rounded-full transition-colors ${
-                      viewMode === 'map'
-                        ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
-                        : 'text-gray-500 dark:text-gray-400'
-                    }`}
-                  >
-                    <Map className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Map</span>
-                  </button>
-                </div>
               </div>
 
               <button
@@ -406,34 +378,24 @@ export default function TripPage() {
               </button>
             </div>
 
-        {/* View Mode Content */}
-        {viewMode === 'map' ? (
-          /* Map View - Timeline Linked Layout */
-          <div className="-mx-4 sm:-mx-6 mt-4">
-            <TimelineLinkedMapLayout
-              days={days}
-              selectedDayNumber={selectedDayNumber}
-              onSelectDay={setSelectedDayNumber}
-              onEditItem={handleSelectItem}
-              onAddItem={(dayNumber) => { setSidebarAddDay(dayNumber); setSelectedItem(null); }}
-              onAddPlace={(place, dayNumber) => {
-                addPlace({
-                  name: place.name || '',
-                  city: place.city || primaryCity,
-                  latitude: place.latitude ?? undefined,
-                  longitude: place.longitude ?? undefined,
-                  category: place.category,
-                } as Destination, dayNumber);
-              }}
-              onRemoveItem={removeItem}
-              onReorderItems={(dayNumber, items) => reorderItems(dayNumber, items)}
-              tripDestination={primaryCity}
-              startDate={trip.start_date}
-            />
-          </div>
-        ) : (
-          /* List View - Traditional layout */
-          <div>
+        {/* Map Header */}
+        <TripMapHeader
+          days={days}
+          selectedDayNumber={selectedDayNumber}
+          tripDestination={primaryCity}
+          onMarkerClick={handleSelectItem}
+          onAddPlace={(place, dayNumber) => {
+            addPlace({
+              name: place.name || '',
+              city: place.city || primaryCity,
+              latitude: place.latitude ?? undefined,
+              longitude: place.longitude ?? undefined,
+              category: place.category,
+            } as Destination, dayNumber);
+          }}
+          className="mt-4"
+        />
+
         {/* Trip Notes - expandable (mobile only, desktop uses sidebar) */}
         <div className="mt-4 lg:hidden">
           <button
@@ -597,12 +559,9 @@ export default function TripPage() {
           </div>
         )}
           </div>
-        )}
-          </div>
           {/* End main content column */}
 
-          {/* Desktop Sidebar - hidden in map view */}
-          {viewMode === 'list' && (
+          {/* Desktop Sidebar */}
           <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
             <div className="sticky top-24 space-y-4 max-h-[calc(100vh-8rem)] overflow-y-auto pb-8">
               {/* Add Place Panel */}
@@ -728,7 +687,6 @@ export default function TripPage() {
               )}
             </div>
           </div>
-          )}
         </div>
         {/* End desktop flex layout */}
       </div>
