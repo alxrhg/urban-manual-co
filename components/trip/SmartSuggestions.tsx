@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useCallback, useEffect } from 'react';
 import { Plus, MapPin, Loader2 } from 'lucide-react';
+import type { SuggestionPatch, TripPatch } from '@/lib/intelligence/types';
 
 interface TripDay {
   dayNumber: number;
@@ -27,14 +28,13 @@ interface LocalSuggestion {
   text: string;
   subtext?: string;
   priority: number;
-  action?: {
-    type: 'add_place' | 'add_category';
-    dayNumber?: number;
-    category?: string;
-  };
+  patch?: TripPatch;
 }
 
-interface AISuggestion {
+/**
+ * @deprecated Use SuggestionPatch from @/lib/intelligence/types instead
+ */
+interface LegacyAISuggestion {
   destination: {
     id: number;
     slug: string;
@@ -53,8 +53,12 @@ interface SmartSuggestionsProps {
   days: TripDay[];
   destination?: string | null;
   selectedDayNumber?: number;
+  /** @deprecated Use onApplyPatch instead */
   onAddPlace?: (dayNumber: number, category?: string) => void;
-  onAddAISuggestion?: (suggestion: AISuggestion) => void;
+  /** @deprecated Use onApplyPatch instead */
+  onAddAISuggestion?: (suggestion: LegacyAISuggestion) => void;
+  /** Handler for applying a suggestion patch */
+  onApplyPatch?: (patch: SuggestionPatch) => void;
   onAddFromNL?: (destination: unknown, dayNumber: number, time?: string) => Promise<void>;
   className?: string;
 }
@@ -76,6 +80,8 @@ function getTimeSlot(time: string | null | undefined): TimeSlot | null {
  *
  * Philosophy: Intelligence works automatically and appears naturally.
  * No AI branding, no explicit prompts - just helpful hints that feel native.
+ *
+ * v2.0: Now uses SuggestionPatch format for "intelligence as operations"
  */
 export default function SmartSuggestions({
   days,
@@ -83,9 +89,10 @@ export default function SmartSuggestions({
   selectedDayNumber = 1,
   onAddPlace,
   onAddAISuggestion,
+  onApplyPatch,
   className = '',
 }: SmartSuggestionsProps) {
-  const [aiSuggestions, setAISuggestions] = useState<AISuggestion[]>([]);
+  const [suggestionPatches, setSuggestionPatches] = useState<SuggestionPatch[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
 
@@ -116,8 +123,9 @@ export default function SmartSuggestions({
 
       if (response.ok) {
         const result = await response.json();
+        // Suggestions now come as SuggestionPatch objects
         // Only show top 2 - subtle, not overwhelming
-        setAISuggestions(result.suggestions?.slice(0, 2) || []);
+        setSuggestionPatches(result.suggestions?.slice(0, 2) || []);
         setHasLoaded(true);
       }
     } catch {
@@ -134,7 +142,7 @@ export default function SmartSuggestions({
     }
   }, [destination, days.length, hasLoaded, fetchSuggestions]);
 
-  // Local analysis (instant, no API)
+  // Local analysis (instant, no API) - now returns LocalSuggestion with patches
   const localSuggestions = useMemo(() => {
     const result: LocalSuggestion[] = [];
     const allItems = days.flatMap(d => d.items);
@@ -174,13 +182,22 @@ export default function SmartSuggestions({
     );
 
     // Only add genuinely useful suggestions (silence is golden)
+    // Now with patches for "intelligence as operations"
     if (!hasBreakfast && allItems.length >= 2) {
       result.push({
         id: 'breakfast',
         text: 'Morning cafe',
         subtext: 'Starts the day right',
         priority: 10,
-        action: { type: 'add_category', dayNumber: 1, category: 'cafe' },
+        patch: {
+          type: 'fillGap',
+          payload: {
+            dayIndex: 0,
+            startTime: '09:00',
+            durationMinutes: 60,
+            blockType: 'meal',
+          },
+        },
       });
     }
 
@@ -192,7 +209,15 @@ export default function SmartSuggestions({
           text: 'Afternoon activity',
           subtext: `Day ${day.dayNumber} has a gap`,
           priority: 8,
-          action: { type: 'add_category', dayNumber: day.dayNumber, category: 'museum' },
+          patch: {
+            type: 'fillGap',
+            payload: {
+              dayIndex: day.dayNumber - 1,
+              startTime: '14:00',
+              durationMinutes: 120,
+              blockType: 'activity',
+            },
+          },
         });
         break;
       }
@@ -204,7 +229,15 @@ export default function SmartSuggestions({
         text: 'Dinner spot',
         subtext: 'Evening open',
         priority: 9,
-        action: { type: 'add_category', dayNumber: 1, category: 'restaurant' },
+        patch: {
+          type: 'fillGap',
+          payload: {
+            dayIndex: 0,
+            startTime: '19:00',
+            durationMinutes: 90,
+            blockType: 'meal',
+          },
+        },
       });
     }
 
@@ -214,7 +247,15 @@ export default function SmartSuggestions({
         text: 'After dinner',
         subtext: 'Cocktail bar nearby',
         priority: 5,
-        action: { type: 'add_category', category: 'bar' },
+        patch: {
+          type: 'fillGap',
+          payload: {
+            dayIndex: 0,
+            startTime: '21:30',
+            durationMinutes: 90,
+            blockType: 'activity',
+          },
+        },
       });
     }
 
@@ -224,7 +265,7 @@ export default function SmartSuggestions({
   }, [days]);
 
   // Calculate what to show
-  const hasSuggestions = localSuggestions.length > 0 || aiSuggestions.length > 0;
+  const hasSuggestions = localSuggestions.length > 0 || suggestionPatches.length > 0;
 
   // Don't render anything if no suggestions and not loading
   // Silence is golden - don't show empty states
@@ -237,6 +278,54 @@ export default function SmartSuggestions({
     return null;
   }
 
+  // Handler for applying a local suggestion
+  const handleLocalSuggestion = (suggestion: LocalSuggestion) => {
+    if (onApplyPatch && suggestion.patch) {
+      // Create a full SuggestionPatch from the local suggestion
+      const fullPatch: SuggestionPatch = {
+        id: suggestion.id,
+        label: suggestion.text,
+        patch: suggestion.patch,
+        reason: suggestion.subtext || '',
+        meta: {
+          source: 'rule',
+        },
+      };
+      onApplyPatch(fullPatch);
+    } else if (onAddPlace) {
+      // Legacy fallback
+      const payload = suggestion.patch?.payload as any;
+      onAddPlace(
+        (payload?.dayIndex ?? 0) + 1,
+        payload?.blockType === 'meal' ? 'restaurant' : 'museum'
+      );
+    }
+  };
+
+  // Handler for applying an AI suggestion patch
+  const handleAISuggestion = (patch: SuggestionPatch) => {
+    if (onApplyPatch) {
+      onApplyPatch(patch);
+    } else if (onAddAISuggestion && patch.meta?.destination) {
+      // Legacy fallback - convert to old format
+      const legacySuggestion: LegacyAISuggestion = {
+        destination: {
+          id: Number(patch.meta.destination.id) || 0,
+          slug: patch.meta.destination.slug || '',
+          name: patch.meta.destination.name || '',
+          category: patch.meta.destination.category || '',
+          rating: patch.meta.destination.rating,
+          image_thumbnail: patch.meta.destination.imageThumbnail,
+        },
+        day: patch.meta.day || 1,
+        timeSlot: patch.meta.timeSlot || 'afternoon',
+        startTime: patch.meta.startTime || '12:00',
+        reason: patch.reason,
+      };
+      onAddAISuggestion(legacySuggestion);
+    }
+  };
+
   return (
     <div className={`${className}`}>
       {/* Subtle inline suggestions - no headers, no AI branding */}
@@ -245,14 +334,7 @@ export default function SmartSuggestions({
         {localSuggestions.map((suggestion) => (
           <button
             key={suggestion.id}
-            onClick={() => {
-              if (onAddPlace && suggestion.action) {
-                onAddPlace(
-                  suggestion.action.dayNumber || 1,
-                  suggestion.action.category
-                );
-              }
-            }}
+            onClick={() => handleLocalSuggestion(suggestion)}
             className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-gray-800 transition-all"
           >
             <Plus className="w-3 h-3 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
@@ -267,17 +349,17 @@ export default function SmartSuggestions({
           </button>
         ))}
 
-        {/* Place suggestions appear as natural destination cards */}
-        {aiSuggestions.map((suggestion, index) => (
+        {/* AI suggestion patches appear as natural destination cards */}
+        {suggestionPatches.map((patch) => (
           <button
-            key={`${suggestion.destination.slug}-${index}`}
-            onClick={() => onAddAISuggestion?.(suggestion)}
+            key={patch.id}
+            onClick={() => handleAISuggestion(patch)}
             className="group flex items-center gap-2 px-2 py-1.5 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-gray-800 transition-all"
           >
-            {suggestion.destination.image_thumbnail ? (
+            {patch.meta?.image ? (
               <div className="w-6 h-6 rounded-md overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700">
                 <img
-                  src={suggestion.destination.image_thumbnail}
+                  src={patch.meta.image}
                   alt=""
                   className="w-full h-full object-cover"
                 />
@@ -289,10 +371,10 @@ export default function SmartSuggestions({
             )}
             <div className="text-left">
               <span className="text-[12px] text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
-                {suggestion.destination.name}
+                {patch.meta?.destination?.name || patch.label}
               </span>
               <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-1.5">
-                Day {suggestion.day}
+                Day {patch.meta?.day || 1}
               </span>
             </div>
           </button>

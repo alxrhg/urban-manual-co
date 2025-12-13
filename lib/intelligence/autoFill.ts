@@ -1,11 +1,12 @@
 /**
  * AutoFill Module - Time-aware gap filling for itineraries
  *
- * v2.1.0: Replaces the legacy meal-slot filler (breakfast/lunch/dinner)
+ * v2.2.0: Now returns SuggestionPatch format for "intelligence as operations"
+ * Replaces the legacy meal-slot filler (breakfast/lunch/dinner)
  * with dynamic TimeBlock injection based on gaps in the timeline.
  */
 
-import type { TimeBlock, Place } from './types';
+import type { TimeBlock, Place, SuggestionPatch, FillGapPayload, TimeBlockType } from './types';
 import { createTimeBlock, parseTimeToMinutes, formatTimeFromMinutes } from './types';
 
 // Legacy import for backwards compatibility
@@ -270,6 +271,81 @@ export function getTimelineCoverage(blocks: TimeBlock[]): {
     coveragePercent,
     missingMeals,
   };
+}
+
+// =============================================================================
+// Patch-Based Suggestions (Intelligence as Operations)
+// =============================================================================
+
+/**
+ * Generate a unique suggestion ID
+ */
+function generateSuggestionId(): string {
+  return `sug_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+/**
+ * Convert FillSuggestion to SuggestionPatch format
+ */
+export function fillSuggestionToPatch(
+  suggestion: FillSuggestion,
+  dayIndex: number = 0
+): SuggestionPatch {
+  const blockType: TimeBlockType = suggestion.type === 'meal' ? 'meal' : 'activity';
+
+  return {
+    id: generateSuggestionId(),
+    label: suggestion.suggestedPlace?.name
+      ? `Add ${suggestion.suggestedPlace.name}`
+      : `Add ${suggestion.label}`,
+    patch: {
+      type: 'fillGap',
+      payload: {
+        dayIndex,
+        startTime: suggestion.startTime,
+        durationMinutes: suggestion.durationMinutes,
+        place: suggestion.suggestedPlace,
+        blockType,
+      } as FillGapPayload,
+    },
+    reason: suggestion.reason,
+    meta: {
+      source: 'rule',
+      destination: suggestion.suggestedPlace,
+      day: dayIndex + 1,
+      timeSlot: suggestion.label.toLowerCase(),
+      startTime: suggestion.startTime,
+      image: suggestion.suggestedPlace?.imageThumbnail || suggestion.suggestedPlace?.image,
+    },
+  };
+}
+
+/**
+ * Fill gaps in the timeline and return SuggestionPatch array
+ * This is the primary function for the new patch-based system
+ *
+ * @param blocks - Current timeline blocks
+ * @param dayIndex - The day index (0-based) for the trip
+ * @param nearbyRestaurants - Optional list of nearby restaurants to suggest
+ * @returns Array of SuggestionPatch objects
+ */
+export function fillGapsAsPatches(
+  blocks: TimeBlock[],
+  dayIndex: number = 0,
+  nearbyRestaurants?: Place[]
+): SuggestionPatch[] {
+  const suggestions = fillGapsInTimeline(blocks, nearbyRestaurants);
+  return suggestions.map(s => fillSuggestionToPatch(s, dayIndex));
+}
+
+/**
+ * Convert multiple FillSuggestions to patches
+ */
+export function fillSuggestionsToPatches(
+  suggestions: FillSuggestion[],
+  dayIndex: number = 0
+): SuggestionPatch[] {
+  return suggestions.map(s => fillSuggestionToPatch(s, dayIndex));
 }
 
 // =============================================================================
