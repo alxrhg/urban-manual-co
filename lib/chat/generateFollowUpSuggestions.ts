@@ -1,8 +1,16 @@
 /**
  * Generate contextual follow-up suggestions based on conversation history and results
+ *
+ * This module generates ActionPatch objects for deterministic refinement suggestions.
  */
 
-interface FollowUpSuggestion {
+import type { ActionPatch, ActionPatchIcon, ActionPatchReasonType } from '@/types/action-patch';
+
+/**
+ * Legacy interface for backwards compatibility
+ * @deprecated Use ActionPatch instead
+ */
+export interface FollowUpSuggestion {
   text: string;
   icon?: 'location' | 'time' | 'price' | 'rating' | 'default';
   type?: 'refine' | 'expand' | 'related';
@@ -23,6 +31,8 @@ interface GenerateSuggestionsParams {
     category?: string;
     michelin_stars?: number;
     rating?: number;
+    name?: string;
+    slug?: string;
   }>;
   conversationHistory?: Array<{ role: string; content: string }>;
   userContext?: {
@@ -31,14 +41,37 @@ interface GenerateSuggestionsParams {
   };
 }
 
+/**
+ * Map legacy icon types to ActionPatch icons
+ */
+const iconMap: Record<string, ActionPatchIcon> = {
+  location: 'location',
+  time: 'time',
+  price: 'price',
+  rating: 'rating',
+  default: 'default',
+};
+
+/**
+ * Map legacy types to ActionPatch reason types
+ */
+const reasonTypeMap: Record<string, ActionPatchReasonType> = {
+  refine: 'refine',
+  expand: 'expand',
+  related: 'related',
+};
+
+/**
+ * Generate ActionPatch-based follow-up suggestions
+ */
 export function generateFollowUpSuggestions({
   query,
   intent,
   destinations = [],
   conversationHistory = [],
   userContext,
-}: GenerateSuggestionsParams): FollowUpSuggestion[] {
-  const suggestions: FollowUpSuggestion[] = [];
+}: GenerateSuggestionsParams): ActionPatch[] {
+  const suggestions: ActionPatch[] = [];
   const queryLower = query.toLowerCase();
 
   // Extract context from conversation history for better suggestions
@@ -46,99 +79,151 @@ export function generateFollowUpSuggestions({
     .slice(-6) // Last 6 messages (3 turns)
     .map(msg => msg.content.toLowerCase())
     .join(' ');
-  
+
   const fullContext = `${queryLower} ${conversationText}`;
-  
-  const hasCity = intent?.city || fullContext.match(/\b(tokyo|taipei|new york|london|paris|barcelona|rome|milan|berlin|amsterdam|seoul|singapore|hong kong|bangkok|bali|sydney|melbourne)\b/i);
-  const hasCategory = intent?.category || fullContext.match(/\b(restaurant|hotel|cafe|bar|shop|museum|gallery|park|beach|temple|shrine)\b/i);
+
+  const cityMatch = fullContext.match(/\b(tokyo|taipei|new york|london|paris|barcelona|rome|milan|berlin|amsterdam|seoul|singapore|hong kong|bangkok|bali|sydney|melbourne)\b/i);
+  const hasCity = intent?.city || cityMatch;
+  const detectedCity = intent?.city || (cityMatch ? capitalize(cityMatch[1]) : null);
+
+  const categoryMatch = fullContext.match(/\b(restaurant|hotel|cafe|bar|shop|museum|gallery|park|beach|temple|shrine)\b/i);
+  const hasCategory = intent?.category || categoryMatch;
+  const detectedCategory = intent?.category || (categoryMatch ? categoryMatch[1].toLowerCase() : null);
+
   const hasPrice = intent?.filters?.priceLevel;
   const hasRating = fullContext.match(/\b(rating|rated|stars|michelin)\b/i);
   const hasTime = fullContext.match(/\b(breakfast|lunch|dinner|brunch|late night|open|closing)\b/i);
-  const hasLocation = fullContext.match(/\b(near|close|walking|distance|area|neighborhood|district)\b/i);
-  
+
   // Detect conversational patterns
   const isFollowUp = queryLower.match(/\b(more|another|different|also|and|plus|show me|what about|how about)\b/i);
   const isRefinement = queryLower.match(/\b(with|without|that|this|these|those|like|similar)\b/i);
   const isComparison = queryLower.match(/\b(compare|versus|vs|better|best|difference)\b/i);
 
   // Get unique cities and categories from results
-  const resultCities = [...new Set(destinations.map(d => d.city).filter(Boolean))];
   const resultCategories = [...new Set(destinations.map(d => d.category).filter(Boolean))];
   const hasMichelin = destinations.some(d => d.michelin_stars && d.michelin_stars > 0);
   const hasHighRating = destinations.some(d => d.rating && d.rating >= 4.5);
+  const topResult = destinations[0];
 
   // Type 1: Refinement suggestions (narrow down)
   if (hasCity && !hasCategory) {
+    const category = resultCategories[0] || 'restaurant';
+    const city = detectedCity || 'this city';
     suggestions.push({
-      text: `Show me ${resultCategories[0] || 'restaurants'} in ${intent?.city || 'this city'}`,
+      label: `Show me ${category}s in ${city}`,
+      patch: {
+        filters: {
+          city: detectedCity,
+          category,
+        },
+      },
+      reason: { type: 'refine', text: 'Add category filter' },
       icon: 'location',
-      type: 'refine',
+      priority: 10,
     });
   }
 
   if (hasCategory && !hasPrice) {
     suggestions.push({
-      text: 'Show me budget-friendly options',
+      label: 'Show me budget-friendly options',
+      patch: {
+        filters: {
+          priceMax: 2,
+        },
+      },
+      reason: { type: 'refine', text: 'Filter by price range' },
       icon: 'price',
-      type: 'refine',
+      priority: 8,
     });
   }
 
   if (!hasTime && hasCategory) {
     suggestions.push({
-      text: 'What\'s good for dinner?',
+      label: "What's good for dinner?",
+      patch: {
+        filters: {
+          timeContext: 'dinner',
+        },
+      },
+      reason: { type: 'refine', text: 'Filter by meal time' },
       icon: 'time',
-      type: 'refine',
+      priority: 7,
     });
   }
 
   if (!hasRating && hasCategory) {
     suggestions.push({
-      text: 'Show me highly rated places',
+      label: 'Show me highly rated places',
+      patch: {
+        filters: {
+          ratingMin: 4.5,
+        },
+      },
+      reason: { type: 'refine', text: 'Filter by rating' },
       icon: 'rating',
-      type: 'refine',
-    });
-  }
-
-  if (hasCity && !hasLocation) {
-    suggestions.push({
-      text: 'Show me places near the city center',
-      icon: 'location',
-      type: 'refine',
+      priority: 7,
     });
   }
 
   // Type 2: Expansion suggestions (broaden search)
-  if (hasCity && resultCities.length === 1) {
+  if (hasCategory && detectedCity) {
     suggestions.push({
-      text: `Show me places in nearby cities`,
-      icon: 'location',
-      type: 'expand',
-    });
-  }
-
-  if (hasCategory && resultCategories.length === 1) {
-    suggestions.push({
-      text: `What else is good in ${intent?.city || 'this area'}?`,
+      label: `What else is good in ${detectedCity}?`,
+      patch: {
+        filters: {
+          city: detectedCity,
+          category: null, // Clear category to expand
+        },
+      },
+      reason: { type: 'expand', text: 'Explore other categories' },
       icon: 'default',
-      type: 'expand',
+      priority: 5,
     });
   }
 
   // Type 3: Related suggestions (contextual)
   if (hasMichelin) {
     suggestions.push({
-      text: 'Show me more Michelin-starred restaurants',
-      icon: 'rating',
-      type: 'related',
+      label: 'Show me Michelin-starred restaurants',
+      patch: {
+        filters: {
+          michelin: true,
+          category: 'restaurant',
+        },
+      },
+      reason: { type: 'related', text: 'Results include Michelin restaurants' },
+      icon: 'michelin',
+      priority: 9,
     });
   }
 
   if (hasHighRating && !hasRating) {
     suggestions.push({
-      text: 'Show me the highest rated places',
+      label: 'Show me the highest rated places',
+      patch: {
+        filters: {
+          ratingMin: 4.5,
+        },
+      },
+      reason: { type: 'related', text: 'Results include highly rated places' },
       icon: 'rating',
-      type: 'related',
+      priority: 6,
+    });
+  }
+
+  // "More like this" suggestion
+  if (topResult?.name && topResult?.slug) {
+    suggestions.push({
+      label: `More like ${topResult.name}`,
+      patch: {
+        intent: {
+          mode: 'more_like_this',
+          referenceSlug: topResult.slug,
+        },
+      },
+      reason: { type: 'related', text: `Find similar places to ${topResult.name}` },
+      icon: 'search',
+      priority: 8,
     });
   }
 
@@ -147,9 +232,15 @@ export function generateFollowUpSuggestions({
     const favoriteCity = userContext.favoriteCities[0];
     if (!hasCity || intent?.city?.toLowerCase() !== favoriteCity.toLowerCase()) {
       suggestions.push({
-        text: `What's good in ${favoriteCity}?`,
+        label: `What's good in ${favoriteCity}?`,
+        patch: {
+          filters: {
+            city: favoriteCity,
+          },
+        },
+        reason: { type: 'personalized', text: 'Based on your favorite cities' },
         icon: 'location',
-        type: 'related',
+        priority: 4,
       });
     }
   }
@@ -158,37 +249,57 @@ export function generateFollowUpSuggestions({
     const favoriteCategory = userContext.favoriteCategories[0];
     if (!hasCategory || intent?.category?.toLowerCase() !== favoriteCategory.toLowerCase()) {
       suggestions.push({
-        text: `Show me ${favoriteCategory}`,
+        label: `Show me ${favoriteCategory}s`,
+        patch: {
+          filters: {
+            category: favoriteCategory,
+          },
+        },
+        reason: { type: 'personalized', text: 'Based on your preferences' },
         icon: 'default',
-        type: 'related',
+        priority: 4,
       });
     }
   }
 
   // Conversation-aware suggestions based on history
   if (isFollowUp && conversationHistory.length > 0) {
-    // If user is asking for more, suggest related but different options
     suggestions.push({
-      text: 'Show me something different',
+      label: 'Show me something different',
+      patch: {
+        intent: {
+          mode: 'discovery',
+        },
+      },
+      reason: { type: 'expand', text: 'Explore different options' },
       icon: 'default',
-      type: 'expand',
+      priority: 3,
     });
   }
-  
+
   if (isRefinement && conversationHistory.length > 0) {
-    // If refining, suggest removing filters
     suggestions.push({
-      text: 'Show me all options',
-      icon: 'default',
-      type: 'expand',
+      label: 'Show me all options',
+      patch: {
+        clearFilters: true,
+      },
+      reason: { type: 'expand', text: 'Remove all filters' },
+      icon: 'filter',
+      priority: 3,
     });
   }
-  
+
   if (isComparison) {
     suggestions.push({
-      text: 'Show me the best rated',
+      label: 'Show me the best rated',
+      patch: {
+        filters: {
+          ratingMin: 4.5,
+        },
+      },
+      reason: { type: 'refine', text: 'Filter to top-rated options' },
       icon: 'rating',
-      type: 'refine',
+      priority: 8,
     });
   }
 
@@ -196,39 +307,139 @@ export function generateFollowUpSuggestions({
   if (suggestions.length < 3) {
     if (!hasTime) {
       suggestions.push({
-        text: 'What\'s open now?',
+        label: "What's open now?",
+        patch: {
+          filters: {
+            openNow: true,
+          },
+        },
+        reason: { type: 'refine', text: 'Show only open places' },
         icon: 'time',
-        type: 'refine',
+        priority: 6,
       });
     }
 
-    if (hasCity) {
+    if (hasCity && detectedCity) {
       suggestions.push({
-        text: 'Show me hidden gems',
+        label: 'Show me hidden gems',
+        patch: {
+          filters: {
+            vibes: ['hidden_gem'],
+            city: detectedCity,
+          },
+        },
+        reason: { type: 'expand', text: 'Discover lesser-known places' },
         icon: 'default',
-        type: 'expand',
+        priority: 5,
       });
     }
 
-    if (hasCategory) {
+    // Itinerary suggestion
+    if (detectedCity) {
       suggestions.push({
-        text: 'Show me with outdoor seating',
-        icon: 'location',
-        type: 'refine',
+        label: `Plan my day in ${detectedCity}`,
+        patch: {
+          filters: { city: detectedCity },
+          intent: { mode: 'itinerary', itineraryDuration: 'full_day' },
+        },
+        reason: { type: 'expand', text: 'Create a day itinerary' },
+        icon: 'trip',
+        priority: 4,
       });
     }
   }
 
-  // Limit to 3-4 suggestions and prioritize by type
-  const prioritized = [
-    ...suggestions.filter(s => s.type === 'refine'),
-    ...suggestions.filter(s => s.type === 'expand'),
-    ...suggestions.filter(s => s.type === 'related'),
-  ].slice(0, 4);
+  // Sort by priority and limit to 4 suggestions
+  const prioritized = suggestions
+    .sort((a, b) => (b.priority || 0) - (a.priority || 0))
+    .slice(0, 4);
 
-  return prioritized.length > 0 ? prioritized : [
-    { text: 'Show me more options', icon: 'default', type: 'expand' },
-    { text: 'What else is good here?', icon: 'default', type: 'related' },
-  ];
+  // Provide fallbacks if no suggestions
+  if (prioritized.length === 0) {
+    return [
+      {
+        label: 'Show me more options',
+        patch: {
+          intent: { mode: 'discovery' },
+        },
+        reason: { type: 'expand', text: 'Explore more options' },
+        icon: 'default',
+      },
+      {
+        label: "What else is good here?",
+        patch: {
+          clearFilters: true,
+        },
+        reason: { type: 'related', text: 'Browse all options' },
+        icon: 'default',
+      },
+    ];
+  }
+
+  return prioritized;
+}
+
+/**
+ * Convert ActionPatch to legacy FollowUpSuggestion format
+ * @deprecated Use ActionPatch directly in new code
+ */
+export function actionPatchToLegacy(patch: ActionPatch): FollowUpSuggestion {
+  // Map ActionPatch icons to legacy icons
+  const legacyIconMap: Record<string, FollowUpSuggestion['icon']> = {
+    location: 'location',
+    time: 'time',
+    price: 'price',
+    rating: 'rating',
+    michelin: 'rating', // Map to rating since michelin relates to quality
+    category: 'default',
+    cuisine: 'default',
+    vibe: 'default',
+    trip: 'default',
+    search: 'default',
+    filter: 'default',
+    default: 'default',
+  };
+
+  // Map ActionPatch reason types to legacy types
+  const legacyTypeMap: Record<string, FollowUpSuggestion['type']> = {
+    refine: 'refine',
+    expand: 'expand',
+    related: 'related',
+    personalized: 'related',
+    popular: 'related',
+    contextual: 'related',
+    clarification: 'refine',
+    alternative: 'refine',
+  };
+
+  return {
+    text: patch.label,
+    icon: legacyIconMap[patch.icon || 'default'] || 'default',
+    type: legacyTypeMap[patch.reason.type] || 'related',
+  };
+}
+
+/**
+ * Convert legacy FollowUpSuggestion to ActionPatch format
+ */
+export function legacyToActionPatch(suggestion: FollowUpSuggestion): ActionPatch {
+  return {
+    label: suggestion.text,
+    patch: {
+      query: { set: suggestion.text },
+    },
+    reason: {
+      type: reasonTypeMap[suggestion.type || 'related'] || 'related',
+      text: 'Converted from legacy suggestion',
+    },
+    icon: iconMap[suggestion.icon || 'default'] || 'default',
+  };
+}
+
+// Helper function
+function capitalize(str: string): string {
+  return str.split(' ').map(word =>
+    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+  ).join(' ');
 }
 

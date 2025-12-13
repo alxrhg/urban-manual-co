@@ -1,5 +1,6 @@
 import { extractLocation } from './extractLocation';
 import { expandNearbyLocations } from './expandLocations';
+import type { ActionPatch, ActionPatchIcon } from '@/types/action-patch';
 
 interface SuggestionInput {
   query: string;
@@ -8,22 +9,55 @@ interface SuggestionInput {
   filters?: {
     openNow?: boolean;
     priceMax?: number;
+    city?: string;
+    category?: string;
   };
 }
 
-interface Suggestion {
+/**
+ * Legacy suggestion interface for backwards compatibility
+ * @deprecated Use ActionPatch instead
+ */
+interface LegacySuggestion {
   label: string;
   refinement: string;
   type: 'tag' | 'location' | 'price' | 'category' | 'style' | 'michelin' | 'open';
 }
 
 /**
+ * Internal suggestion structure with full ActionPatch data
+ */
+interface Suggestion {
+  label: string;
+  refinement: string;
+  type: 'tag' | 'location' | 'price' | 'category' | 'style' | 'michelin' | 'open';
+  patch: ActionPatch['patch'];
+  icon: ActionPatchIcon;
+  priority: number;
+}
+
+/**
+ * Map suggestion types to ActionPatch icons
+ */
+const typeToIcon: Record<Suggestion['type'], ActionPatchIcon> = {
+  tag: 'default',
+  location: 'location',
+  price: 'price',
+  category: 'category',
+  style: 'vibe',
+  michelin: 'michelin',
+  open: 'time',
+};
+
+/**
  * Generate intelligent filter chips based on actual results data
  * Analyzes tags, locations, prices, categories, and styles to suggest meaningful filters
+ *
+ * Returns ActionPatch objects for deterministic application of refinements.
  */
-export async function generateSuggestions(input: SuggestionInput): Promise<Array<{ label: string; refinement: string }>> {
+export async function generateSuggestions(input: SuggestionInput): Promise<ActionPatch[]> {
   const { query, results, refinements = [], filters } = input;
-  
+
   if (!results || results.length === 0) {
     return [];
   }
@@ -58,6 +92,17 @@ export async function generateSuggestions(input: SuggestionInput): Promise<Array
     });
   });
 
+  // Priority order: style > tag > location > price > category > michelin > open
+  const priority: Record<Suggestion['type'], number> = {
+    style: 6,
+    tag: 5,
+    location: 4,
+    price: 3,
+    category: 2,
+    michelin: 1,
+    open: 0,
+  };
+
   // Add tag-based suggestions (most common tags)
   const sortedTags = Array.from(tagFrequency.entries())
     .sort((a, b) => b[1] - a[1])
@@ -66,10 +111,18 @@ export async function generateSuggestions(input: SuggestionInput): Promise<Array
   for (const [tag, frequency] of sortedTags) {
     if (frequency >= 2 && !appliedRefinements.has(tag)) {
       const label = formatTagLabel(tag);
+      const type: Suggestion['type'] = styleKeywords.has(tag) ? 'style' : 'tag';
       suggestions.push({
         label,
         refinement: tag,
-        type: styleKeywords.has(tag) ? 'style' : 'tag',
+        type,
+        patch: {
+          filters: {
+            vibes: [tag],
+          },
+        },
+        icon: typeToIcon[type],
+        priority: priority[type],
       });
     }
   }
@@ -91,13 +144,20 @@ export async function generateSuggestions(input: SuggestionInput): Promise<Array
     .sort((a, b) => b[1] - a[1])
     .filter(([loc, count]) => count >= 2 && count < results.length);
 
-  for (const [location, count] of sortedLocations.slice(0, 2)) {
+  for (const [location] of sortedLocations.slice(0, 2)) {
     const refinement = `in ${location}`;
     if (!appliedRefinements.has(refinement.toLowerCase())) {
       suggestions.push({
         label: capitalizeLocation(location),
         refinement,
         type: 'location',
+        patch: {
+          filters: {
+            neighborhood: capitalizeLocation(location),
+          },
+        },
+        icon: 'location',
+        priority: priority.location,
       });
     }
   }
@@ -121,6 +181,13 @@ export async function generateSuggestions(input: SuggestionInput): Promise<Array
           label: formatPriceLabel(uniquePrices[0] <= 1 ? 'Under ¥5K' : 'Under ¥10K'),
           refinement: 'budget',
           type: 'price',
+          patch: {
+            filters: {
+              priceMax: 2,
+            },
+          },
+          icon: 'price',
+          priority: priority.price,
         });
       }
 
@@ -129,6 +196,13 @@ export async function generateSuggestions(input: SuggestionInput): Promise<Array
           label: 'Upscale',
           refinement: 'upscale',
           type: 'price',
+          patch: {
+            filters: {
+              priceMin: 3,
+            },
+          },
+          icon: 'price',
+          priority: priority.price,
         });
       }
     }
@@ -154,6 +228,13 @@ export async function generateSuggestions(input: SuggestionInput): Promise<Array
         label: capitalizeCategory(dominantCategory[0]),
         refinement,
         type: 'category',
+        patch: {
+          filters: {
+            category: dominantCategory[0],
+          },
+        },
+        icon: 'category',
+        priority: priority.category,
       });
     }
   }
@@ -165,6 +246,13 @@ export async function generateSuggestions(input: SuggestionInput): Promise<Array
       label: 'Michelin-starred',
       refinement: 'michelin',
       type: 'michelin',
+      patch: {
+        filters: {
+          michelin: true,
+        },
+      },
+      icon: 'michelin',
+      priority: priority.michelin,
     });
   }
 
@@ -176,6 +264,13 @@ export async function generateSuggestions(input: SuggestionInput): Promise<Array
         label: 'Open now',
         refinement: 'open now',
         type: 'open',
+        patch: {
+          filters: {
+            openNow: true,
+          },
+        },
+        icon: 'time',
+        priority: priority.open,
       });
     }
   }
@@ -193,6 +288,13 @@ export async function generateSuggestions(input: SuggestionInput): Promise<Array
             label: capitalizeLocation(nearbyLoc),
             refinement,
             type: 'location',
+            patch: {
+              filters: {
+                neighborhood: capitalizeLocation(nearbyLoc),
+              },
+            },
+            icon: 'location',
+            priority: priority.location,
           });
         }
       }
@@ -206,19 +308,8 @@ export async function generateSuggestions(input: SuggestionInput): Promise<Array
   const seen = new Set<string>();
   const deduped: Suggestion[] = [];
 
-  // Priority order: style > location > price > category > michelin > open
-  const priority: Record<Suggestion['type'], number> = {
-    style: 6,
-    tag: 5,
-    location: 4,
-    price: 3,
-    category: 2,
-    michelin: 1,
-    open: 0,
-  };
-
   suggestions
-    .sort((a, b) => priority[b.type] - priority[a.type])
+    .sort((a, b) => b.priority - a.priority)
     .forEach(s => {
       const key = s.refinement.toLowerCase();
       if (!seen.has(key)) {
@@ -227,10 +318,16 @@ export async function generateSuggestions(input: SuggestionInput): Promise<Array
       }
     });
 
-  // Return top 6 suggestions
+  // Return top 6 suggestions as ActionPatch objects
   return deduped.slice(0, 6).map(s => ({
     label: s.label,
-    refinement: s.refinement,
+    patch: s.patch,
+    reason: {
+      type: 'refine' as const,
+      text: `Filter by ${s.type}`,
+    },
+    icon: s.icon,
+    priority: s.priority,
   }));
 }
 
@@ -282,4 +379,54 @@ function capitalizeLocation(location: string): string {
 function capitalizeCategory(category: string): string {
   // Capitalize category names
   return category.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+/**
+ * Convert ActionPatch suggestions to legacy format
+ * @deprecated Use ActionPatch directly in new code
+ */
+export function actionPatchToLegacySuggestion(patch: ActionPatch): LegacySuggestion {
+  // Infer type from patch content
+  let type: LegacySuggestion['type'] = 'tag';
+  let refinement = patch.label;
+
+  if (patch.patch.filters) {
+    const { filters } = patch.patch;
+    if (filters.michelin) {
+      type = 'michelin';
+      refinement = 'michelin';
+    } else if (filters.openNow) {
+      type = 'open';
+      refinement = 'open now';
+    } else if (filters.priceMin !== undefined || filters.priceMax !== undefined) {
+      type = 'price';
+      refinement = filters.priceMin && filters.priceMin >= 3 ? 'upscale' : 'budget';
+    } else if (filters.category) {
+      type = 'category';
+      refinement = filters.category;
+    } else if (filters.neighborhood || filters.city) {
+      type = 'location';
+      refinement = filters.neighborhood
+        ? `in ${filters.neighborhood.toLowerCase()}`
+        : filters.city || refinement;
+    } else if (filters.vibes && filters.vibes.length > 0) {
+      type = 'style';
+      refinement = filters.vibes[0];
+    }
+  }
+
+  return {
+    label: patch.label,
+    refinement,
+    type,
+  };
+}
+
+/**
+ * Generate suggestions in legacy format for backwards compatibility
+ * @deprecated Use generateSuggestions directly and handle ActionPatch objects
+ */
+export async function generateLegacySuggestions(input: SuggestionInput): Promise<LegacySuggestion[]> {
+  const patches = await generateSuggestions(input);
+  return patches.map(actionPatchToLegacySuggestion);
 }

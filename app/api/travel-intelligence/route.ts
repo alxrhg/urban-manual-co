@@ -639,24 +639,84 @@ async function generateItinerary(
 }
 
 /**
- * Generate intelligent follow-up suggestions
+ * ActionPatch type for structured follow-up suggestions
+ */
+interface ActionPatch {
+  label: string;
+  patch: {
+    filters?: {
+      city?: string | null;
+      category?: string | null;
+      neighborhood?: string | null;
+      priceMin?: number | null;
+      priceMax?: number | null;
+      michelin?: boolean;
+      occasion?: string | null;
+      vibes?: string[];
+      openNow?: boolean;
+      cuisine?: string | null;
+      ratingMin?: number | null;
+      timeContext?: 'breakfast' | 'lunch' | 'dinner' | 'late_night' | null;
+    };
+    query?: {
+      set?: string;
+      append?: string;
+      clear?: boolean;
+    };
+    intent?: {
+      mode?: 'search' | 'recommendation' | 'discovery' | 'comparison' | 'more_like_this' | 'itinerary' | 'clarification';
+      referenceSlug?: string;
+      itineraryDuration?: 'half_day' | 'full_day' | 'multi_day';
+      socialContext?: 'solo' | 'date' | 'group' | 'business' | 'family';
+    };
+    clearFilters?: boolean;
+    reset?: boolean;
+  };
+  reason: {
+    type: 'refine' | 'expand' | 'related' | 'personalized' | 'popular' | 'contextual' | 'clarification' | 'alternative';
+    text?: string;
+  };
+  icon?: 'location' | 'time' | 'price' | 'rating' | 'category' | 'cuisine' | 'vibe' | 'trip' | 'search' | 'filter' | 'michelin' | 'default';
+  priority?: number;
+}
+
+/**
+ * Generate intelligent follow-up suggestions as ActionPatch objects
  */
 function generateFollowUps(
   intent: ParsedIntent,
   results: any[],
   conversationHistory: ConversationMessage[],
   tasteProfile: any | null
-): string[] {
-  const suggestions: string[] = [];
+): ActionPatch[] {
+  const suggestions: ActionPatch[] = [];
   const city = intent.filters.city;
   const category = intent.filters.category;
 
   // Itinerary-specific follow-ups
   if (intent.intent === 'itinerary') {
     if (city) {
-      suggestions.push(`More restaurants in ${city}`);
-      suggestions.push(`Hidden gems in ${city}`);
-      suggestions.push(`Bars in ${city}`);
+      suggestions.push({
+        label: `More restaurants in ${city}`,
+        patch: { filters: { city, category: 'restaurant' } },
+        reason: { type: 'expand', text: 'Find more restaurants' },
+        icon: 'category',
+        priority: 8,
+      });
+      suggestions.push({
+        label: `Hidden gems in ${city}`,
+        patch: { filters: { city, vibes: ['hidden_gem'] } },
+        reason: { type: 'expand', text: 'Discover local favorites' },
+        icon: 'vibe',
+        priority: 7,
+      });
+      suggestions.push({
+        label: `Bars in ${city}`,
+        patch: { filters: { city, category: 'bar' } },
+        reason: { type: 'expand', text: 'Find nightlife' },
+        icon: 'category',
+        priority: 6,
+      });
     }
     return suggestions.slice(0, 4);
   }
@@ -666,40 +726,118 @@ function generateFollowUps(
     const topResult = results[0];
 
     // Suggest similar
-    if (topResult.name) {
-      suggestions.push(`More like ${topResult.name}`);
+    if (topResult.name && topResult.slug) {
+      suggestions.push({
+        label: `More like ${topResult.name}`,
+        patch: { intent: { mode: 'more_like_this', referenceSlug: topResult.slug } },
+        reason: { type: 'related', text: `Find places similar to ${topResult.name}` },
+        icon: 'search',
+        priority: 9,
+      });
     }
 
     // Suggest different category in same city
     if (city) {
       if (category === 'restaurant') {
-        suggestions.push(`Best bars in ${city}`);
-        suggestions.push(`Coffee in ${city}`);
+        suggestions.push({
+          label: `Best bars in ${city}`,
+          patch: { filters: { city, category: 'bar' } },
+          reason: { type: 'expand', text: 'Explore nightlife' },
+          icon: 'category',
+          priority: 7,
+        });
+        suggestions.push({
+          label: `Coffee in ${city}`,
+          patch: { filters: { city, category: 'cafe' } },
+          reason: { type: 'expand', text: 'Find coffee spots' },
+          icon: 'category',
+          priority: 6,
+        });
       } else if (category === 'bar') {
-        suggestions.push(`Late night eats in ${city}`);
-        suggestions.push(`Restaurants in ${city}`);
+        suggestions.push({
+          label: `Late night eats in ${city}`,
+          patch: { filters: { city, category: 'restaurant', timeContext: 'late_night' } },
+          reason: { type: 'expand', text: 'Find late-night dining' },
+          icon: 'time',
+          priority: 7,
+        });
+        suggestions.push({
+          label: `Restaurants in ${city}`,
+          patch: { filters: { city, category: 'restaurant' } },
+          reason: { type: 'expand', text: 'Find restaurants' },
+          icon: 'category',
+          priority: 6,
+        });
       } else if (category === 'cafe') {
-        suggestions.push(`Brunch spots in ${city}`);
+        suggestions.push({
+          label: `Brunch spots in ${city}`,
+          patch: { filters: { city, category: 'restaurant', timeContext: 'breakfast' } },
+          reason: { type: 'expand', text: 'Find brunch options' },
+          icon: 'time',
+          priority: 7,
+        });
       } else if (category === 'hotel') {
-        suggestions.push(`Restaurants near ${topResult.name || city}`);
+        suggestions.push({
+          label: `Restaurants near ${topResult.name || city}`,
+          patch: { filters: { city, category: 'restaurant' } },
+          reason: { type: 'expand', text: 'Find nearby dining' },
+          icon: 'location',
+          priority: 7,
+        });
       } else {
-        suggestions.push(`Restaurants in ${city}`);
-        suggestions.push(`Cafes in ${city}`);
+        suggestions.push({
+          label: `Restaurants in ${city}`,
+          patch: { filters: { city, category: 'restaurant' } },
+          reason: { type: 'expand', text: 'Find restaurants' },
+          icon: 'category',
+          priority: 7,
+        });
+        suggestions.push({
+          label: `Cafes in ${city}`,
+          patch: { filters: { city, category: 'cafe' } },
+          reason: { type: 'expand', text: 'Find coffee spots' },
+          icon: 'category',
+          priority: 6,
+        });
       }
 
       // Suggest itinerary
-      suggestions.push(`Plan my day in ${city}`);
+      suggestions.push({
+        label: `Plan my day in ${city}`,
+        patch: { filters: { city }, intent: { mode: 'itinerary', itineraryDuration: 'full_day' } },
+        reason: { type: 'expand', text: 'Create a day itinerary' },
+        icon: 'trip',
+        priority: 5,
+      });
     }
 
     // Suggest vibe-based refinement
     if (intent.vibes.length === 0 && category === 'restaurant') {
-      suggestions.push('Show me romantic spots');
-      suggestions.push('Hidden gems only');
+      suggestions.push({
+        label: 'Show me romantic spots',
+        patch: { filters: { vibes: ['romantic'] } },
+        reason: { type: 'refine', text: 'Filter by atmosphere' },
+        icon: 'vibe',
+        priority: 6,
+      });
+      suggestions.push({
+        label: 'Hidden gems only',
+        patch: { filters: { vibes: ['hidden_gem'] } },
+        reason: { type: 'refine', text: 'Discover local favorites' },
+        icon: 'vibe',
+        priority: 6,
+      });
     }
 
     // Suggest Michelin if not already filtered
     if (!intent.filters.michelin && results.some(r => r.michelin_stars > 0)) {
-      suggestions.push('Only Michelin starred');
+      suggestions.push({
+        label: 'Only Michelin starred',
+        patch: { filters: { michelin: true } },
+        reason: { type: 'refine', text: 'Filter to Michelin restaurants' },
+        icon: 'michelin',
+        priority: 8,
+      });
     }
 
     // Personalized suggestions based on taste profile
@@ -709,34 +847,86 @@ function generateFollowUps(
         .slice(0, 1);
 
       if (favCategories.length > 0 && city) {
-        suggestions.push(`${favCategories[0].category}s in ${city}`);
+        const favCat = favCategories[0].category;
+        suggestions.push({
+          label: `${favCat}s in ${city}`,
+          patch: { filters: { city, category: favCat } },
+          reason: { type: 'personalized', text: 'Based on your preferences' },
+          icon: 'category',
+          priority: 5,
+        });
       }
     }
 
     // Suggest price refinement
     if (!intent.priceContext) {
       if (results.some(r => r.price_level >= 3)) {
-        suggestions.push('More affordable options');
+        suggestions.push({
+          label: 'More affordable options',
+          patch: { filters: { priceMax: 2 } },
+          reason: { type: 'refine', text: 'Filter by price' },
+          icon: 'price',
+          priority: 6,
+        });
       }
     }
   } else {
     // No results - suggest broader searches
     if (city) {
-      suggestions.push(`All restaurants in ${city}`);
-      suggestions.push(`Best of ${city}`);
+      suggestions.push({
+        label: `All restaurants in ${city}`,
+        patch: { filters: { city, category: 'restaurant' }, clearFilters: false },
+        reason: { type: 'expand', text: 'Browse all options' },
+        icon: 'category',
+        priority: 7,
+      });
+      suggestions.push({
+        label: `Best of ${city}`,
+        patch: { filters: { city, ratingMin: 4.5 } },
+        reason: { type: 'expand', text: 'Show top-rated places' },
+        icon: 'rating',
+        priority: 6,
+      });
     } else {
-      suggestions.push('Restaurants in Tokyo');
-      suggestions.push('Hotels in Paris');
-      suggestions.push('Plan my day in Tokyo');
+      suggestions.push({
+        label: 'Restaurants in Tokyo',
+        patch: { filters: { city: 'Tokyo', category: 'restaurant' } },
+        reason: { type: 'popular', text: 'Popular destination' },
+        icon: 'location',
+        priority: 7,
+      });
+      suggestions.push({
+        label: 'Hotels in Paris',
+        patch: { filters: { city: 'Paris', category: 'hotel' } },
+        reason: { type: 'popular', text: 'Popular destination' },
+        icon: 'location',
+        priority: 6,
+      });
+      suggestions.push({
+        label: 'Plan my day in Tokyo',
+        patch: { filters: { city: 'Tokyo' }, intent: { mode: 'itinerary', itineraryDuration: 'full_day' } },
+        reason: { type: 'popular', text: 'Start planning' },
+        icon: 'trip',
+        priority: 5,
+      });
     }
   }
 
   // Add variety based on history
   if (conversationHistory.length > 2) {
-    suggestions.push('Show me something different');
+    suggestions.push({
+      label: 'Show me something different',
+      patch: { intent: { mode: 'discovery' } },
+      reason: { type: 'expand', text: 'Explore different options' },
+      icon: 'search',
+      priority: 4,
+    });
   }
 
-  return suggestions.slice(0, 4);
+  // Sort by priority and return top 4
+  return suggestions
+    .sort((a, b) => (b.priority || 0) - (a.priority || 0))
+    .slice(0, 4);
 }
 
 /**
@@ -832,13 +1022,27 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     // 2. Check if clarification is needed
     const clarification = checkNeedsClarification(query, intent, conversationHistory);
     if (clarification.needsClarification) {
+      // Generate city suggestion patches for clarification
+      const cityPatches: ActionPatch[] = Object.keys(CITY_VARIATIONS).slice(0, 4).map(city => {
+        const capitalizedCity = city.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        return {
+          label: capitalizedCity,
+          patch: {
+            filters: { city: capitalizedCity },
+          },
+          reason: {
+            type: 'clarification' as const,
+            text: 'Select a city',
+          },
+          icon: 'location' as const,
+        };
+      });
+
       return NextResponse.json({
         response: clarification.clarificationQuestion,
         destinations: [],
         filters: intent.filters,
-        followUps: Object.keys(CITY_VARIATIONS).slice(0, 4).map(c =>
-          c.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-        ),
+        followUps: cityPatches,
         intent: 'clarification',
         needsClarification: true,
         clarificationType: clarification.clarificationType,
@@ -1039,11 +1243,43 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       }
 
       const finalResults = results.slice(0, 20);
-      const followUps = [
-        `More ${allCuisines[0] || 'fusion'} options`,
-        `More ${allCuisines[1] || 'restaurants'}`,
-        intent.filters.city ? `Other cuisines in ${intent.filters.city}` : 'Plan a food tour',
-        'Find a fusion restaurant',
+      const cuisine1 = allCuisines[0] || 'fusion';
+      const cuisine2 = allCuisines[1] || 'restaurant';
+      const followUps: ActionPatch[] = [
+        {
+          label: `More ${cuisine1} options`,
+          patch: { filters: { cuisine: cuisine1, city: intent.filters.city } },
+          reason: { type: 'refine', text: `Find more ${cuisine1}` },
+          icon: 'cuisine',
+          priority: 8,
+        },
+        {
+          label: `More ${cuisine2} options`,
+          patch: { filters: { cuisine: cuisine2, city: intent.filters.city } },
+          reason: { type: 'refine', text: `Find more ${cuisine2}` },
+          icon: 'cuisine',
+          priority: 7,
+        },
+        intent.filters.city ? {
+          label: `Other cuisines in ${intent.filters.city}`,
+          patch: { filters: { city: intent.filters.city, cuisine: null } },
+          reason: { type: 'expand', text: 'Explore other cuisines' },
+          icon: 'location',
+          priority: 6,
+        } : {
+          label: 'Plan a food tour',
+          patch: { intent: { mode: 'itinerary' } },
+          reason: { type: 'expand', text: 'Create a food itinerary' },
+          icon: 'trip',
+          priority: 6,
+        },
+        {
+          label: 'Find a fusion restaurant',
+          patch: { filters: { vibes: ['fusion'] } },
+          reason: { type: 'related', text: 'Find places that blend cuisines' },
+          icon: 'cuisine',
+          priority: 5,
+        },
       ];
 
       return NextResponse.json({
@@ -1348,11 +1584,32 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     });
   } catch (error: any) {
     console.error('Travel intelligence error:', error);
+    // Return ActionPatch format for error fallback suggestions
+    const fallbackPatches: ActionPatch[] = [
+      {
+        label: 'Restaurants in Tokyo',
+        patch: { filters: { city: 'Tokyo', category: 'restaurant' } },
+        reason: { type: 'popular', text: 'Popular destination' },
+        icon: 'location',
+      },
+      {
+        label: 'Hotels in Paris',
+        patch: { filters: { city: 'Paris', category: 'hotel' } },
+        reason: { type: 'popular', text: 'Popular destination' },
+        icon: 'location',
+      },
+      {
+        label: 'Plan my day in Tokyo',
+        patch: { filters: { city: 'Tokyo' }, intent: { mode: 'itinerary', itineraryDuration: 'full_day' } },
+        reason: { type: 'popular', text: 'Start planning' },
+        icon: 'trip',
+      },
+    ];
     return NextResponse.json({
       error: 'Search failed',
       response: 'Sorry, I had trouble with that search. Please try again.',
       destinations: [],
-      followUps: ['Restaurants in Tokyo', 'Hotels in Paris', 'Plan my day in Tokyo'],
+      followUps: fallbackPatches,
     }, { status: 500 });
   }
 });
