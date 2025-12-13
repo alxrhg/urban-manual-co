@@ -1730,3 +1730,234 @@ html.christmas-mode.dark::before,
     display: none;
   }
 }
+
+/* ============================================
+   PASSPORT THEME - Account Page Styles
+   ============================================ */
+
+/* Security paper texture */
+.passport-paper {
+  background-color: #f5f3ef;
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.01) 2px,
+      rgba(0, 0, 0, 0.01) 4px
+    );
+}
+
+.dark .passport-paper {
+  background-color: #1a1917;
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.01) 2px,
+      rgba(255, 255, 255, 0.01) 4px
+    );
+}
+
+/* Holographic/foil effect */
+.passport-foil {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 25%,
+    rgba(200, 220, 255, 0.2) 35%,
+    rgba(255, 200, 220, 0.2) 45%,
+    rgba(220, 255, 200, 0.2) 55%,
+    rgba(200, 200, 255, 0.2) 65%,
+    rgba(255, 255, 255, 0.1) 75%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 400% 400%;
+  animation: foilShift 8s ease-in-out infinite;
+}
+
+@keyframes foilShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* OCR-B style font stack for passport data fields */
+.passport-data {
+  font-family: 'Space Mono', 'OCR-B', 'Courier New', monospace;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Passport stamp ink effect */
+.stamp-ink {
+  mix-blend-mode: multiply;
+  opacity: 0.85;
+}
+
+.dark .stamp-ink {
+  mix-blend-mode: screen;
+  opacity: 0.7;
+}
+
+/* Stamp colors - various ink colors */
+.stamp-ink-blue {
+  color: #1e3a5f;
+  border-color: #1e3a5f;
+}
+
+.stamp-ink-red {
+  color: #8b1e3f;
+  border-color: #8b1e3f;
+}
+
+.stamp-ink-green {
+  color: #1e5f3a;
+  border-color: #1e5f3a;
+}
+
+.stamp-ink-purple {
+  color: #4a1e5f;
+  border-color: #4a1e5f;
+}
+
+.dark .stamp-ink-blue {
+  color: #7ba3c9;
+  border-color: #7ba3c9;
+}
+
+.dark .stamp-ink-red {
+  color: #c97b8f;
+  border-color: #c97b8f;
+}
+
+.dark .stamp-ink-green {
+  color: #7bc9a3;
+  border-color: #7bc9a3;
+}
+
+.dark .stamp-ink-purple {
+  color: #a37bc9;
+  border-color: #a37bc9;
+}
+
+/* Boarding pass perforated edge */
+.boarding-pass-edge {
+  position: relative;
+}
+
+.boarding-pass-edge::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  background: radial-gradient(
+    circle at 12px 12px,
+    transparent 8px,
+    hsl(var(--background)) 8px
+  );
+  background-size: 24px 24px;
+}
+
+/* Barcode visual */
+.barcode {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 40px;
+  overflow: hidden;
+}
+
+.barcode-line {
+  background: currentColor;
+  width: 2px;
+  min-width: 1px;
+}
+
+/* Ticket stub styling */
+.ticket-stub {
+  position: relative;
+  border-radius: 8px 0 0 8px;
+  overflow: visible;
+}
+
+.ticket-stub::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: repeating-linear-gradient(
+    to bottom,
+    currentColor 0px,
+    currentColor 4px,
+    transparent 4px,
+    transparent 8px
+  );
+  opacity: 0.3;
+}
+
+/* Stamp rotation utilities */
+.stamp-rotate-neg-5 { transform: rotate(-5deg); }
+.stamp-rotate-neg-4 { transform: rotate(-4deg); }
+.stamp-rotate-neg-3 { transform: rotate(-3deg); }
+.stamp-rotate-neg-2 { transform: rotate(-2deg); }
+.stamp-rotate-neg-1 { transform: rotate(-1deg); }
+.stamp-rotate-0 { transform: rotate(0deg); }
+.stamp-rotate-1 { transform: rotate(1deg); }
+.stamp-rotate-2 { transform: rotate(2deg); }
+.stamp-rotate-3 { transform: rotate(3deg); }
+.stamp-rotate-4 { transform: rotate(4deg); }
+.stamp-rotate-5 { transform: rotate(5deg); }
+
+/* Passport photo styling */
+.passport-photo {
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.dark .passport-photo {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Guilloche pattern (decorative security pattern) */
+.passport-guilloche {
+  background-image:
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      transparent 0px,
+      transparent 8px,
+      rgba(0, 0, 0, 0.02) 8px,
+      rgba(0, 0, 0, 0.02) 9px
+    );
+}
+
+.dark .passport-guilloche {
+  background-image:
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      transparent 0px,
+      transparent 8px,
+      rgba(255, 255, 255, 0.02) 8px,
+      rgba(255, 255, 255, 0.02) 9px
+    );
+}
+
+/* Reduce motion for foil animation */
+@media (prefers-reduced-motion: reduce) {
+  .passport-foil {
+    animation: none;
+    background-position: 50% 50%;
+  }
+}

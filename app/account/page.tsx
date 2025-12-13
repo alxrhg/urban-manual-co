@@ -4,10 +4,9 @@ import React from "react";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { MapPin, Plus, Calendar, Trash2, Edit2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { cityCountryMap } from "@/data/cityCountryMap";
 import Image from "next/image";
-import { EnhancedVisitedTab } from "@/components/EnhancedVisitedTab";
 import { EnhancedSavedTab } from "@/components/EnhancedSavedTab";
 import { WorldMapVisualization } from "@/components/WorldMapVisualization";
 import { AchievementsDisplay } from "@/components/AchievementsDisplay";
@@ -19,8 +18,10 @@ import { SecuritySettings } from "@/components/SecuritySettings";
 import { PreferencesTab } from "@/components/account/PreferencesTab";
 import { MCPIntegration } from "@/components/account/MCPIntegration";
 import { openCookieSettings } from "@/components/CookieConsent";
+import { PassportCard } from "@/components/account/PassportCard";
+import { StampsGrid } from "@/components/account/StampsGrid";
+import { TripsWallet } from "@/components/account/TripsWallet";
 import type { Collection, SavedPlace, VisitedPlace } from "@/types/common";
-import { formatDestinationsFromField } from "@/types/trip";
 import type { Trip } from "@/types/trip";
 import type { User } from "@supabase/supabase-js";
 import { toast } from "@/lib/toast";
@@ -426,112 +427,74 @@ export default function Account() {
   return (
     <main className="w-full px-6 md:px-10 py-20 min-h-screen">
       <div className="w-full">
-        {/* Header - Matches homepage spacing and style */}
+        {/* Header - Passport Style */}
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-light">Account</h1>
+            <div>
+              <h1 className="text-2xl font-light">Passport</h1>
+              <p className="passport-data text-[10px] text-gray-400 mt-1">Urban Manual Travel Identity</p>
+            </div>
             <button
               onClick={handleSignOut}
-              className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+              className="passport-data text-[10px] text-gray-500 hover:text-black dark:hover:text-white transition-colors"
             >
               Sign Out
             </button>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+          <p className="passport-data text-[10px] text-gray-400">{user.email}</p>
         </div>
 
-        {/* Tab Navigation - Minimal, matches homepage city/category style */}
+        {/* Tab Navigation - Passport Pages */}
         <div className="mb-12">
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-            {(['profile', 'visited', 'saved', 'collections', 'trips', 'achievements', 'preferences', 'integrations', 'settings'] as const).map((tab) => (
+            {([
+              { id: 'profile', label: 'ID' },
+              { id: 'visited', label: 'Stamps' },
+              { id: 'saved', label: 'Saved' },
+              { id: 'collections', label: 'Collections' },
+              { id: 'trips', label: 'Wallet' },
+              { id: 'achievements', label: 'Badges' },
+              { id: 'preferences', label: 'Preferences' },
+              { id: 'integrations', label: 'Integrations' },
+              { id: 'settings', label: 'Settings' },
+            ] as const).map(({ id, label }) => (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`transition-all ${
-                  activeTab === tab
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={`passport-data transition-all ${
+                  activeTab === id
                     ? "font-medium text-black dark:text-white"
                     : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                 }`}
               >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                {label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Profile Tab */}
+        {/* Profile Tab - Passport ID Page */}
         {activeTab === 'profile' && (
           <div className="space-y-12 fade-in">
-            {/* Curation Completion - Prominent gamification stat */}
-            <div className="p-6 border border-gray-200 dark:border-gray-800 rounded-2xl bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <div className="text-4xl font-light mb-1">{stats.curationCompletionPercentage}%</div>
-                  <div className="text-xs text-gray-500">of curation explored</div>
-                </div>
-                <div className="text-right text-xs text-gray-400">
-                  {stats.visitedCount} / {totalDestinations} places
-                </div>
-              </div>
-              {/* Progress bar */}
-              <div className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-black dark:bg-white transition-all duration-500 ease-out"
-                  style={{ width: `${Math.min(stats.curationCompletionPercentage, 100)}%` }}
-                />
-              </div>
-              {stats.curationCompletionPercentage < 100 && (
-                <p className="text-xs text-gray-400 mt-3">
-                  {stats.curationCompletionPercentage < 10
-                    ? "Just getting started! Keep exploring."
-                    : stats.curationCompletionPercentage < 25
-                    ? "Great start! Many more places to discover."
-                    : stats.curationCompletionPercentage < 50
-                    ? "Halfway there! You're doing amazing."
-                    : stats.curationCompletionPercentage < 75
-                    ? "Impressive! You're a seasoned explorer."
-                    : "Almost there! You've explored most of our curation."}
-                </p>
-              )}
-              {stats.curationCompletionPercentage === 100 && (
-                <p className="text-xs text-gray-400 mt-3">
-                  🎉 Incredible! You've visited every place in our curation!
-                </p>
-              )}
-            </div>
-
-            {/* Stats Grid - Minimal, like homepage cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                <div className="text-2xl font-light mb-1">{stats.visitedCount}</div>
-                <div className="text-xs text-gray-500">Visited</div>
-              </div>
-              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                <div className="text-2xl font-light mb-1">{stats.savedCount}</div>
-                <div className="text-xs text-gray-500">Saved</div>
-              </div>
-              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                <div className="text-2xl font-light mb-1">{stats.uniqueCities.size}</div>
-                <div className="text-xs text-gray-500">Cities</div>
-              </div>
-              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                <div className="text-2xl font-light mb-1">{stats.uniqueCountries.size}</div>
-                <div className="text-xs text-gray-500">Countries</div>
-              </div>
-            </div>
+            {/* Passport Card - The ID Page */}
+            <PassportCard
+              user={user}
+              stats={stats}
+              totalDestinations={totalDestinations}
+            />
 
             {/* World Map */}
             {(stats.uniqueCountries.size > 0 || stats.visitedDestinationsWithCoords.length > 0) && (
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400">Travel Map</h2>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <h2 className="passport-data text-[10px] text-gray-400">Travel Map</h2>
+                  <p className="passport-data text-[10px] text-gray-400">
                     {stats.uniqueCountries.size > 0 && `${stats.uniqueCountries.size} ${stats.uniqueCountries.size === 1 ? 'country' : 'countries'}`}
                     {stats.uniqueCountries.size > 0 && stats.uniqueCities.size > 0 && ' • '}
                     {stats.uniqueCities.size > 0 && `${stats.uniqueCities.size} ${stats.uniqueCities.size === 1 ? 'city' : 'cities'}`}
                   </p>
                 </div>
-                <WorldMapVisualization 
+                <WorldMapVisualization
                   visitedCountries={stats.uniqueCountries}
                   visitedDestinations={stats.visitedDestinationsWithCoords}
                 />
@@ -541,7 +504,7 @@ export default function Account() {
             {/* Recent Visits */}
             {visitedPlaces.length > 0 && (
               <div>
-                <h2 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Recent Visits</h2>
+                <h2 className="passport-data text-[10px] text-gray-400 mb-4">Recent Entries</h2>
                 <div className="space-y-2">
                   {visitedPlaces.slice(0, 5).map((place) => (
                     <button
@@ -565,7 +528,7 @@ export default function Account() {
                         <div className="text-xs text-gray-500 mt-0.5">
                           {place.destination && capitalizeCity(place.destination.city)} • {place.destination?.category}
                         </div>
-                        <div className="text-xs text-gray-400 mt-0.5">
+                        <div className="passport-data text-[10px] text-gray-400 mt-0.5">
                           {place.visited_at && new Date(place.visited_at).toLocaleDateString()}
                         </div>
                       </div>
@@ -577,13 +540,10 @@ export default function Account() {
           </div>
         )}
 
-        {/* Visited Tab */}
+        {/* Visited Tab - Stamps Page */}
         {activeTab === 'visited' && (
           <div className="fade-in">
-            <EnhancedVisitedTab
-              visitedPlaces={visitedPlaces}
-              onPlaceAdded={loadUserData}
-            />
+            <StampsGrid visitedPlaces={visitedPlaces} />
           </div>
         )}
 
@@ -635,132 +595,20 @@ export default function Account() {
           </div>
         )}
 
-        {/* Trips Tab */}
+        {/* Trips Tab - Travel Wallet */}
         {activeTab === 'trips' && (
           <div className="fade-in">
-            <div className="flex justify-end mb-4">
-              <button
-                onClick={() => {
-                  if (!user) {
-                    router.push('/auth/login');
-                  } else {
-                    setEditingTripId(null);
-                    setShowTripDialog(true);
-                  }
-                }}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity flex items-center gap-2"
-              >
-                <Plus className="h-3 w-3" />
-                {user ? "New Trip" : "Sign in to create trip"}
-              </button>
-            </div>
-
-            {trips.length === 0 ? (
-              <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
-                <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No trips yet</p>
-                <button
-                  onClick={() => {
-                    if (!user) {
-                      router.push('/auth/login');
-                    } else {
-                      setEditingTripId(null);
-                      setShowTripDialog(true);
-                    }
-                  }}
-                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
-                >
-                  {user ? "Create your first trip" : "Sign in to create trip"}
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {trips.map((trip) => (
-                  <div
-                    key={trip.id}
-                    className="flex flex-col border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    <button
-                      onClick={() => router.push(`/trips/${trip.id}`)}
-                      className="text-left p-4 flex-1"
-                    >
-                      <h3 className="font-medium text-sm mb-2 line-clamp-2">{trip.title}</h3>
-                      {trip.description && (
-                        <p className="text-xs text-gray-500 line-clamp-2 mb-2">{trip.description}</p>
-                      )}
-                      <div className="space-y-1 text-xs text-gray-400">
-                        {trip.destination && (
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-3 w-3" />
-                            <span>{formatDestinationsFromField(trip.destination)}</span>
-                          </div>
-                        )}
-                        {(trip.start_date || trip.end_date) && (
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-3 w-3" />
-                            <span>
-                              {trip.start_date ? new Date(trip.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
-                              {trip.end_date && ` – ${new Date(trip.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
-                            </span>
-                          </div>
-                        )}
-                        {trip.status && (
-                          <div>
-                            <span className="capitalize text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800">
-                              {trip.status}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                    <div className="flex items-center gap-2 p-4 pt-0 border-t border-gray-200 dark:border-gray-800">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/trips/${trip.id}`);
-                        }}
-                        className="flex-1 text-xs font-medium py-2 px-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingTripId(trip.id);
-                          setShowTripDialog(true);
-                        }}
-                        className="p-2 rounded-xl text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                        aria-label={`Edit ${trip.title}`}
-                      >
-                        <Edit2 className="h-3 w-3" />
-                      </button>
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          if (confirm(`Are you sure you want to delete "${trip.title}"?`)) {
-                            try {
-                              const { error } = await supabase
-                                .from('trips')
-                                .delete()
-                                .eq('id', trip.id);
-                              if (error) throw error;
-                              await loadUserData();
-                            } catch (error) {
-                              console.error('Error deleting trip:', error);
-                              toast.error('Failed to delete trip');
-                            }
-                          }
-                        }}
-                        className="p-2 rounded-xl text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
-                        aria-label={`Delete ${trip.title}`}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <TripsWallet
+              trips={trips}
+              onNewTrip={() => {
+                if (!user) {
+                  router.push('/auth/login');
+                } else {
+                  setEditingTripId(null);
+                  setShowTripDialog(true);
+                }
+              }}
+            />
           </div>
         )}
 
