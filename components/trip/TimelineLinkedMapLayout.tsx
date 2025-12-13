@@ -18,7 +18,8 @@ import {
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
-import { useMapViewportSync, type MapMarkerData } from '@/lib/hooks/useMapViewportSync';
+import { useMapViewportSync } from '@/lib/hooks/useMapViewportSync';
+import type { Destination } from '@/types/destination';
 import TimelineLinkedMap from './TimelineLinkedMap';
 import { ItineraryScrollList } from './ItineraryScrollList';
 
@@ -28,7 +29,7 @@ interface TimelineLinkedMapLayoutProps {
   onSelectDay: (dayNumber: number) => void;
   onEditItem?: (item: EnrichedItineraryItem) => void;
   onAddItem?: (dayNumber: number) => void;
-  onAddPlace?: (place: Partial<{ name: string; city: string; latitude: number; longitude: number; category: string }>, dayNumber: number) => void;
+  onAddPlace?: (place: Partial<Destination>, dayNumber: number) => void;
   onRemoveItem?: (itemId: string) => void;
   onReorderItems?: (dayNumber: number, items: EnrichedItineraryItem[]) => void;
   tripDestination?: string;

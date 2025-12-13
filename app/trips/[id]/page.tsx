@@ -420,8 +420,8 @@ export default function TripPage() {
                 addPlace({
                   name: place.name || '',
                   city: place.city || primaryCity,
-                  latitude: place.latitude,
-                  longitude: place.longitude,
+                  latitude: place.latitude ?? undefined,
+                  longitude: place.longitude ?? undefined,
                   category: place.category,
                 } as Destination, dayNumber);
               }}
