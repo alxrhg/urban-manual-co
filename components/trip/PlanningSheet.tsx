@@ -1,17 +1,14 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useTripBuilder } from '@/contexts/TripBuilderContext';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   X,
   MapPin,
-  Calendar,
   FolderOpen,
   Save,
   Share2,
-  Plus,
-  ChevronDown,
 } from 'lucide-react';
 
 /**
@@ -44,34 +41,6 @@ export default function PlanningSheet() {
     startTrip,
   } = useTripBuilder();
 
-  // Close on outside click
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (sheetRef.current && !sheetRef.current.contains(event.target as Node)) {
-        closePlanningSheet();
-      }
-    }
-
-    if (isPlanningSheetOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [isPlanningSheetOpen, closePlanningSheet]);
-
-  // Close on escape
-  useEffect(() => {
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        closePlanningSheet();
-      }
-    }
-
-    if (isPlanningSheetOpen) {
-      document.addEventListener('keydown', handleEscape);
-      return () => document.removeEventListener('keydown', handleEscape);
-    }
-  }, [isPlanningSheetOpen, closePlanningSheet]);
-
   if (!isPlanningSheetOpen) return null;
 
   const tripCities = getTripCities();
@@ -88,16 +57,19 @@ export default function PlanningSheet() {
   // Handle save
   const handleSave = async () => {
     if (!user) {
-      // Could show login prompt here
       return;
     }
     await saveTrip();
   };
 
-  // Handle share (placeholder - would open share modal)
+  // Handle share (placeholder)
   const handleShare = () => {
-    // TODO: Implement share functionality
     console.log('Share trip');
+  };
+
+  // Handle backdrop click
+  const handleBackdropClick = () => {
+    closePlanningSheet();
   };
 
   return (
@@ -105,6 +77,7 @@ export default function PlanningSheet() {
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40 transition-opacity"
+        onClick={handleBackdropClick}
         aria-hidden="true"
       />
 
@@ -116,6 +89,7 @@ export default function PlanningSheet() {
                    rounded-t-2xl shadow-2xl
                    max-h-[70vh] overflow-y-auto
                    animate-in slide-in-from-bottom duration-300"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Drag handle */}
         <div className="flex justify-center pt-3 pb-2">
