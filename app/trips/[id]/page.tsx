@@ -642,7 +642,6 @@ export default function TripPage() {
                   item={selectedItem}
                   onClose={() => setSelectedItem(null)}
                   onTimeChange={updateItemTime}
-                  onNotesChange={updateItemNotes}
                   onItemUpdate={(id, updates) => updateItem(id, updates)}
                   onRemove={removeItem}
                 />
