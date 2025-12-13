@@ -23,10 +23,9 @@ import { jwtVerify } from "jose";
 // Import MCP handler
 import { processRequest, getServerInfo, endpoints } from "@/lib/mcp/handler";
 
-// JWT secret for MCP OAuth tokens
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.MCP_JWT_SECRET || process.env.SUPABASE_JWT_SECRET || "urban-manual-mcp-secret-key-change-in-production"
-);
+// JWT secret for MCP OAuth tokens - REQUIRED, no fallback to prevent insecure deployments
+const JWT_SECRET_RAW = process.env.MCP_JWT_SECRET || process.env.SUPABASE_JWT_SECRET;
+const JWT_SECRET = JWT_SECRET_RAW ? new TextEncoder().encode(JWT_SECRET_RAW) : null;
 
 // Rate limiter configuration
 let ratelimit: Ratelimit | null = null;
@@ -68,23 +67,25 @@ async function authenticateRequest(request: NextRequest) {
 
     const token = authHeader.slice(7);
 
-    // First, try to verify as MCP OAuth JWT
-    try {
-      const { payload } = await jwtVerify(token, JWT_SECRET, {
-        issuer: "urban-manual-mcp",
-      });
+    // First, try to verify as MCP OAuth JWT (only if secret is configured)
+    if (JWT_SECRET) {
+      try {
+        const { payload } = await jwtVerify(token, JWT_SECRET, {
+          issuer: "urban-manual-mcp",
+        });
 
-      if (payload.type === "access" && payload.sub) {
-        return {
-          id: payload.sub as string,
-          email: null,
-          role: "user",
-          scope: payload.scope as string || "read",
-          authType: "oauth",
-        };
+        if (payload.type === "access" && payload.sub) {
+          return {
+            id: payload.sub as string,
+            email: null,
+            role: "user",
+            scope: payload.scope as string || "read",
+            authType: "oauth",
+          };
+        }
+      } catch {
+        // Not an MCP OAuth token, try Supabase
       }
-    } catch {
-      // Not an MCP OAuth token, try Supabase
     }
 
     // Try Supabase Auth token

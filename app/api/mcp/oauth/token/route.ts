@@ -68,14 +68,32 @@ export async function POST(request: NextRequest) {
       return tokenError("invalid_grant", "Authorization code has expired");
     }
 
+    // Validate client_id matches the one from authorization
+    // Per OAuth 2.0 spec, if client_id was provided, it must match
+    if (client_id && client_id !== codeData.client_id) {
+      return tokenError("invalid_grant", "Client ID mismatch");
+    }
+
     // Verify PKCE if code_challenge was provided
-    if (codeData.code_challenge && codeData.code_challenge_method === "S256") {
+    if (codeData.code_challenge) {
       if (!code_verifier) {
         return tokenError("invalid_request", "Code verifier is required");
       }
-      const expectedChallenge = createHash("sha256")
-        .update(code_verifier)
-        .digest("base64url");
+
+      let expectedChallenge: string;
+      if (codeData.code_challenge_method === "S256") {
+        // SHA-256 hash of the code verifier
+        expectedChallenge = createHash("sha256")
+          .update(code_verifier)
+          .digest("base64url");
+      } else if (codeData.code_challenge_method === "plain") {
+        // Plain method: code_verifier === code_challenge
+        expectedChallenge = code_verifier;
+      } else {
+        // Reject unknown/unsupported methods
+        return tokenError("invalid_request", "Unsupported code_challenge_method");
+      }
+
       if (expectedChallenge !== codeData.code_challenge) {
         return tokenError("invalid_grant", "Code verifier does not match");
       }
@@ -130,6 +148,11 @@ export async function POST(request: NextRequest) {
     if (new Date(tokenData.expires_at) < new Date()) {
       await supabase.from("mcp_refresh_tokens").delete().eq("token_hash", tokenHash);
       return tokenError("invalid_grant", "Refresh token has expired");
+    }
+
+    // Validate client_id matches (if provided)
+    if (client_id && client_id !== tokenData.client_id) {
+      return tokenError("invalid_grant", "Client ID mismatch");
     }
 
     // Generate new tokens
