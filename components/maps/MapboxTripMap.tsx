@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Maximize2, Minimize2, Navigation, AlertTriangle } from 'lucide-react';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 // Import mapbox-gl dynamically to avoid SSR issues
 let mapboxgl: typeof import('mapbox-gl') | null = null;
@@ -52,8 +53,6 @@ export default function MapboxTripMap({
 
     import('mapbox-gl').then((mb) => {
       mapboxgl = mb;
-      // Import CSS
-      import('mapbox-gl/dist/mapbox-gl.css');
       setMapboxLoaded(true);
     }).catch((err) => {
       console.error('Failed to load mapbox-gl:', err);
