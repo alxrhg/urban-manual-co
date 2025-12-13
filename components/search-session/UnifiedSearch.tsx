@@ -99,7 +99,7 @@ export function UnifiedSearch({
   const handleChipClick = useCallback((chip: Suggestion | FilterChip) => {
     if ('query' in chip || 'action' in chip) {
       searchWithChip(chip as Suggestion);
-    } else {
+    } else if ('value' in chip) {
       // Filter chip - construct query
       search(`${chip.type}: ${chip.value}`);
     }
