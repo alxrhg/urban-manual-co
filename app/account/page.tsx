@@ -7,9 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { Plus } from "lucide-react";
 import { cityCountryMap } from "@/data/cityCountryMap";
 import Image from "next/image";
-import { EnhancedSavedTab } from "@/components/EnhancedSavedTab";
 import { WorldMapVisualization } from "@/components/WorldMapVisualization";
-import { AchievementsDisplay } from "@/components/AchievementsDisplay";
 import { PageLoader } from "@/components/LoadingStates";
 import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
@@ -18,9 +16,13 @@ import { SecuritySettings } from "@/components/SecuritySettings";
 import { PreferencesTab } from "@/components/account/PreferencesTab";
 import { MCPIntegration } from "@/components/account/MCPIntegration";
 import { openCookieSettings } from "@/components/CookieConsent";
-import { PassportCard } from "@/components/account/PassportCard";
-import { StampsGrid } from "@/components/account/StampsGrid";
+// Passport components
+import { IdentityPage } from "@/components/account/passport/IdentityPage";
+import { VisaPages } from "@/components/account/passport/VisaPages";
+import { BucketListPage } from "@/components/account/passport/BucketListPage";
+import { EndorsementsPage } from "@/components/account/passport/EndorsementsPage";
 import { TripsWallet } from "@/components/account/TripsWallet";
+import { PassportNav, type PassportSection } from "@/components/account/passport/PassportNav";
 import type { Collection, SavedPlace, VisitedPlace } from "@/types/common";
 import type { Trip } from "@/types/trip";
 import type { User } from "@supabase/supabase-js";
@@ -47,17 +49,34 @@ export default function Account() {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
   
-  // Get initial tab from URL query param - use useEffect to avoid SSR issues
-  const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings' | 'trips' | 'preferences' | 'integrations'>('profile');
+  // Get initial section from URL query param - use useEffect to avoid SSR issues
+  const [activeSection, setActiveSection] = useState<PassportSection>('identity');
 
-  // Update tab from URL params after mount
+  // Update section from URL params after mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
-      const validTabs = ['profile', 'visited', 'saved', 'collections', 'achievements', 'settings', 'trips', 'preferences', 'integrations'] as const;
-      if (tab && validTabs.includes(tab as typeof validTabs[number])) {
-        setActiveTab(tab as typeof activeTab);
+      // Map old tab names to new passport sections
+      const tabToSection: Record<string, PassportSection> = {
+        'profile': 'identity',
+        'visited': 'stamps',
+        'saved': 'bucketlist',
+        'collections': 'albums',
+        'trips': 'wallet',
+        'achievements': 'endorsements',
+        'preferences': 'preferences',
+        'settings': 'settings',
+        // New section names also work
+        'identity': 'identity',
+        'stamps': 'stamps',
+        'bucketlist': 'bucketlist',
+        'albums': 'albums',
+        'wallet': 'wallet',
+        'endorsements': 'endorsements',
+      };
+      if (tab && tabToSection[tab]) {
+        setActiveSection(tabToSection[tab]);
       }
     }
   }, []);
@@ -402,22 +421,48 @@ export default function Account() {
     );
   }
 
-  // Show sign in screen
+  // Show passport application screen (sign in)
   if (!user) {
     return (
       <main className="w-full px-6 md:px-10 py-20">
         <div className="min-h-[60vh] flex items-center justify-center">
-          <div className="w-full max-w-sm">
-            <h1 className="text-2xl font-light mb-8">Account</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
-              Sign in to save places, track visits, and create collections
-            </p>
-            <button
-              onClick={() => router.push('/auth/login')}
-              className="w-full px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-full hover:opacity-80 transition-opacity"
-            >
-              Sign In
-            </button>
+          <div className="w-full max-w-md">
+            {/* Passport Application Form */}
+            <div className="passport-paper passport-guilloche rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+              {/* Foil strip */}
+              <div className="passport-foil h-2" />
+
+              <div className="p-8 text-center">
+                {/* Emblem */}
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full border-2 border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" className="w-10 h-10 text-gray-400" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                  </svg>
+                </div>
+
+                <p className="passport-data text-[10px] text-gray-400 tracking-[0.3em] mb-2">URBAN MANUAL</p>
+                <h1 className="passport-data text-xl tracking-widest mb-2">PASSPORT</h1>
+                <p className="passport-data text-[10px] text-gray-400 tracking-wider mb-8">APPLICATION FORM</p>
+
+                <p className="text-xs text-gray-500 mb-8 max-w-xs mx-auto">
+                  Sign in to begin your travel journey. Track visits, collect stamps, and unlock achievements.
+                </p>
+
+                <button
+                  onClick={() => router.push('/auth/login')}
+                  className="w-full max-w-xs mx-auto px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-full hover:opacity-80 transition-opacity"
+                >
+                  Apply for Passport
+                </button>
+
+                <p className="passport-data text-[8px] text-gray-400 mt-6">
+                  FREE APPLICATION • NO CREDIT CARD REQUIRED
+                </p>
+              </div>
+
+              {/* Foil strip */}
+              <div className="passport-foil h-2" />
+            </div>
           </div>
         </div>
       </main>
@@ -428,8 +473,8 @@ export default function Account() {
     <main className="w-full px-6 md:px-10 py-20 min-h-screen">
       <div className="w-full">
         {/* Header - Passport Style */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-light">Passport</h1>
               <p className="passport-data text-[10px] text-gray-400 mt-1">Urban Manual Travel Identity</p>
@@ -444,54 +489,41 @@ export default function Account() {
           <p className="passport-data text-[10px] text-gray-400">{user.email}</p>
         </div>
 
-        {/* Tab Navigation - Passport Pages */}
-        <div className="mb-12">
-          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-            {([
-              { id: 'profile', label: 'ID' },
-              { id: 'visited', label: 'Stamps' },
-              { id: 'saved', label: 'Saved' },
-              { id: 'collections', label: 'Collections' },
-              { id: 'trips', label: 'Wallet' },
-              { id: 'achievements', label: 'Badges' },
-              { id: 'preferences', label: 'Preferences' },
-              { id: 'integrations', label: 'Integrations' },
-              { id: 'settings', label: 'Settings' },
-            ] as const).map(({ id, label }) => (
-              <button
-                key={id}
-                onClick={() => setActiveTab(id)}
-                className={`passport-data transition-all ${
-                  activeTab === id
-                    ? "font-medium text-black dark:text-white"
-                    : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+        {/* Passport Navigation */}
+        <div className="mb-8">
+          <PassportNav
+            activeSection={activeSection}
+            onSectionChange={setActiveSection}
+            stats={{
+              stamps: stats.visitedCount,
+              pending: stats.savedCount,
+              trips: trips.length,
+              endorsements: stats.visitedCount >= 1 ? Math.min(Math.floor(stats.visitedCount / 5) + 1, 10) : 0,
+            }}
+          />
         </div>
 
-        {/* Profile Tab - Passport ID Page */}
-        {activeTab === 'profile' && (
-          <div className="space-y-12 fade-in">
-            {/* Passport Card - The ID Page */}
-            <PassportCard
+        {/* Identity Page - Passport ID */}
+        {activeSection === 'identity' && (
+          <div className="space-y-8 fade-in">
+            {/* Identity Card */}
+            <IdentityPage
               user={user}
               stats={stats}
-              totalDestinations={totalDestinations}
+              onEditProfile={() => {
+                // Could open profile editor modal
+              }}
             />
 
             {/* World Map */}
             {(stats.uniqueCountries.size > 0 || stats.visitedDestinationsWithCoords.length > 0) && (
-              <div>
+              <div className="passport-paper passport-guilloche rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="passport-data text-[10px] text-gray-400">Travel Map</h2>
+                  <p className="passport-data text-[10px] text-gray-400">TRAVEL MAP</p>
                   <p className="passport-data text-[10px] text-gray-400">
-                    {stats.uniqueCountries.size > 0 && `${stats.uniqueCountries.size} ${stats.uniqueCountries.size === 1 ? 'country' : 'countries'}`}
+                    {stats.uniqueCountries.size > 0 && `${stats.uniqueCountries.size} ${stats.uniqueCountries.size === 1 ? 'NATION' : 'NATIONS'}`}
                     {stats.uniqueCountries.size > 0 && stats.uniqueCities.size > 0 && ' • '}
-                    {stats.uniqueCities.size > 0 && `${stats.uniqueCities.size} ${stats.uniqueCities.size === 1 ? 'city' : 'cities'}`}
+                    {stats.uniqueCities.size > 0 && `${stats.uniqueCities.size} ${stats.uniqueCities.size === 1 ? 'CITY' : 'CITIES'}`}
                   </p>
                 </div>
                 <WorldMapVisualization
@@ -501,102 +533,136 @@ export default function Account() {
               </div>
             )}
 
-            {/* Recent Visits */}
+            {/* Recent Entries */}
             {visitedPlaces.length > 0 && (
-              <div>
-                <h2 className="passport-data text-[10px] text-gray-400 mb-4">Recent Entries</h2>
-                <div className="space-y-2">
-                  {visitedPlaces.slice(0, 5).map((place) => (
-                    <button
-                      key={place.destination_slug}
-                      onClick={() => router.push(`/destination/${place.destination_slug}`)}
-                      className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
-                    >
-                      {place.destination?.image && (
-                        <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-                          <Image
-                            src={place.destination.image}
-                            alt={place.destination.name}
-                            fill
-                            className="object-cover"
-                            sizes="64px"
-                          />
+              <div className="passport-paper passport-guilloche rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+                <div className="px-6 py-3 border-b border-gray-200 dark:border-gray-800">
+                  <p className="passport-data text-[10px] text-gray-400">RECENT ENTRIES</p>
+                </div>
+                <div className="p-4">
+                  <div className="space-y-2">
+                    {visitedPlaces.slice(0, 5).map((place) => (
+                      <button
+                        key={place.destination_slug}
+                        onClick={() => router.push(`/destination/${place.destination_slug}`)}
+                        className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl transition-colors text-left"
+                      >
+                        {place.destination?.image && (
+                          <div className="relative w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                            <Image
+                              src={place.destination.image}
+                              alt={place.destination.name}
+                              fill
+                              className="object-cover"
+                              sizes="56px"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate">{place.destination?.name}</div>
+                          <div className="passport-data text-[10px] text-gray-500 mt-0.5">
+                            {place.destination && capitalizeCity(place.destination.city).toUpperCase()} • {place.destination?.category?.toUpperCase()}
+                          </div>
+                          <div className="passport-data text-[9px] text-gray-400 mt-0.5">
+                            {place.visited_at && new Date(place.visited_at).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: '2-digit' }).toUpperCase()}
+                          </div>
                         </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">{place.destination?.name}</div>
-                        <div className="text-xs text-gray-500 mt-0.5">
-                          {place.destination && capitalizeCity(place.destination.city)} • {place.destination?.category}
-                        </div>
-                        <div className="passport-data text-[10px] text-gray-400 mt-0.5">
-                          {place.visited_at && new Date(place.visited_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
           </div>
         )}
 
-        {/* Visited Tab - Stamps Page */}
-        {activeTab === 'visited' && (
+        {/* Stamps Page - Visa Pages */}
+        {activeSection === 'stamps' && (
           <div className="fade-in">
-            <StampsGrid visitedPlaces={visitedPlaces} />
+            <VisaPages visitedPlaces={visitedPlaces} />
           </div>
         )}
 
-        {/* Saved Tab */}
-        {activeTab === 'saved' && (
+        {/* Bucket List Page - Saved Places */}
+        {activeSection === 'bucketlist' && (
           <div className="fade-in">
-            <EnhancedSavedTab savedPlaces={savedPlaces} />
+            <BucketListPage savedPlaces={savedPlaces} />
           </div>
         )}
 
-        {/* Collections Tab */}
-        {activeTab === 'collections' && (
+        {/* Travel Albums - Collections */}
+        {activeSection === 'albums' && (
           <div className="fade-in">
-            {collections.length === 0 ? (
-              <NoCollectionsEmptyState onCreateCollection={() => setShowCreateModal(true)} />
-            ) : (
-              <>
-                <div className="flex justify-end mb-4">
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="passport-data text-[10px] text-gray-400">TRAVEL ALBUMS</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {collections.length} {collections.length === 1 ? 'album' : 'albums'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-full hover:opacity-80 transition-opacity flex items-center gap-2"
+                >
+                  <Plus className="h-3 w-3" />
+                  New Album
+                </button>
+              </div>
+
+              {collections.length === 0 ? (
+                <div className="passport-paper passport-guilloche rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 p-8 md:p-12 text-center">
+                  <div className="w-16 h-16 mx-auto mb-6 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center text-3xl">
+                    📚
+                  </div>
+                  <h3 className="passport-data text-sm mb-2">NO ALBUMS YET</h3>
+                  <p className="text-xs text-gray-500 max-w-xs mx-auto mb-6">
+                    Create travel albums to organize your favorite destinations by theme.
+                  </p>
                   <button
                     onClick={() => setShowCreateModal(true)}
-                    className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
+                    className="px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-full hover:opacity-80 transition-opacity"
                   >
-                    + New Collection
+                    Create First Album
                   </button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {collections.map((collection) => (
-                    <button
-                      key={collection.id}
-                      onClick={() => router.push(`/collection/${collection.id}`)}
-                      className="text-left p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">{collection.emoji || '📚'}</span>
-                        <h3 className="font-medium text-sm flex-1">{collection.name}</h3>
-                      </div>
-                      {collection.description && (
-                        <p className="text-xs text-gray-500 line-clamp-2 mb-2">{collection.description}</p>
-                      )}
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
-                        <span>{collection.destination_count || 0} places</span>
-                        {collection.is_public && <span>• Public</span>}
-                      </div>
-                    </button>
-                  ))}
+              ) : (
+                <div className="passport-paper passport-guilloche rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
+                    <p className="passport-data text-[10px] text-gray-400">YOUR COLLECTIONS</p>
+                  </div>
+                  <div className="p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {collections.map((collection) => (
+                        <button
+                          key={collection.id}
+                          onClick={() => router.push(`/collection/${collection.id}`)}
+                          className="text-left p-4 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="text-2xl">{collection.emoji || '📚'}</span>
+                            <h3 className="font-medium text-sm flex-1 truncate">{collection.name}</h3>
+                          </div>
+                          {collection.description && (
+                            <p className="text-xs text-gray-500 line-clamp-2 mb-2">{collection.description}</p>
+                          )}
+                          <div className="flex items-center gap-2 passport-data text-[10px] text-gray-400">
+                            <span>{collection.destination_count || 0} PLACES</span>
+                            {collection.is_public && <span>• PUBLIC</span>}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </>
-            )}
+              )}
+            </div>
           </div>
         )}
 
-        {/* Trips Tab - Travel Wallet */}
-        {activeTab === 'trips' && (
+        {/* Document Wallet - Trips */}
+        {activeSection === 'wallet' && (
           <div className="fade-in">
             <TripsWallet
               trips={trips}
@@ -612,71 +678,89 @@ export default function Account() {
           </div>
         )}
 
-        {/* Achievements Tab */}
-        {activeTab === 'achievements' && (
+        {/* Endorsements - Achievements */}
+        {activeSection === 'endorsements' && (
           <div className="fade-in">
-            <AchievementsDisplay
-              visitedPlaces={visitedPlaces}
-              savedPlaces={savedPlaces}
-              uniqueCities={stats.uniqueCities}
-              uniqueCountries={stats.uniqueCountries}
+            <EndorsementsPage
+              achievements={[]}
+              stats={stats}
             />
           </div>
         )}
 
-        {/* Preferences Tab */}
-        {activeTab === 'preferences' && user && (
+        {/* Preferences */}
+        {activeSection === 'preferences' && user && (
           <div className="fade-in">
-            <PreferencesTab userId={user.id} />
+            <div className="space-y-6">
+              <div>
+                <p className="passport-data text-[10px] text-gray-400 mb-4">TRAVELER PREFERENCES</p>
+              </div>
+              <div className="passport-paper passport-guilloche rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
+                <PreferencesTab userId={user.id} />
+              </div>
+              <div className="passport-paper passport-guilloche rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
+                <p className="passport-data text-[10px] text-gray-400 mb-4">INTEGRATIONS</p>
+                <MCPIntegration />
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Integrations Tab */}
-        {activeTab === 'integrations' && user && (
-          <div className="fade-in">
-            <MCPIntegration />
-          </div>
-        )}
+        {/* Settings */}
+        {activeSection === 'settings' && user && (
+          <div className="fade-in space-y-6">
+            <div>
+              <p className="passport-data text-[10px] text-gray-400 mb-4">PASSPORT SETTINGS</p>
+            </div>
 
-        {/* Settings Tab */}
-        {activeTab === 'settings' && user && (
-          <div className="fade-in space-y-12">
             {/* Profile Section */}
-            <section>
-              <h2 className="text-lg font-light mb-6">Profile</h2>
-              <ProfileEditor
-                userId={user.id}
-                onSaveComplete={() => {
-                  toast.success('Profile updated');
-                }}
-              />
-            </section>
+            <div className="passport-paper passport-guilloche rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
+                <p className="passport-data text-[10px] text-gray-400">HOLDER INFORMATION</p>
+              </div>
+              <div className="p-6">
+                <ProfileEditor
+                  userId={user.id}
+                  onSaveComplete={() => {
+                    toast.success('Profile updated');
+                  }}
+                />
+              </div>
+            </div>
 
             {/* Security Section */}
-            <section>
-              <h2 className="text-lg font-light mb-6">Security</h2>
-              <SecuritySettings />
-            </section>
+            <div className="passport-paper passport-guilloche rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
+                <p className="passport-data text-[10px] text-gray-400">SECURITY FEATURES</p>
+              </div>
+              <div className="p-6">
+                <SecuritySettings />
+              </div>
+            </div>
 
             {/* Privacy & Data Section */}
-            <section>
-              <h2 className="text-lg font-light mb-6">Privacy & Data</h2>
-              <AccountPrivacyManager />
-
-              {/* Cookie Settings */}
-              <div className="py-4 border-t border-gray-200 dark:border-gray-800 mt-6">
-                <div>
-                  <p className="text-sm font-medium">Cookie Preferences</p>
-                  <p className="text-sm text-gray-500 mt-0.5">Control how we use cookies</p>
-                </div>
-                <button
-                  onClick={openCookieSettings}
-                  className="text-xs text-gray-500 hover:text-black dark:hover:text-white mt-2"
-                >
-                  Manage cookies
-                </button>
+            <div className="passport-paper passport-guilloche rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
+                <p className="passport-data text-[10px] text-gray-400">PRIVACY & DATA</p>
               </div>
-            </section>
+              <div className="p-6">
+                <AccountPrivacyManager />
+
+                {/* Cookie Settings */}
+                <div className="py-4 border-t border-gray-200 dark:border-gray-800 mt-6">
+                  <div>
+                    <p className="text-sm font-medium">Cookie Preferences</p>
+                    <p className="text-sm text-gray-500 mt-0.5">Control how we use cookies</p>
+                  </div>
+                  <button
+                    onClick={openCookieSettings}
+                    className="passport-data text-[10px] text-gray-500 hover:text-black dark:hover:text-white mt-2"
+                  >
+                    [MANAGE COOKIES]
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
