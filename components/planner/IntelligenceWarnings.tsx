@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import {
-  AlertTriangle,
   Cloud,
   CloudRain,
   Users,
@@ -10,7 +9,8 @@ import {
   Plane,
   X,
   ChevronRight,
-  Sparkles,
+  Lightbulb,
+  Info,
 } from 'lucide-react';
 import type { PlannerWarning } from '@/lib/intelligence/types';
 
@@ -21,8 +21,13 @@ interface IntelligenceWarningsProps {
 }
 
 /**
- * IntelligenceWarnings - Display contextual warnings and suggestions
- * Handles weather, crowd levels, timing conflicts, and AI recommendations
+ * IntelligenceWarnings - Display contextual insights and suggestions
+ *
+ * Design philosophy:
+ * - Premium products don't panic in public
+ * - Suggestions, not warnings
+ * - Helpful insights, not scary alerts
+ * - Calm colors, not alarm colors
  */
 export default function IntelligenceWarnings({
   warnings,
@@ -33,7 +38,7 @@ export default function IntelligenceWarnings({
 
   if (warnings.length === 0) return null;
 
-  // Group warnings by severity for display order
+  // Sort by severity but don't dramatically differentiate visually
   const sortedWarnings = [...warnings].sort((a, b) => {
     const severityOrder = { high: 0, medium: 1, low: 2 };
     return severityOrder[a.severity] - severityOrder[b.severity];
@@ -50,36 +55,41 @@ export default function IntelligenceWarnings({
       case 'transit':
         return Plane;
       default:
-        return AlertTriangle;
+        return Info;
     }
   };
 
+  // Gentler color palette - no alarming reds
+  // All insights feel calm and helpful
   const getColors = (severity: PlannerWarning['severity']) => {
     switch (severity) {
       case 'high':
+        // Previously red - now a warmer amber/orange that feels urgent but not alarming
         return {
-          bg: 'bg-red-50 dark:bg-red-900/20',
-          border: 'border-red-200 dark:border-red-800',
-          icon: 'text-red-500',
-          text: 'text-red-800 dark:text-red-200',
-          button: 'bg-red-100 hover:bg-red-200 dark:bg-red-800/50 dark:hover:bg-red-800',
+          bg: 'bg-orange-50/80 dark:bg-orange-900/10',
+          border: 'border-orange-200/60 dark:border-orange-800/40',
+          icon: 'text-orange-400 dark:text-orange-300',
+          text: 'text-gray-700 dark:text-gray-200',
+          button: 'bg-orange-100/80 hover:bg-orange-100 dark:bg-orange-800/30 dark:hover:bg-orange-800/50',
         };
       case 'medium':
+        // Subtle amber - informational
         return {
-          bg: 'bg-amber-50 dark:bg-amber-900/20',
-          border: 'border-amber-200 dark:border-amber-800',
-          icon: 'text-amber-500',
-          text: 'text-amber-800 dark:text-amber-200',
-          button: 'bg-amber-100 hover:bg-amber-200 dark:bg-amber-800/50 dark:hover:bg-amber-800',
+          bg: 'bg-amber-50/60 dark:bg-amber-900/10',
+          border: 'border-amber-200/50 dark:border-amber-800/30',
+          icon: 'text-amber-400 dark:text-amber-300',
+          text: 'text-gray-700 dark:text-gray-200',
+          button: 'bg-amber-100/60 hover:bg-amber-100 dark:bg-amber-800/20 dark:hover:bg-amber-800/40',
         };
       case 'low':
       default:
+        // Very subtle gray - gentle suggestion
         return {
-          bg: 'bg-blue-50 dark:bg-blue-900/20',
-          border: 'border-blue-200 dark:border-blue-800',
-          icon: 'text-blue-500',
-          text: 'text-blue-800 dark:text-blue-200',
-          button: 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-800/50 dark:hover:bg-blue-800',
+          bg: 'bg-gray-50/60 dark:bg-gray-800/30',
+          border: 'border-gray-200/50 dark:border-gray-700/30',
+          icon: 'text-gray-400 dark:text-gray-400',
+          text: 'text-gray-600 dark:text-gray-300',
+          button: 'bg-gray-100/60 hover:bg-gray-100 dark:bg-gray-700/30 dark:hover:bg-gray-700/50',
         };
     }
   };
@@ -119,8 +129,8 @@ export default function IntelligenceWarnings({
                       ${colors.button} ${colors.text}
                     `}
                   >
-                    <Sparkles className="w-3 h-3" />
-                    <span className="hidden sm:inline">Suggestion</span>
+                    <Lightbulb className="w-3 h-3" />
+                    <span className="hidden sm:inline">Details</span>
                     <ChevronRight
                       className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
                     />
@@ -190,13 +200,13 @@ export default function IntelligenceWarnings({
         );
       })}
 
-      {/* Collapse all button when multiple warnings */}
+      {/* Collapse all button when multiple insights */}
       {warnings.length > 2 && (
         <button
           onClick={() => setExpandedId(null)}
           className="w-full text-center py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
         >
-          {expandedId ? 'Collapse' : `${warnings.length} alerts`}
+          {expandedId ? 'Collapse' : `${warnings.length} insights`}
         </button>
       )}
     </div>

@@ -89,48 +89,48 @@ export function analyzeScheduleForWarnings(items: ScheduleItem[]): PlannerWarnin
     const endTime = scheduledTime + duration / 60;
     const lastEntry = hours.lastEntry || hours.close - 0.5;
 
-    // Warning: Scheduled after closing
+    // Timing note: Scheduled after typical closing
     if (scheduledTime >= hours.close) {
       warnings.push({
         id: `closed-${item.id}`,
         type: 'timing',
-        severity: 'high',
-        message: `${item.title} is likely closed at ${formatHour(scheduledTime)}`,
-        suggestion: `Most ${category}s close by ${formatHour(hours.close)}. Consider visiting earlier.`,
+        severity: 'medium', // Informational, not alarming
+        message: `${item.title} typically closes by ${formatHour(hours.close)}`,
+        suggestion: `Your ${formatHour(scheduledTime)} visit may be after hours. Consider an earlier time, or check if they have extended hours.`,
         blockId: item.id,
       });
     }
-    // Warning: Scheduled before opening
+    // Timing note: Scheduled before typical opening
     else if (scheduledTime < hours.open) {
       warnings.push({
         id: `not-open-${item.id}`,
         type: 'timing',
-        severity: 'medium',
-        message: `${item.title} may not be open at ${formatHour(scheduledTime)}`,
-        suggestion: `Most ${category}s open around ${formatHour(hours.open)}.`,
+        severity: 'low',
+        message: `${item.title} typically opens around ${formatHour(hours.open)}`,
+        suggestion: `Perfect if you're planning to arrive as it opens.`,
         blockId: item.id,
       });
     }
-    // Warning: Won't have enough time before closing
+    // Timing note: Limited time before closing
     else if (endTime > hours.close) {
       const availableMinutes = Math.round((hours.close - scheduledTime) * 60);
       warnings.push({
         id: `closing-soon-${item.id}`,
         type: 'timing',
-        severity: 'medium',
-        message: `${item.title} closes in ~${availableMinutes} min after your arrival`,
-        suggestion: `Visit earlier or plan for a shorter visit. Closes at ${formatHour(hours.close)}.`,
+        severity: 'low',
+        message: `About ${availableMinutes} min available at ${item.title}`,
+        suggestion: `Arrives near closing (${formatHour(hours.close)}). Great for a focused visit.`,
         blockId: item.id,
       });
     }
-    // Warning: After last entry time
+    // Timing note: Near last entry time
     else if (scheduledTime >= lastEntry && lastEntry !== hours.close) {
       warnings.push({
         id: `last-entry-${item.id}`,
         type: 'timing',
         severity: 'low',
-        message: `Last entry at ${item.title} is typically ${formatHour(lastEntry)}`,
-        suggestion: `Your ${formatHour(scheduledTime)} arrival may be past last entry.`,
+        message: `Last entry around ${formatHour(lastEntry)}`,
+        suggestion: `Your timing is close to last entry—worth confirming beforehand.`,
         blockId: item.id,
       });
     }
@@ -140,7 +140,8 @@ export function analyzeScheduleForWarnings(items: ScheduleItem[]): PlannerWarnin
 }
 
 /**
- * Detect overlapping bookings and conflicts
+ * Detect timing considerations between scheduled items
+ * Uses positive, premium language - suggestions not warnings
  */
 export function detectConflicts(items: ScheduleItem[]): PlannerWarning[] {
   const warnings: PlannerWarning[] = [];
@@ -154,7 +155,7 @@ export function detectConflicts(items: ScheduleItem[]): PlannerWarning[] {
     itemsByDay[item.dayNumber].push(item);
   });
 
-  // Check each day for conflicts
+  // Check each day for timing considerations
   Object.entries(itemsByDay).forEach(([dayNum, dayItems]) => {
     const sortedItems = dayItems
       .filter(item => item.time)
@@ -177,26 +178,26 @@ export function detectConflicts(items: ScheduleItem[]): PlannerWarning[] {
       const currentDuration = current.duration || TYPICAL_DURATION[category] || 60;
       const currentEnd = currentStart + currentDuration / 60;
 
-      // Check for overlap
+      // Overlapping times - present as alternatives, not conflicts
       if (currentEnd > nextStart) {
         const overlapMinutes = Math.round((currentEnd - nextStart) * 60);
         warnings.push({
           id: `overlap-${current.id}-${next.id}`,
           type: 'timing',
-          severity: 'high',
-          message: `${current.title} and ${next.title} overlap by ~${overlapMinutes} min`,
-          suggestion: `Adjust times or reduce duration at ${current.title}.`,
+          severity: 'medium', // Downgraded - overlaps are options, not errors
+          message: `Overlapping options: ${current.title} and ${next.title}`,
+          suggestion: `These experiences overlap by ${overlapMinutes} min. You could adjust times, or choose one as the focus.`,
           blockId: current.id,
         });
       }
-      // Check for very tight schedule
+      // Tight transitions - gentle suggestion
       else if (currentEnd > nextStart - 0.25) { // Less than 15 min gap
         warnings.push({
           id: `tight-${current.id}-${next.id}`,
           type: 'timing',
           severity: 'low',
-          message: `Very tight transition from ${current.title} to ${next.title}`,
-          suggestion: `Consider adding buffer time for travel.`,
+          message: `Quick transition to ${next.title}`,
+          suggestion: `Allow extra time if you'd like a leisurely pace between stops.`,
           blockId: current.id,
         });
       }
@@ -248,11 +249,11 @@ export function checkClosureDays(items: ScheduleItem[], tripStartDate?: string):
         warnings.push({
           id: `closure-day-${item.id}`,
           type: 'timing',
-          severity: 'high', // High severity when we have confirmed data
-          message: `${item.title} is closed on ${dayName}s`,
+          severity: 'medium', // Informational - help them reschedule, don't alarm
+          message: `${item.title} is closed ${dayName}s`,
           suggestion: hoursText
-            ? `Opening hours show: "${hoursText}". Consider rescheduling to another day.`
-            : `This venue is closed on ${dayName}s. Consider rescheduling to another day.`,
+            ? `Their hours show "${hoursText}". Easy to move to another day.`
+            : `This spot closes on ${dayName}s—worth shifting to another day.`,
           blockId: item.id,
         });
         return; // Already handled with actual data
@@ -276,9 +277,9 @@ export function checkClosureDays(items: ScheduleItem[], tripStartDate?: string):
       warnings.push({
         id: `closure-day-${item.id}`,
         type: 'timing',
-        severity: 'medium', // Medium severity for heuristic-based warnings
-        message: `${item.title} may be closed on ${dayName}`,
-        suggestion: `Many ${category}s close on ${dayName}. Verify opening hours before visiting.`,
+        severity: 'low', // Just a gentle heads-up
+        message: `${dayName} closure possible`,
+        suggestion: `Some ${category}s close on ${dayName}s. Worth a quick check.`,
         blockId: item.id,
       });
     }
