@@ -2032,38 +2032,29 @@ function DaySection({
         <TravelTime from={orderedItems[orderedItems.length - 1]} to={nightlyHotel} />
       )}
 
-      {/* Nightly hotel indicator - Night pass card */}
+      {/* Nightly hotel indicator - Clean card matching flight style */}
       {nightlyHotel && (
         <button
           onClick={() => onSelectItem?.(nightlyHotel)}
-          className="w-full mt-2 relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-900 via-purple-900 to-indigo-900 dark:from-indigo-950 dark:via-purple-950 dark:to-indigo-950 hover:shadow-lg transition-all text-left"
+          className="w-full mt-2 relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-md transition-all text-left"
         >
-          {/* Stars background */}
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute w-1 h-1 rounded-full bg-white opacity-60 top-2 left-[12%]" />
-            <div className="absolute w-0.5 h-0.5 rounded-full bg-white opacity-40 top-4 left-[35%]" />
-            <div className="absolute w-1 h-1 rounded-full bg-white opacity-50 top-3 left-[58%]" />
-            <div className="absolute w-0.5 h-0.5 rounded-full bg-white opacity-30 top-5 left-[78%]" />
-            <div className="absolute w-1 h-1 rounded-full bg-white opacity-40 top-2 right-[8%]" />
-          </div>
-
-          <div className="relative p-4">
+          <div className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                  <Moon className="w-4 h-4 text-indigo-200" />
+                <div className="w-9 h-9 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
+                  <Moon className="w-4 h-4 text-stone-500 dark:text-gray-400" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">
+                  <p className="text-sm font-semibold text-stone-900 dark:text-white">
                     {nightlyHotel.title || 'Hotel'}
                   </p>
-                  <p className="text-xs text-indigo-200/70 mt-0.5">
+                  <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
                     Overnight stay
                   </p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-xs text-indigo-200/60">
+                <p className="text-[10px] text-stone-500 dark:text-gray-400 uppercase tracking-wide">
                   Night
                 </p>
               </div>
@@ -2506,28 +2497,25 @@ function HotelActivityRow({
   const image = item.destination?.image_thumbnail || item.destination?.image || item.parsedNotes?.image;
   const hotelName = item.title || 'Hotel';
 
-  // Get styling based on activity type - neutral design
+  // Get styling based on activity type
   const getActivityStyle = () => {
     switch (activityType) {
       case 'checkin':
         return {
-          bgClass: 'bg-stone-100 dark:bg-gray-800/50',
           icon: <DoorOpen className="w-4 h-4" />,
-          label: 'Check-in',
+          label: 'CHECK-IN',
           time: item.parsedNotes?.checkInTime ? formatTime(item.parsedNotes.checkInTime) : '',
         };
       case 'breakfast':
         return {
-          bgClass: 'bg-stone-100 dark:bg-gray-800/50',
           icon: <Coffee className="w-4 h-4" />,
-          label: 'Breakfast',
+          label: 'BREAKFAST',
           time: item.parsedNotes?.breakfastTime || '7:00–10:00',
         };
       case 'checkout':
         return {
-          bgClass: 'bg-stone-100 dark:bg-gray-800/50',
           icon: <LogOut className="w-4 h-4" />,
-          label: 'Check-out',
+          label: 'CHECK-OUT',
           time: item.parsedNotes?.checkOutTime ? formatTime(item.parsedNotes.checkOutTime) : '',
         };
     }
@@ -2548,7 +2536,7 @@ function HotelActivityRow({
         onClick={onSelect}
         className={`
           relative overflow-hidden rounded-2xl cursor-pointer transition-all
-          ${style.bgClass}
+          bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800
           ${isDragging ? 'shadow-xl ring-2 ring-stone-400 dark:ring-gray-500' : 'hover:shadow-md'}
         `}
       >
@@ -2556,8 +2544,8 @@ function HotelActivityRow({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Icon */}
-              <div className="w-9 h-9 rounded-xl bg-stone-200 dark:bg-gray-700 flex items-center justify-center">
-                <span className="text-stone-600 dark:text-gray-400">{style.icon}</span>
+              <div className="w-9 h-9 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
+                <span className="text-stone-500 dark:text-gray-400">{style.icon}</span>
               </div>
 
               {/* Hotel info */}
@@ -2567,7 +2555,7 @@ function HotelActivityRow({
                 </p>
                 <div className="flex items-center gap-2 mt-0.5">
                   {item.parsedNotes?.roomType && activityType === 'checkin' && (
-                    <span className="text-xs text-stone-600 dark:text-gray-400">
+                    <span className="text-xs text-stone-500 dark:text-gray-400">
                       {item.parsedNotes.roomType}
                     </span>
                   )}
