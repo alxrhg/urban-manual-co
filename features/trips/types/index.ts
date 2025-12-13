@@ -6,7 +6,7 @@
  */
 
 import type { Destination } from '@/types/destination';
-import type { Trip as SupabaseTrip, ItineraryItem, ItineraryItemNotes } from '@/types/trip';
+import type { Trip as SupabaseTrip, ItineraryItem, ItineraryItemNotes, ActivityType } from '@/types/trip';
 
 // ============================================
 // CORE ITEM TYPES
@@ -98,7 +98,7 @@ export interface HotelItem extends BaseTripItem {
 export interface ActivityItem extends BaseTripItem {
   type: 'activity';
   title: string;
-  activityType?: 'downtime' | 'hotel_time' | 'custom';
+  activityType?: ActivityType;
   description?: string;
   location?: string;
   linkedHotelId?: string;
