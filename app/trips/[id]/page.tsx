@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal, Trash2 } from 'lucide-react';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal, Trash2, List, LayoutList } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import {
   DndContext,
@@ -33,6 +33,7 @@ import type { Destination } from '@/types/destination';
 import TripSettingsBox from '@/components/trip/TripSettingsBox';
 import DestinationBox from '@/components/trip/DestinationBox';
 import AddPlacePanel from '@/components/trip/AddPlacePanel';
+import VisualTimelineView from '@/components/trip/VisualTimelineView';
 import { NeighborhoodTags } from '@/components/trip/NeighborhoodBreakdown';
 import DayIntelligence from '@/components/trip/DayIntelligence';
 import { CrowdBadge } from '@/components/trip/CrowdIndicator';
@@ -106,6 +107,9 @@ export default function TripPage() {
 
   // Edit mode state
   const [isEditMode, setIsEditMode] = useState(false);
+
+  // View mode state (list or timeline)
+  const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
 
   // Sidebar states (desktop)
   const [showTripSettings, setShowTripSettings] = useState(false);
@@ -441,26 +445,55 @@ export default function TripPage() {
         {/* Day Tabs */}
         {days.length > 0 && (
           <div className="sticky top-16 z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 py-3 bg-white dark:bg-gray-950 mt-6">
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-              {days.map((day) => {
-                const isSelected = day.dayNumber === selectedDayNumber;
-                const dayDate = day.date
-                  ? new Date(day.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                  : null;
-                return (
-                  <button
-                    key={day.dayNumber}
-                    onClick={() => setSelectedDayNumber(day.dayNumber)}
-                    className={`flex-shrink-0 px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-all ${
-                      isSelected
-                        ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    {dayDate || `Day ${day.dayNumber}`}
-                  </button>
-                );
-              })}
+            <div className="flex items-center gap-3">
+              {/* Day tabs */}
+              <div className="flex-1 flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                {days.map((day) => {
+                  const isSelected = day.dayNumber === selectedDayNumber;
+                  const dayDate = day.date
+                    ? new Date(day.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                    : null;
+                  return (
+                    <button
+                      key={day.dayNumber}
+                      onClick={() => setSelectedDayNumber(day.dayNumber)}
+                      className={`flex-shrink-0 px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-all ${
+                        isSelected
+                          ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                          : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {dayDate || `Day ${day.dayNumber}`}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* View Mode Toggle */}
+              <div className="flex-shrink-0 flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-1.5 rounded-md transition-all ${
+                    viewMode === 'list'
+                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                  title="List view"
+                >
+                  <List className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode('timeline')}
+                  className={`p-1.5 rounded-md transition-all ${
+                    viewMode === 'timeline'
+                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                  title="Timeline view"
+                >
+                  <LayoutList className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -474,6 +507,20 @@ export default function TripPage() {
             const checkoutHotel = checkoutHotelByDay[day.dayNumber] || null;
             const checkInHotel = checkInHotelByDay[day.dayNumber] || null;
             const breakfastHotel = breakfastHotelByDay[day.dayNumber] || null;
+
+            // Timeline View
+            if (viewMode === 'timeline') {
+              return (
+                <VisualTimelineView
+                  key={day.dayNumber}
+                  day={day}
+                  onEditItem={handleSelectItem}
+                  activeItemId={expandedItemId}
+                />
+              );
+            }
+
+            // List View (default)
             return (
               <DaySection
                 key={day.dayNumber}
