@@ -2058,7 +2058,7 @@ function DaySection({
                     {nightlyHotel.title || 'Hotel'}
                   </p>
                   <p className="text-xs text-indigo-200/70 mt-0.5">
-                    {nightlyHotel.parsedNotes?.roomNumber ? `Room ${nightlyHotel.parsedNotes.roomNumber}` : 'Overnight stay'}
+                    Overnight stay
                   </p>
                 </div>
               </div>
@@ -2580,9 +2580,9 @@ function HotelActivityRow({
                   {hotelName}
                 </p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  {item.parsedNotes?.roomNumber && activityType === 'checkin' && (
+                  {item.parsedNotes?.roomType && activityType === 'checkin' && (
                     <span className="text-xs text-stone-600 dark:text-gray-400">
-                      Room {item.parsedNotes.roomNumber}
+                      {item.parsedNotes.roomType}
                     </span>
                   )}
                   {activityType === 'breakfast' && item.parsedNotes?.breakfastIncluded && (

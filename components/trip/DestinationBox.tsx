@@ -583,12 +583,12 @@ export default function DestinationBox({
                 </div>
 
                 {/* Room & Confirmation */}
-                {(parsedNotes?.roomNumber || editConfirmation) && (
+                {(parsedNotes?.roomType || editConfirmation) && (
                   <div className="flex items-center gap-3 mt-3 pt-3 border-t border-stone-100 dark:border-gray-700/50">
-                    {parsedNotes?.roomNumber && (
+                    {parsedNotes?.roomType && (
                       <div className="flex-1">
                         <p className="text-[9px] text-stone-400 dark:text-gray-500 uppercase tracking-wide">Room</p>
-                        <p className="text-sm font-bold text-stone-900 dark:text-white">{parsedNotes.roomNumber}</p>
+                        <p className="text-sm font-bold text-stone-900 dark:text-white">{parsedNotes.roomType}</p>
                       </div>
                     )}
                     {editConfirmation && (
