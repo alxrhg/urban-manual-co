@@ -3911,11 +3911,11 @@ function SidebarDestinationPalette({
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-amber-500" />
           <h3 className="text-[12px] font-semibold text-gray-900 dark:text-white">
-            Drag to Add
+            Our Curated List in {city}
           </h3>
         </div>
         <p className="text-[11px] text-gray-500 mt-0.5">
-          Drag places onto Day {selectedDayNumber}
+          Drag to add to your trip
         </p>
       </div>
 
