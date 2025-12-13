@@ -26,6 +26,14 @@
 export { default as TripDrawer } from './TripDrawer';
 export { default as TripFloatingBar } from './TripFloatingBar';
 
+// Mobile-optimized components (redesigned)
+export { default as MobileTripSheet } from './MobileTripSheet';
+export { default as MobileTripCard } from './MobileTripCard';
+export { default as MobileTripFloatingBar } from './MobileTripFloatingBar';
+
+// Responsive wrapper (auto-switches between mobile/desktop)
+export { default as ResponsiveTripUI } from './ResponsiveTripUI';
+
 // Panel components (side panel architecture)
 export { default as TripPanel } from './TripPanel';
 export { default as TripHeader } from './TripHeader';
