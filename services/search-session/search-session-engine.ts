@@ -133,9 +133,10 @@ export class SearchSessionEngine {
 
       // Convert messages to turns
       const turns: SearchTurn[] = [];
-      for (let i = 0; i < (messages || []).length; i += 2) {
-        const userMsg = messages[i];
-        const assistantMsg = messages[i + 1];
+      const messageList = messages || [];
+      for (let i = 0; i < messageList.length; i += 2) {
+        const userMsg = messageList[i];
+        const assistantMsg = messageList[i + 1];
         if (userMsg && userMsg.role === 'user') {
           turns.push({
             id: userMsg.id,
