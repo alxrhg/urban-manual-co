@@ -206,65 +206,61 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     }
   }, [trip, userId, fetchTrip, onError]);
 
-  // Reorder items within a day - uses batched update for performance
+  // Reorder items within a day - uses server-side batch API
+  // Client performs optimistic update only; server handles persistence
   const reorderItems = useCallback(async (dayNumber: number, newItems: EnrichedItineraryItem[]) => {
     // Store previous state for potential revert
     const previousDays = days;
 
-    // Optimistic update
+    // Optimistic update - UI updates immediately
     setDays((prev) =>
       prev.map((d) =>
         d.dayNumber === dayNumber ? { ...d, items: newItems } : d
       )
     );
 
-    try {
-      const supabase = createClient();
-      if (!supabase) return;
+    // Filter items to update (skip temp IDs and invalid IDs)
+    const itemsToUpdate = newItems.filter(item => {
+      const idStr = String(item.id);
+      // Skip temp IDs, empty IDs, or non-UUID-like IDs
+      if (idStr.startsWith('temp-') || !idStr || idStr === 'undefined' || idStr === 'null') {
+        return false;
+      }
+      // Skip virtual hotel activity items (e.g., "breakfast-xxx", "checkout-xxx")
+      if (idStr.startsWith('breakfast-') || idStr.startsWith('checkout-') || idStr.startsWith('checkin-')) {
+        return false;
+      }
+      // Check if it looks like a valid UUID (basic check)
+      if (idStr.length < 10) {
+        return false;
+      }
+      return true;
+    });
 
-      // Filter items to update (skip temp IDs and invalid IDs)
-      const itemsToUpdate = newItems.filter(item => {
-        const idStr = String(item.id);
-        // Skip temp IDs, empty IDs, or non-UUID-like IDs
-        if (idStr.startsWith('temp-') || !idStr || idStr === 'undefined' || idStr === 'null') {
-          return false;
-        }
-        // Skip virtual hotel activity items (e.g., "breakfast-xxx", "checkout-xxx")
-        if (idStr.startsWith('breakfast-') || idStr.startsWith('checkout-') || idStr.startsWith('checkin-')) {
-          return false;
-        }
-        // Check if it looks like a valid UUID (basic check)
-        if (idStr.length < 10) {
-          return false;
-        }
-        return true;
+    if (itemsToUpdate.length === 0) {
+      return;
+    }
+
+    // Prepare batch update data with new order indices
+    const batchItems = itemsToUpdate.map((item, index) => ({
+      id: item.id,
+      order_index: index,
+    }));
+
+    try {
+      // Call server-side batch API for atomic update
+      const response = await fetch(`/api/trips/${tripId}/items/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operation: 'reorder',
+          items: batchItems,
+        }),
       });
 
-      if (itemsToUpdate.length === 0) {
-        return;
-      }
-
-      // Prepare batch update data
-      const updates = itemsToUpdate.map((item, index) => ({
-        id: item.id,
-        order_index: index,
-      }));
-
-      // Batched update using upsert - much faster than sequential updates
-      const { error } = await supabase
-        .from('itinerary_items')
-        .upsert(
-          updates.map(u => ({
-            id: u.id,
-            order_index: u.order_index,
-            trip_id: tripId, // Required for upsert
-          })),
-          { onConflict: 'id', ignoreDuplicates: false }
-        );
-
-      if (error) {
-        console.error('Error batch updating item order:', error);
-        throw error;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.errors?.[0]?.message || 'Failed to reorder items');
       }
     } catch (err) {
       console.error('Error reordering:', err);
@@ -1012,7 +1008,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     }
   }, [days]);
 
-  // Move an item to a different day
+  // Move an item to a different day - uses server-side batch API
   const moveItemToDay = useCallback(async (itemId: string, newDayNumber: number) => {
     // Find the item and its current day
     let currentDayNumber: number | null = null;
@@ -1034,6 +1030,9 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     const newDay = days.find((d) => d.dayNumber === newDayNumber);
     const newOrderIndex = newDay?.items.length || 0;
 
+    // Store previous state for potential revert
+    const previousDays = days;
+
     // Optimistic update - move item between days
     setDays((prev) =>
       prev.map((d) => {
@@ -1050,23 +1049,102 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     );
 
     try {
-      const supabase = createClient();
-      if (!supabase) return;
+      // Call server-side batch API for atomic move operation
+      const response = await fetch(`/api/trips/${tripId}/items/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operation: 'move',
+          items: [{
+            id: itemId,
+            day: newDayNumber,
+            order_index: newOrderIndex,
+          }],
+        }),
+      });
 
-      const { error } = await supabase
-        .from('itinerary_items')
-        .update({ day: newDayNumber, order_index: newOrderIndex })
-        .eq('id', itemId);
-
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.errors?.[0]?.message || 'Failed to move item');
+      }
     } catch (err) {
       console.error('Error moving item:', err);
-      // Revert on error - refresh to get correct state
-      fetchTrip();
+      // Revert to previous state on error
+      setDays(previousDays);
       toast.error('Failed to move item. Please try again.');
       onError?.(err instanceof Error ? err : new Error('Failed to move item'));
     }
-  }, [days, fetchTrip, onError]);
+  }, [days, tripId, onError]);
+
+  // Batch update schedule times - uses server-side batch API
+  // Useful for recalculating all times at once after changes
+  const batchUpdateSchedule = useCallback(async (
+    updates: Array<{ id: string; time?: string | null; day?: number; order_index?: number }>
+  ) => {
+    // Filter valid items
+    const validUpdates = updates.filter(item => {
+      const idStr = String(item.id);
+      if (idStr.startsWith('temp-') || !idStr || idStr === 'undefined' || idStr === 'null') {
+        return false;
+      }
+      if (idStr.startsWith('breakfast-') || idStr.startsWith('checkout-') || idStr.startsWith('checkin-')) {
+        return false;
+      }
+      if (idStr.length < 10) {
+        return false;
+      }
+      return true;
+    });
+
+    if (validUpdates.length === 0) {
+      return;
+    }
+
+    // Store previous state for potential revert
+    const previousDays = days;
+
+    // Optimistic update - apply all schedule changes immediately
+    setDays((prev) =>
+      prev.map((d) => ({
+        ...d,
+        items: d.items.map((item) => {
+          const update = validUpdates.find(u => u.id === item.id);
+          if (update) {
+            return {
+              ...item,
+              ...(update.time !== undefined && { time: update.time }),
+              ...(update.day !== undefined && { day: update.day }),
+              ...(update.order_index !== undefined && { order_index: update.order_index }),
+            };
+          }
+          return item;
+        }),
+      }))
+    );
+
+    try {
+      // Call server-side batch API for atomic schedule update
+      const response = await fetch(`/api/trips/${tripId}/items/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operation: 'schedule',
+          items: validUpdates,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.errors?.[0]?.message || 'Failed to update schedule');
+      }
+    } catch (err) {
+      console.error('Error updating schedule:', err);
+      // Revert to previous state on error
+      setDays(previousDays);
+      toast.error('Failed to update schedule. Please try again.');
+      onError?.(err instanceof Error ? err : new Error('Failed to update schedule'));
+    }
+  }, [days, tripId, onError]);
 
   return {
     trip,
@@ -1088,6 +1166,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     updateItemNotes,
     updateItem,
     moveItemToDay,
+    batchUpdateSchedule,
     refresh: fetchTrip,
   };
 }
