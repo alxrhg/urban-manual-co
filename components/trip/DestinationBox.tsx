@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import {
-  X, MapPin, Star, Globe, Clock, ChevronDown,
+  X, MapPin, Star, Globe, Clock, ChevronDown, ChevronRight,
   Plane, Train, Building2, Phone, Navigation, ExternalLink,
-  Flag, Tag, CalendarCheck, Timer, Check, ImageOff
+  Flag, Tag, CalendarCheck, Timer, Check, ImageOff, Wifi, Car, Dumbbell, Waves, Sparkles, Coffee
 } from 'lucide-react';
+import Link from 'next/link';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import type { ItineraryItemNotes } from '@/types/trip';
 
@@ -485,17 +486,216 @@ export default function DestinationBox({
           </div>
         )}
 
-        {/* Hotel check-in/out display */}
-        {itemType === 'hotel' && (editCheckInTime || editCheckOutTime) && (
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="text-center">
-              <p className="text-xs text-gray-500 mb-0.5">Check-in</p>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">{editCheckInTime || '—'}</p>
+        {/* Hotel Display */}
+        {itemType === 'hotel' && (
+          <div className="space-y-4">
+            {/* Hotel Image */}
+            {image && !imageError && (
+              <div className="relative h-40 rounded-xl overflow-hidden bg-stone-200 dark:bg-gray-700">
+                <Image
+                  src={image}
+                  alt={name}
+                  fill
+                  className="object-cover"
+                  onError={() => setImageError(true)}
+                  unoptimized={image.includes('googleusercontent.com') || image.includes('maps.googleapis.com')}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                {/* Rating badge */}
+                {rating && (
+                  <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-lg bg-black/50 backdrop-blur-sm">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                    <span className="text-sm font-semibold text-white">{rating.toFixed(1)}</span>
+                  </div>
+                )}
+                {/* Hotel info overlay */}
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <h4 className="font-semibold text-white text-base">{name}</h4>
+                  {neighborhood && (
+                    <p className="text-sm text-white/80 mt-0.5">{neighborhood}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Quick Actions */}
+            {(phone || website || (lat && lng)) && (
+              <div className="flex gap-2">
+                {phone && (
+                  <a
+                    href={`tel:${phone}`}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <Phone className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Call</span>
+                  </a>
+                )}
+                {website && (
+                  <a
+                    href={website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <Globe className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Website</span>
+                  </a>
+                )}
+                {lat && lng && (
+                  <a
+                    href={`https://maps.apple.com/?q=${lat},${lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <Navigation className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Directions</span>
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* Description from database */}
+            {description && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                {description}
+              </p>
+            )}
+
+            {/* Database Info - Rating, Price, Tags */}
+            <div className="border-t border-gray-100 dark:border-gray-800 pt-4 space-y-3">
+              {/* Rating row */}
+              {rating && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Rating</span>
+                  <div className="flex items-center gap-1">
+                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">{rating.toFixed(1)}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Price Level */}
+              {priceLevel && priceLevel > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Price</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {'$'.repeat(priceLevel)}
+                  </span>
+                </div>
+              )}
+
+              {/* Address */}
+              {address && (
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{address}</span>
+                </div>
+              )}
+
+              {/* Tags */}
+              {destination?.tags && destination.tags.length > 0 && (
+                <div className="pt-2">
+                  <div className="flex flex-wrap gap-1.5">
+                    {destination.tags.slice(0, 6).map((tag, i) => (
+                      <span
+                        key={i}
+                        className="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-400"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="text-center">
-              <p className="text-xs text-gray-500 mb-0.5">Check-out</p>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">{editCheckOutTime || '—'}</p>
+
+            {/* Your Stay Section */}
+            <div className="bg-stone-50 dark:bg-gray-800/50 rounded-xl p-4">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-3">
+                Your Stay
+              </p>
+
+              {/* Check-in/out Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Check-in */}
+                <div className="bg-white dark:bg-gray-900/50 rounded-lg p-3">
+                  <p className="text-[10px] text-stone-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                    Check-in
+                  </p>
+                  <p className="text-lg font-bold text-stone-900 dark:text-white">
+                    {editCheckInTime || '15:00'}
+                  </p>
+                  {parsedNotes?.checkInDate && (
+                    <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
+                      {new Date(parsedNotes.checkInDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </p>
+                  )}
+                </div>
+
+                {/* Check-out */}
+                <div className="bg-white dark:bg-gray-900/50 rounded-lg p-3">
+                  <p className="text-[10px] text-stone-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                    Check-out
+                  </p>
+                  <p className="text-lg font-bold text-stone-900 dark:text-white">
+                    {editCheckOutTime || '11:00'}
+                  </p>
+                  {parsedNotes?.checkOutDate && (
+                    <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
+                      {new Date(parsedNotes.checkOutDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Nights count */}
+              {parsedNotes?.checkInDate && parsedNotes?.checkOutDate && (() => {
+                const nights = Math.ceil((new Date(parsedNotes.checkOutDate + 'T00:00:00').getTime() - new Date(parsedNotes.checkInDate + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24));
+                return nights > 0 ? (
+                  <p className="text-xs text-stone-500 dark:text-gray-400 mt-2 text-center">
+                    {nights} {nights === 1 ? 'night' : 'nights'}
+                  </p>
+                ) : null;
+              })()}
+
+              {/* Room & Confirmation */}
+              {(parsedNotes?.roomType || editConfirmation) && (
+                <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-stone-200 dark:border-gray-700">
+                  {parsedNotes?.roomType && (
+                    <div>
+                      <p className="text-[10px] text-stone-400 dark:text-gray-500 uppercase tracking-wide">Room</p>
+                      <p className="text-sm font-medium text-stone-900 dark:text-white">{parsedNotes.roomType}</p>
+                    </div>
+                  )}
+                  {editConfirmation && (
+                    <div>
+                      <p className="text-[10px] text-stone-400 dark:text-gray-500 uppercase tracking-wide">Confirmation</p>
+                      <p className="text-xs font-mono font-medium text-stone-700 dark:text-gray-300 truncate">{editConfirmation}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Breakfast included */}
+              {parsedNotes?.breakfastIncluded && (
+                <div className="mt-3 flex items-center gap-2 text-xs text-stone-600 dark:text-gray-400">
+                  <Coffee className="w-3.5 h-3.5" />
+                  Breakfast included
+                </div>
+              )}
             </div>
+
+            {/* View Full Page Link - subtle at bottom */}
+            {destination?.slug && (
+              <Link
+                href={`/destination/${destination.slug}`}
+                className="flex items-center justify-center gap-2 w-full py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                View on Urban Manual
+              </Link>
+            )}
           </div>
         )}
 
@@ -581,8 +781,8 @@ export default function DestinationBox({
             </div>
           )}
 
-          {/* Times for flights/trains */}
-          {(itemType === 'flight' || itemType === 'train') && (
+          {/* Times for trains only (flights have their own editor above) */}
+          {itemType === 'train' && (
             <div className="flex gap-3">
               <div className="flex-1">
                 <label className="text-[10px] text-gray-400 mb-1 block">Departs</label>
@@ -653,8 +853,8 @@ export default function DestinationBox({
             </div>
           )}
 
-          {/* Confirmation for bookable items */}
-          {(itemType === 'hotel' || itemType === 'flight' || itemType === 'train' || editBookingStatus === 'booked') && (
+          {/* Confirmation for bookable items (excluding flights which have their own editor) */}
+          {(itemType === 'hotel' || itemType === 'train' || editBookingStatus === 'booked') && (
             <div>
               <label className="text-[10px] text-gray-400 mb-1 block">Confirmation #</label>
               <input
@@ -690,18 +890,20 @@ export default function DestinationBox({
             </div>
           )}
 
-          {/* Notes */}
-          <div>
-            <label className="text-[10px] text-gray-400 mb-1 block">Notes</label>
-            <textarea
-              value={editNotes}
-              onChange={(e) => setEditNotes(e.target.value)}
-              onBlur={() => saveChanges('notes', editNotes)}
-              placeholder="Add a note..."
-              rows={2}
-              className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg resize-none"
-            />
-          </div>
+          {/* Notes (excluding flights which have their own notes field) */}
+          {itemType !== 'flight' && (
+            <div>
+              <label className="text-[10px] text-gray-400 mb-1 block">Notes</label>
+              <textarea
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                onBlur={() => saveChanges('notes', editNotes)}
+                placeholder="Add a note..."
+                rows={2}
+                className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg resize-none"
+              />
+            </div>
+          )}
         </div>
 
         {/* Quick Actions */}
