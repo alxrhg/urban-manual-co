@@ -14,6 +14,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { genAI, GEMINI_MODEL_PRO } from '@/lib/gemini';
 import { withErrorHandling, createValidationError, createUnauthorizedError } from '@/lib/errors';
 import { tasteProfileEvolutionService } from '@/services/intelligence/taste-profile-evolution';
+import { createPlannerTracker } from '@/lib/observability';
 import type { Trip, ItineraryItem, InsertItineraryItem } from '@/types/trip';
 import { SchemaType, type FunctionDeclaration, type FunctionCallingMode, type Content, type Part } from '@google/generative-ai';
 
@@ -800,12 +801,17 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   const body: PlanTripRequest = await request.json();
   const { prompt, context } = body;
 
+  // Initialize observability tracker
+  const tracker = createPlannerTracker(prompt || '', { userId: user.id, tripId: body.tripId });
+
   if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
+    tracker.validationError('Prompt is required');
     throw createValidationError('Prompt is required');
   }
 
   // Check Gemini availability
   if (!genAI) {
+    tracker.validationError('AI service not available');
     throw createValidationError('AI service not available');
   }
 
@@ -880,8 +886,14 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         const args = functionCall.args as Record<string, any>;
 
         console.log(`[plan-trip] Executing tool: ${toolName}`, args);
+        tracker.toolCalled(toolName);
 
         const toolResult = await executeTool(toolName, args, user.id, supabase);
+
+        // Track tool errors
+        if (!toolResult.success && toolResult.error) {
+          tracker.toolError(toolName, toolResult.error);
+        }
 
         actions.push({ tool: toolName, args, result: toolResult });
 
@@ -897,6 +909,12 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       response = await chat.sendMessage(functionResponses.parts);
       result = response.response;
       iterationCount++;
+      tracker.iteration();
+    }
+
+    // Check if we hit max iterations (timeout)
+    if (iterationCount >= maxIterations) {
+      tracker.timeout();
     }
 
     // Extract final text response
@@ -916,6 +934,9 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       .filter((a) => a.tool === 'add_to_itinerary' && a.result.success)
       .map((a) => a.result.data);
 
+    // Track successful completion
+    tracker.success();
+
     return NextResponse.json({
       success: true,
       message: finalText || 'Trip planning complete.',
@@ -931,6 +952,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     });
   } catch (aiError: any) {
     console.error('[plan-trip] AI error:', aiError);
+    tracker.failure('ai_error', aiError?.message || 'Unknown AI error');
     throw createValidationError('Failed to process trip planning request. Please try again.');
   }
 });

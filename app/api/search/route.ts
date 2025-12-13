@@ -9,6 +9,7 @@ import {
 } from '@/lib/rate-limit';
 import { createServerClient } from '@/lib/supabase/server';
 import { withErrorHandling } from '@/lib/errors';
+import { createSearchTracker } from '@/lib/observability';
 
 // Generate embedding for a query using OpenAI embeddings via provider-agnostic helper
 async function generateEmbedding(query: string): Promise<number[] | null> {
@@ -140,12 +141,15 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     }
 
     if (!query || query.trim().length < 2) {
-      return NextResponse.json({ 
-        results: [], 
+      return NextResponse.json({
+        results: [],
         searchTier: 'basic',
-        error: 'Query too short' 
+        error: 'Query too short'
       });
     }
+
+    // Initialize search quality tracker
+    const searchTracker = createSearchTracker(query, { userId: authenticatedUserId });
 
     // Extract structured filters using AI (with conversation context)
     const intent = await understandQuery(query);
@@ -255,6 +259,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
     // Strategy 2: Full-text search on search_text column (if vector search didn't return results or as fallback)
     if (results.length === 0) {
+      searchTracker.fallback('fulltext', 'vector_search_no_results');
       try {
         let fullTextQuery = supabase
           .from('destinations')
@@ -309,6 +314,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
     // Strategy 3: AI field search (vibe_tags, keywords, search_keywords) if still no results
     if (results.length === 0) {
+      searchTracker.fallback('ai-fields', 'fulltext_search_no_results');
       try {
         const { data: aiFieldResults, error: aiFieldError } = await supabase.rpc('search_by_ai_fields', {
           search_term: query,
@@ -354,6 +360,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
     // Strategy 4: Fallback to keyword matching (original method)
     if (results.length === 0) {
+      searchTracker.fallback('keyword', 'ai_fields_no_results');
       let fallbackQuery = supabase
         .from('destinations')
         .select('slug, name, city, category, micro_description, description, content, image, image_thumbnail, michelin_stars, crown, rating, price_level, brand, latitude, longitude')
@@ -507,6 +514,12 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       aiInsightBanner = `Tailored for ${contextParts.join(', ')}`;
     }
 
+    // Track search quality metrics
+    searchTracker.success(
+      rankedResults.length,
+      searchTier as 'vector-semantic' | 'fulltext' | 'ai-fields' | 'keyword'
+    );
+
     // Log search interaction (best-effort)
     if (authenticatedUserId) {
       try {
@@ -535,6 +548,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   } catch (error: any) {
     console.error('Search API error:', error);
+    // Track search error (create new tracker since we might not have one in scope)
+    const errorTracker = createSearchTracker(body?.query || 'unknown', {});
+    errorTracker.error(error);
+
     return NextResponse.json({
       results: [],
       searchTier: 'basic',
