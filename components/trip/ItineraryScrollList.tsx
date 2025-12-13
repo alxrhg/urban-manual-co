@@ -130,7 +130,7 @@ export function ItineraryScrollList({
     : `Day ${day.dayNumber}`;
 
   return (
-    <div className="p-4">
+    <div className="p-4 pb-32">
       {/* Day Header */}
       <div className="mb-6">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -163,17 +163,14 @@ export function ItineraryScrollList({
                     onClick={() => onItemClick?.(item)}
                     onMouseEnter={useHoverSelection ? () => onItemHover?.(item) : undefined}
                     onMouseLeave={useHoverSelection ? () => onItemHover?.(null) : undefined}
-                    className={`
-                      relative pl-10 cursor-pointer transition-all duration-200
-                      ${activeItemId === item.id ? 'scale-[1.02]' : 'hover:scale-[1.01]'}
-                    `}
+                    className="relative pl-10 cursor-pointer"
                   >
-                    {/* Timeline dot */}
+                    {/* Timeline dot - centered on the line at left-4 (16px) */}
                     <div
                       className={`
-                        absolute left-2.5 top-4 w-3 h-3 rounded-full border-2 z-10 transition-colors
+                        absolute left-[10px] top-4 w-3 h-3 rounded-full border-2 z-10 transition-all duration-200
                         ${activeItemId === item.id
-                          ? 'bg-gray-900 dark:bg-white border-gray-900 dark:border-white'
+                          ? 'bg-gray-900 dark:bg-white border-gray-900 dark:border-white scale-125'
                           : 'bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700'
                         }
                       `}
