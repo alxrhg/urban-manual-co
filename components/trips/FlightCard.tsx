@@ -222,7 +222,7 @@ export default function FlightCard({ flight, departureDate, onExpand }: FlightCa
             <div className="flex items-center gap-1.5 px-2">
               <div className="w-1.5 h-1.5 rounded-full bg-stone-300 dark:bg-gray-600" />
               <div className="w-12 h-px bg-stone-300 dark:bg-gray-600 relative">
-                <Plane className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400 dark:text-gray-500 rotate-90" />
+                <Plane className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400 dark:text-gray-500" />
               </div>
               <div className="w-1.5 h-1.5 rounded-full bg-stone-300 dark:bg-gray-600" />
             </div>

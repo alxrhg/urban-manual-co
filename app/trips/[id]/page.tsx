@@ -2852,7 +2852,7 @@ function ItemRow({
                 <div className="flex items-center gap-1 px-1.5">
                   <div className="w-1 h-1 rounded-full bg-stone-300 dark:bg-gray-600" />
                   <div className="w-8 h-px bg-stone-300 dark:bg-gray-600 relative">
-                    <Plane className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 text-stone-400 dark:text-gray-500 rotate-90" />
+                    <Plane className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 text-stone-400 dark:text-gray-500" />
                   </div>
                   <div className="w-1 h-1 rounded-full bg-stone-300 dark:bg-gray-600" />
                 </div>
