@@ -120,6 +120,80 @@ export const INDOOR_CATEGORIES = new Set([
   'aquarium',
 ]);
 
+// Activity intensity scores (physical effort 0-10, mental effort 0-10)
+// Used for fatigue prediction and activity balancing
+export const CATEGORY_INTENSITY: Record<string, { physical: number; mental: number; type: 'cultural' | 'dining' | 'active' | 'leisure' | 'nightlife' }> = {
+  // Cultural - high mental, low physical (standing fatigue)
+  'museum': { physical: 4, mental: 7, type: 'cultural' },
+  'art museum': { physical: 4, mental: 8, type: 'cultural' },
+  'history museum': { physical: 4, mental: 7, type: 'cultural' },
+  'science museum': { physical: 5, mental: 7, type: 'cultural' },
+  'gallery': { physical: 3, mental: 6, type: 'cultural' },
+  'exhibition': { physical: 3, mental: 6, type: 'cultural' },
+  'cultural center': { physical: 3, mental: 5, type: 'cultural' },
+  'heritage site': { physical: 5, mental: 6, type: 'cultural' },
+  'temple': { physical: 4, mental: 4, type: 'cultural' },
+  'shrine': { physical: 4, mental: 4, type: 'cultural' },
+  'church': { physical: 2, mental: 3, type: 'cultural' },
+  'cathedral': { physical: 3, mental: 4, type: 'cultural' },
+  'castle': { physical: 6, mental: 5, type: 'cultural' },
+  'palace': { physical: 5, mental: 6, type: 'cultural' },
+  'historic site': { physical: 5, mental: 5, type: 'cultural' },
+
+  // Active/Outdoor - high physical
+  'park': { physical: 4, mental: 2, type: 'active' },
+  'garden': { physical: 4, mental: 3, type: 'active' },
+  'botanical garden': { physical: 5, mental: 4, type: 'active' },
+  'beach': { physical: 3, mental: 1, type: 'leisure' },
+  'hiking': { physical: 9, mental: 3, type: 'active' },
+  'nature reserve': { physical: 7, mental: 3, type: 'active' },
+  'viewpoint': { physical: 3, mental: 2, type: 'active' },
+  'observation deck': { physical: 2, mental: 2, type: 'active' },
+  'zoo': { physical: 7, mental: 4, type: 'active' },
+  'aquarium': { physical: 4, mental: 4, type: 'cultural' },
+  'theme park': { physical: 8, mental: 3, type: 'active' },
+  'amusement park': { physical: 8, mental: 3, type: 'active' },
+
+  // Dining - low intensity, restorative
+  'restaurant': { physical: 1, mental: 2, type: 'dining' },
+  'fine dining': { physical: 1, mental: 3, type: 'dining' },
+  'cafe': { physical: 1, mental: 1, type: 'dining' },
+  'coffee shop': { physical: 1, mental: 1, type: 'dining' },
+  'bakery': { physical: 1, mental: 1, type: 'dining' },
+  'bar': { physical: 1, mental: 2, type: 'nightlife' },
+  'wine bar': { physical: 1, mental: 2, type: 'nightlife' },
+  'cocktail bar': { physical: 1, mental: 2, type: 'nightlife' },
+  'pub': { physical: 1, mental: 2, type: 'nightlife' },
+  'food market': { physical: 4, mental: 3, type: 'active' },
+  'street food': { physical: 2, mental: 2, type: 'dining' },
+
+  // Shopping - moderate physical (walking/standing)
+  'shopping': { physical: 5, mental: 3, type: 'active' },
+  'department store': { physical: 5, mental: 3, type: 'active' },
+  'boutique': { physical: 3, mental: 2, type: 'leisure' },
+  'market': { physical: 5, mental: 3, type: 'active' },
+  'flea market': { physical: 6, mental: 3, type: 'active' },
+
+  // Entertainment - seated, mentally engaging
+  'theater': { physical: 1, mental: 5, type: 'cultural' },
+  'cinema': { physical: 1, mental: 4, type: 'leisure' },
+  'concert hall': { physical: 1, mental: 5, type: 'cultural' },
+  'nightclub': { physical: 6, mental: 2, type: 'nightlife' },
+  'comedy club': { physical: 1, mental: 3, type: 'leisure' },
+
+  // Wellness - restorative
+  'spa': { physical: 1, mental: 1, type: 'leisure' },
+  'onsen': { physical: 1, mental: 1, type: 'leisure' },
+  'gym': { physical: 8, mental: 2, type: 'active' },
+
+  // Landmarks
+  'landmark': { physical: 3, mental: 3, type: 'cultural' },
+  'monument': { physical: 2, mental: 2, type: 'cultural' },
+
+  // Default
+  'default': { physical: 3, mental: 3, type: 'leisure' },
+};
+
 /**
  * Get estimated duration for a place based on its category
  */
@@ -171,6 +245,256 @@ export function isIndoorCategory(category?: string | null): boolean {
     }
   }
   return false;
+}
+
+/**
+ * Get activity intensity for a category
+ */
+export function getActivityIntensity(category?: string | null): { physical: number; mental: number; type: string } {
+  if (!category) return CATEGORY_INTENSITY.default;
+
+  const normalized = category.toLowerCase().trim();
+
+  // Try exact match first
+  if (CATEGORY_INTENSITY[normalized]) {
+    return CATEGORY_INTENSITY[normalized];
+  }
+
+  // Try partial match
+  for (const [key, intensity] of Object.entries(CATEGORY_INTENSITY)) {
+    if (normalized.includes(key) || key.includes(normalized)) {
+      return intensity;
+    }
+  }
+
+  return CATEGORY_INTENSITY.default;
+}
+
+/**
+ * Calculate fatigue score for a day's activities
+ * Returns a score from 0-100 where higher = more fatiguing
+ * Also estimates total walking distance based on travel times
+ */
+export interface DayFatigue {
+  score: number; // 0-100
+  label: 'Light' | 'Moderate' | 'Demanding' | 'Exhausting';
+  physicalLoad: number; // 0-100
+  mentalLoad: number; // 0-100
+  estimatedWalkingKm: number;
+  estimatedStandingHours: number;
+  warnings: string[];
+}
+
+export function calculateDayFatigue(
+  items: Array<{
+    category?: string | null;
+    duration: number; // minutes
+    travelTimeFromPrev?: number;
+  }>
+): DayFatigue {
+  let totalPhysical = 0;
+  let totalMental = 0;
+  let totalStandingMinutes = 0;
+  let totalWalkingMinutes = 0;
+  const warnings: string[] = [];
+
+  items.forEach((item, index) => {
+    const intensity = getActivityIntensity(item.category);
+    const durationHours = item.duration / 60;
+
+    // Weight intensity by duration
+    totalPhysical += intensity.physical * durationHours;
+    totalMental += intensity.mental * durationHours;
+
+    // Standing time estimate (museums, galleries, shopping = mostly standing)
+    if (intensity.type === 'cultural' || intensity.type === 'active') {
+      totalStandingMinutes += item.duration * 0.7; // 70% standing time
+    }
+
+    // Walking from travel
+    if (item.travelTimeFromPrev) {
+      totalWalkingMinutes += item.travelTimeFromPrev;
+    }
+  });
+
+  // Normalize to 0-100 scale
+  // Assume a typical intense day is ~8 hours of activities
+  const maxDailyLoad = 8 * 7; // 8 hours at intensity 7
+  const physicalLoad = Math.min(100, Math.round((totalPhysical / maxDailyLoad) * 100));
+  const mentalLoad = Math.min(100, Math.round((totalMental / maxDailyLoad) * 100));
+
+  // Combined score (physical weighs slightly more)
+  const score = Math.min(100, Math.round(physicalLoad * 0.6 + mentalLoad * 0.4));
+
+  // Estimate walking distance (5 km/h average walking speed)
+  const estimatedWalkingKm = Math.round((totalWalkingMinutes / 60) * 5 * 10) / 10;
+
+  // Standing hours
+  const estimatedStandingHours = Math.round((totalStandingMinutes / 60) * 10) / 10;
+
+  // Generate warnings
+  if (score >= 80) {
+    warnings.push('This day is exhausting - consider removing an activity or adding rest');
+  } else if (score >= 65) {
+    warnings.push('Demanding day ahead - pace yourself');
+  }
+
+  if (estimatedWalkingKm > 10) {
+    warnings.push(`High walking day (~${estimatedWalkingKm}km) - wear comfortable shoes`);
+  }
+
+  if (estimatedStandingHours > 5) {
+    warnings.push(`~${estimatedStandingHours}h of standing - consider seated breaks`);
+  }
+
+  // Determine label
+  let label: DayFatigue['label'];
+  if (score < 30) label = 'Light';
+  else if (score < 55) label = 'Moderate';
+  else if (score < 75) label = 'Demanding';
+  else label = 'Exhausting';
+
+  return {
+    score,
+    label,
+    physicalLoad,
+    mentalLoad,
+    estimatedWalkingKm,
+    estimatedStandingHours,
+    warnings,
+  };
+}
+
+/**
+ * Detect "intensity marathons" - consecutive activities of the same high-intensity type
+ * e.g., 3 museums back-to-back = museum marathon
+ */
+export interface IntensityMarathon {
+  type: string;
+  count: number;
+  items: string[];
+  warning: string;
+}
+
+export function detectIntensityMarathons(
+  items: Array<{
+    name: string;
+    category?: string | null;
+  }>
+): IntensityMarathon[] {
+  const marathons: IntensityMarathon[] = [];
+  if (items.length < 2) return marathons;
+
+  let currentType: string | null = null;
+  let currentStreak: string[] = [];
+
+  // Activity types that cause fatigue when consecutive
+  const fatigueTypes = new Set(['cultural', 'active']);
+
+  items.forEach((item) => {
+    const intensity = getActivityIntensity(item.category);
+    const isRestingType = intensity.type === 'dining' || intensity.type === 'leisure';
+
+    if (isRestingType) {
+      // Dining/leisure breaks the streak
+      if (currentStreak.length >= 3 && currentType && fatigueTypes.has(currentType)) {
+        marathons.push(createMarathonWarning(currentType, currentStreak));
+      }
+      currentStreak = [];
+      currentType = null;
+    } else if (currentType === intensity.type) {
+      // Continue streak
+      currentStreak.push(item.name);
+    } else {
+      // New type - check if previous streak was a marathon
+      if (currentStreak.length >= 3 && currentType && fatigueTypes.has(currentType)) {
+        marathons.push(createMarathonWarning(currentType, currentStreak));
+      }
+      currentStreak = [item.name];
+      currentType = intensity.type;
+    }
+  });
+
+  // Check final streak
+  if (currentStreak.length >= 3 && currentType && fatigueTypes.has(currentType)) {
+    marathons.push(createMarathonWarning(currentType, currentStreak));
+  }
+
+  return marathons;
+}
+
+function createMarathonWarning(type: string, items: string[]): IntensityMarathon {
+  const typeLabels: Record<string, string> = {
+    cultural: 'museum/gallery',
+    active: 'walking-heavy',
+  };
+
+  const label = typeLabels[type] || type;
+
+  return {
+    type,
+    count: items.length,
+    items: [...items],
+    warning: `${items.length} ${label} activities back-to-back without a break`,
+  };
+}
+
+/**
+ * Check if first day should have adjusted schedule for jet lag
+ * Returns adjustment suggestions based on flight duration
+ */
+export interface JetLagAdjustment {
+  shouldAdjust: boolean;
+  suggestedStartTime: string;
+  reason: string;
+  tips: string[];
+}
+
+export function getJetLagAdjustment(
+  flightDurationHours?: number,
+  timezoneShiftHours?: number
+): JetLagAdjustment {
+  // Default: no adjustment
+  if (!flightDurationHours && !timezoneShiftHours) {
+    return {
+      shouldAdjust: false,
+      suggestedStartTime: '09:00',
+      reason: '',
+      tips: [],
+    };
+  }
+
+  const isLongHaul = (flightDurationHours && flightDurationHours >= 6) ||
+                     (timezoneShiftHours && Math.abs(timezoneShiftHours) >= 5);
+
+  if (!isLongHaul) {
+    return {
+      shouldAdjust: false,
+      suggestedStartTime: '09:00',
+      reason: '',
+      tips: [],
+    };
+  }
+
+  const tips: string[] = [];
+
+  // Significant timezone shift
+  if (timezoneShiftHours && Math.abs(timezoneShiftHours) >= 8) {
+    tips.push('Expect significant jet lag - stay hydrated and get sunlight');
+    tips.push('Consider a power nap (20-30 min) if needed, but not after 3pm');
+  }
+
+  // Long flight fatigue
+  if (flightDurationHours && flightDurationHours >= 10) {
+    tips.push('Long flight recovery - keep first day light on physical activities');
+  }
+
+  return {
+    shouldAdjust: true,
+    suggestedStartTime: '11:00',
+    reason: 'Long-haul arrival - starting later allows recovery time',
+    tips,
+  };
 }
 
 /**

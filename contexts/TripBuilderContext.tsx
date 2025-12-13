@@ -10,6 +10,10 @@ import {
   predictCrowdLevel,
   isOutdoorCategory,
   formatDuration,
+  calculateDayFatigue,
+  detectIntensityMarathons,
+  type DayFatigue,
+  type IntensityMarathon,
 } from '@/lib/trip-intelligence';
 import { isClosedOnDay, getHoursForDay } from '@/lib/utils/opening-hours';
 
@@ -47,6 +51,14 @@ export interface TripHealth {
   totalWalkingTime: number;
   hasTimeConflicts: boolean;
   missingMeals: number[];
+  // Energy & fatigue metrics
+  energyAnalysis: {
+    averageDailyFatigue: number; // 0-100
+    peakFatigueDay: number | null; // day number with highest fatigue
+    totalWalkingKm: number;
+    intensityMarathons: IntensityMarathon[];
+    dayFatigueScores: Array<{ day: number; fatigue: DayFatigue }>;
+  };
 }
 
 export interface TripDay {
@@ -1147,6 +1159,14 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
 
   // Get overall trip health score
   const getTripHealth = useCallback((): TripHealth => {
+    const emptyEnergyAnalysis = {
+      averageDailyFatigue: 0,
+      peakFatigueDay: null,
+      totalWalkingKm: 0,
+      intensityMarathons: [] as IntensityMarathon[],
+      dayFatigueScores: [] as Array<{ day: number; fatigue: DayFatigue }>,
+    };
+
     if (!activeTrip) {
       return {
         score: 0,
@@ -1156,6 +1176,7 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
         totalWalkingTime: 0,
         hasTimeConflicts: false,
         missingMeals: [],
+        energyAnalysis: emptyEnergyAnalysis,
       };
     }
 
@@ -1166,6 +1187,11 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
     let hasTimeConflicts = false;
     const missingMeals: number[] = [];
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+    // Energy analysis tracking
+    const dayFatigueScores: Array<{ day: number; fatigue: DayFatigue }> = [];
+    let totalWalkingKm = 0;
+    const allIntensityMarathons: IntensityMarathon[] = [];
 
     // Analyze each day
     activeTrip.days.forEach(day => {
@@ -1222,6 +1248,52 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
         missingMeals.push(day.dayNumber);
         score -= 3;
       }
+
+      // Calculate day fatigue
+      if (day.items.length > 0) {
+        const fatigue = calculateDayFatigue(
+          day.items.map(item => ({
+            category: item.destination.category,
+            duration: item.duration,
+            travelTimeFromPrev: item.travelTimeFromPrev,
+          }))
+        );
+        dayFatigueScores.push({ day: day.dayNumber, fatigue });
+        totalWalkingKm += fatigue.estimatedWalkingKm;
+
+        // Penalize exhausting days
+        if (fatigue.score >= 80) {
+          score -= 8;
+          insights.push({
+            type: 'warning',
+            icon: 'clock',
+            message: `Day ${day.dayNumber} is exhausting (${fatigue.label}) - consider lighter activities`,
+            action: 'Rebalance',
+          });
+        } else if (fatigue.score >= 65) {
+          score -= 3;
+        }
+
+        // Detect intensity marathons (e.g., 3+ museums back-to-back)
+        const marathons = detectIntensityMarathons(
+          day.items.map(item => ({
+            name: item.destination.name,
+            category: item.destination.category,
+          }))
+        );
+        if (marathons.length > 0) {
+          allIntensityMarathons.push(...marathons);
+          marathons.forEach(marathon => {
+            score -= 5;
+            insights.push({
+              type: 'tip',
+              icon: 'category',
+              message: `Day ${day.dayNumber}: ${marathon.warning}`,
+              action: 'Add break',
+            });
+          });
+        }
+      }
     });
 
     // Category diversity bonus/penalty
@@ -1258,6 +1330,14 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
     else if (score >= 40) label = 'Needs work';
     else label = 'Poor';
 
+    // Calculate energy analysis summary
+    const averageDailyFatigue = dayFatigueScores.length > 0
+      ? Math.round(dayFatigueScores.reduce((sum, d) => sum + d.fatigue.score, 0) / dayFatigueScores.length)
+      : 0;
+    const peakFatigueDay = dayFatigueScores.length > 0
+      ? dayFatigueScores.reduce((max, d) => d.fatigue.score > max.fatigue.score ? d : max).day
+      : null;
+
     return {
       score,
       label,
@@ -1266,6 +1346,13 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
       totalWalkingTime,
       hasTimeConflicts,
       missingMeals,
+      energyAnalysis: {
+        averageDailyFatigue,
+        peakFatigueDay,
+        totalWalkingKm,
+        intensityMarathons: allIntensityMarathons,
+        dayFatigueScores,
+      },
     };
   }, [activeTrip]);
 
