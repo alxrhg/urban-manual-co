@@ -781,8 +781,8 @@ export default function DestinationBox({
             </div>
           )}
 
-          {/* Times for flights/trains */}
-          {(itemType === 'flight' || itemType === 'train') && (
+          {/* Times for trains only (flights have their own editor above) */}
+          {itemType === 'train' && (
             <div className="flex gap-3">
               <div className="flex-1">
                 <label className="text-[10px] text-gray-400 mb-1 block">Departs</label>
@@ -853,8 +853,8 @@ export default function DestinationBox({
             </div>
           )}
 
-          {/* Confirmation for bookable items */}
-          {(itemType === 'hotel' || itemType === 'flight' || itemType === 'train' || editBookingStatus === 'booked') && (
+          {/* Confirmation for bookable items (excluding flights which have their own editor) */}
+          {(itemType === 'hotel' || itemType === 'train' || editBookingStatus === 'booked') && (
             <div>
               <label className="text-[10px] text-gray-400 mb-1 block">Confirmation #</label>
               <input
@@ -890,18 +890,20 @@ export default function DestinationBox({
             </div>
           )}
 
-          {/* Notes */}
-          <div>
-            <label className="text-[10px] text-gray-400 mb-1 block">Notes</label>
-            <textarea
-              value={editNotes}
-              onChange={(e) => setEditNotes(e.target.value)}
-              onBlur={() => saveChanges('notes', editNotes)}
-              placeholder="Add a note..."
-              rows={2}
-              className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg resize-none"
-            />
-          </div>
+          {/* Notes (excluding flights which have their own notes field) */}
+          {itemType !== 'flight' && (
+            <div>
+              <label className="text-[10px] text-gray-400 mb-1 block">Notes</label>
+              <textarea
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                onBlur={() => saveChanges('notes', editNotes)}
+                placeholder="Add a note..."
+                rows={2}
+                className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg resize-none"
+              />
+            </div>
+          )}
         </div>
 
         {/* Quick Actions */}
