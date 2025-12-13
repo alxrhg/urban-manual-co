@@ -38,6 +38,7 @@ import DayIntelligence from '@/components/trip/DayIntelligence';
 import { CrowdBadge } from '@/components/trip/CrowdIndicator';
 import { UndoProvider } from '@/components/trip/UndoToast';
 import { SavingFeedback } from '@/components/trip/SavingFeedback';
+import TripPlannerMap from '@/components/trip/TripPlannerMap';
 import { Settings, Moon } from 'lucide-react';
 
 // Weather type
@@ -367,6 +368,7 @@ export default function TripPage() {
               days={days}
               onUpdate={updateTrip}
               onDelete={handleDelete}
+              onReorder={reorderItems}
             />
 
             {/* Action bar: Edit toggle + Settings */}
@@ -725,14 +727,16 @@ function TripHeader({
   days,
   onUpdate,
   onDelete,
+  onReorder,
 }: {
   trip: { id: string; title: string; start_date?: string | null; end_date?: string | null; destination?: string | null; cover_image?: string | null };
   primaryCity: string;
   totalItems: number;
   userId?: string;
-  days: Array<{ items: EnrichedItineraryItem[] }>;
+  days: Array<{ dayNumber: number; date: string | null; items: EnrichedItineraryItem[] }>;
   onUpdate: (updates: Record<string, unknown>) => void;
   onDelete: () => void;
+  onReorder?: (dayNumber: number, items: EnrichedItineraryItem[]) => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(trip.title);
@@ -988,25 +992,19 @@ function TripHeader({
 
   return (
     <div className="group">
-      {/* Static map cover */}
-      <div className="relative aspect-[3/1] rounded-xl overflow-hidden mb-4">
-        {staticMapUrl && !mapError ? (
-          <>
-            <Image
-              src={staticMapUrl}
-              alt={`Map of ${primaryCity}`}
-              fill
-              className="object-cover"
-              unoptimized
-              onError={() => setMapError(true)}
-            />
-            {/* City overlay */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-900 rounded-full px-3 py-1.5 shadow-lg flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-red-500" />
-              <span className="text-[12px] font-medium text-gray-900 dark:text-white">{primaryCity}</span>
-              <span className="text-[11px] text-gray-400">{totalItems} pinned</span>
-            </div>
-          </>
+      {/* Interactive map with routes */}
+      <div className="relative h-60 rounded-xl overflow-hidden mb-4">
+        {days.some(d => d.items.some(item =>
+          (item.destination?.latitude && item.destination?.longitude) ||
+          (item.parsedNotes?.latitude && item.parsedNotes?.longitude)
+        )) ? (
+          <TripPlannerMap
+            days={days}
+            showRoutes={true}
+            enableDragReorder={!!onReorder}
+            onReorder={onReorder}
+            className="h-full"
+          />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 flex items-center justify-center">
             <div className="text-center">
