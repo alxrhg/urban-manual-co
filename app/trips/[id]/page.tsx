@@ -2032,16 +2032,43 @@ function DaySection({
         <TravelTime from={orderedItems[orderedItems.length - 1]} to={nightlyHotel} />
       )}
 
-      {/* Nightly hotel indicator */}
+      {/* Nightly hotel indicator - Night pass card */}
       {nightlyHotel && (
         <button
           onClick={() => onSelectItem?.(nightlyHotel)}
-          className="w-full mt-2 flex items-center gap-2 px-3 py-2.5 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
+          className="w-full mt-2 relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-900 via-purple-900 to-indigo-900 dark:from-indigo-950 dark:via-purple-950 dark:to-indigo-950 hover:shadow-lg transition-all text-left"
         >
-          <Moon className="w-4 h-4 text-gray-400" />
-          <span className="text-[13px] text-gray-500 dark:text-gray-400">
-            Staying at <span className="font-medium text-gray-700 dark:text-gray-300">{nightlyHotel.title || 'Hotel'}</span>
-          </span>
+          {/* Stars background */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute w-1 h-1 rounded-full bg-white opacity-60 top-2 left-[12%]" />
+            <div className="absolute w-0.5 h-0.5 rounded-full bg-white opacity-40 top-4 left-[35%]" />
+            <div className="absolute w-1 h-1 rounded-full bg-white opacity-50 top-3 left-[58%]" />
+            <div className="absolute w-0.5 h-0.5 rounded-full bg-white opacity-30 top-5 left-[78%]" />
+            <div className="absolute w-1 h-1 rounded-full bg-white opacity-40 top-2 right-[8%]" />
+          </div>
+
+          <div className="relative p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                  <Moon className="w-4 h-4 text-indigo-200" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">
+                    {nightlyHotel.title || 'Hotel'}
+                  </p>
+                  <p className="text-xs text-indigo-200/70 mt-0.5">
+                    {nightlyHotel.parsedNotes?.roomNumber ? `Room ${nightlyHotel.parsedNotes.roomNumber}` : 'Overnight stay'}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-indigo-200/60">
+                  Night
+                </p>
+              </div>
+            </div>
+          </div>
         </button>
       )}
     </div>
@@ -2476,30 +2503,46 @@ function HotelActivityRow({
   const [isDragging, setIsDragging] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const getLabel = () => {
-    switch (activityType) {
-      case 'breakfast':
-        return { label: 'Breakfast', detail: `at ${item.title || 'Hotel'}` };
-      case 'checkout':
-        return { label: 'Check-out', detail: `${item.parsedNotes?.checkOutTime ? formatTime(item.parsedNotes.checkOutTime) : ''} from ${item.title || 'Hotel'}` };
-      case 'checkin':
-        return { label: 'Check-in', detail: `${item.parsedNotes?.checkInTime ? formatTime(item.parsedNotes.checkInTime) : ''} at ${item.title || 'Hotel'}` };
-    }
-  };
-
-  const { label, detail } = getLabel();
   const image = item.destination?.image_thumbnail || item.destination?.image || item.parsedNotes?.image;
+  const hotelName = item.title || 'Hotel';
 
-  const getIcon = () => {
+  // Get styling based on activity type
+  const getActivityStyle = () => {
     switch (activityType) {
-      case 'breakfast':
-        return <Coffee className="w-5 h-5 text-gray-500" />;
-      case 'checkout':
-        return <LogOut className="w-5 h-5 text-gray-500" />;
       case 'checkin':
-        return <DoorOpen className="w-5 h-5 text-gray-500" />;
+        return {
+          bgClass: 'bg-gradient-to-r from-amber-50 to-stone-50 dark:from-amber-950/30 dark:to-gray-800/50',
+          borderClass: 'border-l-4 border-amber-400 dark:border-amber-500',
+          iconBgClass: 'bg-amber-100 dark:bg-amber-900/50',
+          iconClass: 'text-amber-600 dark:text-amber-400',
+          icon: <DoorOpen className="w-4 h-4" />,
+          label: 'Check-in',
+          time: item.parsedNotes?.checkInTime ? formatTime(item.parsedNotes.checkInTime) : '',
+        };
+      case 'breakfast':
+        return {
+          bgClass: 'bg-gradient-to-r from-orange-50 via-amber-50 to-stone-50 dark:from-orange-950/30 dark:via-amber-950/20 dark:to-gray-800/50',
+          borderClass: 'border-t-2 border-gradient-to-r border-orange-300',
+          iconBgClass: 'bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900/50 dark:to-amber-900/50',
+          iconClass: 'text-orange-600 dark:text-orange-400',
+          icon: <Coffee className="w-4 h-4" />,
+          label: 'Breakfast',
+          time: item.parsedNotes?.breakfastTime || '7:00–10:00',
+        };
+      case 'checkout':
+        return {
+          bgClass: 'bg-gradient-to-r from-stone-100 to-stone-50 dark:from-gray-800/50 dark:to-gray-800/30',
+          borderClass: 'border-r-4 border-rose-300 dark:border-rose-400/50',
+          iconBgClass: 'bg-stone-200 dark:bg-gray-700',
+          iconClass: 'text-stone-500 dark:text-gray-400',
+          icon: <LogOut className="w-4 h-4" />,
+          label: 'Check-out',
+          time: item.parsedNotes?.checkOutTime ? formatTime(item.parsedNotes.checkOutTime) : '',
+        };
     }
   };
+
+  const style = getActivityStyle();
 
   return (
     <Reorder.Item
@@ -2512,52 +2555,64 @@ function HotelActivityRow({
     >
       <div
         onClick={onSelect}
-        className={`flex items-center gap-3 py-3 px-1 rounded-xl transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer ${isDragging ? 'shadow-lg bg-white dark:bg-gray-900' : ''}`}
+        className={`
+          relative overflow-hidden rounded-2xl cursor-pointer transition-all
+          ${style.bgClass} ${style.borderClass}
+          ${isDragging ? 'shadow-xl ring-2 ring-stone-400 dark:ring-gray-500' : 'hover:shadow-md'}
+        `}
       >
-        {isEditMode && (
-          <div className="flex flex-col gap-0.5 opacity-40 group-hover:opacity-60 transition-opacity px-1">
-            <div className="flex gap-0.5">
-              <div className="w-1 h-1 rounded-full bg-gray-400" />
-              <div className="w-1 h-1 rounded-full bg-gray-400" />
-            </div>
-            <div className="flex gap-0.5">
-              <div className="w-1 h-1 rounded-full bg-gray-400" />
-              <div className="w-1 h-1 rounded-full bg-gray-400" />
-            </div>
-            <div className="flex gap-0.5">
-              <div className="w-1 h-1 rounded-full bg-gray-400" />
-              <div className="w-1 h-1 rounded-full bg-gray-400" />
-            </div>
-          </div>
+        {/* Sunrise accent for breakfast */}
+        {activityType === 'breakfast' && (
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-300 via-amber-300 to-yellow-200" />
         )}
 
-        {/* Circle thumbnail */}
-        <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-          {image && !imageError ? (
-            <Image
-              src={image}
-              alt={item.title || 'Hotel'}
-              width={48}
-              height={48}
-              className="w-full h-full object-cover"
-              onError={() => setImageError(true)}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              {getIcon()}
+        <div className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {/* Icon */}
+              <div className={`w-9 h-9 rounded-xl ${style.iconBgClass} flex items-center justify-center`}>
+                <span className={style.iconClass}>{style.icon}</span>
+              </div>
+
+              {/* Hotel info */}
+              <div>
+                <p className="text-sm font-semibold text-stone-900 dark:text-white">
+                  {hotelName}
+                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  {item.parsedNotes?.roomNumber && activityType === 'checkin' && (
+                    <span className="text-xs text-stone-600 dark:text-gray-400">
+                      Room {item.parsedNotes.roomNumber}
+                    </span>
+                  )}
+                  {activityType === 'breakfast' && item.parsedNotes?.breakfastIncluded && (
+                    <span className="inline-flex items-center gap-1 text-[10px] text-green-600 dark:text-green-400">
+                      <Check className="w-3 h-3" />
+                      Included
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-          )}
+
+            {/* Time */}
+            <div className="text-right">
+              <p className="text-sm font-semibold text-stone-900 dark:text-white">
+                {style.time}
+              </p>
+              <p className="text-[10px] text-stone-500 dark:text-gray-400 uppercase tracking-wide">
+                {style.label}
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Text content */}
-        <div className="flex-1 min-w-0">
-          <div className="text-[14px] font-medium text-gray-900 dark:text-white">
-            {label}
+        {/* Edit mode drag handle indicator */}
+        {isEditMode && (
+          <div className="absolute top-2 left-2 opacity-60">
+            <GripVertical className="w-4 h-4 text-stone-400" />
           </div>
-          <div className="text-[13px] text-gray-400 truncate">
-            {detail}
-          </div>
-        </div>
+        )}
       </div>
     </Reorder.Item>
   );

@@ -485,16 +485,145 @@ export default function DestinationBox({
           </div>
         )}
 
-        {/* Hotel check-in/out display */}
-        {itemType === 'hotel' && (editCheckInTime || editCheckOutTime) && (
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="text-center">
-              <p className="text-xs text-gray-500 mb-0.5">Check-in</p>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">{editCheckInTime || '—'}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xs text-gray-500 mb-0.5">Check-out</p>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">{editCheckOutTime || '—'}</p>
+        {/* Premium Hotel Card Display */}
+        {itemType === 'hotel' && (
+          <div className="space-y-4">
+            {/* Key Card Style Display */}
+            <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-stone-50 via-stone-50 to-stone-100 dark:from-gray-800/60 dark:via-gray-800/50 dark:to-gray-800/40 ring-1 ring-stone-200/60 dark:ring-gray-700/50">
+              {/* Hotel Image Header */}
+              {image && !imageError && (
+                <div className="relative h-28 bg-stone-200 dark:bg-gray-700">
+                  <Image
+                    src={image}
+                    alt={name}
+                    fill
+                    className="object-cover"
+                    onError={() => setImageError(true)}
+                    unoptimized={image.includes('googleusercontent.com') || image.includes('maps.googleapis.com')}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  {/* Hotel name overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-white" />
+                      <h4 className="font-semibold text-white text-sm truncate">{name}</h4>
+                    </div>
+                  </div>
+                  {/* Rating badge */}
+                  {rating && (
+                    <div className="absolute top-2 right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-black/40 backdrop-blur-sm">
+                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                      <span className="text-xs font-medium text-white">{rating.toFixed(1)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="p-4">
+                {/* YOUR STAY Header */}
+                <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-3">
+                  Your Stay
+                </p>
+
+                {/* Check-in/out Timeline */}
+                <div className="flex items-stretch gap-3">
+                  {/* Check-in */}
+                  <div className="flex-1 bg-gradient-to-br from-green-50 to-stone-50 dark:from-green-950/30 dark:to-gray-800/50 rounded-xl p-3 border border-green-100 dark:border-green-900/30">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <div className="w-5 h-5 rounded-md bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                        <Clock className="w-3 h-3 text-green-600 dark:text-green-400" />
+                      </div>
+                      <p className="text-[9px] font-medium uppercase tracking-wide text-green-600 dark:text-green-400">
+                        Check-in
+                      </p>
+                    </div>
+                    <p className="text-lg font-bold text-stone-900 dark:text-white">
+                      {editCheckInTime || '15:00'}
+                    </p>
+                    {parsedNotes?.checkInDate && (
+                      <p className="text-[10px] text-stone-500 dark:text-gray-400 mt-0.5">
+                        {new Date(parsedNotes.checkInDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Nights indicator */}
+                  <div className="flex flex-col items-center justify-center px-1">
+                    <div className="flex-1 w-px bg-gradient-to-b from-green-300 via-stone-300 to-rose-300 dark:from-green-600 dark:via-gray-600 dark:to-rose-600" />
+                    {parsedNotes?.checkInDate && parsedNotes?.checkOutDate && (() => {
+                      const nights = Math.ceil((new Date(parsedNotes.checkOutDate + 'T00:00:00').getTime() - new Date(parsedNotes.checkInDate + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24));
+                      return nights > 0 ? (
+                        <div className="my-1 px-1.5 py-0.5 rounded-full bg-stone-100 dark:bg-gray-800 text-[9px] font-medium text-stone-600 dark:text-gray-300 whitespace-nowrap">
+                          {nights}n
+                        </div>
+                      ) : null;
+                    })()}
+                    <div className="flex-1 w-px bg-gradient-to-b from-stone-300 to-rose-300 dark:from-gray-600 dark:to-rose-600" />
+                  </div>
+
+                  {/* Check-out */}
+                  <div className="flex-1 bg-gradient-to-br from-rose-50 to-stone-50 dark:from-rose-950/30 dark:to-gray-800/50 rounded-xl p-3 border border-rose-100 dark:border-rose-900/30">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <div className="w-5 h-5 rounded-md bg-rose-100 dark:bg-rose-900/50 flex items-center justify-center">
+                        <Clock className="w-3 h-3 text-rose-600 dark:text-rose-400" />
+                      </div>
+                      <p className="text-[9px] font-medium uppercase tracking-wide text-rose-600 dark:text-rose-400">
+                        Check-out
+                      </p>
+                    </div>
+                    <p className="text-lg font-bold text-stone-900 dark:text-white">
+                      {editCheckOutTime || '11:00'}
+                    </p>
+                    {parsedNotes?.checkOutDate && (
+                      <p className="text-[10px] text-stone-500 dark:text-gray-400 mt-0.5">
+                        {new Date(parsedNotes.checkOutDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Room & Confirmation */}
+                {(parsedNotes?.roomNumber || editConfirmation) && (
+                  <div className="flex items-center gap-3 mt-3 pt-3 border-t border-stone-100 dark:border-gray-700/50">
+                    {parsedNotes?.roomNumber && (
+                      <div className="flex-1">
+                        <p className="text-[9px] text-stone-400 dark:text-gray-500 uppercase tracking-wide">Room</p>
+                        <p className="text-sm font-bold text-stone-900 dark:text-white">{parsedNotes.roomNumber}</p>
+                      </div>
+                    )}
+                    {editConfirmation && (
+                      <div className="flex-1">
+                        <p className="text-[9px] text-stone-400 dark:text-gray-500 uppercase tracking-wide">Confirmation</p>
+                        <p className="text-xs font-mono font-medium text-stone-700 dark:text-gray-300 truncate">{editConfirmation}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Breakfast included badge */}
+                {parsedNotes?.breakfastIncluded && (
+                  <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 text-xs">
+                    <CalendarCheck className="w-3.5 h-3.5" />
+                    Breakfast included
+                  </div>
+                )}
+              </div>
+
+              {/* Key card barcode pattern */}
+              <div className="px-4 pb-3">
+                <div className="flex items-center gap-0.5 h-6 opacity-15 dark:opacity-10">
+                  {Array.from({ length: 35 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="bg-stone-900 dark:bg-white"
+                      style={{
+                        width: i % 3 === 0 ? '3px' : i % 2 === 0 ? '2px' : '1px',
+                        height: '100%',
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         )}
