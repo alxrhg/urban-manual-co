@@ -49,6 +49,183 @@ export type TripVisibility = 'private' | 'shared' | 'public';
 export type CollaboratorRole = 'owner' | 'editor' | 'viewer';
 
 // ============================================
+// ITEM ROLES
+// ============================================
+
+/**
+ * ItemRole classifies trip items by their scheduling behavior:
+ *
+ * - `fixed`: Anchors that cannot be moved (flights, hotel check-in/out, ticketed events)
+ * - `planned`: Time-sensitive but movable (reservations with time windows)
+ * - `flexible`: Open blocks that can absorb overflow (walks, downtime, exploration)
+ * - `candidate`: Curated list items not yet on the timeline
+ */
+export type ItemRole = 'fixed' | 'planned' | 'flexible' | 'candidate';
+
+/**
+ * Role metadata providing UI behavior hints
+ */
+export interface ItemRoleConfig {
+  role: ItemRole;
+  canBeAutoMoved: boolean;
+  canGenerateConflicts: boolean;
+  canAbsorbOverflow: boolean;
+  isOnTimeline: boolean;
+}
+
+/**
+ * Role configuration lookup
+ */
+export const ITEM_ROLE_CONFIG: Record<ItemRole, Omit<ItemRoleConfig, 'role'>> = {
+  fixed: {
+    canBeAutoMoved: false,
+    canGenerateConflicts: false, // Fixed items ARE the anchors, they don't conflict
+    canAbsorbOverflow: false,
+    isOnTimeline: true,
+  },
+  planned: {
+    canBeAutoMoved: true,
+    canGenerateConflicts: true, // Conflicts are actionable, not just warnings
+    canAbsorbOverflow: false,
+    isOnTimeline: true,
+  },
+  flexible: {
+    canBeAutoMoved: true,
+    canGenerateConflicts: false,
+    canAbsorbOverflow: true, // Can absorb time from other activities
+    isOnTimeline: true,
+  },
+  candidate: {
+    canBeAutoMoved: false,
+    canGenerateConflicts: false, // Never on timeline, never conflicts
+    canAbsorbOverflow: false,
+    isOnTimeline: false,
+  },
+};
+
+/**
+ * Infers the role of an item based on its type and properties.
+ * This is the core classification logic.
+ */
+export function inferItemRole(
+  itemType: ItineraryItemType | CardType | undefined,
+  notes?: ItineraryItemNotes | null
+): ItemRole {
+  // Flight is always fixed
+  if (itemType === 'flight') {
+    return 'fixed';
+  }
+
+  // Hotel check-in/checkout are fixed anchors
+  if (itemType === 'hotel' || notes?.isHotel) {
+    // The overnight stay itself and check-in/checkout are fixed
+    if (notes?.hotelItemType === 'check_in' || notes?.hotelItemType === 'checkout') {
+      return 'fixed';
+    }
+    // Hotel breakfast and amenities (pool, spa, lounge) are flexible
+    if (
+      notes?.hotelItemType === 'breakfast' ||
+      notes?.hotelItemType === 'lounge' ||
+      notes?.activityType === 'breakfast-at-hotel' ||
+      notes?.activityType === 'pool' ||
+      notes?.activityType === 'spa' ||
+      notes?.activityType === 'gym'
+    ) {
+      return 'flexible';
+    }
+    // Overnight card is fixed (marks where you're staying)
+    if (notes?.hotelItemType === 'overnight') {
+      return 'fixed';
+    }
+    return 'fixed'; // Default hotel to fixed
+  }
+
+  // Train is fixed (ticketed transport)
+  if (itemType === 'train') {
+    return 'fixed';
+  }
+
+  // Events with tickets are fixed
+  if (itemType === 'event') {
+    // If it has a ticket confirmation, it's fixed
+    if (notes?.ticketConfirmation || notes?.ticketUrl) {
+      return 'fixed';
+    }
+    // Otherwise it's planned (can be rescheduled)
+    return 'planned';
+  }
+
+  // Restaurants with reservations are planned
+  if (itemType === 'place' || itemType === 'restaurant' || itemType === 'attraction') {
+    // Has a reservation/booking = planned
+    if (
+      notes?.bookingStatus === 'booked' ||
+      notes?.confirmationNumber ||
+      notes?.confirmation
+    ) {
+      return 'planned';
+    }
+    // Walk-in or need-to-book = flexible (can be moved easily)
+    if (notes?.bookingStatus === 'walk-in' || notes?.bookingStatus === 'need-to-book') {
+      return 'flexible';
+    }
+    // Has a specific time but no booking = planned
+    if (notes?.eventTime) {
+      return 'planned';
+    }
+    // Default places to planned (they're on the timeline with intent)
+    return 'planned';
+  }
+
+  // Activities/downtime are flexible
+  if (itemType === 'activity') {
+    return 'flexible';
+  }
+
+  // Breakfast is flexible
+  if (itemType === 'breakfast') {
+    return 'flexible';
+  }
+
+  // Custom items default to flexible
+  if (itemType === 'custom' || itemType === 'free_time') {
+    return 'flexible';
+  }
+
+  // CardType mappings
+  if (itemType === 'hotel_overnight') {
+    return 'fixed';
+  }
+  if (itemType === 'hotel_activity' || itemType === 'airport_activity') {
+    return 'flexible';
+  }
+  if (itemType === 'transport') {
+    // Ground transport (taxi, etc) is flexible unless it's booked
+    if (notes?.confirmationNumber) {
+      return 'fixed';
+    }
+    return 'flexible';
+  }
+
+  // Default to planned for unknown types
+  return 'planned';
+}
+
+/**
+ * Gets the full role configuration for an item
+ */
+export function getItemRoleConfig(
+  itemType: ItineraryItemType | CardType | undefined,
+  notes?: ItineraryItemNotes | null
+): ItemRoleConfig {
+  const role = inferItemRole(itemType, notes);
+  return {
+    role,
+    ...ITEM_ROLE_CONFIG[role],
+  };
+}
+
+// ============================================
 // TRIP (v2)
 // ============================================
 
@@ -238,9 +415,17 @@ export interface ItineraryItemV2 {
   endTime?: string;
   durationMinutes?: number;
 
-  // Type
+  // Type & Role
   category: CardType;
   subtype?: HotelActivityType | AirportActivityType | MealType;
+  /**
+   * Item role determines scheduling behavior:
+   * - fixed: Cannot be auto-moved (flights, check-in/out, ticketed events)
+   * - planned: Movable reservations with time windows
+   * - flexible: Open blocks that absorb overflow
+   * - candidate: Not yet on timeline
+   */
+  role: ItemRole;
 
   // Content
   title: string;
@@ -583,6 +768,12 @@ export interface TripLocation {
  */
 export interface ItineraryItemNotes {
   type?: ItineraryItemType;
+  /**
+   * Item role for scheduling behavior.
+   * If not set, will be inferred from type and other properties.
+   * Can be explicitly set to override inference.
+   */
+  role?: ItemRole;
   raw?: string;
   duration?: number; // in minutes
   image?: string;

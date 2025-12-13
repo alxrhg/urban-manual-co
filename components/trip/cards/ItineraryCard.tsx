@@ -1,6 +1,8 @@
 'use client';
 
-import type { ItineraryItem as BaseItineraryItem, ItineraryItemNotes } from '@/types/trip';
+import type { ItineraryItem as BaseItineraryItem, ItineraryItemNotes, ItemRole } from '@/types/trip';
+import { inferItemRole } from '@/types/trip';
+import { getRoleBorderClass, ItemRoleBadge, RoleIndicatorDot } from './ItemRoleBadge';
 
 // Extended ItineraryItem with category for card rendering
 export interface ItineraryItem extends BaseItineraryItem {
@@ -17,6 +19,19 @@ export interface ItineraryItem extends BaseItineraryItem {
   flightId?: string;
   hotelBookingId?: string;
   parsedNotes?: ItineraryItemNotes | null;
+}
+
+/**
+ * Get the effective role for an itinerary item
+ */
+export function getItemRole(item: ItineraryItem): ItemRole {
+  // Check for explicit role in parsed notes first
+  if (item.parsedNotes?.role) {
+    return item.parsedNotes.role;
+  }
+  // Infer from type and category
+  const itemType = item.parsedNotes?.type || item.category;
+  return inferItemRole(itemType, item.parsedNotes);
 }
 
 // Flight booking data
@@ -80,6 +95,10 @@ export interface ItineraryCardProps {
   isSelected: boolean;
   onSelect: () => void;
   tripSettings: TripSettings;
+  /** Whether to show the role badge on the card */
+  showRoleBadge?: boolean;
+  /** Whether to show the role border indicator on the left side */
+  showRoleBorder?: boolean;
 }
 
 /**
@@ -108,42 +127,64 @@ export default function ItineraryCard({
   isSelected,
   onSelect,
   tripSettings,
+  showRoleBadge = false,
+  showRoleBorder = true,
 }: ItineraryCardProps) {
+  const role = getItemRole(item);
+  const roleBorderClass = showRoleBorder ? getRoleBorderClass(role) : '';
+
   const baseProps = {
     item,
     isSelected,
     onSelect,
     tripSettings,
+    role,
+    showRoleBadge,
+  };
+
+  // Wrap the card with role-based border styling
+  const wrapWithRoleBorder = (card: React.ReactNode) => {
+    if (!showRoleBorder) return card;
+
+    return (
+      <div className={`relative ${roleBorderClass} rounded-lg overflow-hidden`}>
+        {card}
+      </div>
+    );
   };
 
   switch (item.category) {
     case 'flight':
-      return <FlightCard {...baseProps} flight={flight} />;
+      return wrapWithRoleBorder(<FlightCard {...baseProps} flight={flight} />);
 
     case 'restaurant':
-      return <RestaurantCard {...baseProps} />;
+      return wrapWithRoleBorder(<RestaurantCard {...baseProps} />);
 
     case 'attraction':
-      return <AttractionCard {...baseProps} />;
+      return wrapWithRoleBorder(<AttractionCard {...baseProps} />);
 
     case 'hotel_activity':
     case 'airport_activity':
-      return <MinimalActivityCard {...baseProps} hotel={hotel} />;
+      return wrapWithRoleBorder(<MinimalActivityCard {...baseProps} hotel={hotel} />);
 
     case 'hotel_overnight':
-      return <OvernightCard {...baseProps} hotel={hotel} />;
+      return wrapWithRoleBorder(<OvernightCard {...baseProps} hotel={hotel} />);
 
     case 'transport':
-      return <TransportCard {...baseProps} />;
+      return wrapWithRoleBorder(<TransportCard {...baseProps} />);
 
     case 'free_time':
-      return <FreeTimeGap {...baseProps} />;
+      return wrapWithRoleBorder(<FreeTimeGap {...baseProps} />);
 
     case 'custom':
-      return <CustomCard {...baseProps} />;
+      return wrapWithRoleBorder(<CustomCard {...baseProps} />);
 
     default:
       // Fallback for unknown categories - render as custom
-      return <CustomCard {...baseProps} />;
+      return wrapWithRoleBorder(<CustomCard {...baseProps} />);
   }
 }
+
+// Re-export role utilities for use by parent components
+export { ItemRoleBadge, RoleIndicatorDot, getRoleBorderClass } from './ItemRoleBadge';
+export { getItemRole };

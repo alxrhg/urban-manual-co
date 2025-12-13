@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData, TrainData, ActivityData, HotelData } from '@/types/trip';
-import { parseItineraryNotes, stringifyItineraryNotes } from '@/types/trip';
+import { parseItineraryNotes, stringifyItineraryNotes, inferItemRole } from '@/types/trip';
 import type { Destination } from '@/types/destination';
 import { recalculateDayTimes, calculateTripDays, addDaysToDate } from '@/lib/utils/time-calculations';
 import { toast } from '@/lib/toast';
@@ -283,6 +283,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
 
     const notesData: ItineraryItemNotes = {
       type: itemType,
+      role: inferItemRole(itemType),
       latitude: destination.latitude ?? undefined,
       longitude: destination.longitude ?? undefined,
       category: destination.category ?? undefined,
@@ -376,6 +377,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
 
     const notesData: ItineraryItemNotes = {
       type: 'flight',
+      role: 'fixed', // Flights are always fixed anchors
       airline: flightData.airline,
       flightNumber: flightData.flightNumber,
       from: flightData.from,
@@ -478,6 +480,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
 
     const notesData: ItineraryItemNotes = {
       type: 'train',
+      role: 'fixed', // Trains are fixed (ticketed transport)
       trainLine: trainData.trainLine,
       trainNumber: trainData.trainNumber,
       from: trainData.from,
@@ -583,6 +586,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
 
     const notesData: ItineraryItemNotes = {
       type: 'hotel',
+      role: 'fixed', // Hotels are fixed anchors (check-in/checkout times)
       name: hotelData.name,
       address: hotelData.address,
       checkInDate: hotelData.checkInDate,
@@ -691,6 +695,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
 
     const notesData: ItineraryItemNotes = {
       type: 'activity',
+      role: 'flexible', // Activities are flexible (can absorb overflow)
       activityType: activityData.activityType,
       duration: activityData.duration,
       linkedHotelId: activityData.linkedHotelId,
