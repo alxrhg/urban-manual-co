@@ -38,7 +38,7 @@ import DayIntelligence from '@/components/trip/DayIntelligence';
 import { CrowdBadge } from '@/components/trip/CrowdIndicator';
 import { UndoProvider } from '@/components/trip/UndoToast';
 import { SavingFeedback } from '@/components/trip/SavingFeedback';
-import { WeatherWidget, SmartPacking, analyzeItineraryForPacking, convertWeatherForecast } from '@/components/Intelligence';
+import { WeatherWidget } from '@/components/Intelligence';
 import { Settings, Moon } from 'lucide-react';
 
 // Weather type
@@ -696,31 +696,6 @@ export default function TripPage() {
                   city={primaryCity}
                   selectedDayNumber={selectedDayNumber}
                   onAddPlace={(dest, dayNum) => addPlace(dest, dayNum)}
-                />
-              )}
-
-              {/* Smart Packing */}
-              {!sidebarAddDay && trip?.start_date && (
-                <SmartPacking
-                  destination={primaryCity}
-                  tripDuration={days.length}
-                  weatherData={Object.keys(weatherByDate).length > 0 ? convertWeatherForecast(
-                    Object.values(weatherByDate).map(w => ({
-                      temp: { min: w.tempMin, max: w.tempMax },
-                      precipitation: 0,
-                      precipitationProbability: w.precipProbability,
-                      windSpeed: 0,
-                      humidity: 50,
-                      icon: w.weatherCode <= 3 ? 'sun' : w.weatherCode <= 69 ? 'rain' : 'snow',
-                    }))
-                  ) : null}
-                  activities={analyzeItineraryForPacking(
-                    days.flatMap(d => d.items.map(item => ({
-                      category: item.destination?.category || item.parsedNotes?.category,
-                      title: item.title,
-                      destination: item.destination ? { category: item.destination.category } : null,
-                    })))
-                  )}
                 />
               )}
 
