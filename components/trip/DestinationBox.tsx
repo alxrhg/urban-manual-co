@@ -372,7 +372,6 @@ export default function DestinationBox({
             {/* Train Details */}
             <div className="p-4">
               <InfoRow label="Confirmation" value={notes?.confirmationNumber} mono />
-              <InfoRow label="Car" value={notes?.carNumber} />
               <InfoRow label="Seat" value={notes?.seatNumber} />
 
               {notes?.notes && (
