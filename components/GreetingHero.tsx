@@ -4,6 +4,147 @@ import { useState, useEffect, useRef } from 'react';
 import { Search, SlidersHorizontal, Sparkles, Loader2, X, Clock } from 'lucide-react';
 import { SearchFiltersComponent } from '@/components/SearchFilters';
 
+interface ActionPrompt {
+  label: string;
+  query: string;
+}
+
+/**
+ * Generate a contextual daily summary based on current date/time
+ */
+function getDailySummary(date: Date): string {
+  const day = date.getDay();
+  const dayOfMonth = date.getDate();
+  const month = date.getMonth();
+  const hour = date.getHours();
+
+  // Special date commentary
+  if (dayOfMonth === 13 && day === 5) {
+    return "Friday the 13th — time to discover somewhere unexpected.";
+  }
+  if (month === 11 && dayOfMonth >= 20 && dayOfMonth <= 31) {
+    return "Holiday season is here — find the perfect spot for celebrations.";
+  }
+  if (month === 0 && dayOfMonth <= 7) {
+    return "New year, new places to explore. Where will you go first?";
+  }
+
+  // Day-of-week based summaries
+  const daySummaries: Record<number, string[]> = {
+    0: [ // Sunday
+      "Sunday vibes — perfect for a leisurely brunch or scenic walk.",
+      "Take it slow today. A cozy café or hidden gem awaits.",
+    ],
+    1: [ // Monday
+      "New week, fresh starts. What will you discover today?",
+      "Monday energy — fuel up at a great breakfast spot.",
+    ],
+    2: [ // Tuesday
+      "Tuesday is underrated. Beat the crowds at your next favorite place.",
+      "Mid-week momentum building. Time for a lunch discovery.",
+    ],
+    3: [ // Wednesday
+      "Halfway through the week — treat yourself to something special.",
+      "Hump day calls for a pick-me-up. Coffee or cocktails?",
+    ],
+    4: [ // Thursday
+      "Almost there — preview the weekend with an evening out.",
+      "Thursday's the new Friday. Start your weekend early.",
+    ],
+    5: [ // Friday
+      "Weekend mode activated. Where are you headed tonight?",
+      "Friday freedom — the city is yours to explore.",
+    ],
+    6: [ // Saturday
+      "Weekend adventures await. Make today count.",
+      "Saturday is for wandering. Find something new.",
+    ],
+  };
+
+  // Time-based refinements
+  if (hour >= 6 && hour < 11) {
+    if (day === 0 || day === 6) {
+      return "Weekend morning — the best time for brunch hunting.";
+    }
+    return daySummaries[day][0];
+  }
+  if (hour >= 17 && hour < 21) {
+    return "Evening is calling — dinner reservations or cocktail hour?";
+  }
+  if (hour >= 21 || hour < 2) {
+    return "The night is young. Where will you end up?";
+  }
+
+  // Default to day-based
+  const summaries = daySummaries[day] || ["Every day is a good day for discovery."];
+  return summaries[Math.floor(Math.random() * summaries.length)] || summaries[0];
+}
+
+/**
+ * Generate contextual action prompts based on time/day
+ */
+function getActionPrompts(date: Date): ActionPrompt[] {
+  const hour = date.getHours();
+  const day = date.getDay();
+  const isWeekend = day === 0 || day === 6;
+
+  // Morning prompts (6am-11am)
+  if (hour >= 6 && hour < 11) {
+    return isWeekend
+      ? [
+          { label: "Brunch spots", query: "best brunch spots" },
+          { label: "Coffee & pastries", query: "specialty coffee and pastries" },
+        ]
+      : [
+          { label: "Quick breakfast", query: "quick breakfast spots" },
+          { label: "Great coffee", query: "best coffee shops" },
+        ];
+  }
+
+  // Lunch (11am-2pm)
+  if (hour >= 11 && hour < 14) {
+    return [
+      { label: "Lunch nearby", query: "best lunch restaurants" },
+      { label: "Quick bites", query: "casual lunch spots" },
+    ];
+  }
+
+  // Afternoon (2pm-5pm)
+  if (hour >= 14 && hour < 17) {
+    return [
+      { label: "Afternoon tea", query: "afternoon tea or cafe" },
+      { label: "Happy hour", query: "best happy hour deals" },
+    ];
+  }
+
+  // Evening (5pm-9pm)
+  if (hour >= 17 && hour < 21) {
+    return isWeekend
+      ? [
+          { label: "Dinner date", query: "romantic dinner restaurants" },
+          { label: "Group dining", query: "restaurants for groups" },
+        ]
+      : [
+          { label: "Dinner tonight", query: "best dinner spots" },
+          { label: "After work drinks", query: "cocktail bars" },
+        ];
+  }
+
+  // Late night (9pm-2am)
+  if (hour >= 21 || hour < 2) {
+    return [
+      { label: "Late night eats", query: "late night restaurants" },
+      { label: "Cocktail bars", query: "best cocktail bars" },
+    ];
+  }
+
+  // Default / early morning
+  return [
+    { label: "Explore nearby", query: "hidden gems nearby" },
+    { label: "Trending now", query: "trending restaurants" },
+  ];
+}
+
 interface GreetingHeroProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
@@ -150,11 +291,40 @@ export default function GreetingHero({
   return (
     <div className="w-full h-full relative" data-name="Search Bar">
       <div className="w-full relative">
-        {/* Greeting above search - Keep this */}
+        {/* Date and Greeting Section */}
         <div className="text-left mb-8">
-          <h1 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
+          {/* Date Display */}
+          <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-[2px] mb-1">
+            {dateStr}
+          </p>
+
+          {/* Greeting */}
+          <h1 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium mb-3">
             {greeting}{userName ? `, ${userName}` : ''}
           </h1>
+
+          {/* Daily Summary */}
+          <p className="text-[11px] text-gray-500 dark:text-gray-400 italic mb-4">
+            {getDailySummary(now)}
+          </p>
+
+          {/* Quick Action Prompts */}
+          <div className="flex flex-wrap gap-2">
+            {getActionPrompts(now).map((prompt, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  onSearchChange(prompt.query);
+                  if (onSubmit) {
+                    onSubmit(prompt.query);
+                  }
+                }}
+                className="text-[10px] uppercase tracking-[1.5px] px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-all duration-200"
+              >
+                {prompt.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Borderless Text Input - Lovably style (no icon, no border, left-aligned) */}
