@@ -9,6 +9,8 @@ interface CityAutocompleteInputProps {
   placeholder?: string;
   required?: boolean;
   className?: string;
+  id?: string;
+  'aria-label'?: string;
 }
 
 export function CityAutocompleteInput({
@@ -17,6 +19,8 @@ export function CityAutocompleteInput({
   placeholder = 'Tokyo',
   required = false,
   className = '',
+  id,
+  'aria-label': ariaLabel,
 }: CityAutocompleteInputProps) {
   const [cities, setCities] = useState<string[]>([]);
   const [filteredCities, setFilteredCities] = useState<string[]>([]);
@@ -106,6 +110,8 @@ export function CityAutocompleteInput({
     <div className="relative">
       <input
         ref={inputRef}
+        id={id}
+        aria-label={ariaLabel}
         type="text"
         value={value}
         onChange={handleInputChange}

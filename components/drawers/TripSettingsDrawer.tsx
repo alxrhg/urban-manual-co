@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -54,6 +54,7 @@ export default function TripSettingsDrawer({
 }: TripSettingsDrawerProps) {
   const { closeDrawer } = useDrawerStore();
   const { user } = useAuth();
+  const uniqueId = useId();
   const [title, setTitle] = useState(trip.title);
   const [destination, setDestination] = useState(trip.destination || '');
   const [startDate, setStartDate] = useState(formatDateForInput(trip.start_date));
@@ -128,10 +129,15 @@ export default function TripSettingsDrawer({
     <div className="p-5 space-y-6">
       {/* Title */}
       <div>
-        <label className="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-2 uppercase tracking-wide">
+        <label
+          htmlFor={`trip-title-${uniqueId}`}
+          className="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-2 uppercase tracking-wide"
+        >
           Trip Name
         </label>
         <input
+          id={`trip-title-${uniqueId}`}
+          aria-label="Trip Name"
           type="text"
           value={title}
           onChange={(e) => {
@@ -147,10 +153,15 @@ export default function TripSettingsDrawer({
 
       {/* Destination with Autocomplete */}
       <div>
-        <label className="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-2 uppercase tracking-wide">
+        <label
+          htmlFor={`trip-destination-${uniqueId}`}
+          className="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-2 uppercase tracking-wide"
+        >
           Destination
         </label>
         <CityAutocompleteInput
+          id={`trip-destination-${uniqueId}`}
+          aria-label="Destination"
           value={destination}
           onChange={setDestination}
           placeholder="e.g. Tokyo, Paris, New York"
@@ -161,10 +172,15 @@ export default function TripSettingsDrawer({
       {/* Dates */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-2 uppercase tracking-wide">
+          <label
+            htmlFor={`trip-start-date-${uniqueId}`}
+            className="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-2 uppercase tracking-wide"
+          >
             Start Date
           </label>
           <input
+            id={`trip-start-date-${uniqueId}`}
+            aria-label="Start Date"
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
@@ -172,10 +188,15 @@ export default function TripSettingsDrawer({
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-2 uppercase tracking-wide">
+          <label
+            htmlFor={`trip-end-date-${uniqueId}`}
+            className="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-2 uppercase tracking-wide"
+          >
             End Date
           </label>
           <input
+            id={`trip-end-date-${uniqueId}`}
+            aria-label="End Date"
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
