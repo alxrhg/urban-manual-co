@@ -12,6 +12,7 @@ import {
   formatDuration,
 } from '@/lib/trip-intelligence';
 import { isClosedOnDay, getHoursForDay } from '@/lib/utils/opening-hours';
+import { trackAddToTrip, trackUndo, getRecommendationContext } from '@/lib/quality-telemetry';
 
 // ============================================
 // TYPES
@@ -384,14 +385,53 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
       };
     });
 
+    // Track add-to-trip for quality telemetry
+    const slug = destination.slug || '';
+    const recContext = getRecommendationContext(slug);
+    trackAddToTrip({
+      destinationSlug: slug,
+      destinationId: destination.id,
+      destinationCategory: destination.category,
+      pageContext: 'trip',
+      featureContext: recContext?.featureContext || 'itinerary',
+      recommendationSource: recContext?.source,
+      recommendationScore: recContext?.score,
+      position: recContext?.position,
+      metadata: { day, timeSlot },
+    });
+
     // Open panel when adding
     setIsPanelOpen(true);
   }, []);
 
   // Remove item from trip
   const removeFromTrip = useCallback((itemId: string) => {
+    // Track the removal as an undo event before modifying state
     setActiveTrip(prev => {
       if (!prev) return null;
+
+      // Find the item being removed for tracking
+      let removedItem: TripItem | null = null;
+      for (const day of prev.days) {
+        const found = day.items.find(item => item.id === itemId);
+        if (found) {
+          removedItem = found;
+          break;
+        }
+      }
+
+      // Track undo for quality telemetry
+      if (removedItem) {
+        const slug = removedItem.destination.slug || '';
+        const recContext = getRecommendationContext(slug);
+        trackUndo({
+          originalAction: 'add_to_trip',
+          destinationSlug: slug,
+          destinationId: removedItem.destination.id,
+          pageContext: 'trip',
+          recommendationSource: recContext?.source,
+        });
+      }
 
       const days = prev.days.map(day => ({
         ...day,

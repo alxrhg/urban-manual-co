@@ -1,6 +1,9 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import { trackChipView, trackChipClick, trackChipRemove } from '@/lib/quality-telemetry';
+import type { QualityPageContext, QualityFeatureContext } from '@/lib/intelligence/types';
 
 export interface RefinementTag {
   type: 'category' | 'city' | 'neighborhood' | 'style' | 'price' | 'modifier';
@@ -14,6 +17,12 @@ interface RefinementChipsProps {
   onChipRemove?: (tag: RefinementTag) => void;
   activeTags?: Set<string>;
   className?: string;
+  /** Enable quality tracking */
+  trackQuality?: boolean;
+  /** Page context for tracking */
+  pageContext?: QualityPageContext;
+  /** Feature context for tracking */
+  featureContext?: QualityFeatureContext;
 }
 
 export function RefinementChips({
@@ -22,7 +31,30 @@ export function RefinementChips({
   onChipRemove,
   activeTags = new Set(),
   className = '',
+  trackQuality = false,
+  pageContext,
+  featureContext,
 }: RefinementChipsProps) {
+  const hasTrackedViews = useRef(false);
+
+  // Track views on mount (once)
+  useEffect(() => {
+    if (trackQuality && !hasTrackedViews.current && tags.length > 0) {
+      hasTrackedViews.current = true;
+      tags.forEach((tag, index) => {
+        trackChipView({
+          sourceType: 'refinement',
+          sourceId: `${tag.type}-${tag.value}`,
+          sourceLabel: tag.label,
+          position: index,
+          totalItems: tags.length,
+          pageContext,
+          featureContext,
+        });
+      });
+    }
+  }, [trackQuality, tags, pageContext, featureContext]);
+
   if (tags.length === 0) {
     return null;
   }
@@ -46,6 +78,35 @@ export function RefinementChips({
     }
   };
 
+  const handleChipClick = (tag: RefinementTag, index: number) => {
+    if (trackQuality) {
+      trackChipClick({
+        sourceType: 'refinement',
+        sourceId: `${tag.type}-${tag.value}`,
+        sourceLabel: tag.label,
+        position: index,
+        totalItems: tags.length,
+        pageContext,
+        featureContext,
+      });
+    }
+    onChipClick(tag);
+  };
+
+  const handleChipRemove = (tag: RefinementTag, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (trackQuality) {
+      trackChipRemove({
+        sourceType: 'refinement',
+        sourceId: `${tag.type}-${tag.value}`,
+        sourceLabel: tag.label,
+        pageContext,
+        featureContext,
+      });
+    }
+    onChipRemove?.(tag);
+  };
+
   return (
     <div className={`flex flex-wrap gap-2 ${className}`}>
       {tags.map((tag, index) => {
@@ -60,17 +121,14 @@ export function RefinementChips({
         return (
           <button
             key={`${tag.type}-${tag.value}-${index}`}
-            onClick={() => onChipClick(tag)}
+            onClick={() => handleChipClick(tag, index)}
             className={`${baseClasses} ${colorClasses}`}
             aria-label={`Filter by ${tag.label}`}
           >
             <span>{tag.label}</span>
             {onChipRemove && (
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onChipRemove(tag);
-                }}
+                onClick={(e) => handleChipRemove(tag, e)}
                 className="ml-0.5 hover:opacity-70 transition-opacity"
                 aria-label={`Remove ${tag.label}`}
               >

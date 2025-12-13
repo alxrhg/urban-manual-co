@@ -338,3 +338,154 @@ export function parseTimeToMinutes(time: string): number {
   const [hours, mins] = time.split(':').map(Number);
   return hours * 60 + mins;
 }
+
+// =============================================================================
+// Quality Telemetry Types
+// =============================================================================
+
+/**
+ * Event types for quality telemetry tracking
+ */
+export type QualityEventType =
+  | 'chip_view'
+  | 'chip_click'
+  | 'chip_remove'
+  | 'save'
+  | 'add_to_trip'
+  | 'undo';
+
+/**
+ * Source types for recommendation tracking
+ */
+export type QualitySourceType =
+  | 'insight'
+  | 'refinement'
+  | 'intent'
+  | 'category'
+  | 'recommendation';
+
+/**
+ * Recommendation source for attribution
+ */
+export type RecommendationSource =
+  | 'curated'
+  | 'google'
+  | 'ai'
+  | 'collaborative'
+  | 'content'
+  | 'hybrid';
+
+/**
+ * Page context for telemetry
+ */
+export type QualityPageContext =
+  | 'homepage'
+  | 'search'
+  | 'chat'
+  | 'destination'
+  | 'trip'
+  | 'discovery';
+
+/**
+ * Feature context for telemetry
+ */
+export type QualityFeatureContext =
+  | 'discovery'
+  | 'recommendations'
+  | 'smart_fill'
+  | 'nearby'
+  | 'itinerary'
+  | 'search_results';
+
+/**
+ * Result type for action outcomes
+ */
+export type QualityResultType =
+  | 'accepted'
+  | 'ignored'
+  | 'dismissed'
+  | 'reversed';
+
+/**
+ * Quality event data structure
+ */
+export interface QualityEvent {
+  /** Event type */
+  eventType: QualityEventType;
+
+  /** Source classification */
+  sourceType?: QualitySourceType;
+  sourceId?: string;
+  sourceLabel?: string;
+
+  /** Position tracking for CTR analysis */
+  position?: number;
+  totalItems?: number;
+
+  /** Recommendation attribution */
+  recommendationSource?: RecommendationSource;
+  recommendationScore?: number;
+
+  /** Destination context */
+  destinationSlug?: string;
+  destinationId?: number;
+  destinationCategory?: string;
+
+  /** Page/feature context */
+  pageContext?: QualityPageContext;
+  featureContext?: QualityFeatureContext;
+
+  /** Result tracking */
+  resultType?: QualityResultType;
+
+  /** Engagement metrics */
+  dwellTimeMs?: number;
+
+  /** Flexible metadata */
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Context for tracking recommendations
+ * Passed through the recommendation chain
+ */
+export interface RecommendationContext {
+  source: RecommendationSource;
+  score?: number;
+  position?: number;
+  totalItems?: number;
+  pageContext?: QualityPageContext;
+  featureContext?: QualityFeatureContext;
+}
+
+/**
+ * Quality metrics summary
+ */
+export interface QualityMetricsSummary {
+  chipCtr: number;
+  saveRate: number;
+  addToTripRate: number;
+  undoRate: number;
+  sampleSize: number;
+  period: number; // days
+}
+
+/**
+ * CTR by source type
+ */
+export interface SourceCtrMetrics {
+  sourceType: QualitySourceType;
+  totalViews: number;
+  totalClicks: number;
+  ctr: number;
+}
+
+/**
+ * Position-based CTR metrics
+ */
+export interface PositionCtrMetrics {
+  position: number;
+  totalViews: number;
+  totalClicks: number;
+  ctr: number;
+}

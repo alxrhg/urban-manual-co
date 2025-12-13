@@ -1,13 +1,22 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
+import { trackChipView, trackChipClick, trackChipRemove } from '@/lib/quality-telemetry';
+import type { QualityPageContext, QualityFeatureContext } from '@/lib/intelligence/types';
 
 interface IntentConfirmationChipsProps {
   intent: ExtractedIntent;
   onChipRemove?: (chipType: string, value: string) => void;
   onChipEdit?: (chipType: string, oldValue: string, newValue: string) => void;
   editable?: boolean;
+  /** Enable quality tracking */
+  trackQuality?: boolean;
+  /** Page context for tracking */
+  pageContext?: QualityPageContext;
+  /** Feature context for tracking */
+  featureContext?: QualityFeatureContext;
 }
 
 export function IntentConfirmationChips({
@@ -15,6 +24,9 @@ export function IntentConfirmationChips({
   onChipRemove,
   onChipEdit,
   editable = true,
+  trackQuality = false,
+  pageContext,
+  featureContext,
 }: IntentConfirmationChipsProps) {
   const chips: Array<{ type: string; value: string; label: string; icon?: string }> = [];
 
@@ -128,9 +140,42 @@ export function IntentConfirmationChips({
     });
   }
 
+  const hasTrackedViews = useRef(false);
+
+  // Track views on mount (once)
+  useEffect(() => {
+    if (trackQuality && !hasTrackedViews.current && chips.length > 0) {
+      hasTrackedViews.current = true;
+      chips.forEach((chip, index) => {
+        trackChipView({
+          sourceType: 'intent',
+          sourceId: `${chip.type}-${chip.value}`,
+          sourceLabel: chip.label,
+          position: index,
+          totalItems: chips.length,
+          pageContext,
+          featureContext,
+        });
+      });
+    }
+  }, [trackQuality, chips, pageContext, featureContext]);
+
   if (chips.length === 0) {
     return null;
   }
+
+  const handleChipRemove = (chip: { type: string; value: string; label: string }, index: number) => {
+    if (trackQuality) {
+      trackChipRemove({
+        sourceType: 'intent',
+        sourceId: `${chip.type}-${chip.value}`,
+        sourceLabel: chip.label,
+        pageContext,
+        featureContext,
+      });
+    }
+    onChipRemove?.(chip.type, chip.value);
+  };
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -142,7 +187,7 @@ export function IntentConfirmationChips({
           <span>{chip.label}</span>
           {editable && onChipRemove && (
             <button
-              onClick={() => onChipRemove(chip.type, chip.value)}
+              onClick={() => handleChipRemove(chip, index)}
               className="ml-0.5 hover:text-gray-900 dark:hover:text-white transition-colors"
               aria-label={`Remove ${chip.label}`}
             >

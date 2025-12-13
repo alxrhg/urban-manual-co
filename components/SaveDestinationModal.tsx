@@ -14,21 +14,28 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/sonner';
+import { trackSave, trackUndo, getRecommendationContext } from '@/lib/quality-telemetry';
+import type { QualityPageContext, RecommendationSource } from '@/lib/intelligence/types';
 
 interface SaveDestinationModalProps {
   destinationId: number;
   destinationSlug: string;
+  destinationCategory?: string;
   isOpen: boolean;
   onClose: () => void;
   onSave?: (collectionId: string | null) => void;
+  /** Page context for quality tracking */
+  pageContext?: QualityPageContext;
 }
 
 export function SaveDestinationModal({
   destinationId,
   destinationSlug,
+  destinationCategory,
   isOpen,
   onClose,
   onSave,
+  pageContext,
 }: SaveDestinationModalProps) {
   const { user } = useAuth();
   const [currentCollectionId, setCurrentCollectionId] = useState<string | null>(null);
@@ -111,7 +118,7 @@ export function SaveDestinationModal({
       }
 
       setCurrentCollectionId(collectionId);
-      
+
       // Track save event to Discovery Engine
       if (user && collectionId !== null) {
         fetch('/api/discovery/track-event', {
@@ -126,7 +133,21 @@ export function SaveDestinationModal({
           console.warn('Failed to track save event:', error);
         });
       }
-      
+
+      // Track quality telemetry for saves
+      const recContext = getRecommendationContext(destinationSlug);
+      trackSave({
+        destinationSlug,
+        destinationId,
+        destinationCategory,
+        pageContext,
+        featureContext: recContext?.featureContext,
+        recommendationSource: recContext?.source,
+        recommendationScore: recContext?.score,
+        position: recContext?.position,
+        metadata: { collectionId },
+      });
+
       if (onSave) onSave(collectionId);
       onClose();
     } catch (error) {
@@ -165,6 +186,17 @@ export function SaveDestinationModal({
       }
 
       setCurrentCollectionId(null);
+
+      // Track unsave as an undo action (negative quality signal)
+      const recContext = getRecommendationContext(destinationSlug);
+      trackUndo({
+        originalAction: 'save',
+        destinationSlug,
+        destinationId,
+        pageContext,
+        recommendationSource: recContext?.source,
+      });
+
       if (onSave) onSave(null);
       onClose();
     } catch (error) {

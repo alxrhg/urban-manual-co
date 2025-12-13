@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import {
   Users,
   Clock,
@@ -11,6 +11,8 @@ import {
   AlertCircle,
   Sun,
 } from 'lucide-react';
+import { trackChipView, trackChipClick } from '@/lib/quality-telemetry';
+import type { QualityPageContext, QualityFeatureContext } from '@/lib/intelligence/types';
 
 /**
  * Standardized Insight Chip Component
@@ -63,6 +65,20 @@ interface InsightChipProps {
   onClick?: () => void;
   /** Tooltip text */
   title?: string;
+
+  // Quality telemetry props
+  /** Enable quality tracking for this chip */
+  trackQuality?: boolean;
+  /** Unique ID for tracking (defaults to type-label) */
+  trackingId?: string;
+  /** Position in list (for CTR analysis) */
+  position?: number;
+  /** Total items in list */
+  totalItems?: number;
+  /** Page context for tracking */
+  pageContext?: QualityPageContext;
+  /** Feature context for tracking */
+  featureContext?: QualityFeatureContext;
 }
 
 // Variant color configurations
@@ -124,13 +140,55 @@ export function InsightChip({
   className = '',
   onClick,
   title,
+  trackQuality = false,
+  trackingId,
+  position,
+  totalItems,
+  pageContext,
+  featureContext,
 }: InsightChipProps) {
   const styles = VARIANT_STYLES[variant];
   const defaultIcon = TYPE_ICONS[type];
   const displayIcon = icon !== undefined ? icon : defaultIcon;
+  const hasTrackedView = useRef(false);
 
   const padding = compact ? 'px-1.5 py-0.5' : 'px-2 py-0.5';
   const isClickable = !!onClick;
+
+  // Generate tracking ID
+  const chipTrackingId = trackingId || `${type}-${label}`;
+
+  // Track view on mount (once)
+  useEffect(() => {
+    if (trackQuality && !hasTrackedView.current) {
+      hasTrackedView.current = true;
+      trackChipView({
+        sourceType: 'insight',
+        sourceId: chipTrackingId,
+        sourceLabel: label,
+        position,
+        totalItems,
+        pageContext,
+        featureContext,
+      });
+    }
+  }, [trackQuality, chipTrackingId, label, position, totalItems, pageContext, featureContext]);
+
+  // Handle click with tracking
+  const handleClick = () => {
+    if (trackQuality) {
+      trackChipClick({
+        sourceType: 'insight',
+        sourceId: chipTrackingId,
+        sourceLabel: label,
+        position,
+        totalItems,
+        pageContext,
+        featureContext,
+      });
+    }
+    onClick?.();
+  };
 
   return (
     <span
@@ -140,7 +198,7 @@ export function InsightChip({
         ${isClickable ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}
         ${className}
       `.trim()}
-      onClick={onClick}
+      onClick={isClickable ? handleClick : undefined}
       title={title}
       role={isClickable ? 'button' : undefined}
     >
