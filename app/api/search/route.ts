@@ -103,9 +103,11 @@ function parseQueryFallback(query: string): {
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const supabase = await createServerClient();
+  let searchQuery = 'unknown'; // Track query for error handling
   try {
     const body = await request.json();
     const { query, filters = {}, userId, session_token } = body;
+    searchQuery = query || 'unknown';
     const {
       data: { user: supabaseUser },
     } = await supabase.auth.getUser();
@@ -549,7 +551,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   } catch (error: any) {
     console.error('Search API error:', error);
     // Track search error (create new tracker since we might not have one in scope)
-    const errorTracker = createSearchTracker(body?.query || 'unknown', {});
+    const errorTracker = createSearchTracker(searchQuery, {});
     errorTracker.error(error);
 
     return NextResponse.json({
