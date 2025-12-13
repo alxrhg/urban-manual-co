@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
-import { requireAdmin, AuthError } from '@/lib/adminAuth'
+import { NextRequest, NextResponse } from 'next/server'
+import { withAdminAuth, withErrorHandling, createSuccessResponse, createValidationError, AdminContext } from '@/lib/errors'
 
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY
 
@@ -170,130 +170,119 @@ async function getTimeZone(lat: number, lng: number) {
   return j?.timeZoneId || null
 }
 
-export async function POST(req: Request) {
-  try {
-    if (!GOOGLE_API_KEY) return NextResponse.json({ error: 'Missing NEXT_PUBLIC_GOOGLE_API_KEY' }, { status: 500 })
-
-    const { serviceClient: supabase } = await requireAdmin(req)
-
-    const body = await req.json().catch(() => ({})) as { slug?: string, limit?: number, offset?: number }
-    const { slug, limit = 10, offset = 0 } = body
-
-    // Select targets
-    let rows: any[] = []
-    if (slug) {
-      const { data, error } = await supabase.from('destinations').select('slug,name,city,google_place_id').eq('slug', slug).limit(1)
-      if (error) {
-        return NextResponse.json({ error: `Database error: ${error.message}`, slug }, { status: 500 })
-      }
-      rows = data || []
-      if (rows.length === 0) {
-        return NextResponse.json({ 
-          error: `Destination not found`, 
-          slug,
-          message: 'No destination found with this slug. Check the slug in your database.' 
-        }, { status: 404 })
-      }
-    } else {
-      const { data, error } = await supabase
-        .from('destinations')
-        .select('slug,name,city,google_place_id')
-        .or('google_place_id.is.null,formatted_address.is.null,international_phone_number.is.null,website.is.null')
-        .order('slug', { ascending: true })
-        .range(offset, Math.max(offset + limit - 1, offset))
-      if (error) {
-        return NextResponse.json({ error: `Database error: ${error.message}` }, { status: 500 })
-      }
-      rows = data || []
-    }
-
-    const results: any[] = []
-    for (const row of rows) {
-      const query = `${row.name} ${row.city}`
-      let placeId = row.google_place_id as string | null
-      if (!placeId) placeId = await findPlaceId(query, row.name, row.city)
-      if (!placeId) { results.push({ slug: row.slug, ok: false, reason: 'no_place_id', name: row.name, city: row.city }); continue }
-
-      const details = await getPlaceDetails(placeId)
-      if (!details) { results.push({ slug: row.slug, ok: false, reason: 'no_details' }); continue }
-
-      const lat = details.geometry?.location?.lat
-      const lng = details.geometry?.location?.lng
-      const timezone_id = (lat != null && lng != null) ? await getTimeZone(lat, lng) : null
-
-      const reviews = Array.isArray(details.reviews) ? details.reviews.slice(0, 5).map((r: any) => ({
-        author_name: r.author_name,
-        rating: r.rating,
-        text: r.text,
-        time: r.time,
-        relative_time_description: r.relative_time_description,
-        language: r.language,
-      })) : []
-
-      // Build update object with only basic fields first (these should always exist)
-      const update: any = {
-        google_place_id: placeId,
-        formatted_address: details.formatted_address || null,
-        international_phone_number: details.international_phone_number || null,
-        website: details.website || null,
-        price_level: details.price_level ?? null,
-        rating: details.rating ?? null,
-        user_ratings_total: details.user_ratings_total ?? null,
-        opening_hours_json: details.opening_hours ? JSON.stringify(details.opening_hours) : null,
-        plus_code: details.plus_code?.global_code || null,
-        latitude: lat ?? null,
-        longitude: lng ?? null,
-        timezone_id,
-        reviews_json: reviews.length ? JSON.stringify(reviews) : null,
-      }
-
-      // Try to add extended fields, but don't fail if columns don't exist
-      // These fields require the extended migration to be run
-      const extendedFields: any = {
-        current_opening_hours_json: details.current_opening_hours ? JSON.stringify(details.current_opening_hours) : null,
-        secondary_opening_hours_json: details.secondary_opening_hours ? JSON.stringify(details.secondary_opening_hours) : null,
-        business_status: details.business_status || null,
-        editorial_summary: details.editorial_summary?.overview || null,
-        google_name: details.name || null,
-        place_types_json: details.types ? JSON.stringify(details.types) : null,
-        utc_offset: details.utc_offset ?? null,
-        vicinity: details.vicinity || null,
-        adr_address: details.adr_address || null,
-        address_components_json: details.address_components ? JSON.stringify(details.address_components) : null,
-        icon_url: details.icon || null,
-        icon_background_color: details.icon_background_color || null,
-        icon_mask_base_uri: details.icon_mask_base_uri || null,
-      }
-
-      // Try updating with extended fields first, if it fails, fall back to basic fields
-      const { error: upErr } = await supabase.from('destinations').update({ ...update, ...extendedFields } as any).eq('slug', row.slug)
-      
-      if (upErr && upErr.message?.includes('column') && upErr.message?.includes('schema cache')) {
-        // If extended columns don't exist, try with just basic fields
-        const { error: basicErr } = await supabase.from('destinations').update(update as any).eq('slug', row.slug)
-        if (basicErr) {
-          results.push({ slug: row.slug, ok: false, error: basicErr.message, reason: 'update_failed' })
-        } else {
-          results.push({ slug: row.slug, ok: true, note: 'enriched_with_basic_fields_only' })
-        }
-      } else if (upErr) {
-        results.push({ slug: row.slug, ok: false, error: upErr.message, reason: 'update_failed' })
-      } else {
-        results.push({ slug: row.slug, ok: true })
-      }
-    }
-
-    return NextResponse.json({ count: results.length, results, nextOffset: offset + results.length })
-  } catch (e: any) {
-    if (e instanceof AuthError) {
-      return NextResponse.json({ error: e.message }, { status: e.status })
-    }
-    return NextResponse.json({ error: e?.message || 'unknown' }, { status: 500 })
+export const POST = withAdminAuth(async (req: NextRequest, { serviceClient: supabase }: AdminContext) => {
+  if (!GOOGLE_API_KEY) {
+    throw createValidationError('Missing NEXT_PUBLIC_GOOGLE_API_KEY');
   }
-}
 
-export async function GET() {
-  return NextResponse.json({
+  const body = await req.json().catch(() => ({})) as { slug?: string, limit?: number, offset?: number }
+  const { slug, limit = 10, offset = 0 } = body
+
+  // Select targets
+  let rows: any[] = []
+  if (slug) {
+    const { data, error } = await supabase.from('destinations').select('slug,name,city,google_place_id').eq('slug', slug).limit(1)
+    if (error) {
+      throw error;
+    }
+    rows = data || []
+    if (rows.length === 0) {
+      throw createValidationError(`Destination not found with slug: ${slug}. Check the slug in your database.`);
+    }
+  } else {
+    const { data, error } = await supabase
+      .from('destinations')
+      .select('slug,name,city,google_place_id')
+      .or('google_place_id.is.null,formatted_address.is.null,international_phone_number.is.null,website.is.null')
+      .order('slug', { ascending: true })
+      .range(offset, Math.max(offset + limit - 1, offset))
+    if (error) {
+      throw error;
+    }
+    rows = data || []
+  }
+
+  const results: any[] = []
+  for (const row of rows) {
+    const query = `${row.name} ${row.city}`
+    let placeId = row.google_place_id as string | null
+    if (!placeId) placeId = await findPlaceId(query, row.name, row.city)
+    if (!placeId) { results.push({ slug: row.slug, ok: false, reason: 'no_place_id', name: row.name, city: row.city }); continue }
+
+    const details = await getPlaceDetails(placeId)
+    if (!details) { results.push({ slug: row.slug, ok: false, reason: 'no_details' }); continue }
+
+    const lat = details.geometry?.location?.lat
+    const lng = details.geometry?.location?.lng
+    const timezone_id = (lat != null && lng != null) ? await getTimeZone(lat, lng) : null
+
+    const reviews = Array.isArray(details.reviews) ? details.reviews.slice(0, 5).map((r: any) => ({
+      author_name: r.author_name,
+      rating: r.rating,
+      text: r.text,
+      time: r.time,
+      relative_time_description: r.relative_time_description,
+      language: r.language,
+    })) : []
+
+    // Build update object with only basic fields first (these should always exist)
+    const update: any = {
+      google_place_id: placeId,
+      formatted_address: details.formatted_address || null,
+      international_phone_number: details.international_phone_number || null,
+      website: details.website || null,
+      price_level: details.price_level ?? null,
+      rating: details.rating ?? null,
+      user_ratings_total: details.user_ratings_total ?? null,
+      opening_hours_json: details.opening_hours ? JSON.stringify(details.opening_hours) : null,
+      plus_code: details.plus_code?.global_code || null,
+      latitude: lat ?? null,
+      longitude: lng ?? null,
+      timezone_id,
+      reviews_json: reviews.length ? JSON.stringify(reviews) : null,
+    }
+
+    // Try to add extended fields, but don't fail if columns don't exist
+    // These fields require the extended migration to be run
+    const extendedFields: any = {
+      current_opening_hours_json: details.current_opening_hours ? JSON.stringify(details.current_opening_hours) : null,
+      secondary_opening_hours_json: details.secondary_opening_hours ? JSON.stringify(details.secondary_opening_hours) : null,
+      business_status: details.business_status || null,
+      editorial_summary: details.editorial_summary?.overview || null,
+      google_name: details.name || null,
+      place_types_json: details.types ? JSON.stringify(details.types) : null,
+      utc_offset: details.utc_offset ?? null,
+      vicinity: details.vicinity || null,
+      adr_address: details.adr_address || null,
+      address_components_json: details.address_components ? JSON.stringify(details.address_components) : null,
+      icon_url: details.icon || null,
+      icon_background_color: details.icon_background_color || null,
+      icon_mask_base_uri: details.icon_mask_base_uri || null,
+    }
+
+    // Try updating with extended fields first, if it fails, fall back to basic fields
+    const { error: upErr } = await supabase.from('destinations').update({ ...update, ...extendedFields } as any).eq('slug', row.slug)
+
+    if (upErr && upErr.message?.includes('column') && upErr.message?.includes('schema cache')) {
+      // If extended columns don't exist, try with just basic fields
+      const { error: basicErr } = await supabase.from('destinations').update(update as any).eq('slug', row.slug)
+      if (basicErr) {
+        results.push({ slug: row.slug, ok: false, error: basicErr.message, reason: 'update_failed' })
+      } else {
+        results.push({ slug: row.slug, ok: true, note: 'enriched_with_basic_fields_only' })
+      }
+    } else if (upErr) {
+      results.push({ slug: row.slug, ok: false, error: upErr.message, reason: 'update_failed' })
+    } else {
+      results.push({ slug: row.slug, ok: true })
+    }
+  }
+
+  return createSuccessResponse({ count: results.length, results, nextOffset: offset + results.length });
+});
+
+export const GET = withErrorHandling(async () => {
+  return createSuccessResponse({
     ok: true,
     message: 'Use POST with JSON to run enrichment.',
     example: {
@@ -301,4 +290,4 @@ export async function GET() {
       body: { limit: 100, offset: 0 },
     },
   });
-}
+});

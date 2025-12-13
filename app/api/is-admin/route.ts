@@ -1,16 +1,8 @@
-import { NextResponse } from 'next/server';
-import { getUserFromRequest, AuthError } from '@/lib/adminAuth';
+import { NextRequest } from 'next/server';
+import { withAuth, AuthContext, createSuccessResponse } from '@/lib/errors';
 
-export async function POST(req: Request) {
-  try {
-    const { user } = await getUserFromRequest(req);
-    const role = (user.app_metadata as Record<string, any> | null)?.role;
-    return NextResponse.json({ isAdmin: role === 'admin' });
-  } catch (error) {
-    if (error instanceof AuthError && error.status === 401) {
-      return NextResponse.json({ isAdmin: false }, { status: 401 });
-    }
-    return NextResponse.json({ isAdmin: false }, { status: 500 });
-  }
-}
+export const POST = withAuth(async (_request: NextRequest, { user }: AuthContext) => {
+  const role = (user.app_metadata as Record<string, any> | null)?.role;
+  return createSuccessResponse({ isAdmin: role === 'admin' });
+});
 

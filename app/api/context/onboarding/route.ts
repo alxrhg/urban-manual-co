@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server';
+import { NextRequest } from 'next/server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { URBAN_MANUAL_EDITOR_SYSTEM_PROMPT } from '@/lib/ai/systemPrompts';
+import { withOptionalAuth, createSuccessResponse, OptionalAuthContext } from '@/lib/errors';
 
 // Lightweight intent parsing (no dependency on client helpers)
 async function parseIntentSafe(query: string): Promise<any> {
@@ -58,66 +59,56 @@ function buildMicroSurveyOptions() {
   ];
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withOptionalAuth(async (req: NextRequest, { user }: OptionalAuthContext) => {
+  const { firstMessage } = await req.json();
+  const hints = getClientHints(req);
+
+  const userId = user?.id;
+
+  const intent = firstMessage ? await parseIntentSafe(firstMessage) : { modifiers: [], keywords: [] };
+
+  const archetypeSeed = {
+    language: hints.language,
+    timezone: hints.timezone,
+    vibe_seed: ['cozy', 'modern', 'romantic', 'buzzy'][Math.floor(Math.random() * 4)],
+  };
+
+  const sessionContext = {
+    city: intent.city,
+    category: intent.category,
+    meal: undefined,
+    cuisine: undefined,
+    mood: undefined,
+    price_level: undefined,
+    timezone: hints.timezone,
+    language: hints.language,
+    archetype_seed: archetypeSeed.vibe_seed,
+    ip_hint: hints.ip || undefined,
+  };
+
+  // Best-effort store to Supabase conversation_sessions
   try {
-    const { firstMessage } = await req.json();
-    const hints = getClientHints(req);
-
-    // Attempt auth context (optional)
-    let userId: string | undefined;
-    try {
-      const supabase = await createServerClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      userId = user?.id;
-    } catch {}
-
-    const intent = firstMessage ? await parseIntentSafe(firstMessage) : { modifiers: [], keywords: [] };
-
-    const archetypeSeed = {
-      language: hints.language,
-      timezone: hints.timezone,
-      vibe_seed: ['cozy', 'modern', 'romantic', 'buzzy'][Math.floor(Math.random() * 4)],
-    };
-
-    const sessionContext = {
-      city: intent.city,
-      category: intent.category,
-      meal: undefined,
-      cuisine: undefined,
-      mood: undefined,
-      price_level: undefined,
-      timezone: hints.timezone,
-      language: hints.language,
-      archetype_seed: archetypeSeed.vibe_seed,
-      ip_hint: hints.ip || undefined,
-    };
-
-    // Best-effort store to Supabase conversation_sessions
-    try {
-      const admin = createServiceRoleClient();
-      if (admin && userId) {
-        await admin.from('conversation_sessions').upsert({
-          user_id: userId,
-          context: sessionContext,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id' });
-      }
-    } catch (e) {
-      // table may not exist yet; ignore
+    const admin = createServiceRoleClient();
+    if (admin && userId) {
+      await admin.from('conversation_sessions').upsert({
+        user_id: userId,
+        context: sessionContext,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' });
     }
-
-    const greeting = await generateGreeting({ ...sessionContext, intent });
-    const survey = buildMicroSurveyOptions();
-
-    return NextResponse.json({
-      context: sessionContext,
-      intent,
-      greeting,
-      survey,
-    });
-  } catch (e: any) {
-    return NextResponse.json({ error: 'Failed to initialise onboarding', details: e.message }, { status: 500 });
+  } catch (e) {
+    // table may not exist yet; ignore
   }
-}
+
+  const greeting = await generateGreeting({ ...sessionContext, intent });
+  const survey = buildMicroSurveyOptions();
+
+  return createSuccessResponse({
+    context: sessionContext,
+    intent,
+    greeting,
+    survey,
+  });
+});
 
 

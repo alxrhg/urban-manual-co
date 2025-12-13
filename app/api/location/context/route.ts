@@ -1,35 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { getLocationContext } from '@/lib/search/expandLocations';
+import { withErrorHandling, createSuccessResponse, createValidationError } from '@/lib/errors';
 
 /**
  * GET /api/location/context
  * Get location context (nearby locations, walking times, cultural notes)
  */
-export async function GET(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams;
-    const locationName = searchParams.get('location');
+export const GET = withErrorHandling(async (request: NextRequest) => {
+  const searchParams = request.nextUrl.searchParams;
+  const locationName = searchParams.get('location');
 
-    if (!locationName) {
-      return NextResponse.json(
-        { error: 'location parameter is required' },
-        { status: 400 }
-      );
-    }
-
-    const context = await getLocationContext(locationName);
-
-    if (!context) {
-      return NextResponse.json({ context: null });
-    }
-
-    return NextResponse.json({ context });
-  } catch (error: any) {
-    console.error('Error getting location context:', error);
-    return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
-      { status: 500 }
-    );
+  if (!locationName) {
+    throw createValidationError('location parameter is required');
   }
-}
 
+  const context = await getLocationContext(locationName);
+
+  return createSuccessResponse({ context: context || null });
+});

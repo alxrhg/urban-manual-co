@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
+import { withErrorHandling, createSuccessResponse } from '@/lib/errors';
 
 // Get build version from environment or package.json
-export async function GET() {
+export const GET = withErrorHandling(async () => {
   // Try multiple sources for build number/commit SHA (in order of preference):
   // 1. GitHub Actions build number (GITHUB_RUN_NUMBER)
   // 2. GitHub Actions commit SHA (GITHUB_SHA)
@@ -14,7 +14,7 @@ export async function GET() {
   const githubSha = process.env.GITHUB_SHA;
   const vercelCommitSha = process.env.VERCEL_GIT_COMMIT_SHA;
   const vercelEnv = process.env.VERCEL_ENV;
-  
+
   // Read package.json version
   let packageVersion = '0.1.0';
   try {
@@ -25,10 +25,10 @@ export async function GET() {
   } catch (error) {
     console.error('Error reading package.json:', error);
   }
-  
+
   // Get commit SHA from various sources
   let commitSha: string | null = githubSha || vercelCommitSha || null;
-  
+
   // If no commit SHA from environment, try to get it from git (local dev only)
   if (!commitSha) {
     try {
@@ -38,9 +38,9 @@ export async function GET() {
       // This is expected in some deployment environments
     }
   }
-  
+
   const shortSha = commitSha ? commitSha.substring(0, 7) : null;
-  
+
   // Prioritize GitHub build number, then commit SHA, then fallback
   let buildVersion: string;
   if (githubRunNumber) {
@@ -57,13 +57,13 @@ export async function GET() {
     buildVersion = process.env.NEXT_PUBLIC_BUILD_VERSION || `${packageVersion}-dev`;
   }
 
-  return NextResponse.json({ 
+  return createSuccessResponse({
     version: buildVersion,
     commitSha: commitSha || null,
     shortSha: shortSha || null,
     buildNumber: githubRunNumber || null,
     packageVersion,
-    environment: vercelEnv || null
+    environment: vercelEnv || null,
   });
-}
+});
 

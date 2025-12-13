@@ -11,7 +11,7 @@
  * Configure this URL in Sanity: https://your-domain.com/api/sanity-webhook
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import {
@@ -22,6 +22,7 @@ import {
   type SanityDestination,
   type ConflictInfo,
 } from '@/lib/sanity/field-mapping';
+import { withErrorHandling, createSuccessResponse, CustomError, ErrorCode } from '@/lib/errors';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONFIGURATION
@@ -340,122 +341,118 @@ async function syncDocumentToSupabase(
 // POST HANDLER - Receive webhook events
 // ═══════════════════════════════════════════════════════════════════════════
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling(async (request: NextRequest) => {
   const startTime = Date.now();
 
-  try {
-    const supabase = getSupabaseClient();
+  const supabase = getSupabaseClient();
 
-    let webhookData: {
-      projectId?: string;
-      dataset?: string;
-      ids?: string[];
-      _id?: string;
-      _type?: string;
-    };
+  let webhookData: {
+    projectId?: string;
+    dataset?: string;
+    ids?: string[];
+    _id?: string;
+    _type?: string;
+  };
 
-    // Verify webhook signature
-    if (SANITY_WEBHOOK_SECRET) {
-      const signature = request.headers.get('x-sanity-signature');
-      const body = await request.text();
+  // Verify webhook signature
+  if (SANITY_WEBHOOK_SECRET) {
+    const signature = request.headers.get('x-sanity-signature');
+    const body = await request.text();
 
-      if (!verifyWebhookSignature(body, signature, SANITY_WEBHOOK_SECRET)) {
-        console.error('[Sanity Webhook] Invalid signature');
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
-      }
-
-      webhookData = JSON.parse(body);
-    } else {
-      const isProduction = process.env.NODE_ENV === 'production';
-      if (isProduction) {
-        console.error('[Sanity Webhook] SANITY_WEBHOOK_SECRET required in production');
-        return NextResponse.json(
-          { error: 'Webhook signature verification required in production' },
-          { status: 401 }
-        );
-      }
-      console.warn('[Sanity Webhook] Running without signature verification - dev mode only');
-      webhookData = await request.json();
+    if (!verifyWebhookSignature(body, signature, SANITY_WEBHOOK_SECRET)) {
+      console.error('[Sanity Webhook] Invalid signature');
+      throw new CustomError(ErrorCode.UNAUTHORIZED, 'Invalid signature', 401);
     }
 
-    // Handle different webhook payload formats
-    // Format 1: { ids: [...] } - multiple document IDs
-    // Format 2: { _id: "...", _type: "..." } - single document
-    let documentIds: string[] = [];
-
-    if (webhookData.ids && Array.isArray(webhookData.ids)) {
-      documentIds = webhookData.ids;
-    } else if (webhookData._id) {
-      documentIds = [webhookData._id];
+    webhookData = JSON.parse(body);
+  } else {
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (isProduction) {
+      console.error('[Sanity Webhook] SANITY_WEBHOOK_SECRET required in production');
+      throw new CustomError(
+        ErrorCode.UNAUTHORIZED,
+        'Webhook signature verification required in production',
+        401
+      );
     }
+    console.warn('[Sanity Webhook] Running without signature verification - dev mode only');
+    webhookData = await request.json();
+  }
 
-    if (documentIds.length === 0) {
-      return NextResponse.json({ error: 'No document IDs provided' }, { status: 400 });
-    }
+  // Handle different webhook payload formats
+  // Format 1: { ids: [...] } - multiple document IDs
+  // Format 2: { _id: "...", _type: "..." } - single document
+  let documentIds: string[] = [];
 
-    console.log(`[Sanity Webhook] Processing ${documentIds.length} document(s)`);
+  if (webhookData.ids && Array.isArray(webhookData.ids)) {
+    documentIds = webhookData.ids;
+  } else if (webhookData._id) {
+    documentIds = [webhookData._id];
+  }
 
-    // Process each document
-    const results: SyncResult[] = [];
+  if (documentIds.length === 0) {
+    throw new CustomError(ErrorCode.VALIDATION_ERROR, 'No document IDs provided', 400);
+  }
 
-    for (const docId of documentIds) {
-      try {
-        // Fetch full document from Sanity
-        const doc = await fetchSanityDocument(docId);
+  console.log(`[Sanity Webhook] Processing ${documentIds.length} document(s)`);
 
-        if (!doc) {
-          results.push({
-            slug: docId,
-            status: 'skipped',
-            error: 'Document not found or not a destination',
-          });
-          continue;
-        }
+  // Process each document
+  const results: SyncResult[] = [];
 
-        // Sync to Supabase
-        const result = await syncDocumentToSupabase(supabase, doc);
-        results.push(result);
+  for (const docId of documentIds) {
+    try {
+      // Fetch full document from Sanity
+      const doc = await fetchSanityDocument(docId);
 
-        console.log(`[Sanity Webhook] ${result.status}: ${result.slug}`);
-      } catch (error: any) {
+      if (!doc) {
         results.push({
           slug: docId,
-          status: 'error',
-          error: error.message || String(error),
+          status: 'skipped',
+          error: 'Document not found or not a destination',
         });
-        console.error(`[Sanity Webhook] Error processing ${docId}:`, error);
+        continue;
       }
+
+      // Sync to Supabase
+      const result = await syncDocumentToSupabase(supabase, doc);
+      results.push(result);
+
+      console.log(`[Sanity Webhook] ${result.status}: ${result.slug}`);
+    } catch (error: any) {
+      results.push({
+        slug: docId,
+        status: 'error',
+        error: error.message || String(error),
+      });
+      console.error(`[Sanity Webhook] Error processing ${docId}:`, error);
     }
-
-    // Summarize results
-    const summary = {
-      total: results.length,
-      created: results.filter((r) => r.status === 'created').length,
-      updated: results.filter((r) => r.status === 'updated').length,
-      skipped: results.filter((r) => r.status === 'skipped').length,
-      unpublished: results.filter((r) => r.status === 'unpublished').length,
-      conflicts: results.filter((r) => r.status === 'conflict').length,
-      errors: results.filter((r) => r.status === 'error').length,
-    };
-
-    const duration = Date.now() - startTime;
-
-    return NextResponse.json({
-      message: `Processed ${summary.total} document(s) in ${duration}ms`,
-      summary,
-      results,
-    });
-  } catch (error: any) {
-    console.error('[Sanity Webhook] Fatal error:', error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
-}
+
+  // Summarize results
+  const summary = {
+    total: results.length,
+    created: results.filter((r) => r.status === 'created').length,
+    updated: results.filter((r) => r.status === 'updated').length,
+    skipped: results.filter((r) => r.status === 'skipped').length,
+    unpublished: results.filter((r) => r.status === 'unpublished').length,
+    conflicts: results.filter((r) => r.status === 'conflict').length,
+    errors: results.filter((r) => r.status === 'error').length,
+  };
+
+  const duration = Date.now() - startTime;
+
+  return createSuccessResponse({
+    message: `Processed ${summary.total} document(s) in ${duration}ms`,
+    summary,
+    results,
+  });
+});
 
 // ═══════════════════════════════════════════════════════════════════════════
 // GET HANDLER - Webhook verification and status
 // ═══════════════════════════════════════════════════════════════════════════
 
-export async function GET() {
+export const GET = withErrorHandling(async () => {
   const hasSecret = !!SANITY_WEBHOOK_SECRET;
   const hasSupabase = !!(
     (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL) &&
@@ -466,7 +463,7 @@ export async function GET() {
     (process.env.SANITY_TOKEN || process.env.SANITY_API_READ_TOKEN)
   );
 
-  return NextResponse.json({
+  return createSuccessResponse({
     status: 'active',
     message: 'Sanity webhook endpoint is ready',
     configuration: {
@@ -488,4 +485,4 @@ export async function GET() {
       step5: 'Set secret matching SANITY_WEBHOOK_SECRET env var',
     },
   });
-}
+});

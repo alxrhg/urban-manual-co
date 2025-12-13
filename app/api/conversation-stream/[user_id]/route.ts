@@ -4,7 +4,6 @@
  */
 
 import { NextRequest } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
 import { openai, OPENAI_MODEL } from '@/lib/openai';
 import {
   genAI,
@@ -32,6 +31,8 @@ import {
 } from '@/lib/rate-limit';
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { unifiedSearch } from '@/lib/discovery-engine/integration';
+import { getUser } from '@/lib/errors';
+import { createServerClient } from '@/lib/supabase/server';
 
 const CONVERSATION_MODEL = process.env.OPENAI_CONVERSATION_MODEL || OPENAI_MODEL;
 
@@ -65,8 +66,7 @@ export async function POST(
 
   try {
     // Get user context first for rate limiting
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser(request);
     const { user_id } = await context.params;
     const userId = normalizeUserId(user?.id || user_id || undefined);
 
@@ -131,8 +131,9 @@ export async function POST(
 
           // Extract intent from new message
           let userContext: any = {};
-          if (userId && supabase) {
+          if (userId) {
             try {
+              const supabase = await createServerClient();
               const { data: profile, error: profileError } = await supabase
                 .from('user_profiles')
                 .select('favorite_cities, favorite_categories, travel_style')

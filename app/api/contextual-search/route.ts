@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { generateContext } from '@/services/gemini';
 import { getSeasonalContext } from '@/services/seasonality';
 import type { Listing } from '@/services/gemini';
+import { withErrorHandling, createSuccessResponse } from '@/lib/errors';
 
 function getSupabaseClient() {
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
@@ -220,122 +221,107 @@ async function generateContextString(
   return generateContext(query, city, modifiers, listings, seasonality);
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { query } = body;
-    
-    if (!query || query.trim().length < 2) {
-      return NextResponse.json({
-        context: 'What would you like to discover? Try searching for a place, city, or experience.',
-        results: [],
-        noModifierMatches: false,
-      });
-    }
-    
-    // Extract intent (city, category, modifiers)
-    const intent = await extractIntent(query);
-    console.log('[Contextual Search] Query:', query, 'Intent:', JSON.stringify(intent, null, 2));
-    
-    const supabase = getSupabaseClient();
-    
-    // Build base query
-    let baseQuery = supabase
-      .from('destinations')
-      .select('slug, name, city, category, micro_description, description, content, image, michelin_stars, crown, rating, price_level, tags, style_tags, ambience_tags, experience_tags')
-      .limit(1000);
-    
-    // Apply city filter
-    if (intent.city) {
-      baseQuery = baseQuery.ilike('city', `%${intent.city}%`);
-    }
-    
-    // Apply category filter
-    if (intent.category) {
-      const categoryMap: Record<string, string> = {
-        'restaurant': 'Restaurant',
-        'hotel': 'Hotel',
-        'cafe': 'Cafe',
-        'bar': 'Bar',
-      };
-      const normalizedCategory = categoryMap[intent.category.toLowerCase()] || intent.category;
-      baseQuery = baseQuery.ilike('category', `%${normalizedCategory}%`);
-    }
-    
-    // Get base results
-    const { data: baseResults, error } = await baseQuery;
-    
-    if (error) {
-      console.error('[Contextual Search] Error fetching base results:', error);
-      return NextResponse.json({
-        context: 'Sorry, we encountered an error searching.',
-        results: [],
-        noModifierMatches: false,
-      }, { status: 500 });
-    }
-    
-    const results = baseResults || [];
-    
-    // Filter by modifiers if any (use tags + style/ambience/experience)
-    let filteredResults = results;
-    let noModifierMatches = false;
-    
-    if (intent.modifiers.length > 0) {
-      const lowerModifiers = intent.modifiers.map(m => m.toLowerCase());
-      filteredResults = results.filter((d: any) => {
-        const tags = (d.tags || []).concat(d.style_tags || [], d.ambience_tags || [], d.experience_tags || []);
-        const lowerTags = (tags as any[]).map((t: any) => String(t).toLowerCase());
-        return lowerModifiers.every((m: string) => lowerTags.some((t: string) => t === m || t.includes(m)));
-      });
-      
-      if (filteredResults.length === 0) {
-        // No matches for modifiers, fall back to base results
-        noModifierMatches = true;
-        filteredResults = results;
-      }
-    }
-    
-    // Boosting: apply simple scoring for presentation order
-    const boosted = filteredResults
-      .map((d: any) => {
-        let score = 0;
-        // Popularity proxies
-        if (d.michelin_stars && d.michelin_stars > 0) score += 15;
-        if (d.rating) score += d.rating * 2;
-        // Modifiers match bonus across style/ambience
-        const pool = (d.style_tags || []).concat(d.ambience_tags || [], d.experience_tags || [], d.tags || []);
-        const lowerPool = (pool as any[]).map((t: any) => String(t).toLowerCase());
-        score += intent.modifiers.reduce((acc: number, m: string) => acc + (lowerPool.some((t: string) => t === m || t.includes(m)) ? 3 : 0), 0);
-        return { ...d, _score: score };
-      })
-      .sort((a: any, b: any) => b._score - a._score);
+export const POST = withErrorHandling(async (request: NextRequest) => {
+  const body = await request.json();
+  const { query } = body;
 
-    // Generate context string using gemini service
-    const context = await generateContextString(
-      query,
-      intent.city,
-      intent.category,
-      intent.modifiers,
-      boosted.length,
-      noModifierMatches,
-      boosted
-    );
-    
-    return NextResponse.json({
-      context,
-      results: boosted.slice(0, 50), // Limit to 50 results
-      noModifierMatches,
-      intent,
-    });
-    
-  } catch (error: any) {
-    console.error('[Contextual Search] Error:', error);
-    return NextResponse.json({
-      context: 'Sorry, we encountered an error processing your search.',
+  if (!query || query.trim().length < 2) {
+    return createSuccessResponse({
+      context: 'What would you like to discover? Try searching for a place, city, or experience.',
       results: [],
       noModifierMatches: false,
-      error: error.message,
-    }, { status: 500 });
+    });
   }
-}
+
+  // Extract intent (city, category, modifiers)
+  const intent = await extractIntent(query);
+  console.log('[Contextual Search] Query:', query, 'Intent:', JSON.stringify(intent, null, 2));
+
+  const supabase = getSupabaseClient();
+
+  // Build base query
+  let baseQuery = supabase
+    .from('destinations')
+    .select('slug, name, city, category, micro_description, description, content, image, michelin_stars, crown, rating, price_level, tags, style_tags, ambience_tags, experience_tags')
+    .limit(1000);
+
+  // Apply city filter
+  if (intent.city) {
+    baseQuery = baseQuery.ilike('city', `%${intent.city}%`);
+  }
+
+  // Apply category filter
+  if (intent.category) {
+    const categoryMap: Record<string, string> = {
+      'restaurant': 'Restaurant',
+      'hotel': 'Hotel',
+      'cafe': 'Cafe',
+      'bar': 'Bar',
+    };
+    const normalizedCategory = categoryMap[intent.category.toLowerCase()] || intent.category;
+    baseQuery = baseQuery.ilike('category', `%${normalizedCategory}%`);
+  }
+
+  // Get base results
+  const { data: baseResults, error } = await baseQuery;
+
+  if (error) {
+    console.error('[Contextual Search] Error fetching base results:', error);
+    throw error;
+  }
+
+  const results = baseResults || [];
+
+  // Filter by modifiers if any (use tags + style/ambience/experience)
+  let filteredResults = results;
+  let noModifierMatches = false;
+
+  if (intent.modifiers.length > 0) {
+    const lowerModifiers = intent.modifiers.map(m => m.toLowerCase());
+    filteredResults = results.filter((d: any) => {
+      const tags = (d.tags || []).concat(d.style_tags || [], d.ambience_tags || [], d.experience_tags || []);
+      const lowerTags = (tags as any[]).map((t: any) => String(t).toLowerCase());
+      return lowerModifiers.every((m: string) => lowerTags.some((t: string) => t === m || t.includes(m)));
+    });
+
+    if (filteredResults.length === 0) {
+      // No matches for modifiers, fall back to base results
+      noModifierMatches = true;
+      filteredResults = results;
+    }
+  }
+
+  // Boosting: apply simple scoring for presentation order
+  const boosted = filteredResults
+    .map((d: any) => {
+      let score = 0;
+      // Popularity proxies
+      if (d.michelin_stars && d.michelin_stars > 0) score += 15;
+      if (d.rating) score += d.rating * 2;
+      // Modifiers match bonus across style/ambience
+      const pool = (d.style_tags || []).concat(d.ambience_tags || [], d.experience_tags || [], d.tags || []);
+      const lowerPool = (pool as any[]).map((t: any) => String(t).toLowerCase());
+      score += intent.modifiers.reduce((acc: number, m: string) => acc + (lowerPool.some((t: string) => t === m || t.includes(m)) ? 3 : 0), 0);
+      return { ...d, _score: score };
+    })
+    .sort((a: any, b: any) => b._score - a._score);
+
+  // Generate context string using gemini service
+  const context = await generateContextString(
+    query,
+    intent.city,
+    intent.category,
+    intent.modifiers,
+    boosted.length,
+    noModifierMatches,
+    boosted
+  );
+
+  return createSuccessResponse({
+    context,
+    results: boosted.slice(0, 50), // Limit to 50 results
+    noModifierMatches,
+    intent,
+  });
+});
 
