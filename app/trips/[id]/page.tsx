@@ -50,6 +50,110 @@ interface DayWeather {
   precipProbability: number;
 }
 
+// ============================================================================
+// Daily Summary & Action Prompts for Trip Days
+// ============================================================================
+
+interface TripActionPrompt {
+  label: string;
+  category: string;
+}
+
+/**
+ * Generate a contextual daily summary for a trip day
+ */
+function getTripDaySummary(date: string | undefined, city: string, weather?: DayWeather | null): string {
+  if (!date) return `Discover the best of ${city} today.`;
+
+  const dayDate = new Date(date + 'T00:00:00');
+  const dayOfWeek = dayDate.getDay();
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+  // Weather-based commentary takes priority
+  if (weather) {
+    if (weather.precipProbability > 60) {
+      return `Rain likely in ${city} — perfect for museums or cozy cafés.`;
+    }
+    if (weather.tempMax >= 30) {
+      return `Hot day ahead in ${city} — find spots with AC or outdoor shade.`;
+    }
+    if (weather.tempMax <= 5) {
+      return `Bundle up in ${city} — warm indoor spots are your friend.`;
+    }
+    if (weather.weatherCode === 0 || weather.weatherCode === 1) {
+      return isWeekend
+        ? `Beautiful day in ${city} — ideal for exploring outdoors.`
+        : `Clear skies in ${city} — make the most of it.`;
+    }
+  }
+
+  // Day-of-week based summaries
+  const daySummaries: Record<number, string> = {
+    0: `Sunday in ${city} — perfect for brunch and a leisurely stroll.`,
+    1: `Monday in ${city} — beat the crowds at popular spots.`,
+    2: `Tuesday in ${city} — locals' favorites are less crowded today.`,
+    3: `Midweek in ${city} — great day for reservations.`,
+    4: `Thursday in ${city} — weekend vibes starting early.`,
+    5: `Friday in ${city} — the city comes alive tonight.`,
+    6: `Saturday in ${city} — explore the weekend energy.`,
+  };
+
+  return daySummaries[dayOfWeek] || `Discover the best of ${city} today.`;
+}
+
+/**
+ * Generate contextual action prompts for a trip day
+ */
+function getTripActionPrompts(date: string | undefined, city: string, existingItems: { category?: string }[]): TripActionPrompt[] {
+  // Analyze what's already planned
+  const hasBreakfast = existingItems.some(i =>
+    i.category?.toLowerCase().includes('cafe') ||
+    i.category?.toLowerCase().includes('breakfast') ||
+    i.category?.toLowerCase().includes('bakery')
+  );
+  const hasLunch = existingItems.some(i =>
+    i.category?.toLowerCase().includes('restaurant') ||
+    i.category?.toLowerCase().includes('lunch')
+  );
+  const hasDinner = existingItems.some(i =>
+    i.category?.toLowerCase().includes('restaurant') ||
+    i.category?.toLowerCase().includes('dinner')
+  );
+  const hasDrinks = existingItems.some(i =>
+    i.category?.toLowerCase().includes('bar') ||
+    i.category?.toLowerCase().includes('cocktail')
+  );
+  const hasActivity = existingItems.some(i =>
+    i.category?.toLowerCase().includes('museum') ||
+    i.category?.toLowerCase().includes('gallery') ||
+    i.category?.toLowerCase().includes('attraction')
+  );
+
+  const prompts: TripActionPrompt[] = [];
+
+  // Suggest what's missing from a typical day
+  if (!hasBreakfast) {
+    prompts.push({ label: `Breakfast in ${city}`, category: 'cafe' });
+  }
+  if (!hasActivity) {
+    prompts.push({ label: `Things to do`, category: 'attraction' });
+  }
+  if (!hasLunch && !hasDinner) {
+    prompts.push({ label: `Where to eat`, category: 'restaurant' });
+  }
+  if (!hasDrinks) {
+    prompts.push({ label: `Evening drinks`, category: 'bar' });
+  }
+
+  // If day is mostly planned, suggest discovery
+  if (prompts.length === 0) {
+    prompts.push({ label: `Hidden gems`, category: 'all' });
+    prompts.push({ label: `Local favorites`, category: 'restaurant' });
+  }
+
+  return prompts.slice(0, 2); // Max 2 prompts
+}
+
 /**
  * TripPage - Completely rethought
  *
@@ -1961,6 +2065,34 @@ function DaySection({
               )}
             </AnimatePresence>
           </div>
+        </div>
+      </div>
+
+      {/* Daily Summary & Quick Prompts */}
+      <div className="mb-4">
+        <p className="text-[11px] text-gray-500 dark:text-gray-400 italic mb-2">
+          {getTripDaySummary(date, city, weather)}
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {getTripActionPrompts(date, city, items.map(i => ({ category: i.destination?.category || i.parsedNotes?.category }))).map((prompt, index) => (
+            <button
+              key={index}
+              onClick={() => {
+                const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+                if (isDesktop && onOpenSidebarAdd) {
+                  onOpenSidebarAdd();
+                } else {
+                  setShowAddMenu(false);
+                  setShowSearch(true);
+                  setSearchSource('curated');
+                  setSearchQuery(prompt.label);
+                }
+              }}
+              className="text-[10px] uppercase tracking-[1px] px-2.5 py-1 rounded-full border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-white transition-all duration-200"
+            >
+              {prompt.label}
+            </button>
+          ))}
         </div>
       </div>
 
