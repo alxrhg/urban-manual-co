@@ -606,6 +606,11 @@ export interface ItineraryItemNotes {
   terminal?: string;
   gate?: string;
   seatNumber?: string;
+  seatClass?: 'economy' | 'premium_economy' | 'business' | 'first';
+  departureTerminal?: string;
+  arrivalTerminal?: string;
+  loungeName?: string;
+  loungeLocation?: string;
   // Train-specific fields
   trainNumber?: string;
   trainLine?: string;
@@ -664,6 +669,16 @@ export interface ItineraryItemNotes {
   hotelItemType?: 'check_in' | 'checkout' | 'breakfast' | 'overnight' | 'lounge'; // Type of hotel-related item
   hasLounge?: boolean; // Whether hotel has a lounge
   amenities?: string[]; // Hotel amenities list
+  // Hotel amenity flags
+  wifiIncluded?: boolean;
+  parkingIncluded?: boolean;
+  hasGym?: boolean;
+  hasPool?: boolean;
+  hasSpa?: boolean;
+  // Airport activity type
+  airportActivityType?: AirportActivityType;
+  // Lodging name (when different from item title)
+  lodgingName?: string;
 }
 
 /**

@@ -14,6 +14,7 @@ interface FlightCardProps {
 /**
  * FlightCard - Renders flight itinerary items
  * Uses FlightStatusCard for the actual display
+ * Supports departure/arrival terminals, lounge access, and seat info
  */
 export default function FlightCard({
   item,
@@ -22,6 +23,8 @@ export default function FlightCard({
   onSelect,
   tripSettings,
 }: FlightCardProps) {
+  const notes = item.parsedNotes;
+
   // Build flight data from the flight booking or parsed notes
   const flightData = flight
     ? {
@@ -37,11 +40,19 @@ export default function FlightCard({
         terminal: flight.terminal,
         gate: flight.gate,
       }
-    : item.parsedNotes;
+    : notes;
 
   if (!flightData) {
     return null;
   }
+
+  // Extract additional flight details from parsed notes or flight booking
+  const departureTerminal = notes?.departureTerminal || flight?.terminal;
+  const arrivalTerminal = notes?.arrivalTerminal;
+  const loungeAccess = notes?.loungeAccess ?? false;
+  const loungeName = notes?.loungeName;
+  const seatNumber = notes?.seatNumber || flight?.seatNumber;
+  const seatClass = notes?.seatClass;
 
   return (
     <div
@@ -56,7 +67,13 @@ export default function FlightCard({
     >
       <FlightStatusCard
         flight={flightData}
-        departureDate={flight?.departureDate || item.parsedNotes?.departureDate}
+        departureDate={flight?.departureDate || notes?.departureDate}
+        departureTerminal={departureTerminal}
+        arrivalTerminal={arrivalTerminal}
+        loungeAccess={loungeAccess}
+        loungeName={loungeName}
+        seatNumber={seatNumber}
+        seatClass={seatClass}
         compact
       />
     </div>

@@ -50,6 +50,14 @@ export interface HotelBooking {
   phone?: string;
   website?: string;
   image?: string;
+  // Amenities
+  breakfastIncluded?: boolean;
+  hasPool?: boolean;
+  hasGym?: boolean;
+  hasSpa?: boolean;
+  hasLounge?: boolean;
+  parkingIncluded?: boolean;
+  wifiIncluded?: boolean;
 }
 
 // Trip settings for card rendering context
@@ -63,7 +71,7 @@ export interface TripSettings {
   is24HourTime?: boolean;
 }
 
-// Import card components (to be created)
+// Import card components
 import FlightCard from './FlightCard';
 import RestaurantCard from './RestaurantCard';
 import AttractionCard from './AttractionCard';
@@ -72,6 +80,8 @@ import OvernightCard from './OvernightCard';
 import TransportCard from './TransportCard';
 import FreeTimeGap from './FreeTimeGap';
 import CustomCard from './CustomCard';
+import HotelCheckInCard from './HotelCheckInCard';
+import HotelCheckoutCard from './HotelCheckoutCard';
 
 export interface ItineraryCardProps {
   item: ItineraryItem;
@@ -116,6 +126,9 @@ export default function ItineraryCard({
     tripSettings,
   };
 
+  // Check for hotel activity subtypes (check_in, checkout)
+  const hotelItemType = item.parsedNotes?.hotelItemType;
+
   switch (item.category) {
     case 'flight':
       return <FlightCard {...baseProps} flight={flight} />;
@@ -127,6 +140,16 @@ export default function ItineraryCard({
       return <AttractionCard {...baseProps} />;
 
     case 'hotel_activity':
+      // Route check-in and checkout to dedicated cards
+      if (hotelItemType === 'check_in') {
+        return <HotelCheckInCard {...baseProps} hotel={hotel} />;
+      }
+      if (hotelItemType === 'checkout') {
+        return <HotelCheckoutCard {...baseProps} hotel={hotel} />;
+      }
+      // Other hotel activities (breakfast, pool, gym, lounge, etc.)
+      return <MinimalActivityCard {...baseProps} hotel={hotel} />;
+
     case 'airport_activity':
       return <MinimalActivityCard {...baseProps} hotel={hotel} />;
 

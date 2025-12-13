@@ -1,13 +1,25 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowRight, RefreshCw, Loader2, CheckCircle2, Clock, AlertCircle, Plane } from 'lucide-react';
+import { ArrowRight, RefreshCw, Loader2, CheckCircle2, Clock, AlertCircle, Plane, Armchair, DoorOpen } from 'lucide-react';
 import type { ItineraryItemNotes } from '@/types/trip';
 
 interface FlightStatusCardProps {
   flight: ItineraryItemNotes;
   departureDate?: string;
   compact?: boolean;
+  /** Departure terminal from booking (not live status) */
+  departureTerminal?: string;
+  /** Arrival terminal from booking (not live status) */
+  arrivalTerminal?: string;
+  /** Whether passenger has lounge access */
+  loungeAccess?: boolean;
+  /** Name of the lounge */
+  loungeName?: string;
+  /** Seat number */
+  seatNumber?: string;
+  /** Seat class (economy, business, first) */
+  seatClass?: string;
 }
 
 type FlightStatus = 'scheduled' | 'boarding' | 'departed' | 'in_flight' | 'landed' | 'delayed' | 'cancelled' | 'unknown';
@@ -27,9 +39,24 @@ interface FlightInfo {
  * FlightStatusCard - Compact flight card with route-focused design
  * Layout: Route header → Schedule row → Flight identity
  */
-export default function FlightStatusCard({ flight, departureDate, compact = true }: FlightStatusCardProps) {
+export default function FlightStatusCard({
+  flight,
+  departureDate,
+  compact = true,
+  departureTerminal,
+  arrivalTerminal,
+  loungeAccess,
+  loungeName,
+  seatNumber,
+  seatClass,
+}: FlightStatusCardProps) {
   const [flightInfo, setFlightInfo] = useState<FlightInfo | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Determine terminals: prefer live data, fallback to booking data, then flight notes
+  const getDepartureTerminal = () => flightInfo?.terminal || departureTerminal || flight.terminal;
+  const getArrivalTerminal = () => arrivalTerminal;
+  const getDepartureGate = () => flightInfo?.gate || flight.gate;
 
   const fetchFlightStatus = async () => {
     if (!flight.flightNumber || !flight.airline) return;
@@ -167,7 +194,7 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
 
   return (
     <div className="p-4 rounded-2xl bg-stone-100 dark:bg-gray-800/50">
-      {/* REGION 1: Route Header (EWR → MIA) */}
+      {/* REGION 1: Route Header (EWR → MIA) with terminals */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-4 mb-3">
         {/* Origin */}
         <div>
@@ -177,6 +204,13 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
           {origin.city && (
             <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
               {origin.city}
+            </p>
+          )}
+          {getDepartureTerminal() && (
+            <p className="text-[10px] text-stone-400 dark:text-gray-500 mt-1 flex items-center gap-1">
+              <DoorOpen className="w-3 h-3" />
+              Terminal {getDepartureTerminal()}
+              {getDepartureGate() && <span>• Gate {getDepartureGate()}</span>}
             </p>
           )}
         </div>
@@ -194,6 +228,12 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
           {destination.city && (
             <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
               {destination.city}
+            </p>
+          )}
+          {getArrivalTerminal() && (
+            <p className="text-[10px] text-stone-400 dark:text-gray-500 mt-1 flex items-center gap-1">
+              <DoorOpen className="w-3 h-3" />
+              Terminal {getArrivalTerminal()}
             </p>
           )}
         </div>
@@ -246,23 +286,38 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
         </div>
       </div>
 
-      {/* Gate/Terminal (if available) */}
-      {flightInfo && (flightInfo.gate || flightInfo.terminal) && (
+      {/* Lounge Access Indicator */}
+      {loungeAccess && (
         <div className="flex items-center gap-2 mt-2 pt-2 border-t border-stone-200 dark:border-gray-700">
-          <p className="text-[10px] text-stone-500">
-            {flightInfo.terminal && `Terminal ${flightInfo.terminal}`}
-            {flightInfo.terminal && flightInfo.gate && ' • '}
-            {flightInfo.gate && `Gate ${flightInfo.gate}`}
-          </p>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+            <Armchair className="w-3.5 h-3.5" />
+            <span className="text-[10px] font-medium">
+              {loungeName || 'Lounge Access'}
+            </span>
+          </div>
         </div>
       )}
 
-      {/* Confirmation Number */}
-      {flight.confirmationNumber && (
-        <div className="mt-2 pt-2 border-t border-stone-200 dark:border-gray-700">
-          <p className="text-[10px] text-stone-500">
-            Confirmation: <span className="font-mono font-medium">{flight.confirmationNumber}</span>
-          </p>
+      {/* Seat & Booking Info */}
+      {(seatNumber || seatClass || flight.confirmationNumber) && (
+        <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-stone-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            {seatNumber && (
+              <p className="text-[10px] text-stone-500 dark:text-gray-400">
+                Seat: <span className="font-mono font-medium">{seatNumber}</span>
+              </p>
+            )}
+            {seatClass && seatClass !== 'economy' && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-200 dark:bg-gray-700 text-stone-600 dark:text-gray-300 capitalize">
+                {seatClass.replace('_', ' ')}
+              </span>
+            )}
+          </div>
+          {flight.confirmationNumber && (
+            <p className="text-[10px] text-stone-500 dark:text-gray-400">
+              Conf: <span className="font-mono font-medium">{flight.confirmationNumber}</span>
+            </p>
+          )}
         </div>
       )}
     </div>

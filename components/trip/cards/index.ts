@@ -9,6 +9,13 @@ export { default as TransportCard } from './TransportCard';
 export { default as FreeTimeGap } from './FreeTimeGap';
 export { default as CustomCard } from './CustomCard';
 
+// Hotel check-in/checkout reminder cards
+export { default as HotelCheckInCard } from './HotelCheckInCard';
+export { default as HotelCheckoutCard } from './HotelCheckoutCard';
+
+// Connection warning for short layovers
+export { default as ConnectionWarning, createConnectionWarningFromStop } from './ConnectionWarning';
+
 // Types
 export type {
   ItineraryItem,
