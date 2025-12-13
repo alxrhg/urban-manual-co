@@ -2506,35 +2506,26 @@ function HotelActivityRow({
   const image = item.destination?.image_thumbnail || item.destination?.image || item.parsedNotes?.image;
   const hotelName = item.title || 'Hotel';
 
-  // Get styling based on activity type
+  // Get styling based on activity type - neutral design
   const getActivityStyle = () => {
     switch (activityType) {
       case 'checkin':
         return {
-          bgClass: 'bg-gradient-to-r from-amber-50 to-stone-50 dark:from-amber-950/30 dark:to-gray-800/50',
-          borderClass: 'border-l-4 border-amber-400 dark:border-amber-500',
-          iconBgClass: 'bg-amber-100 dark:bg-amber-900/50',
-          iconClass: 'text-amber-600 dark:text-amber-400',
+          bgClass: 'bg-stone-100 dark:bg-gray-800/50',
           icon: <DoorOpen className="w-4 h-4" />,
           label: 'Check-in',
           time: item.parsedNotes?.checkInTime ? formatTime(item.parsedNotes.checkInTime) : '',
         };
       case 'breakfast':
         return {
-          bgClass: 'bg-gradient-to-r from-orange-50 via-amber-50 to-stone-50 dark:from-orange-950/30 dark:via-amber-950/20 dark:to-gray-800/50',
-          borderClass: 'border-t-2 border-gradient-to-r border-orange-300',
-          iconBgClass: 'bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900/50 dark:to-amber-900/50',
-          iconClass: 'text-orange-600 dark:text-orange-400',
+          bgClass: 'bg-stone-100 dark:bg-gray-800/50',
           icon: <Coffee className="w-4 h-4" />,
           label: 'Breakfast',
           time: item.parsedNotes?.breakfastTime || '7:00–10:00',
         };
       case 'checkout':
         return {
-          bgClass: 'bg-gradient-to-r from-stone-100 to-stone-50 dark:from-gray-800/50 dark:to-gray-800/30',
-          borderClass: 'border-r-4 border-rose-300 dark:border-rose-400/50',
-          iconBgClass: 'bg-stone-200 dark:bg-gray-700',
-          iconClass: 'text-stone-500 dark:text-gray-400',
+          bgClass: 'bg-stone-100 dark:bg-gray-800/50',
           icon: <LogOut className="w-4 h-4" />,
           label: 'Check-out',
           time: item.parsedNotes?.checkOutTime ? formatTime(item.parsedNotes.checkOutTime) : '',
@@ -2557,21 +2548,16 @@ function HotelActivityRow({
         onClick={onSelect}
         className={`
           relative overflow-hidden rounded-2xl cursor-pointer transition-all
-          ${style.bgClass} ${style.borderClass}
+          ${style.bgClass}
           ${isDragging ? 'shadow-xl ring-2 ring-stone-400 dark:ring-gray-500' : 'hover:shadow-md'}
         `}
       >
-        {/* Sunrise accent for breakfast */}
-        {activityType === 'breakfast' && (
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-300 via-amber-300 to-yellow-200" />
-        )}
-
         <div className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Icon */}
-              <div className={`w-9 h-9 rounded-xl ${style.iconBgClass} flex items-center justify-center`}>
-                <span className={style.iconClass}>{style.icon}</span>
+              <div className="w-9 h-9 rounded-xl bg-stone-200 dark:bg-gray-700 flex items-center justify-center">
+                <span className="text-stone-600 dark:text-gray-400">{style.icon}</span>
               </div>
 
               {/* Hotel info */}

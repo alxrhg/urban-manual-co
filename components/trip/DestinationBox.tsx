@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import {
-  X, MapPin, Star, Globe, Clock, ChevronDown,
+  X, MapPin, Star, Globe, Clock, ChevronDown, ChevronRight,
   Plane, Train, Building2, Phone, Navigation, ExternalLink,
-  Flag, Tag, CalendarCheck, Timer, Check, ImageOff
+  Flag, Tag, CalendarCheck, Timer, Check, ImageOff, Wifi, Car, Dumbbell, Waves, Sparkles, Coffee
 } from 'lucide-react';
+import Link from 'next/link';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import type { ItineraryItemNotes } from '@/types/trip';
 
@@ -485,146 +486,171 @@ export default function DestinationBox({
           </div>
         )}
 
-        {/* Premium Hotel Card Display */}
+        {/* Hotel Display */}
         {itemType === 'hotel' && (
           <div className="space-y-4">
-            {/* Key Card Style Display */}
-            <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-stone-50 via-stone-50 to-stone-100 dark:from-gray-800/60 dark:via-gray-800/50 dark:to-gray-800/40 ring-1 ring-stone-200/60 dark:ring-gray-700/50">
-              {/* Hotel Image Header */}
-              {image && !imageError && (
-                <div className="relative h-28 bg-stone-200 dark:bg-gray-700">
-                  <Image
-                    src={image}
-                    alt={name}
-                    fill
-                    className="object-cover"
-                    onError={() => setImageError(true)}
-                    unoptimized={image.includes('googleusercontent.com') || image.includes('maps.googleapis.com')}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  {/* Hotel name overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="w-4 h-4 text-white" />
-                      <h4 className="font-semibold text-white text-sm truncate">{name}</h4>
-                    </div>
+            {/* Hotel Image */}
+            {image && !imageError && (
+              <div className="relative h-32 rounded-xl overflow-hidden bg-stone-200 dark:bg-gray-700">
+                <Image
+                  src={image}
+                  alt={name}
+                  fill
+                  className="object-cover"
+                  onError={() => setImageError(true)}
+                  unoptimized={image.includes('googleusercontent.com') || image.includes('maps.googleapis.com')}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                {/* Rating badge */}
+                {rating && (
+                  <div className="absolute top-2 right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-black/40 backdrop-blur-sm">
+                    <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                    <span className="text-xs font-medium text-white">{rating.toFixed(1)}</span>
                   </div>
-                  {/* Rating badge */}
-                  {rating && (
-                    <div className="absolute top-2 right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-black/40 backdrop-blur-sm">
-                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                      <span className="text-xs font-medium text-white">{rating.toFixed(1)}</span>
+                )}
+                {/* Hotel name overlay */}
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <h4 className="font-semibold text-white text-sm">{name}</h4>
+                  {address && (
+                    <p className="text-xs text-white/70 flex items-center gap-1 mt-0.5">
+                      <MapPin className="w-3 h-3" />
+                      <span className="line-clamp-1">{address}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Description from database */}
+            {description && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                {description}
+              </p>
+            )}
+
+            {/* Stay Details */}
+            <div className="bg-stone-50 dark:bg-gray-800/50 rounded-xl p-4">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-3">
+                Your Stay
+              </p>
+
+              {/* Check-in/out Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Check-in */}
+                <div className="bg-white dark:bg-gray-900/50 rounded-lg p-3">
+                  <p className="text-[10px] text-stone-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                    Check-in
+                  </p>
+                  <p className="text-lg font-bold text-stone-900 dark:text-white">
+                    {editCheckInTime || '15:00'}
+                  </p>
+                  {parsedNotes?.checkInDate && (
+                    <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
+                      {new Date(parsedNotes.checkInDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </p>
+                  )}
+                </div>
+
+                {/* Check-out */}
+                <div className="bg-white dark:bg-gray-900/50 rounded-lg p-3">
+                  <p className="text-[10px] text-stone-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                    Check-out
+                  </p>
+                  <p className="text-lg font-bold text-stone-900 dark:text-white">
+                    {editCheckOutTime || '11:00'}
+                  </p>
+                  {parsedNotes?.checkOutDate && (
+                    <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
+                      {new Date(parsedNotes.checkOutDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Nights count */}
+              {parsedNotes?.checkInDate && parsedNotes?.checkOutDate && (() => {
+                const nights = Math.ceil((new Date(parsedNotes.checkOutDate + 'T00:00:00').getTime() - new Date(parsedNotes.checkInDate + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24));
+                return nights > 0 ? (
+                  <p className="text-xs text-stone-500 dark:text-gray-400 mt-2 text-center">
+                    {nights} {nights === 1 ? 'night' : 'nights'}
+                  </p>
+                ) : null;
+              })()}
+
+              {/* Room & Confirmation */}
+              {(parsedNotes?.roomType || editConfirmation) && (
+                <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-stone-200 dark:border-gray-700">
+                  {parsedNotes?.roomType && (
+                    <div>
+                      <p className="text-[10px] text-stone-400 dark:text-gray-500 uppercase tracking-wide">Room</p>
+                      <p className="text-sm font-medium text-stone-900 dark:text-white">{parsedNotes.roomType}</p>
+                    </div>
+                  )}
+                  {editConfirmation && (
+                    <div>
+                      <p className="text-[10px] text-stone-400 dark:text-gray-500 uppercase tracking-wide">Confirmation</p>
+                      <p className="text-xs font-mono font-medium text-stone-700 dark:text-gray-300 truncate">{editConfirmation}</p>
                     </div>
                   )}
                 </div>
               )}
 
-              <div className="p-4">
-                {/* YOUR STAY Header */}
-                <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-3">
-                  Your Stay
-                </p>
-
-                {/* Check-in/out Timeline */}
-                <div className="flex items-stretch gap-3">
-                  {/* Check-in */}
-                  <div className="flex-1 bg-gradient-to-br from-green-50 to-stone-50 dark:from-green-950/30 dark:to-gray-800/50 rounded-xl p-3 border border-green-100 dark:border-green-900/30">
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <div className="w-5 h-5 rounded-md bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
-                        <Clock className="w-3 h-3 text-green-600 dark:text-green-400" />
-                      </div>
-                      <p className="text-[9px] font-medium uppercase tracking-wide text-green-600 dark:text-green-400">
-                        Check-in
-                      </p>
-                    </div>
-                    <p className="text-lg font-bold text-stone-900 dark:text-white">
-                      {editCheckInTime || '15:00'}
-                    </p>
-                    {parsedNotes?.checkInDate && (
-                      <p className="text-[10px] text-stone-500 dark:text-gray-400 mt-0.5">
-                        {new Date(parsedNotes.checkInDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Nights indicator */}
-                  <div className="flex flex-col items-center justify-center px-1">
-                    <div className="flex-1 w-px bg-gradient-to-b from-green-300 via-stone-300 to-rose-300 dark:from-green-600 dark:via-gray-600 dark:to-rose-600" />
-                    {parsedNotes?.checkInDate && parsedNotes?.checkOutDate && (() => {
-                      const nights = Math.ceil((new Date(parsedNotes.checkOutDate + 'T00:00:00').getTime() - new Date(parsedNotes.checkInDate + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24));
-                      return nights > 0 ? (
-                        <div className="my-1 px-1.5 py-0.5 rounded-full bg-stone-100 dark:bg-gray-800 text-[9px] font-medium text-stone-600 dark:text-gray-300 whitespace-nowrap">
-                          {nights}n
-                        </div>
-                      ) : null;
-                    })()}
-                    <div className="flex-1 w-px bg-gradient-to-b from-stone-300 to-rose-300 dark:from-gray-600 dark:to-rose-600" />
-                  </div>
-
-                  {/* Check-out */}
-                  <div className="flex-1 bg-gradient-to-br from-rose-50 to-stone-50 dark:from-rose-950/30 dark:to-gray-800/50 rounded-xl p-3 border border-rose-100 dark:border-rose-900/30">
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <div className="w-5 h-5 rounded-md bg-rose-100 dark:bg-rose-900/50 flex items-center justify-center">
-                        <Clock className="w-3 h-3 text-rose-600 dark:text-rose-400" />
-                      </div>
-                      <p className="text-[9px] font-medium uppercase tracking-wide text-rose-600 dark:text-rose-400">
-                        Check-out
-                      </p>
-                    </div>
-                    <p className="text-lg font-bold text-stone-900 dark:text-white">
-                      {editCheckOutTime || '11:00'}
-                    </p>
-                    {parsedNotes?.checkOutDate && (
-                      <p className="text-[10px] text-stone-500 dark:text-gray-400 mt-0.5">
-                        {new Date(parsedNotes.checkOutDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </p>
-                    )}
-                  </div>
+              {/* Breakfast included */}
+              {parsedNotes?.breakfastIncluded && (
+                <div className="mt-3 flex items-center gap-2 text-xs text-stone-600 dark:text-gray-400">
+                  <Coffee className="w-3.5 h-3.5" />
+                  Breakfast included
                 </div>
-
-                {/* Room & Confirmation */}
-                {(parsedNotes?.roomType || editConfirmation) && (
-                  <div className="flex items-center gap-3 mt-3 pt-3 border-t border-stone-100 dark:border-gray-700/50">
-                    {parsedNotes?.roomType && (
-                      <div className="flex-1">
-                        <p className="text-[9px] text-stone-400 dark:text-gray-500 uppercase tracking-wide">Room</p>
-                        <p className="text-sm font-bold text-stone-900 dark:text-white">{parsedNotes.roomType}</p>
-                      </div>
-                    )}
-                    {editConfirmation && (
-                      <div className="flex-1">
-                        <p className="text-[9px] text-stone-400 dark:text-gray-500 uppercase tracking-wide">Confirmation</p>
-                        <p className="text-xs font-mono font-medium text-stone-700 dark:text-gray-300 truncate">{editConfirmation}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Breakfast included badge */}
-                {parsedNotes?.breakfastIncluded && (
-                  <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 text-xs">
-                    <CalendarCheck className="w-3.5 h-3.5" />
-                    Breakfast included
-                  </div>
-                )}
-              </div>
-
-              {/* Key card barcode pattern */}
-              <div className="px-4 pb-3">
-                <div className="flex items-center gap-0.5 h-6 opacity-15 dark:opacity-10">
-                  {Array.from({ length: 35 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="bg-stone-900 dark:bg-white"
-                      style={{
-                        width: i % 3 === 0 ? '3px' : i % 2 === 0 ? '2px' : '1px',
-                        height: '100%',
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
+              )}
             </div>
+
+            {/* Database Info Section */}
+            {(destination?.tags?.length || priceLevel) && (
+              <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
+                {/* Price Level */}
+                {priceLevel && priceLevel > 0 && (
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Price</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      {'$'.repeat(priceLevel)}
+                    </span>
+                  </div>
+                )}
+
+                {/* Tags */}
+                {destination?.tags && destination.tags.length > 0 && (
+                  <div className="py-2">
+                    <span className="text-sm text-gray-500 dark:text-gray-400 block mb-2">Tags</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {destination.tags.slice(0, 5).map((tag, i) => (
+                        <span
+                          key={i}
+                          className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-400"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* View Full Page Link */}
+            {destination?.slug && (
+              <Link
+                href={`/destination/${destination.slug}`}
+                className="flex items-center justify-between w-full py-3 px-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <ExternalLink className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    View full details
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </Link>
+            )}
           </div>
         )}
 
