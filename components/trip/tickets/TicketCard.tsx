@@ -29,12 +29,10 @@ const TicketCard = forwardRef<HTMLDivElement, TicketCardProps>(
       onClick && 'active:scale-[0.99]',
       isActive && 'ring-2 ring-stone-400 dark:ring-gray-500',
       {
-        // Default ticket
-        'bg-white dark:bg-gray-900': variant === 'default',
-        // Boarding pass - slightly warmer tone
+        // Default ticket and Hotel - clean white background
+        'bg-white dark:bg-gray-900': variant === 'default' || variant === 'hotel',
+        // Boarding pass - slightly warmer tone with gradient
         'bg-gradient-to-r from-stone-50 to-white dark:from-gray-900 dark:to-gray-800': variant === 'boarding-pass',
-        // Hotel - clean white
-        'bg-white dark:bg-gray-900': variant === 'hotel',
         // Night pass - darker, inverted
         'bg-stone-900 dark:bg-gray-950 text-white': variant === 'night-pass',
       },
