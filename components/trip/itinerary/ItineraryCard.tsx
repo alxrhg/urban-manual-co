@@ -493,31 +493,24 @@ function HotelCard({
         </div>
 
         {/* Room and Confirmation Grid */}
-        {(notes?.roomNumber || notes?.roomType || notes?.confirmationNumber) && (
+        {(notes?.roomType || notes?.hotelConfirmation || notes?.confirmation) && (
           <div className="grid grid-cols-2 gap-2 mb-4">
-            {(notes?.roomNumber || notes?.roomType) && (
+            {notes?.roomType && (
               <div className="bg-stone-50 dark:bg-gray-800/50 rounded-xl p-3">
                 <p className="text-[10px] text-stone-400 dark:text-gray-500 uppercase tracking-wide mb-1">
                   Room
                 </p>
-                {notes?.roomNumber && (
-                  <p className="text-lg font-bold text-stone-900 dark:text-white">
-                    {notes.roomNumber}
-                  </p>
-                )}
-                {notes?.roomType && (
-                  <p className="text-xs text-stone-500 dark:text-gray-400">{notes.roomType}</p>
-                )}
+                <p className="text-sm font-medium text-stone-900 dark:text-white">{notes.roomType}</p>
               </div>
             )}
 
-            {notes?.confirmationNumber && (
+            {(notes?.hotelConfirmation || notes?.confirmation) && (
               <div className="bg-stone-50 dark:bg-gray-800/50 rounded-xl p-3">
                 <p className="text-[10px] text-stone-400 dark:text-gray-500 uppercase tracking-wide mb-1">
                   Confirmation
                 </p>
                 <p className="text-sm font-mono font-bold text-stone-900 dark:text-white truncate">
-                  {notes.confirmationNumber}
+                  {notes.hotelConfirmation || notes.confirmation}
                 </p>
               </div>
             )}
