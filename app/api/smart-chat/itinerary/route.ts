@@ -10,6 +10,10 @@ import { withErrorHandling } from '@/lib/errors';
 import { createServerClient } from '@/lib/supabase/server';
 import { smartConversationEngine, ItineraryPlan } from '@/services/intelligence/smart-conversation-engine';
 import { unifiedIntelligenceCore } from '@/services/intelligence/unified-intelligence-core';
+import {
+  ItineraryBuildRequestSchema,
+  createValidationErrorResponse,
+} from '@/lib/schemas/intelligence';
 
 // ============================================
 // BUILD ITINERARY
@@ -21,20 +25,15 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     const { data: { session: authSession } } = await supabase.auth.getSession();
     const userId = authSession?.user?.id;
 
-    const body = await request.json();
-    const {
-      city,
-      duration = 'day',
-      neighborhood,
-      sessionId,
-    } = body;
+    // Validate request body with Zod
+    const rawBody = await request.json();
+    const parseResult = ItineraryBuildRequestSchema.safeParse(rawBody);
 
-    if (!city) {
-      return NextResponse.json({
-        success: false,
-        error: 'City is required',
-      }, { status: 400 });
+    if (!parseResult.success) {
+      return NextResponse.json(createValidationErrorResponse(parseResult.error), { status: 400 });
     }
+
+    const { city, duration, neighborhood, sessionId } = parseResult.data;
 
     // Get session context
     const session = await smartConversationEngine.getOrCreateSession(sessionId, userId);

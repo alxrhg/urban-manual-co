@@ -10,6 +10,10 @@ import { withErrorHandling } from '@/lib/errors';
 import { createServerClient } from '@/lib/supabase/server';
 import { smartConversationEngine, MultiCityPlan } from '@/services/intelligence/smart-conversation-engine';
 import { unifiedIntelligenceCore } from '@/services/intelligence/unified-intelligence-core';
+import {
+  MultiCityPlanRequestSchema,
+  createValidationErrorResponse,
+} from '@/lib/schemas/intelligence';
 
 // ============================================
 // BUILD MULTI-CITY ITINERARY
@@ -21,26 +25,15 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     const { data: { session: authSession } } = await supabase.auth.getSession();
     const userId = authSession?.user?.id;
 
-    const body = await request.json();
-    const {
-      cities,
-      daysPerCity = 2,
-      sessionId,
-    } = body;
+    // Validate request body with Zod
+    const rawBody = await request.json();
+    const parseResult = MultiCityPlanRequestSchema.safeParse(rawBody);
 
-    if (!cities || !Array.isArray(cities) || cities.length < 2) {
-      return NextResponse.json({
-        success: false,
-        error: 'At least 2 cities are required',
-      }, { status: 400 });
+    if (!parseResult.success) {
+      return NextResponse.json(createValidationErrorResponse(parseResult.error), { status: 400 });
     }
 
-    if (cities.length > 5) {
-      return NextResponse.json({
-        success: false,
-        error: 'Maximum 5 cities allowed',
-      }, { status: 400 });
-    }
+    const { cities, daysPerCity, sessionId } = parseResult.data;
 
     // Get session context
     const session = await smartConversationEngine.getOrCreateSession(sessionId, userId);
