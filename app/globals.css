@@ -485,6 +485,15 @@
     --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1), 0 8px 10px rgba(0, 0, 0, 0.04);
     --shadow-hover: 0 12px 24px rgba(0, 0, 0, 0.12);
 
+    /* Apple-inspired spacing scale (generous whitespace = premium feel) */
+    --spacing-xs: 8px;        /* Tight spacing */
+    --spacing-sm: 16px;       /* Small gaps */
+    --spacing-md: 24px;       /* Between related items */
+    --spacing-lg: 48px;       /* Between cards/groups */
+    --spacing-xl: 80px;       /* Between major elements */
+    --spacing-2xl: 120px;     /* Large section padding */
+    --spacing-section: 120px; /* Hero/section vertical padding */
+
     /* Stagger delay base for animations */
     --stagger-delay: 50ms;
   }
@@ -1999,4 +2008,68 @@ html.christmas-mode.dark::before,
 
 .text-fluid-3xl {
   font-size: clamp(1.875rem, 1.5rem + 2vw, 3rem);
+}
+
+/* ============================================
+   APPLE-INSPIRED SPACING UTILITIES
+   Generous whitespace = premium, fast feel
+   ============================================ */
+
+/* Section spacing - generous vertical padding */
+.section-spacing {
+  padding-top: var(--spacing-section);
+  padding-bottom: var(--spacing-section);
+}
+
+.section-spacing-sm {
+  padding-top: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+}
+
+/* Gap utilities using spacing scale */
+.gap-section { gap: var(--spacing-section); }
+.gap-2xl { gap: var(--spacing-2xl); }
+.gap-xl { gap: var(--spacing-xl); }
+.gap-lg { gap: var(--spacing-lg); }
+.gap-md { gap: var(--spacing-md); }
+.gap-sm { gap: var(--spacing-sm); }
+.gap-xs { gap: var(--spacing-xs); }
+
+/* Margin utilities */
+.mt-section { margin-top: var(--spacing-section); }
+.mb-section { margin-bottom: var(--spacing-section); }
+.my-section { margin-top: var(--spacing-section); margin-bottom: var(--spacing-section); }
+
+.mt-xl { margin-top: var(--spacing-xl); }
+.mb-xl { margin-bottom: var(--spacing-xl); }
+.my-xl { margin-top: var(--spacing-xl); margin-bottom: var(--spacing-xl); }
+
+.mt-lg { margin-top: var(--spacing-lg); }
+.mb-lg { margin-bottom: var(--spacing-lg); }
+.my-lg { margin-top: var(--spacing-lg); margin-bottom: var(--spacing-lg); }
+
+/* Padding utilities */
+.pt-section { padding-top: var(--spacing-section); }
+.pb-section { padding-bottom: var(--spacing-section); }
+.py-section { padding-top: var(--spacing-section); padding-bottom: var(--spacing-section); }
+
+.pt-xl { padding-top: var(--spacing-xl); }
+.pb-xl { padding-bottom: var(--spacing-xl); }
+.py-xl { padding-top: var(--spacing-xl); padding-bottom: var(--spacing-xl); }
+
+.pt-lg { padding-top: var(--spacing-lg); }
+.pb-lg { padding-bottom: var(--spacing-lg); }
+.py-lg { padding-top: var(--spacing-lg); padding-bottom: var(--spacing-lg); }
+
+/* Responsive section spacing */
+@media (max-width: 768px) {
+  .section-spacing {
+    padding-top: var(--spacing-xl);
+    padding-bottom: var(--spacing-xl);
+  }
+
+  .section-spacing-sm {
+    padding-top: var(--spacing-lg);
+    padding-bottom: var(--spacing-lg);
+  }
 }
