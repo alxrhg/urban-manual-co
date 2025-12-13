@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { withErrorHandling, createValidationError } from '@/lib/errors';
+import type { SuggestionPatch, AddActivityPayload, FillGapPayload, Place } from '@/lib/intelligence/types';
 
 /**
  * POST /api/intelligence/smart-fill
@@ -216,6 +217,69 @@ function getSuggestionForSlot(
   }
 }
 
+/**
+ * Generate a unique suggestion ID
+ */
+function generateSuggestionId(): string {
+  return `sug_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+/**
+ * Convert a destination to a Place object
+ */
+function destinationToPlace(dest: any): Place {
+  return {
+    id: dest.id,
+    slug: dest.slug,
+    name: dest.name,
+    city: dest.city,
+    category: dest.category,
+    latitude: dest.latitude,
+    longitude: dest.longitude,
+    image: dest.image,
+    imageThumbnail: dest.image_thumbnail,
+    rating: dest.rating,
+    priceLevel: dest.price_level,
+    description: dest.description,
+  };
+}
+
+/**
+ * Create a SuggestionPatch from destination and gap info
+ */
+function createSuggestionPatch(
+  dest: any,
+  day: number,
+  timeSlot: string,
+  startTime: string,
+  reason: string,
+  source: 'ai' | 'rule' = 'ai'
+): SuggestionPatch {
+  const place = destinationToPlace(dest);
+
+  return {
+    id: generateSuggestionId(),
+    label: `Add ${dest.name}`,
+    patch: {
+      type: 'addActivity',
+      payload: {
+        dayIndex: day - 1, // Convert 1-indexed day to 0-indexed
+        place,
+        startTime,
+      } as AddActivityPayload,
+    },
+    reason,
+    meta: {
+      source,
+      destination: place,
+      day,
+      timeSlot,
+      startTime,
+      image: dest.image_thumbnail || dest.image,
+    },
+  };
+}
+
 async function generateAISuggestions(
   apiKey: string,
   city: string,
@@ -223,7 +287,7 @@ async function generateAISuggestions(
   existingItems: any[],
   analysis: TripAnalysis,
   tripDays: number
-): Promise<any[]> {
+): Promise<SuggestionPatch[]> {
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
@@ -292,20 +356,22 @@ Suggest 3-5 places per day with gaps. Return only JSON, no other text:`;
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
 
-      // Enrich with full destination data
-      return parsed.map((suggestion: any) => {
-        const dest = availableDestinations.find(d => d.id === suggestion.destinationId);
-        if (!dest) return null;
+      // Convert to SuggestionPatch format
+      return parsed
+        .map((suggestion: any) => {
+          const dest = availableDestinations.find(d => d.id === suggestion.destinationId);
+          if (!dest) return null;
 
-        return {
-          destination: dest,
-          day: suggestion.day,
-          timeSlot: suggestion.timeSlot,
-          startTime: suggestion.startTime,
-          reason: suggestion.reason,
-          order: getOrderFromTimeSlot(suggestion.timeSlot),
-        };
-      }).filter(Boolean);
+          return createSuggestionPatch(
+            dest,
+            suggestion.day,
+            suggestion.timeSlot,
+            suggestion.startTime,
+            suggestion.reason,
+            'ai'
+          );
+        })
+        .filter(Boolean);
     }
   } catch (error) {
     console.error('AI suggestion generation failed:', error);
@@ -320,8 +386,8 @@ function generateRuleBasedSuggestions(
   existingItems: any[],
   analysis: TripAnalysis,
   tripDays: number
-): any[] {
-  const suggestions: any[] = [];
+): SuggestionPatch[] {
+  const suggestions: SuggestionPatch[] = [];
   const usedDestinations = new Set<number>();
 
   // Category mappings for smart suggestions
@@ -347,9 +413,9 @@ function generateRuleBasedSuggestions(
     // If there's a previous item, use context-aware suggestions
     if (gap.afterItem) {
       const afterCategory = (gap.afterItem.parsedNotes?.category || '').toLowerCase();
-      for (const [key, suggestions] of Object.entries(afterActivitySuggestions)) {
+      for (const [key, catSuggestions] of Object.entries(afterActivitySuggestions)) {
         if (afterCategory.includes(key)) {
-          targetCategories = suggestions;
+          targetCategories = catSuggestions;
           break;
         }
       }
@@ -370,14 +436,15 @@ function generateRuleBasedSuggestions(
           reason = `Perfect to visit after ${gap.afterItem.title}`;
         }
 
-        suggestions.push({
-          destination: dest,
-          day: gap.day,
-          timeSlot: gap.timeSlot,
-          startTime: getDefaultTimeForSlot(gap.timeSlot),
+        const suggestion = createSuggestionPatch(
+          dest,
+          gap.day,
+          gap.timeSlot,
+          getDefaultTimeForSlot(gap.timeSlot),
           reason,
-          order: getOrderFromTimeSlot(gap.timeSlot),
-        });
+          'rule'
+        );
+        suggestions.push(suggestion);
 
         break; // One suggestion per gap
       }
@@ -422,8 +489,11 @@ async function generateGapSuggestions(
     gapMinutes: number;
     timeOfDay: string;
     suggestedTime: string;
+    dayIndex?: number;
   }
-): Promise<any[]> {
+): Promise<SuggestionPatch[]> {
+  const dayIndex = gapContext.dayIndex ?? 0;
+
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
@@ -474,17 +544,40 @@ Return only JSON, no other text:`;
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
 
-      // Enrich with full destination data
-      return parsed.map((suggestion: any) => {
-        const dest = availableDestinations.find(d => d.id === suggestion.destinationId);
-        if (!dest) return null;
+      // Convert to SuggestionPatch format with fillGap action
+      return parsed
+        .map((suggestion: any) => {
+          const dest = availableDestinations.find(d => d.id === suggestion.destinationId);
+          if (!dest) return null;
 
-        return {
-          destination: dest,
-          reason: suggestion.reason,
-          suggestedTime: gapContext.suggestedTime,
-        };
-      }).filter(Boolean);
+          const place = destinationToPlace(dest);
+
+          const patch: SuggestionPatch = {
+            id: generateSuggestionId(),
+            label: `Add ${dest.name}`,
+            patch: {
+              type: 'fillGap',
+              payload: {
+                dayIndex,
+                startTime: gapContext.suggestedTime,
+                durationMinutes: Math.min(gapContext.gapMinutes, 90),
+                place,
+                blockType: dest.category?.toLowerCase().includes('restaurant') ? 'meal' : 'activity',
+              } as FillGapPayload,
+            },
+            reason: suggestion.reason,
+            meta: {
+              source: 'ai',
+              destination: place,
+              day: dayIndex + 1,
+              timeSlot: gapContext.timeOfDay,
+              startTime: gapContext.suggestedTime,
+              image: dest.image_thumbnail || dest.image,
+            },
+          };
+          return patch;
+        })
+        .filter(Boolean);
     }
   } catch (error) {
     console.error('Gap suggestion generation failed:', error);
@@ -499,14 +592,35 @@ Return only JSON, no other text:`;
   };
 
   const targetCategories = categoryMap[gapContext.timeOfDay] || [];
-  const fallbackSuggestions = availableDestinations
+  const fallbackSuggestions: SuggestionPatch[] = availableDestinations
     .filter(d => targetCategories.some(cat => d.category?.toLowerCase().includes(cat)))
     .slice(0, 4)
-    .map(dest => ({
-      destination: dest,
-      reason: `Great ${dest.category?.toLowerCase()} for ${gapContext.timeOfDay.toLowerCase()}`,
-      suggestedTime: gapContext.suggestedTime,
-    }));
+    .map(dest => {
+      const place = destinationToPlace(dest);
+      return {
+        id: generateSuggestionId(),
+        label: `Add ${dest.name}`,
+        patch: {
+          type: 'fillGap',
+          payload: {
+            dayIndex,
+            startTime: gapContext.suggestedTime,
+            durationMinutes: Math.min(gapContext.gapMinutes, 90),
+            place,
+            blockType: dest.category?.toLowerCase().includes('restaurant') ? 'meal' : 'activity',
+          } as FillGapPayload,
+        },
+        reason: `Great ${dest.category?.toLowerCase()} for ${gapContext.timeOfDay.toLowerCase()}`,
+        meta: {
+          source: 'rule' as const,
+          destination: place,
+          day: dayIndex + 1,
+          timeSlot: gapContext.timeOfDay,
+          startTime: gapContext.suggestedTime,
+          image: dest.image_thumbnail || dest.image,
+        },
+      };
+    });
 
   return fallbackSuggestions;
 }

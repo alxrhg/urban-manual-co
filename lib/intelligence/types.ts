@@ -236,6 +236,7 @@ export interface GeneratedItinerary {
 
 /**
  * Response from smart-fill API
+ * @deprecated Use SuggestionPatch instead
  */
 export interface SmartFillSuggestion {
   day: number;
@@ -244,6 +245,157 @@ export interface SmartFillSuggestion {
   destination: Place;
   reason: string;
   smartData?: SmartBlockData;
+}
+
+// =============================================================================
+// Suggestion Patch Types (Intelligence as Operations)
+// =============================================================================
+
+/**
+ * Action types that can be applied to a trip
+ */
+export type PatchActionType =
+  | 'addBlock'
+  | 'removeBlock'
+  | 'updateBlock'
+  | 'moveBlock'
+  | 'setMeal'
+  | 'addActivity'
+  | 'assignHotel'
+  | 'reorderDays'
+  | 'fillGap';
+
+/**
+ * Payload types for each action
+ */
+export interface AddBlockPayload {
+  dayIndex: number;
+  block: Partial<TimeBlock>;
+  insertAfterBlockId?: string;
+}
+
+export interface RemoveBlockPayload {
+  dayIndex: number;
+  blockId: string;
+}
+
+export interface UpdateBlockPayload {
+  dayIndex: number;
+  blockId: string;
+  updates: Partial<TimeBlock>;
+}
+
+export interface MoveBlockPayload {
+  fromDayIndex: number;
+  toDayIndex: number;
+  blockId: string;
+  insertAfterBlockId?: string;
+}
+
+export interface SetMealPayload {
+  dayIndex: number;
+  mealType: 'breakfast' | 'lunch' | 'dinner';
+  place: Place;
+}
+
+export interface AddActivityPayload {
+  dayIndex: number;
+  place: Place;
+  startTime?: string;
+}
+
+export interface AssignHotelPayload {
+  dayIndex: number;
+  hotel: Place;
+}
+
+export interface ReorderDaysPayload {
+  newOrder: number[];
+}
+
+export interface FillGapPayload {
+  dayIndex: number;
+  startTime: string;
+  durationMinutes: number;
+  place?: Place;
+  blockType: TimeBlockType;
+  insertAfterBlockId?: string;
+}
+
+/**
+ * A patch operation that can be applied to a trip
+ */
+export interface TripPatch {
+  type: PatchActionType;
+  payload:
+    | AddBlockPayload
+    | RemoveBlockPayload
+    | UpdateBlockPayload
+    | MoveBlockPayload
+    | SetMealPayload
+    | AddActivityPayload
+    | AssignHotelPayload
+    | ReorderDaysPayload
+    | FillGapPayload;
+}
+
+/**
+ * A suggestion with its associated patch operation
+ * This is the primary type for all trip suggestions
+ */
+export interface SuggestionPatch {
+  /** Unique identifier for this suggestion */
+  id: string;
+  /** Human-readable label for the suggestion */
+  label: string;
+  /** The patch operation to apply */
+  patch: TripPatch;
+  /** Why this suggestion is being made */
+  reason: string;
+  /** Optional metadata */
+  meta?: {
+    /** Confidence score (0-1) */
+    confidence?: number;
+    /** Source of the suggestion */
+    source?: 'ai' | 'rule' | 'user';
+    /** Related destination info for display */
+    destination?: Place;
+    /** Day this affects */
+    day?: number;
+    /** Time slot this affects */
+    timeSlot?: string;
+    /** Suggested start time */
+    startTime?: string;
+    /** Image URL for display */
+    image?: string;
+  };
+}
+
+/**
+ * Result of applying a suggestion patch
+ */
+export interface PatchResult {
+  success: boolean;
+  /** The inverse patch to undo this operation */
+  undoPatch?: TripPatch;
+  /** Error message if failed */
+  error?: string;
+}
+
+/**
+ * A group of related suggestion patches
+ */
+export interface SuggestionGroup {
+  /** Group identifier */
+  id: string;
+  /** Human-readable title */
+  title: string;
+  /** Description of what this group addresses */
+  description: string;
+  /** The patches in this group */
+  patches: SuggestionPatch[];
+  /** Whether all patches should be applied together */
+  atomic?: boolean;
 }
 
 // =============================================================================
