@@ -26,6 +26,7 @@ interface TimelineLinkedMapProps {
   showDayFilter?: boolean;
   isFullscreen?: boolean;
   isCompact?: boolean;
+  startInteractive?: boolean; // If false, map is static until tapped
   className?: string;
 }
 
@@ -84,10 +85,14 @@ export default function TimelineLinkedMap({
   showDayFilter = true,
   isFullscreen = false,
   isCompact = false,
+  startInteractive = false,
   className = '',
 }: TimelineLinkedMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
+
+  // Interactive mode state - starts static unless specified
+  const [isInteractive, setIsInteractive] = useState(startInteractive || isFullscreen);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const markerCleanupRef = useRef<(() => void)[]>([]);
   const polylinesRef = useRef<google.maps.Polyline[]>([]);
@@ -227,7 +232,7 @@ export default function TimelineLinkedMap({
           position: google.maps.ControlPosition.RIGHT_BOTTOM,
         },
         mapId: 'timeline-linked-map',
-        gestureHandling: isCompact ? 'none' : 'greedy',
+        gestureHandling: isCompact ? 'none' : (isInteractive ? 'greedy' : 'none'),
       });
 
       setMapLoaded(true);
@@ -540,6 +545,21 @@ export default function TimelineLinkedMap({
     mapRef.current.setZoom(viewport.zoom);
   }, [viewport, mapLoaded]);
 
+  // Update gesture handling when interactive mode changes
+  useEffect(() => {
+    if (!mapRef.current || !mapLoaded || isCompact) return;
+    mapRef.current.setOptions({
+      gestureHandling: isInteractive ? 'greedy' : 'none',
+    });
+  }, [isInteractive, mapLoaded, isCompact]);
+
+  // Enable interactive mode handler
+  const enableInteractive = useCallback(() => {
+    if (!isInteractive && !isCompact) {
+      setIsInteractive(true);
+    }
+  }, [isInteractive, isCompact]);
+
   // Initialize autocomplete
   useEffect(() => {
     if (!googleLoaded || !mapLoaded || !searchInputRef.current || autocompleteRef.current) return;
@@ -710,8 +730,21 @@ export default function TimelineLinkedMap({
       {/* Map Container */}
       <div ref={mapContainer} className="w-full h-full" />
 
-      {/* Search Bar */}
-      {showSearch && mapLoaded && !mapError && !isCompact && (
+      {/* Tap to interact overlay - shown when map is static */}
+      {!isInteractive && mapLoaded && !mapError && !isCompact && (
+        <button
+          onClick={enableInteractive}
+          className="absolute inset-0 z-20 flex items-center justify-center bg-transparent cursor-pointer group"
+          aria-label="Tap to interact with map"
+        >
+          <div className="px-4 py-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 dark:border-gray-700 opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="text-sm text-gray-600 dark:text-gray-300">Tap to explore map</span>
+          </div>
+        </button>
+      )}
+
+      {/* Search Bar - only shown in interactive mode */}
+      {showSearch && mapLoaded && !mapError && !isCompact && isInteractive && (
         <div className="absolute top-4 left-4 right-16 max-w-md z-10">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
