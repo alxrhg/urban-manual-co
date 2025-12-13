@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { AlertTriangle, Clock, ArrowRight, DoorOpen, Plane } from 'lucide-react';
 import type { FlightStop } from '@/types/trip';
 
@@ -156,7 +157,7 @@ export default function ConnectionWarning({
 export function createConnectionWarningFromStop(
   stop: FlightStop,
   isInternational: boolean = false
-): JSX.Element | null {
+): React.ReactElement | null {
   if (!stop.durationMinutes || stop.durationMinutes >= 120) {
     return null;
   }
