@@ -35,6 +35,7 @@ import DestinationBox from '@/components/trip/DestinationBox';
 import AddPlacePanel from '@/components/trip/AddPlacePanel';
 import { NeighborhoodTags } from '@/components/trip/NeighborhoodBreakdown';
 import DayIntelligence from '@/components/trip/DayIntelligence';
+import { calculatePaceScore, type DayItem } from '@/components/trip/DayHeader';
 import { CrowdBadge } from '@/components/trip/CrowdIndicator';
 import { UndoProvider } from '@/components/trip/UndoToast';
 import { SavingFeedback } from '@/components/trip/SavingFeedback';
@@ -1651,22 +1652,101 @@ function DaySection({
           : ''
       }`}
     >
-      {/* Day header - reference style */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <h3 className="text-[16px] font-semibold text-gray-900 dark:text-white">
-            Day {dayNumber}{longDateDisplay && `: ${longDateDisplay}`}
-          </h3>
-          {/* Weather badge */}
-          {weather && (
-            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">
-              <WeatherIcon code={weather.weatherCode} className="w-3.5 h-3.5" />
-              <span className="text-[12px] text-gray-600 dark:text-gray-300">
-                {weather.tempMax}°
+      {/* Day header - rhythm style with chips */}
+      <div className="mb-4">
+        {/* Top row: Day title + info chips */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Day number */}
+            <h3 className="text-[16px] font-semibold text-gray-900 dark:text-white">
+              Day {dayNumber}
+            </h3>
+            {/* Date chip */}
+            {dateDisplay && (
+              <span className="inline-flex items-center px-2 py-0.5 text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full font-medium">
+                {dateDisplay}
               </span>
-            </div>
+            )}
+            {/* Weather chip */}
+            {weather && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full">
+                <WeatherIcon code={weather.weatherCode} className="w-3 h-3" />
+                <span className="tabular-nums">{weather.tempMax}°</span>
+                {weather.precipProbability > 10 && (
+                  <span className="text-blue-500 dark:text-blue-400 tabular-nums">
+                    {weather.precipProbability}%
+                  </span>
+                )}
+              </span>
+            )}
+            {/* Pace score chip */}
+            {items.length > 0 && (() => {
+              const dayItems: DayItem[] = items.map(item => ({
+                id: item.id,
+                title: item.title,
+                time: item.time,
+                destination: item.destination ? {
+                  category: item.destination.category,
+                  latitude: item.destination.latitude,
+                  longitude: item.destination.longitude,
+                } : null,
+                parsedNotes: item.parsedNotes ? {
+                  type: item.parsedNotes.type,
+                  category: item.parsedNotes.category,
+                } : undefined,
+              }));
+              const paceScore = calculatePaceScore(dayItems);
+              return (
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full ${paceScore.color}`}>
+                  {paceScore.label}
+                  <span className="opacity-70 tabular-nums">{paceScore.totalHours.toFixed(1)}h</span>
+                </span>
+              );
+            })()}
+          </div>
+          {/* Item count */}
+          <span className="text-[11px] text-gray-400 dark:text-gray-500 tabular-nums">
+            {items.length} {items.length === 1 ? 'stop' : 'stops'}
+          </span>
+        </div>
+
+        {/* Bottom row: Action chips */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Add chip */}
+          <button
+            onClick={() => {
+              const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+              if (isDesktop && onOpenSidebarAdd) {
+                onOpenSidebarAdd();
+              } else {
+                setShowAddMenu(!showAddMenu);
+                setShowSearch(false);
+                setShowTransportForm(null);
+              }
+            }}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
+          >
+            <Plus className={`w-3 h-3 transition-transform ${showAddMenu || showSearch || showTransportForm ? 'rotate-45' : ''}`} />
+            Add
+          </button>
+
+          {/* Optimize chip */}
+          {canOptimize && (
+            <button
+              onClick={optimizeRoute}
+              disabled={isOptimizing}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-full transition-colors ${
+                isOptimizing
+                  ? 'text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 cursor-wait'
+                  : 'text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              {isOptimizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Route className="w-3 h-3" />}
+              {isOptimizing ? 'Optimizing...' : 'Optimize'}
+            </button>
           )}
-          {/* Day warnings - only shows when there's a problem */}
+
+          {/* Day warnings - subtle inline */}
           <DayIntelligence
             items={items.map(item => ({
               id: item.id,
@@ -1690,41 +1770,10 @@ function DaySection({
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Optimize prompt */}
-          {canOptimize && (
-            <button
-              onClick={optimizeRoute}
-              disabled={isOptimizing}
-              className="flex items-center gap-1.5 text-[12px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              {isOptimizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Route className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">Optimize</span>
-            </button>
-          )}
-
-          {/* Plus button */}
-          <div className="relative">
-            <button
-              onClick={() => {
-                // Desktop: use sidebar panel
-                const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
-                if (isDesktop && onOpenSidebarAdd) {
-                  onOpenSidebarAdd();
-                } else {
-                  // Mobile: use inline menu
-                  setShowAddMenu(!showAddMenu);
-                  setShowSearch(false);
-                  setShowTransportForm(null);
-                }
-              }}
-              className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            >
-              <Plus className={`w-4 h-4 sm:w-3.5 sm:h-3.5 text-gray-500 transition-transform ${showAddMenu || showSearch || showTransportForm ? 'rotate-45' : ''}`} />
-            </button>
-
-            {/* Add menu dropdown (mobile only) */}
-            <AnimatePresence>
+        {/* Add menu dropdown (mobile only) - relative container */}
+        <div className="relative">
+          {/* Add menu dropdown (mobile only) */}
+          <AnimatePresence>
               {showAddMenu && !showSearch && !showTransportForm && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: -4 }}
