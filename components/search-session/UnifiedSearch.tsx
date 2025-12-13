@@ -466,7 +466,7 @@ function ChatContent({
   onChipClick: (chip: Suggestion) => void;
   onDestinationClick: (dest: RankedDestination) => void;
   onDestinationSave: (dest: RankedDestination) => void;
-  messagesEndRef: React.RefObject<HTMLDivElement>;
+  messagesEndRef: React.RefObject<HTMLDivElement | null>;
 }) {
   if (turnCount === 0 && !isLoading) {
     return <EmptyState mode="chat" />;
