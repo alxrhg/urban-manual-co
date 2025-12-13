@@ -1,27 +1,17 @@
 /**
  * Trip Domain Model
  *
- * A clean domain model for trip planning with:
- * - Multi-city trips with explicit city-to-date mapping
- * - Hotel "stays" spanning date ranges (not individual nights)
- * - Flight and train legs as explicit segments
- * - Per-day events derived from underlying data (not stored as rows)
+ * Stored entities:
+ * - Trip, City, Stay, Leg, PlaceStop, FreeTime
+ *
+ * Derived events (computed, not stored):
+ * - check-in, check-out, breakfast, departure, arrival, place, lounge, free-time
  *
  * @example
  * ```typescript
- * import {
- *   Trip,
- *   TripAggregate,
- *   deriveTripDays,
- *   deriveTripDayView,
- *   createStay,
- *   isPlaceEvent,
- * } from '@/lib/trip/domain';
+ * import { TripData, deriveDays, isPlaceEvent } from '@/lib/trip/domain';
  *
- * // Derive daily views from a trip aggregate
- * const days = deriveTripDays(tripAggregate);
- *
- * // Filter events by type
+ * const days = deriveDays(tripData);
  * for (const day of days) {
  *   for (const event of day.events) {
  *     if (isPlaceEvent(event)) {
@@ -33,163 +23,137 @@
  */
 
 // =============================================================================
-// Core Domain Types
+// Core Types (Stored Entities)
 // =============================================================================
 
 export type {
-  // Identifiers
-  TripId,
-  StayId,
-  FlightLegId,
-  PlaceVisitId,
-  TripDestinationId,
-  // Value Objects
   ISODate,
-  TimeString,
+  Time,
   Minutes,
-  TimeRange,
-  DateTimePoint,
-  GeoLocation,
-  // Enums/Status
+  DateAndTime,
+  Coords,
   TripStatus,
-  TripSettings,
-  SeatClass,
-  PlaceCategory,
-  FreeTimeType,
-  // Core Entities
-  Traveler,
   Trip,
-  TripDestination,
-  Stay,
+  City,
   StayAmenities,
+  Stay,
+  SeatClass,
   FlightLeg,
-  Airport,
   TrainLeg,
-  PlaceVisit,
+  Leg,
+  PlaceCategory,
   Reservation,
-  FreeTimeBlock,
-  // Aggregates
-  TripAggregate,
+  PlaceStop,
+  FreeTimeKind,
+  FreeTime,
+  TripData,
 } from "./types";
 
 export {
-  DEFAULT_TRIP_SETTINGS,
-  DEFAULT_STAY_AMENITIES,
-  // Factory functions
   createTrip,
-  createTripDestination,
+  createCity,
   createStay,
   createFlightLeg,
-  createPlaceVisit,
-  createFreeTimeBlock,
+  createTrainLeg,
+  createPlaceStop,
+  createFreeTime,
+  isFlightLeg,
+  isTrainLeg,
 } from "./types";
 
 // =============================================================================
-// Derived View Types
+// Derived Types (Computed Views)
 // =============================================================================
 
 export type {
-  // Event types
-  DayEvent,
-  FlightDepartureEvent,
-  FlightArrivalEvent,
-  TrainDepartureEvent,
-  TrainArrivalEvent,
   CheckInEvent,
   CheckOutEvent,
   BreakfastEvent,
   LoungeEvent,
+  DepartureEvent,
+  ArrivalEvent,
   PlaceEvent,
   FreeTimeEvent,
-  TransitEvent,
-  // Day types
-  TripDay,
-  TripDayView,
-  DayMetrics,
+  DayEvent,
   DayWarning,
+  DayMetrics,
+  TripDay,
 } from "./derived";
 
 export {
   // Time utilities
-  timeToMinutes,
-  minutesToTime,
-  calculateDuration,
-  addMinutesToTime,
-  subtractMinutesFromTime,
+  timeToMins,
+  minsToTime,
+  addMins,
+  subMins,
+  durationMins,
   getDateRange,
-  getDayNumber,
-  // Derivation functions
-  deriveTripDays,
-  deriveTripDayView,
-  getEventsForDay,
-  deriveNightStays,
-  // Type guards for events
-  isFlightDepartureEvent,
-  isFlightArrivalEvent,
-  isTrainDepartureEvent,
-  isTrainArrivalEvent,
+  dayNumber,
+  // Derivation
+  deriveDays,
+  getEventsForDate,
+  getNightStays,
+  // Type guards
   isCheckInEvent,
   isCheckOutEvent,
   isBreakfastEvent,
   isLoungeEvent,
+  isDepartureEvent,
+  isArrivalEvent,
   isPlaceEvent,
   isFreeTimeEvent,
-  isTransitEvent,
-  isTransportEvent,
-  isStayEvent,
 } from "./derived";
 
 // =============================================================================
-// Utility Functions
+// Utilities
 // =============================================================================
 
 export type { ValidationError, TripSummary } from "./utils";
 
 export {
   // Trip queries
-  getTripNights,
-  getTripCities,
-  isMultiCityTrip,
-  getCurrentDestination,
+  tripNights,
+  tripCities,
+  isMultiCity,
+  cityForDate,
   // Stay queries
-  getCoveredNights,
-  getUncoveredNights,
-  hasStayForNight,
-  getTotalHotelCost,
-  getStaysWithAmenity,
-  // Flight queries
-  getFlightConnections,
-  getFlightsWithLounge,
-  getTotalFlightCost,
+  coveredNights,
+  uncoveredNights,
+  hasStay,
+  totalStayCost,
+  staysWithAmenity,
+  // Leg queries
+  totalLegCost,
+  flightsWithLounge,
   // Place queries
-  getPlacesByCategory,
-  getPlacesWithReservations,
-  getPlacesForDate,
-  getUnscheduledPlaces,
-  getFlexiblePlaces,
+  placesByCategory,
+  placesWithReservation,
+  placesForDate,
+  unscheduledPlaces,
+  flexiblePlaces,
   // Day queries
-  getDaysWithWarnings,
-  getOverstuffedDays,
-  getDaysWithConflicts,
-  getBusiestDay,
-  getLightestDay,
+  daysWithWarnings,
+  overstuffedDays,
+  conflictDays,
+  busiestDay,
+  lightestDay,
   // Event filtering
-  filterEventsByType,
-  getFixedEvents,
-  getFlexibleEvents,
-  getEventsInTimeRange,
+  eventsByType,
+  fixedEvents,
+  flexibleEvents,
+  eventsInRange,
   // Validation
-  validateTripAggregate,
-  isValidTripAggregate,
-  // Trip manipulation (immutable)
+  validate,
+  isValid,
+  // Mutations (immutable)
   addPlace,
   removePlace,
   updatePlace,
-  movePlaceToDay,
+  movePlace,
   addStay,
   removeStay,
-  addFlight,
-  removeFlight,
+  addLeg,
+  removeLeg,
   // Summary
-  generateTripSummary,
+  summarize,
 } from "./utils";

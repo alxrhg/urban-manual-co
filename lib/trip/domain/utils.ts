@@ -1,312 +1,197 @@
 /**
- * Utility functions for Trip Domain Model
+ * Trip Domain Utilities
  *
- * Helpers for querying, filtering, and manipulating trip data.
+ * Query, validation, and manipulation helpers.
  */
 
 import type {
   Trip,
-  TripAggregate,
-  TripDestination,
+  TripData,
+  City,
   Stay,
-  FlightLeg,
-  TrainLeg,
-  PlaceVisit,
-  FreeTimeBlock,
+  Leg,
+  PlaceStop,
+  FreeTime,
   ISODate,
-  TimeString,
+  Time,
   PlaceCategory,
 } from "./types";
+import { isFlightLeg } from "./types";
 import type { TripDay, DayEvent } from "./derived";
-import { getDateRange, deriveTripDays, timeToMinutes } from "./derived";
+import { getDateRange, deriveDays, timeToMins } from "./derived";
 
 // =============================================================================
 // Trip Queries
 // =============================================================================
 
-/**
- * Get total number of nights in a trip
- */
-export function getTripNights(trip: Trip): number {
-  const dates = getDateRange(trip.startDate, trip.endDate);
-  return dates.length - 1; // Nights = days - 1
+/** Get number of nights in trip */
+export function tripNights(trip: Trip): number {
+  return getDateRange(trip.startDate, trip.endDate).length - 1;
 }
 
-/**
- * Get all cities in a trip (from destinations)
- */
-export function getTripCities(destinations: TripDestination[]): string[] {
-  return destinations.map((d) => d.city);
+/** Get all city names */
+export function tripCities(cities: City[]): string[] {
+  return cities.map((c) => c.name);
 }
 
-/**
- * Check if a trip is multi-city
- */
-export function isMultiCityTrip(destinations: TripDestination[]): boolean {
-  const uniqueCities = new Set(destinations.map((d) => d.city));
-  return uniqueCities.size > 1;
+/** Is this a multi-city trip? */
+export function isMultiCity(cities: City[]): boolean {
+  return new Set(cities.map((c) => c.name)).size > 1;
 }
 
-/**
- * Get the current destination for a given date
- */
-export function getCurrentDestination(
-  date: ISODate,
-  destinations: TripDestination[]
-): TripDestination | undefined {
-  return destinations.find((d) => date >= d.arrivalDate && date <= d.departureDate);
+/** Find city for a given date */
+export function cityForDate(date: ISODate, cities: City[]): City | undefined {
+  return cities.find((c) => date >= c.arrivalDate && date <= c.departureDate);
 }
 
 // =============================================================================
 // Stay Queries
 // =============================================================================
 
-/**
- * Get total nights covered by stays
- */
-export function getCoveredNights(stays: Stay[], trip: Trip): number {
-  const dates = getDateRange(trip.startDate, trip.endDate).slice(0, -1);
-  return dates.filter((date) =>
-    stays.some((s) => s.checkIn.date <= date && s.checkOut.date > date)
-  ).length;
+/** Count nights with hotel booked */
+export function coveredNights(stays: Stay[], trip: Trip): number {
+  const nights = getDateRange(trip.startDate, trip.endDate).slice(0, -1);
+  return nights.filter((d) => stays.some((s) => s.checkIn.date <= d && s.checkOut.date > d)).length;
 }
 
-/**
- * Get nights without a hotel booked
- */
-export function getUncoveredNights(stays: Stay[], trip: Trip): ISODate[] {
-  const dates = getDateRange(trip.startDate, trip.endDate).slice(0, -1);
-  return dates.filter(
-    (date) => !stays.some((s) => s.checkIn.date <= date && s.checkOut.date > date)
-  );
+/** Get dates without hotel */
+export function uncoveredNights(stays: Stay[], trip: Trip): ISODate[] {
+  const nights = getDateRange(trip.startDate, trip.endDate).slice(0, -1);
+  return nights.filter((d) => !stays.some((s) => s.checkIn.date <= d && s.checkOut.date > d));
 }
 
-/**
- * Check if a specific night has a stay booked
- */
-export function hasStayForNight(date: ISODate, stays: Stay[]): boolean {
+/** Does this night have a hotel? */
+export function hasStay(date: ISODate, stays: Stay[]): boolean {
   return stays.some((s) => s.checkIn.date <= date && s.checkOut.date > date);
 }
 
-/**
- * Get total hotel cost for a trip
- */
-export function getTotalHotelCost(stays: Stay[]): { amount: number; currency: string }[] {
-  const costsByCurrency = new Map<string, number>();
-
-  for (const stay of stays) {
-    if (stay.pricePerNight && stay.currency) {
-      const nights = getDateRange(stay.checkIn.date, stay.checkOut.date).length - 1;
-      const current = costsByCurrency.get(stay.currency) ?? 0;
-      costsByCurrency.set(stay.currency, current + stay.pricePerNight * nights);
+/** Total hotel cost by currency */
+export function totalStayCost(stays: Stay[]): Array<{ amount: number; currency: string }> {
+  const byCurrency = new Map<string, number>();
+  for (const s of stays) {
+    if (s.pricePerNight && s.currency) {
+      const nights = getDateRange(s.checkIn.date, s.checkOut.date).length - 1;
+      byCurrency.set(s.currency, (byCurrency.get(s.currency) ?? 0) + s.pricePerNight * nights);
     }
   }
-
-  return Array.from(costsByCurrency.entries()).map(([currency, amount]) => ({
-    amount,
-    currency,
-  }));
+  return Array.from(byCurrency, ([currency, amount]) => ({ amount, currency }));
 }
 
-/**
- * Get stays with specific amenity
- */
-export function getStaysWithAmenity(
-  stays: Stay[],
-  amenity: keyof Stay["amenities"]
-): Stay[] {
+/** Stays with specific amenity */
+export function staysWithAmenity(stays: Stay[], amenity: keyof Stay["amenities"]): Stay[] {
   return stays.filter((s) => s.amenities[amenity]);
 }
 
 // =============================================================================
-// Flight Queries
+// Leg Queries
 // =============================================================================
 
-/**
- * Get flights grouped by connection (same connectionGroupId)
- */
-export function getFlightConnections(
-  flights: FlightLeg[]
-): Map<string, FlightLeg[]> {
-  const connections = new Map<string, FlightLeg[]>();
-
-  for (const flight of flights) {
-    const groupId = flight.connectionGroupId ?? flight.id;
-    const existing = connections.get(groupId) ?? [];
-    connections.set(groupId, [...existing, flight]);
-  }
-
-  // Sort each group by leg order
-  for (const [groupId, legs] of connections) {
-    connections.set(
-      groupId,
-      legs.sort((a, b) => (a.legOrder ?? 0) - (b.legOrder ?? 0))
-    );
-  }
-
-  return connections;
-}
-
-/**
- * Get all flights with lounge access
- */
-export function getFlightsWithLounge(flights: FlightLeg[]): FlightLeg[] {
-  return flights.filter((f) => f.loungeAccess);
-}
-
-/**
- * Get total flight cost
- */
-export function getTotalFlightCost(flights: FlightLeg[]): { amount: number; currency: string }[] {
-  const costsByCurrency = new Map<string, number>();
-
-  for (const flight of flights) {
-    if (flight.price && flight.currency) {
-      const current = costsByCurrency.get(flight.currency) ?? 0;
-      costsByCurrency.set(flight.currency, current + flight.price);
+/** Total transport cost by currency */
+export function totalLegCost(legs: Leg[]): Array<{ amount: number; currency: string }> {
+  const byCurrency = new Map<string, number>();
+  for (const leg of legs) {
+    if (leg.price && leg.currency) {
+      byCurrency.set(leg.currency, (byCurrency.get(leg.currency) ?? 0) + leg.price);
     }
   }
+  return Array.from(byCurrency, ([currency, amount]) => ({ amount, currency }));
+}
 
-  return Array.from(costsByCurrency.entries()).map(([currency, amount]) => ({
-    amount,
-    currency,
-  }));
+/** Flights with lounge access */
+export function flightsWithLounge(legs: Leg[]): Leg[] {
+  return legs.filter((l) => isFlightLeg(l) && l.loungeAccess);
 }
 
 // =============================================================================
-// Place Queries
+// PlaceStop Queries
 // =============================================================================
 
-/**
- * Get places by category
- */
-export function getPlacesByCategory(
-  places: PlaceVisit[],
-  category: PlaceCategory
-): PlaceVisit[] {
+/** Places by category */
+export function placesByCategory(places: PlaceStop[], category: PlaceCategory): PlaceStop[] {
   return places.filter((p) => p.category === category);
 }
 
-/**
- * Get places with reservations
- */
-export function getPlacesWithReservations(places: PlaceVisit[]): PlaceVisit[] {
-  return places.filter((p) => p.reservation != null);
+/** Places with reservations */
+export function placesWithReservation(places: PlaceStop[]): PlaceStop[] {
+  return places.filter((p) => p.reservation);
 }
 
-/**
- * Get places for a specific date
- */
-export function getPlacesForDate(places: PlaceVisit[], date: ISODate): PlaceVisit[] {
+/** Places for a specific date */
+export function placesForDate(places: PlaceStop[], date: ISODate): PlaceStop[] {
   return places.filter((p) => p.date === date);
 }
 
-/**
- * Get unscheduled places (no time set)
- */
-export function getUnscheduledPlaces(places: PlaceVisit[]): PlaceVisit[] {
+/** Unscheduled places (no time) */
+export function unscheduledPlaces(places: PlaceStop[]): PlaceStop[] {
   return places.filter((p) => !p.startTime && !p.reservation?.time);
 }
 
-/**
- * Get flexible places that can be moved
- */
-export function getFlexiblePlaces(places: PlaceVisit[]): PlaceVisit[] {
-  return places.filter((p) => p.isFlexible);
+/** Flexible places (can be rescheduled) */
+export function flexiblePlaces(places: PlaceStop[]): PlaceStop[] {
+  return places.filter((p) => p.flexible);
 }
 
 // =============================================================================
 // Day Queries
 // =============================================================================
 
-/**
- * Get days with warnings
- */
-export function getDaysWithWarnings(days: TripDay[]): TripDay[] {
+/** Days with any warnings */
+export function daysWithWarnings(days: TripDay[]): TripDay[] {
   return days.filter((d) => d.metrics.warnings.length > 0);
 }
 
-/**
- * Get overstuffed days
- */
-export function getOverstuffedDays(days: TripDay[]): TripDay[] {
-  return days.filter((d) => d.metrics.isOverstuffed);
+/** Overstuffed days */
+export function overstuffedDays(days: TripDay[]): TripDay[] {
+  return days.filter((d) => d.metrics.overstuffed);
 }
 
-/**
- * Get days with time conflicts
- */
-export function getDaysWithConflicts(days: TripDay[]): TripDay[] {
-  return days.filter((d) =>
-    d.metrics.warnings.some((w) => w.type === "time_conflict")
-  );
+/** Days with time conflicts */
+export function conflictDays(days: TripDay[]): TripDay[] {
+  return days.filter((d) => d.metrics.warnings.some((w) => w.type === "conflict"));
 }
 
-/**
- * Get busiest day (most scheduled minutes)
- */
-export function getBusiestDay(days: TripDay[]): TripDay | undefined {
-  if (days.length === 0) return undefined;
-  return days.reduce((busiest, day) =>
-    day.metrics.scheduledMinutes > busiest.metrics.scheduledMinutes ? day : busiest
-  );
+/** Busiest day */
+export function busiestDay(days: TripDay[]): TripDay | undefined {
+  if (!days.length) return undefined;
+  return days.reduce((max, d) => (d.metrics.scheduledMins > max.metrics.scheduledMins ? d : max));
 }
 
-/**
- * Get lightest day (fewest scheduled minutes)
- */
-export function getLightestDay(days: TripDay[]): TripDay | undefined {
-  if (days.length === 0) return undefined;
-  return days.reduce((lightest, day) =>
-    day.metrics.scheduledMinutes < lightest.metrics.scheduledMinutes ? day : lightest
-  );
+/** Lightest day */
+export function lightestDay(days: TripDay[]): TripDay | undefined {
+  if (!days.length) return undefined;
+  return days.reduce((min, d) => (d.metrics.scheduledMins < min.metrics.scheduledMins ? d : min));
 }
 
 // =============================================================================
 // Event Filtering
 // =============================================================================
 
-/**
- * Filter events by type
- */
-export function filterEventsByType<T extends DayEvent["type"]>(
+/** Filter events by type */
+export function eventsByType<T extends DayEvent["type"]>(
   events: DayEvent[],
   type: T
 ): Extract<DayEvent, { type: T }>[] {
   return events.filter((e) => e.type === type) as Extract<DayEvent, { type: T }>[];
 }
 
-/**
- * Get fixed events only
- */
-export function getFixedEvents(events: DayEvent[]): DayEvent[] {
-  return events.filter((e) => e.isFixed);
+/** Fixed events only */
+export function fixedEvents(events: DayEvent[]): DayEvent[] {
+  return events.filter((e) => e.fixed);
 }
 
-/**
- * Get flexible events only
- */
-export function getFlexibleEvents(events: DayEvent[]): DayEvent[] {
-  return events.filter((e) => !e.isFixed);
+/** Flexible events only */
+export function flexibleEvents(events: DayEvent[]): DayEvent[] {
+  return events.filter((e) => !e.fixed);
 }
 
-/**
- * Get events within a time range
- */
-export function getEventsInTimeRange(
-  events: DayEvent[],
-  startTime: TimeString,
-  endTime: TimeString
-): DayEvent[] {
-  const start = timeToMinutes(startTime);
-  const end = timeToMinutes(endTime);
-
-  return events.filter((e) => {
-    const eventStart = timeToMinutes(e.startTime);
-    const eventEnd = timeToMinutes(e.endTime);
-    // Event overlaps with range if event doesn't end before range starts
-    // and doesn't start after range ends
-    return eventEnd > start && eventStart < end;
+/** Events in time range */
+export function eventsInRange(events: DayEvent[], start: Time, end: Time): DayEvent[] {
+  const s = timeToMins(start);
+  const e = timeToMins(end);
+  return events.filter((ev) => {
+    const evStart = timeToMins(ev.startTime);
+    const evEnd = timeToMins(ev.endTime);
+    return evEnd > s && evStart < e;
   });
 }
 
@@ -318,258 +203,144 @@ export interface ValidationError {
   type: string;
   message: string;
   entityId?: string;
-  field?: string;
 }
 
-/**
- * Validate a trip aggregate for common issues
- */
-export function validateTripAggregate(aggregate: TripAggregate): ValidationError[] {
+/** Validate trip data */
+export function validate(data: TripData): ValidationError[] {
   const errors: ValidationError[] = [];
+  const { trip, cities, stays, legs, places } = data;
 
   // Trip dates
-  if (aggregate.trip.startDate > aggregate.trip.endDate) {
-    errors.push({
-      type: "invalid_dates",
-      message: "Trip end date must be after start date",
-      field: "endDate",
-    });
+  if (trip.startDate > trip.endDate) {
+    errors.push({ type: "dates", message: "End date before start date" });
   }
 
-  // Destinations coverage
-  const tripDates = getDateRange(aggregate.trip.startDate, aggregate.trip.endDate);
-  for (const date of tripDates) {
-    const destination = aggregate.destinations.find(
-      (d) => date >= d.arrivalDate && date <= d.departureDate
-    );
-    if (!destination) {
-      errors.push({
-        type: "uncovered_date",
-        message: `No destination assigned for ${date}`,
-        field: "destinations",
-      });
+  // City coverage
+  const dates = getDateRange(trip.startDate, trip.endDate);
+  for (const date of dates) {
+    if (!cities.find((c) => date >= c.arrivalDate && date <= c.departureDate)) {
+      errors.push({ type: "city_gap", message: `No city for ${date}` });
     }
   }
 
-  // Stay validation
-  for (const stay of aggregate.stays) {
+  // Stay dates
+  for (const stay of stays) {
     if (stay.checkIn.date > stay.checkOut.date) {
-      errors.push({
-        type: "invalid_stay_dates",
-        message: `Stay "${stay.name}" has check-out before check-in`,
-        entityId: stay.id,
-      });
+      errors.push({ type: "stay_dates", message: `${stay.name}: checkout before checkin`, entityId: stay.id });
     }
-    if (stay.checkIn.date < aggregate.trip.startDate) {
-      errors.push({
-        type: "stay_outside_trip",
-        message: `Stay "${stay.name}" check-in is before trip starts`,
-        entityId: stay.id,
-      });
-    }
-    if (stay.checkOut.date > aggregate.trip.endDate) {
-      errors.push({
-        type: "stay_outside_trip",
-        message: `Stay "${stay.name}" check-out is after trip ends`,
-        entityId: stay.id,
-      });
+    if (stay.checkIn.date < trip.startDate || stay.checkOut.date > trip.endDate) {
+      errors.push({ type: "stay_range", message: `${stay.name}: outside trip dates`, entityId: stay.id });
     }
   }
 
-  // Flight validation
-  for (const flight of aggregate.flights) {
-    const depDate = flight.departure.dateTime.date;
-    const arrDate = flight.arrival.dateTime.date;
-    if (depDate < aggregate.trip.startDate || arrDate > aggregate.trip.endDate) {
-      errors.push({
-        type: "flight_outside_trip",
-        message: `Flight ${flight.flightNumber} is outside trip dates`,
-        entityId: flight.id,
-      });
+  // Leg dates
+  for (const leg of legs) {
+    const dep = leg.departure.dateTime.date;
+    const arr = leg.arrival.dateTime.date;
+    if (dep < trip.startDate || arr > trip.endDate) {
+      errors.push({ type: "leg_range", message: `${leg.number}: outside trip dates`, entityId: leg.id });
     }
   }
 
-  // Place validation
-  for (const place of aggregate.places) {
-    if (place.date < aggregate.trip.startDate || place.date > aggregate.trip.endDate) {
-      errors.push({
-        type: "place_outside_trip",
-        message: `Place "${place.title}" is scheduled outside trip dates`,
-        entityId: place.id,
-      });
+  // Place dates
+  for (const place of places) {
+    if (place.date < trip.startDate || place.date > trip.endDate) {
+      errors.push({ type: "place_range", message: `${place.title}: outside trip dates`, entityId: place.id });
     }
   }
 
   return errors;
 }
 
-/**
- * Check if a trip aggregate is valid
- */
-export function isValidTripAggregate(aggregate: TripAggregate): boolean {
-  return validateTripAggregate(aggregate).length === 0;
+/** Is trip data valid? */
+export function isValid(data: TripData): boolean {
+  return validate(data).length === 0;
 }
 
 // =============================================================================
-// Trip Manipulation
+// Immutable Updates
 // =============================================================================
 
-/**
- * Add a place to a trip aggregate (immutable)
- */
-export function addPlace(
-  aggregate: TripAggregate,
-  place: PlaceVisit
-): TripAggregate {
+/** Add a place */
+export function addPlace(data: TripData, place: PlaceStop): TripData {
+  return { ...data, places: [...data.places, place] };
+}
+
+/** Remove a place */
+export function removePlace(data: TripData, placeId: string): TripData {
+  return { ...data, places: data.places.filter((p) => p.id !== placeId) };
+}
+
+/** Update a place */
+export function updatePlace(data: TripData, placeId: string, updates: Partial<PlaceStop>): TripData {
   return {
-    ...aggregate,
-    places: [...aggregate.places, place],
+    ...data,
+    places: data.places.map((p) => (p.id === placeId ? { ...p, ...updates } : p)),
   };
 }
 
-/**
- * Remove a place from a trip aggregate (immutable)
- */
-export function removePlace(
-  aggregate: TripAggregate,
-  placeId: string
-): TripAggregate {
-  return {
-    ...aggregate,
-    places: aggregate.places.filter((p) => p.id !== placeId),
-  };
+/** Move place to different day */
+export function movePlace(data: TripData, placeId: string, newDate: ISODate, newTime?: Time): TripData {
+  return updatePlace(data, placeId, { date: newDate, startTime: newTime });
 }
 
-/**
- * Update a place in a trip aggregate (immutable)
- */
-export function updatePlace(
-  aggregate: TripAggregate,
-  placeId: string,
-  updates: Partial<PlaceVisit>
-): TripAggregate {
-  return {
-    ...aggregate,
-    places: aggregate.places.map((p) =>
-      p.id === placeId ? { ...p, ...updates } : p
-    ),
-  };
+/** Add a stay */
+export function addStay(data: TripData, stay: Stay): TripData {
+  return { ...data, stays: [...data.stays, stay] };
 }
 
-/**
- * Move a place to a different day
- */
-export function movePlaceToDay(
-  aggregate: TripAggregate,
-  placeId: string,
-  newDate: ISODate,
-  newStartTime?: TimeString
-): TripAggregate {
-  return updatePlace(aggregate, placeId, {
-    date: newDate,
-    startTime: newStartTime,
-  });
+/** Remove a stay */
+export function removeStay(data: TripData, stayId: string): TripData {
+  return { ...data, stays: data.stays.filter((s) => s.id !== stayId) };
 }
 
-/**
- * Add a stay to a trip aggregate (immutable)
- */
-export function addStay(aggregate: TripAggregate, stay: Stay): TripAggregate {
-  return {
-    ...aggregate,
-    stays: [...aggregate.stays, stay],
-  };
+/** Add a leg */
+export function addLeg(data: TripData, leg: Leg): TripData {
+  return { ...data, legs: [...data.legs, leg] };
 }
 
-/**
- * Remove a stay from a trip aggregate (immutable)
- */
-export function removeStay(
-  aggregate: TripAggregate,
-  stayId: string
-): TripAggregate {
-  return {
-    ...aggregate,
-    stays: aggregate.stays.filter((s) => s.id !== stayId),
-  };
-}
-
-/**
- * Add a flight to a trip aggregate (immutable)
- */
-export function addFlight(
-  aggregate: TripAggregate,
-  flight: FlightLeg
-): TripAggregate {
-  return {
-    ...aggregate,
-    flights: [...aggregate.flights, flight],
-  };
-}
-
-/**
- * Remove a flight from a trip aggregate (immutable)
- */
-export function removeFlight(
-  aggregate: TripAggregate,
-  flightId: string
-): TripAggregate {
-  return {
-    ...aggregate,
-    flights: aggregate.flights.filter((f) => f.id !== flightId),
-  };
+/** Remove a leg */
+export function removeLeg(data: TripData, legId: string): TripData {
+  return { ...data, legs: data.legs.filter((l) => l.id !== legId) };
 }
 
 // =============================================================================
-// Summary Generation
+// Summary
 // =============================================================================
 
 export interface TripSummary {
   title: string;
   cities: string[];
-  dateRange: { start: ISODate; end: ISODate };
-  duration: { days: number; nights: number };
-  totalFlights: number;
-  totalTrains: number;
-  totalStays: number;
-  totalPlaces: number;
-  placesWithReservations: number;
-  hasUncoveredNights: boolean;
-  uncoveredNightCount: number;
-  hasWarnings: boolean;
-  warningCount: number;
+  dates: { start: ISODate; end: ISODate };
+  days: number;
+  nights: number;
+  flights: number;
+  trains: number;
+  stays: number;
+  places: number;
+  reservations: number;
+  uncoveredNights: number;
+  warnings: number;
 }
 
-/**
- * Generate a summary of a trip
- */
-export function generateTripSummary(aggregate: TripAggregate): TripSummary {
-  const days = deriveTripDays(aggregate);
-  const uncoveredNights = getUncoveredNights(aggregate.stays, aggregate.trip);
-  const daysWithWarnings = getDaysWithWarnings(days);
+/** Generate trip summary */
+export function summarize(data: TripData): TripSummary {
+  const days = deriveDays(data);
+  const uncovered = uncoveredNights(data.stays, data.trip);
+  const warnings = daysWithWarnings(days);
 
   return {
-    title: aggregate.trip.title,
-    cities: getTripCities(aggregate.destinations),
-    dateRange: {
-      start: aggregate.trip.startDate,
-      end: aggregate.trip.endDate,
-    },
-    duration: {
-      days: days.length,
-      nights: getTripNights(aggregate.trip),
-    },
-    totalFlights: aggregate.flights.length,
-    totalTrains: aggregate.trains.length,
-    totalStays: aggregate.stays.length,
-    totalPlaces: aggregate.places.length,
-    placesWithReservations: getPlacesWithReservations(aggregate.places).length,
-    hasUncoveredNights: uncoveredNights.length > 0,
-    uncoveredNightCount: uncoveredNights.length,
-    hasWarnings: daysWithWarnings.length > 0,
-    warningCount: daysWithWarnings.reduce(
-      (sum, d) => sum + d.metrics.warnings.length,
-      0
-    ),
+    title: data.trip.title,
+    cities: tripCities(data.cities),
+    dates: { start: data.trip.startDate, end: data.trip.endDate },
+    days: days.length,
+    nights: tripNights(data.trip),
+    flights: data.legs.filter((l) => l.type === "flight").length,
+    trains: data.legs.filter((l) => l.type === "train").length,
+    stays: data.stays.length,
+    places: data.places.length,
+    reservations: placesWithReservation(data.places).length,
+    uncoveredNights: uncovered.length,
+    warnings: warnings.reduce((sum, d) => sum + d.metrics.warnings.length, 0),
   };
 }
