@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminNav } from './AdminNav';
+import { AdminCommandPalette, CommandPaletteButton } from './AdminCommandPalette';
 
 export default function AdminLayoutShell({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -40,15 +41,21 @@ export default function AdminLayoutShell({ children }: { children: ReactNode }) 
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-light">Admin</h1>
-            <Link
-              href="/"
-              className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
-            >
-              Exit
-            </Link>
+            <div className="flex items-center gap-4">
+              <CommandPaletteButton />
+              <Link
+                href="/"
+                className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+              >
+                Exit
+              </Link>
+            </div>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
         </div>
+
+        {/* Command Palette */}
+        <AdminCommandPalette />
 
         {/* Tab Navigation - Matches account page */}
         <div className="mb-12">

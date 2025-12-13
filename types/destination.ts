@@ -1,9 +1,13 @@
+export type DestinationStatus = 'draft' | 'published' | 'scheduled';
+
 export interface Destination {
   id?: number; // Database primary key
   slug: string;
   name: string;
   city: string;
   country?: string;
+  status?: DestinationStatus; // Content status
+  scheduled_at?: string | null; // Scheduled publish date
   neighborhood?: string | null; // Specific neighborhood within city
   category: string;
   micro_description?: string; // Short 1-line description for cards

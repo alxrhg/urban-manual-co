@@ -2,10 +2,28 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, X, Eye, EyeOff, Clock, AlertCircle } from 'lucide-react';
 import { htmlToPlainText } from '@/lib/sanitize';
+import { z } from 'zod';
 import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
-import type { Destination } from '@/types/destination';
+import { RichTextEditor } from '@/components/admin/RichTextEditor';
+import { Badge } from '@/components/ui/badge';
+import type { Destination, DestinationStatus } from '@/types/destination';
+
+// Zod validation schema
+const destinationSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(200, 'Name is too long'),
+  slug: z.string().min(1, 'Slug is required').regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only'),
+  city: z.string().min(1, 'City is required'),
+  category: z.string().min(1, 'Category is required'),
+  description: z.string().optional(),
+  content: z.string().optional(),
+  image: z.string().url('Invalid image URL').optional().or(z.literal('')),
+  michelin_stars: z.number().min(0).max(3).nullable().optional(),
+  crown: z.boolean().optional(),
+  status: z.enum(['draft', 'published', 'scheduled']).optional(),
+  scheduled_at: z.string().nullable().optional(),
+});
 
 interface Toast {
   success: (message: string) => void;
@@ -35,12 +53,14 @@ export function DestinationForm({
     name: destination?.name || '',
     city: destination?.city || '',
     category: destination?.category || '',
-    description: htmlToPlainText(destination?.description || ''),
-    content: htmlToPlainText(destination?.content || ''),
+    description: destination?.description || '',
+    content: destination?.content || '',
     image: destination?.image || '',
     michelin_stars: destination?.michelin_stars || null,
     crown: destination?.crown || false,
     parent_destination_id: destination?.parent_destination_id || null,
+    status: (destination?.status || 'published') as DestinationStatus,
+    scheduled_at: destination?.scheduled_at || null,
   });
   const [parentSearchQuery, setParentSearchQuery] = useState('');
   const [parentSearchResults, setParentSearchResults] = useState<Destination[]>([]);
@@ -51,6 +71,8 @@ export function DestinationForm({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [fetchingGoogle, setFetchingGoogle] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [useRichText, setUseRichText] = useState(true);
 
   // Update form when destination changes
   useEffect(() => {
@@ -60,15 +82,18 @@ export function DestinationForm({
         name: destination.name || '',
         city: destination.city || '',
         category: destination.category || '',
-        description: htmlToPlainText(destination.description || ''),
-        content: htmlToPlainText(destination.content || ''),
+        description: destination.description || '',
+        content: destination.content || '',
         image: destination.image || '',
         michelin_stars: destination.michelin_stars || null,
         crown: destination.crown || false,
         parent_destination_id: destination.parent_destination_id || null,
+        status: (destination.status || 'published') as DestinationStatus,
+        scheduled_at: destination.scheduled_at || null,
       });
       setImagePreview(destination.image || null);
       setImageFile(null);
+      setValidationErrors({});
       
       // Load parent destination if editing
       if (destination.parent_destination_id) {
@@ -109,10 +134,13 @@ export function DestinationForm({
         michelin_stars: null,
         crown: false,
         parent_destination_id: null,
+        status: 'draft' as DestinationStatus,
+        scheduled_at: null,
       });
       setImagePreview(null);
       setImageFile(null);
       setSelectedParent(null);
+      setValidationErrors({});
     }
   }, [destination]);
 
@@ -309,7 +337,25 @@ export function DestinationForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setValidationErrors({});
+
+    // Validate with Zod
+    const validationResult = destinationSchema.safeParse({
+      ...formData,
+      michelin_stars: formData.michelin_stars ? Number(formData.michelin_stars) : null,
+    });
+
+    if (!validationResult.success) {
+      const errors: Record<string, string> = {};
+      validationResult.error.issues.forEach((issue) => {
+        const path = issue.path.join('.');
+        errors[path] = issue.message;
+      });
+      setValidationErrors(errors);
+      toast.error('Please fix the validation errors');
+      return;
+    }
+
     let imageUrl = formData.image;
     if (imageFile) {
       const uploadedUrl = await uploadImage();
@@ -320,11 +366,13 @@ export function DestinationForm({
       }
     }
 
-    const data: any = {
+    const data: Partial<Destination> = {
       ...formData,
       image: imageUrl,
-      michelin_stars: formData.michelin_stars ? Number(formData.michelin_stars) : null,
-      parent_destination_id: selectedParent?.id || null,
+      michelin_stars: formData.michelin_stars ? Number(formData.michelin_stars) : undefined,
+      parent_destination_id: selectedParent?.id || undefined,
+      status: formData.status,
+      scheduled_at: formData.status === 'scheduled' ? formData.scheduled_at : undefined,
     };
     await onSave(data);
   };
@@ -636,9 +684,79 @@ export function DestinationForm({
         </div>
       </div>
 
+      {/* Status Section */}
+      <div className="border-b border-gray-200 dark:border-gray-800 pb-4">
+        <h3 className="text-lg font-semibold mb-4">Publishing Status</h3>
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, status: 'draft' })}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                formData.status === 'draft'
+                  ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-400'
+                  : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+              }`}
+            >
+              <EyeOff className="w-4 h-4" />
+              <span>Draft</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, status: 'published' })}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                formData.status === 'published'
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700 text-green-700 dark:text-green-400'
+                  : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+              }`}
+            >
+              <Eye className="w-4 h-4" />
+              <span>Published</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, status: 'scheduled' })}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                formData.status === 'scheduled'
+                  ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-400'
+                  : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+              }`}
+            >
+              <Clock className="w-4 h-4" />
+              <span>Scheduled</span>
+            </button>
+          </div>
+          {formData.status === 'scheduled' && (
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Publish Date & Time</label>
+              <input
+                type="datetime-local"
+                value={formData.scheduled_at?.slice(0, 16) || ''}
+                onChange={(e) => setFormData({ ...formData, scheduled_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          )}
+          <p className="text-xs text-gray-500">
+            {formData.status === 'draft' && 'This destination is not visible to users.'}
+            {formData.status === 'published' && 'This destination is visible to all users.'}
+            {formData.status === 'scheduled' && 'This destination will be published at the scheduled time.'}
+          </p>
+        </div>
+      </div>
+
       {/* Content Section */}
       <div className="border-b border-gray-200 dark:border-gray-800 pb-4">
-        <h3 className="text-lg font-semibold mb-4">Content</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Content</h3>
+          <button
+            type="button"
+            onClick={() => setUseRichText(!useRichText)}
+            className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+          >
+            {useRichText ? 'Switch to Plain Text' : 'Switch to Rich Text'}
+          </button>
+        </div>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1.5">Short Description</label>
@@ -649,16 +767,34 @@ export function DestinationForm({
               className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800 outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               placeholder="A brief, punchy description (1-2 sentences)"
             />
+            {validationErrors.description && (
+              <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {validationErrors.description}
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">Full Content</label>
-            <textarea
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              rows={8}
-              className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800 outline-none focus:ring-2 focus:ring-blue-500 resize-y"
-              placeholder="A detailed description of the destination, what makes it special, atmosphere, best time to visit, etc."
-            />
+            {useRichText ? (
+              <RichTextEditor
+                content={formData.content}
+                onChange={(content) => setFormData({ ...formData, content })}
+                placeholder="A detailed description of the destination, what makes it special, atmosphere, best time to visit, etc."
+              />
+            ) : (
+              <textarea
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                rows={8}
+                className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800 outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                placeholder="A detailed description of the destination, what makes it special, atmosphere, best time to visit, etc."
+              />
+            )}
+            {validationErrors.content && (
+              <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {validationErrors.content}
+              </p>
+            )}
           </div>
         </div>
       </div>

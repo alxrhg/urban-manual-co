@@ -30,9 +30,13 @@ import {
   FileText,
   Tag,
   Calendar,
+  Eye,
+  EyeOff,
+  Clock,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import type { Destination } from '@/types/destination';
+import type { Destination, DestinationStatus } from '@/types/destination';
+import { InlineEditCell } from '@/components/admin/InlineEditCell';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -827,6 +831,7 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
           handleSort={handleSort}
           sortField={sortField}
           sortOrder={sortOrder}
+          onRefresh={fetchDestinations}
         />
       )}
 
@@ -886,6 +891,32 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
   );
 }
 
+// Status badge component
+function StatusBadge({ status }: { status?: DestinationStatus }) {
+  if (!status || status === 'published') {
+    return (
+      <Badge variant="success" className="text-[10px] gap-1">
+        <Eye className="w-3 h-3" />
+        Published
+      </Badge>
+    );
+  }
+  if (status === 'draft') {
+    return (
+      <Badge variant="secondary" className="text-[10px] gap-1 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+        <EyeOff className="w-3 h-3" />
+        Draft
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="secondary" className="text-[10px] gap-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+      <Clock className="w-3 h-3" />
+      Scheduled
+    </Badge>
+  );
+}
+
 // Table View Component
 function TableView({
   destinations,
@@ -900,6 +931,7 @@ function TableView({
   handleSort,
   sortField,
   sortOrder,
+  onRefresh,
 }: {
   destinations: Destination[];
   selectedItems: Set<number>;
@@ -913,6 +945,7 @@ function TableView({
   handleSort: (field: SortField) => void;
   sortField: SortField;
   sortOrder: SortOrder;
+  onRefresh: () => void;
 }) {
   const SortButton = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <button
@@ -997,13 +1030,26 @@ function TableView({
                 </button>
               </td>
               <td className="px-3 py-3 hidden md:table-cell">
-                <span className="text-sm text-gray-600 dark:text-gray-400">{dest.city}</span>
+                <InlineEditCell
+                  value={dest.city}
+                  destinationId={dest.id!}
+                  field="city"
+                  onUpdate={onRefresh}
+                  className="text-sm text-gray-600 dark:text-gray-400"
+                />
               </td>
               <td className="px-3 py-3 hidden sm:table-cell">
-                <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">{dest.category}</span>
+                <InlineEditCell
+                  value={dest.category}
+                  destinationId={dest.id!}
+                  field="category"
+                  onUpdate={onRefresh}
+                  className="text-xs text-gray-500 dark:text-gray-400 capitalize"
+                />
               </td>
               <td className="px-3 py-3 hidden lg:table-cell">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <StatusBadge status={dest.status} />
                   {dest.last_enriched_at && (
                     <Badge variant="success" className="gap-1 text-[10px]">
                       <Check className="w-3 h-3" />
