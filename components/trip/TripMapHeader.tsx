@@ -81,13 +81,23 @@ export default function TripMapHeader({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Handle marker click
-  const handleMarkerClick = useCallback((item: EnrichedItineraryItem) => {
-    syncMarkerClick(item.id);
-    setActiveItem(item.id);
-    flyToItem(item.id);
-    onMarkerClick?.(item);
-  }, [syncMarkerClick, setActiveItem, flyToItem, onMarkerClick]);
+  // Handle marker click - receives itemId from TimelineLinkedMap
+  const handleMarkerClick = useCallback((itemId: string) => {
+    syncMarkerClick(itemId);
+    setActiveItem(itemId);
+    flyToItem(itemId);
+
+    // Find the item to pass to parent callback
+    if (onMarkerClick) {
+      for (const day of days) {
+        const item = day.items.find(i => i.id === itemId);
+        if (item) {
+          onMarkerClick(item);
+          break;
+        }
+      }
+    }
+  }, [syncMarkerClick, setActiveItem, flyToItem, onMarkerClick, days]);
 
   // Handle map drag to expand/collapse (mobile)
   const handleDragEnd = useCallback((_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
