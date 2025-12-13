@@ -177,7 +177,7 @@ export default function DrawerMount() {
         <Drawer
           isOpen={open}
           onClose={closeDrawer}
-          title="AI Suggestions"
+          title="Suggestions"
           fullScreen={true}
           position="right"
           style={drawerStyle}

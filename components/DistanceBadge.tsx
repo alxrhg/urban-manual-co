@@ -1,6 +1,6 @@
 'use client';
 
-import { Navigation } from 'lucide-react';
+import { InsightChip, InsightText } from '@/components/ui/InsightChip';
 
 interface Props {
   distanceKm: number;
@@ -36,26 +36,20 @@ export function DistanceBadge({ distanceKm, compact = false }: Props) {
 
   if (compact) {
     return (
-      <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
-        <Navigation className="h-3 w-3" />
-        <span>{formatDistance(distanceKm)}</span>
-      </div>
+      <InsightText
+        type="distance"
+        variant="neutral"
+        label={formatDistance(distanceKm)}
+      />
     );
   }
 
   return (
-    <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-full">
-      <Navigation className="h-3 w-3 text-blue-600" />
-      <div className="flex flex-col">
-        <span className="text-xs font-medium text-blue-600">
-          {formatDistance(distanceKm)}
-        </span>
-        {walkingTime && (
-          <span className="text-xs text-blue-500">
-            {walkingTime}
-          </span>
-        )}
-      </div>
-    </div>
+    <InsightChip
+      type="distance"
+      variant="info"
+      label={formatDistance(distanceKm)}
+      sublabel={walkingTime ?? undefined}
+    />
   );
 }

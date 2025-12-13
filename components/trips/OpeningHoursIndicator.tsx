@@ -1,7 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import {
+  InsightText,
+  getHoursVariant,
+  getHoursIcon,
+  getHoursLabel,
+} from '@/components/ui/InsightChip';
 
 interface OpeningHoursIndicatorProps {
   placeId?: string;
@@ -11,6 +16,10 @@ interface OpeningHoursIndicatorProps {
 
 type OpenStatus = 'open' | 'closed' | 'closing_soon' | 'unknown';
 
+/**
+ * OpeningHoursIndicator - Shows open/closed status
+ * Uses standardized InsightText for consistent styling
+ */
 export default function OpeningHoursIndicator({
   placeId,
   scheduledTime,
@@ -46,36 +55,21 @@ export default function OpeningHoursIndicator({
     return null;
   }
 
-  const statusConfig = {
-    open: {
-      icon: <CheckCircle2 className="w-3 h-3" />,
-      text: 'Open',
-      className: 'text-green-600 dark:text-green-400',
-    },
-    closed: {
-      icon: <XCircle className="w-3 h-3" />,
-      text: 'Closed',
-      className: 'text-red-600 dark:text-red-400',
-    },
-    closing_soon: {
-      icon: <AlertCircle className="w-3 h-3" />,
-      text: 'Closing soon',
-      className: 'text-orange-600 dark:text-orange-400',
-    },
-    unknown: {
-      icon: <Clock className="w-3 h-3" />,
-      text: 'Hours unknown',
-      className: 'text-stone-400',
-    },
-  };
-
-  const config = statusConfig[status];
+  const variant = getHoursVariant(status);
+  const icon = getHoursIcon(status);
+  const label = getHoursLabel(status);
 
   return (
-    <div className={`flex items-center gap-1 text-[10px] ${config.className}`}>
-      {config.icon}
-      <span>{config.text}</span>
-      {hours && <span className="text-stone-400 ml-1">({hours})</span>}
+    <div className="flex items-center gap-1">
+      <InsightText
+        type="hours"
+        variant={variant}
+        label={label}
+        icon={icon}
+      />
+      {hours && (
+        <span className="text-[10px] text-gray-400 ml-1">({hours})</span>
+      )}
     </div>
   );
 }

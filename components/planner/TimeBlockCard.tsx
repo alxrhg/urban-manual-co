@@ -67,23 +67,24 @@ const CROWD_COLORS: Record<CrowdLevel, { text: string; bg: string }> = {
   very_high: { text: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/30' },
 };
 
-// Badge styles
+// Badge styles - standardized across app
+// Uses consistent: text-[10px], px-2 py-0.5, rounded-full, w-3 h-3 icons
 const BADGE_STYLES: Record<string, { icon: React.ReactNode; className: string }> = {
   'High Demand': {
     icon: <Users className="w-3 h-3" />,
-    className: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
+    className: 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400',
   },
   'Rainy Day Option': {
     icon: <CloudRain className="w-3 h-3" />,
-    className: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
+    className: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
   },
   'Weather Alert': {
     icon: <AlertTriangle className="w-3 h-3" />,
-    className: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+    className: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
   },
-  'AI Suggested': {
+  'Suggested': {
     icon: <Sparkles className="w-3 h-3" />,
-    className: 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400',
+    className: 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400',
   },
 };
 
