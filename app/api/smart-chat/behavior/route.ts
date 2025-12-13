@@ -11,33 +11,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandling } from '@/lib/errors';
 import { smartConversationEngine, BehaviorSignal } from '@/services/intelligence/smart-conversation-engine';
+import {
+  BehaviorTrackingRequestSchema,
+  createValidationErrorResponse,
+} from '@/lib/schemas/intelligence';
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
   try {
-    const body = await request.json();
-    const {
-      sessionId,
-      type,
-      destinationSlug,
-      context,
-    } = body;
+    // Validate request body with Zod
+    const rawBody = await request.json();
+    const parseResult = BehaviorTrackingRequestSchema.safeParse(rawBody);
 
-    // Validate required fields
-    if (!sessionId || !type || !destinationSlug) {
-      return NextResponse.json({
-        success: false,
-        error: 'Missing required fields: sessionId, type, destinationSlug',
-      }, { status: 400 });
+    if (!parseResult.success) {
+      return NextResponse.json(createValidationErrorResponse(parseResult.error), { status: 400 });
     }
 
-    // Validate signal type
-    const validTypes = ['click', 'save', 'reject', 'hover', 'scroll_past', 'dwell'];
-    if (!validTypes.includes(type)) {
-      return NextResponse.json({
-        success: false,
-        error: `Invalid type. Must be one of: ${validTypes.join(', ')}`,
-      }, { status: 400 });
-    }
+    const { sessionId, type, destinationSlug, context } = parseResult.data;
 
     // Build behavior signal
     const signal: BehaviorSignal = {

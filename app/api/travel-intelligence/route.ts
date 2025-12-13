@@ -25,38 +25,17 @@ import { generateText, generateJSON } from '@/lib/llm';
 import { tasteProfileEvolutionService } from '@/services/intelligence/taste-profile-evolution';
 import { searchRatelimit, memorySearchRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';
 import { unifiedIntelligenceCore, UnifiedContext, AutonomousAction } from '@/services/intelligence/unified-intelligence-core';
+import {
+  TravelIntelligenceRequestSchema,
+  type TravelIntelligenceRequest,
+  type SearchFilters,
+  type ConversationMessage,
+  type GroupPreference,
+  type ItinerarySlot,
+  createValidationErrorResponse,
+} from '@/lib/schemas/intelligence';
 
-// Types
-interface ConversationMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp?: string;
-  metadata?: {
-    intent?: string;
-    filters?: SearchFilters;
-    destinationIds?: number[];
-  };
-}
-
-interface SearchFilters {
-  city?: string | null;
-  category?: string | null;
-  neighborhood?: string | null;
-  priceMin?: number | null;
-  priceMax?: number | null;
-  michelin?: boolean;
-  occasion?: string | null;
-  vibe?: string[];
-  openNow?: boolean;
-}
-
-interface TravelIntelligenceRequest {
-  query: string;
-  conversationHistory?: ConversationMessage[];
-  filters?: SearchFilters;
-  limit?: number;
-}
-
+// ParsedIntent - internal type for query parsing (extends the shared schema)
 interface ParsedIntent {
   searchQuery: string;
   filters: SearchFilters;
@@ -72,20 +51,6 @@ interface ParsedIntent {
   clarificationType?: 'city' | 'category' | 'occasion' | 'price';
   // Collaborative trip planning
   groupPreferences?: GroupPreference[];
-}
-
-interface GroupPreference {
-  person: string; // 'me', 'friend', 'partner', etc.
-  cuisines?: string[];
-  vibes?: string[];
-  priceContext?: 'budget' | 'mid_range' | 'splurge';
-}
-
-interface ItinerarySlot {
-  timeSlot: 'morning' | 'lunch' | 'afternoon' | 'dinner' | 'evening';
-  label: string;
-  category: string;
-  destination?: any;
 }
 
 // Vibe keywords mapping
@@ -809,12 +774,15 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     return createRateLimitResponse('Rate limit exceeded. Please try again later.', limit, remaining, reset);
   }
 
-  const body: TravelIntelligenceRequest = await request.json();
-  const { query, conversationHistory = [], filters: explicitFilters = {}, limit: resultLimit = 20 } = body;
+  // Validate request body with Zod
+  const rawBody = await request.json();
+  const parseResult = TravelIntelligenceRequestSchema.safeParse(rawBody);
 
-  if (!query || query.trim().length === 0) {
-    return NextResponse.json({ error: 'Query is required' }, { status: 400 });
+  if (!parseResult.success) {
+    return NextResponse.json(createValidationErrorResponse(parseResult.error), { status: 400 });
   }
+
+  const { query, conversationHistory, filters: explicitFilters, limit: resultLimit } = parseResult.data;
 
   const supabase = await createServerClient();
   const { data: { session } } = await supabase.auth.getSession();

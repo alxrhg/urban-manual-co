@@ -10,6 +10,10 @@ import { withErrorHandling } from '@/lib/errors';
 import { createServerClient } from '@/lib/supabase/server';
 import { smartConversationEngine } from '@/services/intelligence/smart-conversation-engine';
 import { unifiedIntelligenceCore } from '@/services/intelligence/unified-intelligence-core';
+import {
+  SimilarPlacesRequestSchema,
+  createValidationErrorResponse,
+} from '@/lib/schemas/intelligence';
 
 // ============================================
 // FIND SIMILAR PLACES
@@ -21,20 +25,15 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     const { data: { session: authSession } } = await supabase.auth.getSession();
     const userId = authSession?.user?.id;
 
-    const body = await request.json();
-    const {
-      destinationSlug,
-      destinationName,  // Can search by name if slug not known
-      sessionId,
-      limit = 10,
-    } = body;
+    // Validate request body with Zod
+    const rawBody = await request.json();
+    const parseResult = SimilarPlacesRequestSchema.safeParse(rawBody);
 
-    if (!destinationSlug && !destinationName) {
-      return NextResponse.json({
-        success: false,
-        error: 'Either destinationSlug or destinationName is required',
-      }, { status: 400 });
+    if (!parseResult.success) {
+      return NextResponse.json(createValidationErrorResponse(parseResult.error), { status: 400 });
     }
+
+    const { destinationSlug, destinationName, sessionId, limit } = parseResult.data;
 
     // Get session context
     const session = await smartConversationEngine.getOrCreateSession(sessionId, userId);

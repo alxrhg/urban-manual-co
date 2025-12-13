@@ -21,6 +21,10 @@ import {
   isUpstashConfigured,
   createRateLimitResponse,
 } from '@/lib/rate-limit';
+import {
+  SmartChatRequestSchema,
+  createValidationErrorResponse,
+} from '@/lib/schemas/intelligence';
 
 // ============================================
 // MAIN CHAT ENDPOINT
@@ -33,14 +37,15 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     const { data: { session: authSession } } = await supabase.auth.getSession();
     const userId = authSession?.user?.id;
 
-    // Parse request
-    const body = await request.json();
-    const {
-      message,
-      sessionId,
-      includeProactiveActions = true,
-      maxDestinations = 10,
-    } = body;
+    // Validate request body with Zod
+    const rawBody = await request.json();
+    const parseResult = SmartChatRequestSchema.safeParse(rawBody);
+
+    if (!parseResult.success) {
+      return NextResponse.json(createValidationErrorResponse(parseResult.error), { status: 400 });
+    }
+
+    const { message, sessionId, includeProactiveActions, maxDestinations } = parseResult.data;
 
     // Rate limiting
     const identifier = getIdentifier(request, userId);
@@ -54,14 +59,6 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         remaining,
         reset
       );
-    }
-
-    // Validate message
-    if (!message || message.trim().length < 2) {
-      return NextResponse.json({
-        error: 'Message too short',
-        message: 'Please provide a longer message.',
-      }, { status: 400 });
     }
 
     // Process message through smart conversation engine
