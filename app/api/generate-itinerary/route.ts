@@ -1,6 +1,9 @@
 /**
  * Streaming Itinerary Generation API
  * Provides real-time streaming AI-powered trip recommendations using SSE
+ *
+ * Note: This endpoint returns a streaming Response (not NextResponse) for SSE,
+ * so it uses manual auth handling instead of withOptionalAuth wrapper.
  */
 
 import { NextRequest } from 'next/server';
@@ -16,7 +19,6 @@ import {
   getIdentifier,
   isUpstashConfigured,
 } from '@/lib/rate-limit';
-import { withOptionalAuth } from '@/lib/errors';
 
 // Allow longer AI processing for itinerary generation
 export const maxDuration = 60;
@@ -62,9 +64,18 @@ interface GenerateItineraryRequest {
   tripId?: string;
 }
 
-export const POST = withOptionalAuth(async (request: NextRequest, { user }) => {
+export async function POST(request: NextRequest) {
   const encoder = new TextEncoder();
-  const userId = user?.id;
+
+  // Get user if authenticated (optional auth)
+  let userId: string | undefined;
+  try {
+    const supabase = await createServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    userId = user?.id;
+  } catch {
+    // Auth is optional for this endpoint
+  }
 
   // Rate limiting: 5 requests per 10 seconds
   const identifier = getIdentifier(request, userId);
@@ -274,4 +285,4 @@ Please create a comprehensive day-by-day itinerary following the format specifie
       'Connection': 'keep-alive',
     },
   });
-});
+}
