@@ -91,6 +91,35 @@ export function StaggerContainer({
 }
 
 // ============================================================================
+// Premium Stagger Entry (CSS-based for performance)
+// ============================================================================
+
+interface StaggerEntryProps {
+  children: ReactNode;
+  className?: string;
+  /** Index for stagger delay (0-8) */
+  index?: number;
+}
+
+/**
+ * StaggerEntry - CSS-based stagger animation for lists/nav items
+ * Uses the .stagger-enter and .stagger-enter-{n} classes from globals.css
+ */
+export function StaggerEntry({
+  children,
+  className,
+  index = 0,
+}: StaggerEntryProps) {
+  const staggerClass = `stagger-enter-${Math.min(index, 8)}`;
+
+  return (
+    <div className={cn('stagger-enter', staggerClass, className)}>
+      {children}
+    </div>
+  );
+}
+
+// ============================================================================
 // Scale on Hover
 // ============================================================================
 

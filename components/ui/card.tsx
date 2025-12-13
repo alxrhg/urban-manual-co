@@ -6,15 +6,22 @@ type CardProps = {
   className?: string;
   children?: React.ReactNode;
   onClick?: () => void;
+  /** Enable premium hover lift effect */
+  hover?: boolean;
+  /** Enable glass reflection animation on hover */
+  glassReflection?: boolean;
 };
 
-function Card({ className, children, onClick }: CardProps) {
+function Card({ className, children, onClick, hover = false, glassReflection = false }: CardProps) {
   const baseClasses = cn(
     "rounded-2xl border border-gray-200 dark:border-gray-800",
     "bg-white dark:bg-gray-900",
     "text-gray-900 dark:text-white",
     "overflow-hidden",
-    onClick && "cursor-pointer text-left w-full",
+    // Premium micro-interactions
+    hover && "card-premium-lift hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-700",
+    glassReflection && "card-glass-reflection",
+    onClick && "cursor-pointer text-left w-full active:scale-[0.98] duration-[200ms] [transition-timing-function:cubic-bezier(0.2,0,0,1)]",
     className
   );
 

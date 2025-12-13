@@ -1176,7 +1176,353 @@ html {
 }
 
 /* ============================================================================
-   Microinteraction Animations
+   Premium Micro-Interactions System
+   "Alive but distinct" — animations should be felt, not seen
+   ============================================================================ */
+
+/* Premium easing function - snappy, premium movement */
+:root {
+  --ease-premium: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Transition durations */
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 400ms;
+}
+
+/* ============================================================================
+   Button Micro-Interactions
+   ============================================================================ */
+
+/* Shiny texture hover effect - gradient sheen that passes over on hover */
+@keyframes shinePass {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
+}
+
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shine::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%) skewX(-15deg);
+  pointer-events: none;
+}
+
+.btn-shine:hover::before {
+  animation: shinePass 0.6s var(--ease-premium) forwards;
+}
+
+.dark .btn-shine::before {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+}
+
+/* ============================================================================
+   Card Micro-Interactions
+   ============================================================================ */
+
+/* Premium card lift effect */
+.card-premium-lift {
+  transition: transform var(--duration-normal) var(--ease-premium),
+              box-shadow var(--duration-normal) var(--ease-premium);
+}
+
+.card-premium-lift:hover {
+  transform: translateY(-4px);
+}
+
+/* Glass reflection overlay on hover */
+@keyframes glassReflection {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  50% {
+    opacity: 0.15;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+
+.card-glass-reflection {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-glass-reflection::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    transparent 100%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(100%);
+}
+
+.card-glass-reflection:hover::after {
+  animation: glassReflection 0.5s var(--ease-premium) forwards;
+}
+
+.dark .card-glass-reflection::after {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    transparent 100%
+  );
+}
+
+/* Image zoom within masked container */
+.card-image-zoom {
+  overflow: hidden;
+}
+
+.card-image-zoom img,
+.card-image-zoom .img-inner {
+  transition: transform var(--duration-slow) var(--ease-premium);
+}
+
+.card-image-zoom:hover img,
+.card-image-zoom:hover .img-inner {
+  transform: scale(1.05);
+}
+
+/* ============================================================================
+   Premium Shimmer Skeleton
+   ============================================================================ */
+
+@keyframes premiumShimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: #e5e7eb;
+}
+
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    transparent 40%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 60%,
+    transparent 100%
+  );
+  animation: premiumShimmer 1.5s var(--ease-premium) infinite;
+}
+
+.dark .skeleton-shimmer {
+  background: #374151;
+}
+
+.dark .skeleton-shimmer::after {
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    transparent 40%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 60%,
+    transparent 100%
+  );
+}
+
+/* ============================================================================
+   Image Blur-Up Effect
+   ============================================================================ */
+
+.img-blur-up {
+  filter: blur(20px);
+  opacity: 0.8;
+  transition: filter var(--duration-slow) var(--ease-premium),
+              opacity var(--duration-slow) var(--ease-premium);
+}
+
+.img-blur-up.loaded {
+  filter: blur(0);
+  opacity: 1;
+}
+
+/* ============================================================================
+   Drop Zone Pulse (for drag and drop)
+   ============================================================================ */
+
+@keyframes dropZonePulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+    border-color: rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+    border-color: rgba(59, 130, 246, 0.8);
+  }
+}
+
+.drop-zone-active {
+  animation: dropZonePulse 1.5s ease-in-out infinite;
+}
+
+/* ============================================================================
+   Noise Texture Overlay
+   ============================================================================ */
+
+.noise-texture {
+  position: relative;
+}
+
+.noise-texture::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.02;
+  pointer-events: none;
+  z-index: 9998;
+}
+
+.dark .noise-texture::before {
+  opacity: 0.03;
+}
+
+/* ============================================================================
+   Typography Premium
+   ============================================================================ */
+
+/* Tighter tracking for large headings */
+.heading-tight {
+  letter-spacing: -0.02em;
+}
+
+h1, .text-4xl, .text-5xl, .text-6xl {
+  letter-spacing: -0.02em;
+}
+
+h2, .text-3xl {
+  letter-spacing: -0.015em;
+}
+
+/* ============================================================================
+   Fluid Transitions (ensure no instant state changes)
+   ============================================================================ */
+
+.transition-premium {
+  transition: all var(--duration-normal) var(--ease-premium);
+}
+
+.transition-premium-slow {
+  transition: all var(--duration-slow) var(--ease-premium);
+}
+
+/* Modal/Dialog transitions */
+.modal-enter {
+  animation: modalFadeIn var(--duration-normal) var(--ease-premium) forwards;
+}
+
+.modal-exit {
+  animation: modalFadeOut var(--duration-fast) var(--ease-premium) forwards;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes modalFadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+}
+
+/* ============================================================================
+   Staggered Entry Animations
+   ============================================================================ */
+
+@keyframes staggerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger-enter {
+  animation: staggerFadeIn var(--duration-slow) var(--ease-premium) backwards;
+}
+
+.stagger-enter-1 { animation-delay: 50ms; }
+.stagger-enter-2 { animation-delay: 100ms; }
+.stagger-enter-3 { animation-delay: 150ms; }
+.stagger-enter-4 { animation-delay: 200ms; }
+.stagger-enter-5 { animation-delay: 250ms; }
+.stagger-enter-6 { animation-delay: 300ms; }
+.stagger-enter-7 { animation-delay: 350ms; }
+.stagger-enter-8 { animation-delay: 400ms; }
+
+/* ============================================================================
+   Microinteraction Animations (Legacy)
    ============================================================================ */
 
 /* Draw animation for checkmark */

@@ -1,10 +1,24 @@
 import { cn } from "@/lib/utils"
 
-function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
+/**
+ * Premium Skeleton - with diagonal shimmer effect
+ * Use `shimmer` prop for the premium diagonal shimmer animation
+ */
+function Skeleton({
+  className,
+  shimmer = true,
+  ...props
+}: React.ComponentProps<"div"> & { shimmer?: boolean }) {
   return (
     <div
       data-slot="skeleton"
-      className={cn("bg-gray-200 dark:bg-gray-800 animate-pulse rounded-md", className)}
+      className={cn(
+        "rounded-md",
+        shimmer
+          ? "skeleton-shimmer"
+          : "bg-gray-200 dark:bg-gray-800 animate-pulse",
+        className
+      )}
       {...props}
     />
   )

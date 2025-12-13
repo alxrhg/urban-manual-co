@@ -99,8 +99,12 @@ export function LazyImage({
         src={currentSrc}
         alt={alt}
         className={cn(
-          'transition-opacity duration-300',
-          isLoaded ? 'opacity-100' : 'opacity-0',
+          // Premium blur-up transition with cubic-bezier easing
+          'duration-[300ms] [transition-timing-function:cubic-bezier(0.2,0,0,1)]',
+          'transition-[opacity,filter]',
+          isLoaded
+            ? 'opacity-100 blur-0'
+            : 'opacity-80 blur-sm',
           className
         )}
         style={{

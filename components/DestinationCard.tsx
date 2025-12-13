@@ -78,22 +78,24 @@ export const DestinationCard = memo(function DestinationCard({
       onClick={handleClick}
       type="button"
       className={`
-        group relative w-full flex flex-col transition-all duration-300 ease-out
+        group relative w-full flex flex-col
         cursor-pointer text-left focus-ring
-        hover:scale-[1.01]
+        card-premium-lift
         active:scale-[0.98]
+        duration-[200ms] [transition-timing-function:cubic-bezier(0.2,0,0,1)]
         ${className}
       `}
       aria-label={`View ${destination.name} in ${capitalizeCity(destination.city)}`}
     >
-        {/* Image Container with Progressive Loading */}
+        {/* Image Container with Progressive Loading and Glass Reflection */}
         <div
           className={`
             relative aspect-video overflow-hidden rounded-2xl
             bg-gray-100 dark:bg-gray-800
             border border-gray-200 dark:border-gray-800
-            transition-all duration-300 ease-out
             mb-3
+            card-glass-reflection card-image-zoom
+            duration-[300ms] [transition-timing-function:cubic-bezier(0.2,0,0,1)]
             ${isLoaded ? 'opacity-100' : 'opacity-0'}
           `}
         >
@@ -110,9 +112,8 @@ export const DestinationCard = memo(function DestinationCard({
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className={`
-              object-cover
-              transition-all duration-500 ease-out
-              group-hover:scale-105
+              object-cover img-inner
+              duration-[300ms] [transition-timing-function:cubic-bezier(0.2,0,0,1)]
               ${isLoaded ? 'opacity-100' : 'opacity-0'}
             `}
             quality={80}

@@ -227,7 +227,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
+      <body className="antialiased bg-white dark:bg-gray-950 text-gray-900 dark:text-white noise-texture">
         <MyStatsig>
           <ThemeProvider
             attribute="class"
