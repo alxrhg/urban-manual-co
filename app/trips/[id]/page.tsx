@@ -38,6 +38,7 @@ import DayIntelligence from '@/components/trip/DayIntelligence';
 import { CrowdBadge } from '@/components/trip/CrowdIndicator';
 import { UndoProvider } from '@/components/trip/UndoToast';
 import { SavingFeedback } from '@/components/trip/SavingFeedback';
+import FlightCard, { calculateLayoverDuration, isTightConnection, type FlightIntelligence } from '@/components/trip/cards/FlightCard';
 import { Settings, Moon } from 'lucide-react';
 
 // Weather type
@@ -2780,6 +2781,41 @@ function ItemRow({
     }
   }, [showActions]);
 
+  // Render premium FlightCard for flight items
+  if (itemType === 'flight') {
+    return (
+      <Reorder.Item
+        value={item}
+        onDragStart={() => setIsDragging(true)}
+        onDragEnd={() => { setIsDragging(false); onDragEnd(); }}
+        className={`${isEditMode ? 'cursor-grab active:cursor-grabbing' : ''} ${isDragging ? 'z-10' : ''}`}
+        dragListener={isEditMode}
+      >
+        <div className={`rounded-2xl transition-all ${isDragging ? 'shadow-lg' : ''}`}>
+          {/* Drag handle for edit mode */}
+          {isEditMode && (
+            <div className="flex items-center justify-center py-1 mb-1">
+              <GripVertical className="w-4 h-4 text-gray-400 opacity-60" />
+            </div>
+          )}
+          <FlightCard
+            item={item}
+            isSelected={isExpanded}
+            onSelect={() => {
+              const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+              if (isDesktop && onSelect) {
+                onSelect();
+              } else {
+                onToggle();
+              }
+            }}
+            onRemove={onRemove}
+          />
+        </div>
+      </Reorder.Item>
+    );
+  }
+
   return (
     <Reorder.Item
       value={item}
@@ -2810,11 +2846,7 @@ function ItemRow({
 
           {/* Circle image or icon */}
           <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-            {iconType === 'flight' ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <Plane className="w-5 h-5 text-gray-500" />
-              </div>
-            ) : iconType === 'hotel' ? (
+            {iconType === 'hotel' ? (
               <div className="w-full h-full flex items-center justify-center">
                 <Hotel className="w-5 h-5 text-gray-500" />
               </div>
