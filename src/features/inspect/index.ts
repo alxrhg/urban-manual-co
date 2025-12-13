@@ -37,9 +37,9 @@ export { default as AuthContent } from "@/components/IntelligentDrawer/AuthConte
 // DESTINATION COMPONENTS
 // Destination display and inspection
 // ============================================================================
-export { default as DestinationCard } from "@/components/DestinationCard";
-export { default as DestinationCardList } from "@/components/DestinationCardList";
-export { default as DestinationBadges } from "@/components/DestinationBadges";
+export { DestinationCard } from "@/components/DestinationCard";
+export { DestinationCardList } from "@/components/DestinationCardList";
+export { DestinationBadges } from "@/components/DestinationBadges";
 export { default as DestinationDrawer } from "@/components/homepage/DestinationDrawer";
 export { default as DestinationBox } from "@/components/trip/DestinationBox";
 
@@ -48,27 +48,27 @@ export { default as DestinationBox } from "@/components/trip/DestinationBox";
 // Standalone drawers for specific detail views
 // ============================================================================
 export { default as MapDrawer } from "@/components/MapDrawer";
-export { default as ChatDrawer } from "@/components/ChatDrawer";
+export { ChatDrawer } from "@/components/ChatDrawer";
 
 // ============================================================================
 // MODALS
 // Modal-based inspection views
 // ============================================================================
 export { default as VisitModal } from "@/components/VisitModal";
-export { default as VisitedModal } from "@/components/VisitedModal";
-export { default as SaveDestinationModal } from "@/components/SaveDestinationModal";
+export { VisitedModal } from "@/components/VisitedModal";
+export { SaveDestinationModal } from "@/components/SaveDestinationModal";
 
 // ============================================================================
 // DRAWER MOUNT UTILITIES
 // Portal mounting for drawers and panels
 // ============================================================================
 export { default as DrawerMount } from "@/components/DrawerMount";
-export { default as PanelMount } from "@/components/PanelMount";
+export { PanelLayout as PanelMount } from "@/components/PanelMount";
 
 // ============================================================================
 // LOCAL DETAIL COMPONENTS
 // Components from src/features/detail (new consolidated location)
 // ============================================================================
-export { default as DetailDestinationDrawer } from "@/src/features/detail/DestinationDrawer";
+export { DestinationDrawer as DetailDestinationDrawer } from "@/src/features/detail/DestinationDrawer";
 export { default as DetailSkeleton } from "@/src/features/detail/DetailSkeleton";
-export { default as RelatedDestinations } from "@/src/features/detail/RelatedDestinations";
+export { RelatedDestinations } from "@/src/features/detail/RelatedDestinations";
