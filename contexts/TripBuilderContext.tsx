@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 import { Destination } from '@/types/destination';
 import { useAuth } from './AuthContext';
+import { usePlanningModeOptional } from './PlanningModeContext';
 import {
   getEstimatedDuration,
   calculateTravelTime,
@@ -233,6 +234,7 @@ function calculateTripMetrics(days: TripDay[]): TripDay[] {
 
 export function TripBuilderProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const planningModeContext = usePlanningModeOptional();
   const [activeTrip, setActiveTrip] = useState<ActiveTrip | null>(null);
   const [savedTrips, setSavedTrips] = useState<SavedTripSummary[]>([]);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -318,10 +320,23 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
       isModified: false,
     });
     setIsPanelOpen(true);
-  }, []);
+
+    // Auto-enter planning mode when starting a trip
+    if (planningModeContext) {
+      planningModeContext.enterPlanningMode(city, 1);
+    }
+  }, [planningModeContext]);
 
   // Add destination to trip
   const addToTrip = useCallback((destination: Destination, day?: number, timeSlot?: string) => {
+    // Auto-enter planning mode when adding to trip
+    if (planningModeContext && !planningModeContext.isInPlanningMode) {
+      planningModeContext.enterPlanningMode(destination.city || undefined, day || 1);
+    } else if (planningModeContext && destination.city) {
+      // Update target city if different
+      planningModeContext.setTargetCity(destination.city);
+    }
+
     setActiveTrip(prev => {
       // If no active trip, start one
       if (!prev) {
@@ -627,7 +642,12 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
     setActiveTrip(null);
     setIsPanelOpen(false);
     localStorage.removeItem('urban-manual-active-trip');
-  }, []);
+
+    // Exit planning mode when clearing trip
+    if (planningModeContext) {
+      planningModeContext.exitPlanningMode();
+    }
+  }, [planningModeContext]);
 
   // Save trip to Supabase
   const saveTrip = useCallback(async (): Promise<string | null> => {
@@ -765,10 +785,15 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
       });
 
       setIsPanelOpen(true);
+
+      // Enter planning mode when loading a trip
+      if (planningModeContext) {
+        planningModeContext.enterPlanningMode(data.destination, 1);
+      }
     } catch (error) {
       console.error('Error loading trip:', error);
     }
-  }, []);
+  }, [planningModeContext]);
 
   // Generate full itinerary with AI
   const generateItinerary = useCallback(async (

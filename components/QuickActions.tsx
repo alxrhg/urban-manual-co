@@ -6,6 +6,8 @@ import { useQuickSave } from '@/hooks/useQuickSave';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrawer } from '@/contexts/DrawerContext';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
+import { usePlanningMode } from '@/contexts/PlanningModeContext';
+import { useTripBuilder } from '@/contexts/TripBuilderContext';
 
 interface QuickActionsProps {
   destinationId?: number;
@@ -35,7 +37,10 @@ export const QuickActions = memo(function QuickActions({
   const { user } = useAuth();
   const { openDrawer } = useDrawer();
   const { openDrawer: openStoreDrawer } = useDrawerStore();
+  const { planningMode, isInPlanningMode, getAddLabel } = usePlanningMode();
+  const { activeTrip, addToTrip } = useTripBuilder();
   const [showLoginToast, setShowLoginToast] = useState(false);
+  const [isAddingToTrip, setIsAddingToTrip] = useState(false);
 
   const {
     isSaved,
@@ -75,7 +80,12 @@ export const QuickActions = memo(function QuickActions({
     await toggleVisited();
   };
 
-  const handleAddToTrip = (e: React.MouseEvent) => {
+  // Check if destination is already in trip
+  const isInTrip = activeTrip?.days.some(day =>
+    day.items.some(item => item.destination.slug === destinationSlug)
+  );
+
+  const handleAddToTrip = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -86,16 +96,36 @@ export const QuickActions = memo(function QuickActions({
       return;
     }
 
-    // Use callback if provided, otherwise open quick trip selector
+    // Use callback if provided
     if (onAddToTrip) {
       onAddToTrip();
-    } else {
-      openStoreDrawer('quick-trip-selector', {
-        destinationSlug,
-        destinationName,
-        destinationCity,
-      });
+      return;
     }
+
+    // In planning mode with quick add, add directly to default day
+    if (isInPlanningMode && planningMode.quickAddEnabled) {
+      setIsAddingToTrip(true);
+      try {
+        // Fetch destination data if needed
+        const response = await fetch(`/api/destinations/${destinationSlug}`);
+        if (response.ok) {
+          const destination = await response.json();
+          addToTrip(destination, planningMode.defaultDay);
+        }
+      } catch (error) {
+        console.error('Error adding to trip:', error);
+      } finally {
+        setIsAddingToTrip(false);
+      }
+      return;
+    }
+
+    // Default: open quick trip selector
+    openStoreDrawer('quick-trip-selector', {
+      destinationSlug,
+      destinationName,
+      destinationCity,
+    });
   };
 
   const buttonBaseClass = compact
@@ -156,16 +186,28 @@ export const QuickActions = memo(function QuickActions({
       {showAddToTrip && (
         <button
           onClick={handleAddToTrip}
+          disabled={isAddingToTrip || isInTrip}
           className={`
             ${buttonBaseClass}
-            bg-white/90 dark:bg-gray-900/90 text-gray-700 dark:text-gray-300
-            hover:bg-gray-100 dark:hover:bg-gray-800
+            ${isInTrip
+              ? 'bg-emerald-500 text-white'
+              : isInPlanningMode
+                ? 'bg-blue-500 text-white hover:bg-blue-600'
+                : 'bg-white/90 dark:bg-gray-900/90 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }
             backdrop-blur-sm shadow-sm hover:shadow-md
+            disabled:opacity-50 disabled:cursor-not-allowed
           `}
-          aria-label={`Add ${destinationName} to trip`}
-          title="Add to trip"
+          aria-label={isInTrip ? `${destinationName} is in trip` : `Add ${destinationName} to trip`}
+          title={isInTrip ? 'In trip' : isInPlanningMode ? getAddLabel() : 'Add to trip'}
         >
-          <Plus className={iconSize} />
+          {isAddingToTrip ? (
+            <Loader2 className={`${iconSize} animate-spin`} />
+          ) : isInTrip ? (
+            <Check className={`${iconSize} stroke-[3]`} />
+          ) : (
+            <Plus className={iconSize} />
+          )}
         </button>
       )}
 

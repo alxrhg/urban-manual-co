@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Plus, Check, Calendar, ChevronDown } from 'lucide-react';
 import { useTripBuilder } from '@/contexts/TripBuilderContext';
+import { usePlanningMode } from '@/contexts/PlanningModeContext';
 import { Destination } from '@/types/destination';
 
 interface AddToTripButtonProps {
@@ -17,6 +18,7 @@ export default function AddToTripButton({
   className = '',
 }: AddToTripButtonProps) {
   const { activeTrip, addToTrip, canAddMore } = useTripBuilder();
+  const { planningMode, isInPlanningMode, getAddLabel } = usePlanningMode();
   const [showDayPicker, setShowDayPicker] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -52,6 +54,12 @@ export default function AddToTripButton({
 
     if (isInTrip) return;
 
+    // In planning mode with quick add enabled, add directly to default day
+    if (isInPlanningMode && planningMode.quickAddEnabled) {
+      handleAdd(planningMode.defaultDay);
+      return;
+    }
+
     // If trip exists with multiple days, show day picker
     if (activeTrip && activeTrip.days.length > 1) {
       setShowDayPicker(true);
@@ -59,7 +67,7 @@ export default function AddToTripButton({
       // Add to day 1 (or create trip)
       handleAdd(1);
     }
-  }, [isInTrip, activeTrip, handleAdd]);
+  }, [isInTrip, activeTrip, handleAdd, isInPlanningMode, planningMode]);
 
   // Icon variant - minimal, for grid cards
   if (variant === 'icon') {
@@ -75,7 +83,7 @@ export default function AddToTripButton({
                 ? 'bg-green-500 text-white scale-110'
                 : 'bg-black/40 text-white hover:bg-black/60 hover:scale-105'
           } ${className}`}
-          title={isInTrip ? 'Already in trip' : 'Add to trip'}
+          title={isInTrip ? 'Already in trip' : isInPlanningMode ? getAddLabel() : 'Add to trip'}
         >
           {isInTrip || justAdded ? (
             <Check className="w-4 h-4" />
@@ -145,8 +153,8 @@ export default function AddToTripButton({
           ) : (
             <>
               <Plus className="w-4 h-4" />
-              Add to Trip
-              {activeTrip && activeTrip.days.length > 1 && (
+              {isInPlanningMode ? getAddLabel() : 'Add to Trip'}
+              {!isInPlanningMode && activeTrip && activeTrip.days.length > 1 && (
                 <ChevronDown className="w-3 h-3 ml-1" />
               )}
             </>
@@ -219,7 +227,7 @@ export default function AddToTripButton({
       ) : (
         <>
           <Plus className="w-3.5 h-3.5" />
-          Add
+          {isInPlanningMode ? `Day ${planningMode.defaultDay}` : 'Add'}
         </>
       )}
     </button>

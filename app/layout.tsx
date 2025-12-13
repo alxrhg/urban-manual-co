@@ -6,7 +6,9 @@ import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminEditModeProvider } from "@/contexts/AdminEditModeContext";
 import { TripBuilderProvider } from "@/contexts/TripBuilderContext";
+import { PlanningModeProvider } from "@/contexts/PlanningModeContext";
 import { ResponsiveTripUI } from "@/components/trip/TripBuilder";
+import { PlanningModeBar } from "@/components/trip/PlanningModeIndicator";
 import { IntelligentDrawerProvider, IntelligentDrawer } from "@/components/IntelligentDrawer";
 import { DrawerProvider } from "@/contexts/DrawerContext";
 import { ChristmasThemeProvider } from "@/contexts/ChristmasThemeContext";
@@ -244,8 +246,9 @@ export default function RootLayout({
                   <DrawerProvider>
                     <Suspense fallback={null}>
                       <AdminEditModeProvider>
-                          <TripBuilderProvider>
-                            <IntelligentDrawerProvider>
+                          <PlanningModeProvider>
+                            <TripBuilderProvider>
+                              <IntelligentDrawerProvider>
                               <Header />
                               <NativeExperienceProvider
                                 enableSwipeBack={true}
@@ -262,9 +265,11 @@ export default function RootLayout({
                               <NotificationPrompt />
                               <DrawerMount />
                               <ResponsiveTripUI />
+                              <PlanningModeBar />
                               <IntelligentDrawer />
                             </IntelligentDrawerProvider>
-                          </TripBuilderProvider>
+                            </TripBuilderProvider>
+                          </PlanningModeProvider>
                       </AdminEditModeProvider>
                     </Suspense>
                   </DrawerProvider>
