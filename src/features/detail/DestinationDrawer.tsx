@@ -10,6 +10,13 @@ import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
 import { CategoryAutocompleteInput } from '@/components/CategoryAutocompleteInput';
 import { ParentDestinationAutocompleteInput } from '@/components/ParentDestinationAutocompleteInput';
 import { ArchitectTagInput } from '@/components/ArchitectTagInput';
+import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -1445,115 +1452,156 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const headerContent = (
     <div className="flex items-center justify-between w-full gap-3">
       <div className="flex items-center gap-2 flex-1 min-w-0">
-        <button
-          onClick={onClose}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          aria-label="Close drawer"
-        >
-          <X className="h-4 w-4 text-gray-900 dark:text-white" strokeWidth={1.5} />
-        </button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                aria-label="Close drawer"
+                className="h-8 w-8"
+              >
+                <X className="h-4 w-4 text-gray-900 dark:text-white" strokeWidth={1.5} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Close</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <h2 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
           {isEditMode ? 'Edit Destination' : (destination.name || 'Destination')}
         </h2>
       </div>
       {user && (
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Admin Edit Button */}
-          {isAdmin && destination && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsEditMode(!isEditMode);
-              }}
-              className={`p-2 rounded-lg transition-colors ${isEditMode ? 'bg-black dark:bg-white text-white dark:text-black' : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
-              aria-label={isEditMode ? 'Exit edit mode' : 'Edit destination'}
-              title={isEditMode ? 'Exit edit mode' : 'Edit destination (Admin)'}
-            >
-              <Edit className={`h-4 w-4 ${isEditMode ? '' : 'text-gray-900 dark:text-white/90'}`} strokeWidth={1.5} />
-            </button>
-          )}
-          {/* Bookmark Action */}
-          <button
-            onClick={async () => {
-              if (!user) {
-                router.push('/auth/login');
-                return;
-              }
-              if (!isSaved) {
-                setShowSaveModal(true);
-              } else {
-                try {
-                  const supabaseClient = createClient();
-                  if (!supabaseClient) return;
-                  const { error } = await supabaseClient
-                    .from('saved_places')
-                    .delete()
-                    .eq('user_id', user.id)
-                    .eq('destination_slug', destination.slug);
-                  if (!error) {
-                    setIsSaved(false);
-                    if (onSaveToggle) onSaveToggle(destination.slug, false);
-                  }
-                } catch (error) {
-                  console.error('Error unsaving:', error);
-                }
-              }
-            }}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            aria-label={isSaved ? 'Remove from saved' : 'Save destination'}
-          >
-            <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`} strokeWidth={1.5} />
-          </button>
-          {/* Trip Action */}
-          <button
-            onClick={async () => {
-              if (!user) {
-                router.push('/auth/login');
-                return;
-              }
-              if (isAddedToTrip) return;
-              
-              // Try to add directly to most recent trip, or show modal if multiple trips
-              try {
-                const supabaseClient = createClient();
-                if (!supabaseClient) return;
-                
-                const { data: trips, error } = await supabaseClient
-                  .from('trips')
-                  .select('id')
-                  .eq('user_id', user.id)
-                  .order('created_at', { ascending: false })
-                  .limit(2);
-                
-                if (error) throw error;
-                
-                if (trips && trips.length === 1) {
-                  // Only one trip - add directly
-                  const tripId = trips[0].id;
-                  await addDestinationToTrip(tripId);
-                } else if (trips && trips.length > 1) {
-                  // Multiple trips - show modal to select
-                  setShowAddToTripModal(true);
-                } else {
-                  // No trips - show modal to create a new trip
-                  setShowAddToTripModal(true);
-                }
-              } catch (error) {
-                console.error('Error checking trips:', error);
-                // Fallback to showing modal
-                setShowAddToTripModal(true);
-              }
-            }}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            aria-label="Add to trip"
-            disabled={isAddedToTrip}
-          >
-            {isAddedToTrip ? (
-              <Check className="h-4 w-4 text-green-600 dark:text-green-400" strokeWidth={1.5} />
-            ) : (
-              <Plus className="h-4 w-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
+          <TooltipProvider>
+            {/* Admin Edit Button */}
+            {isAdmin && destination && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={isEditMode ? 'default' : 'ghost'}
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsEditMode(!isEditMode);
+                    }}
+                    aria-label={isEditMode ? 'Exit edit mode' : 'Edit destination'}
+                    className="h-8 w-8"
+                  >
+                    <Edit className={`h-4 w-4 ${isEditMode ? '' : 'text-gray-900 dark:text-white/90'}`} strokeWidth={1.5} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isEditMode ? 'Exit edit mode' : 'Edit destination (Admin)'}</p>
+                </TooltipContent>
+              </Tooltip>
             )}
-          </button>
+            {/* Bookmark Action */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={async () => {
+                    if (!user) {
+                      router.push('/auth/login');
+                      return;
+                    }
+                    if (!isSaved) {
+                      setShowSaveModal(true);
+                    } else {
+                      try {
+                        const supabaseClient = createClient();
+                        if (!supabaseClient) return;
+                        const { error } = await supabaseClient
+                          .from('saved_places')
+                          .delete()
+                          .eq('user_id', user.id)
+                          .eq('destination_slug', destination.slug);
+                        if (!error) {
+                          setIsSaved(false);
+                          if (onSaveToggle) onSaveToggle(destination.slug, false);
+                        }
+                      } catch (error) {
+                        console.error('Error unsaving:', error);
+                      }
+                    }
+                  }}
+                  aria-label={isSaved ? 'Remove from saved' : 'Save destination'}
+                  className="h-8 w-8"
+                >
+                  <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`} strokeWidth={1.5} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{isSaved ? 'Remove from saved' : 'Save destination'}</p>
+              </TooltipContent>
+            </Tooltip>
+            {/* Trip Action */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span tabIndex={0} className="inline-flex">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={async () => {
+                      if (!user) {
+                        router.push('/auth/login');
+                        return;
+                      }
+                      if (isAddedToTrip) return;
+
+                      // Try to add directly to most recent trip, or show modal if multiple trips
+                      try {
+                        const supabaseClient = createClient();
+                        if (!supabaseClient) return;
+
+                        const { data: trips, error } = await supabaseClient
+                          .from('trips')
+                          .select('id')
+                          .eq('user_id', user.id)
+                          .order('created_at', { ascending: false })
+                          .limit(2);
+
+                        if (error) throw error;
+
+                        if (trips && trips.length === 1) {
+                          // Only one trip - add directly
+                          const tripId = trips[0].id;
+                          await addDestinationToTrip(tripId);
+                        } else if (trips && trips.length > 1) {
+                          // Multiple trips - show modal to select
+                          setShowAddToTripModal(true);
+                        } else {
+                          // No trips - show modal to create a new trip
+                          setShowAddToTripModal(true);
+                        }
+                      } catch (error) {
+                        console.error('Error checking trips:', error);
+                        // Fallback to showing modal
+                        setShowAddToTripModal(true);
+                      }
+                    }}
+                    aria-label="Add to trip"
+                    disabled={isAddedToTrip}
+                    className="h-8 w-8"
+                  >
+                    {isAddedToTrip ? (
+                      <Check className="h-4 w-4 text-green-600 dark:text-green-400" strokeWidth={1.5} />
+                    ) : (
+                      <Plus className="h-4 w-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
+                    )}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{isAddedToTrip ? 'Added to trip' : 'Add to trip'}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       )}
     </div>
