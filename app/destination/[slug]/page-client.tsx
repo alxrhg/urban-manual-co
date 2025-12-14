@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, MapPin, Bookmark, Check, Plus, ChevronDown, X, Phone, Globe, ExternalLink, Navigation, Clock, Tag, Building2, Share2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -534,10 +535,14 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 </span>
               )}
               {destination.brand && (
-                <span className="px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-[13px] font-medium flex items-center gap-1.5">
+                <Link
+                  href={`/brands/${encodeURIComponent(destination.brand)}`}
+                  className="px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-[13px] font-medium flex items-center gap-1.5 hover:bg-white/30 transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Building2 className="h-3.5 w-3.5" />
                   {destination.brand}
-                </span>
+                </Link>
               )}
             </div>
           </div>
