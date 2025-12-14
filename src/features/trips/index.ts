@@ -14,26 +14,35 @@
  * - Widgets: Trip stats and indicators
  *
  * Usage:
- *   import { TripBuilder, FlightCard, TripStats } from '@/src/features/trips'
+ *   import { TripPanel, FlightCard, TripStats } from '@/src/features/trips'
  */
 
 // ============================================================================
 // BUILDER COMPONENTS
 // Main trip building interface
 // ============================================================================
-export { default as TripBuilder } from "@/components/trip/TripBuilder";
 export { default as TripHeader } from "@/components/trip/TripHeader";
 export { default as AIPlannerBar } from "@/components/trip/AIPlannerBar";
 export { default as FloatingActionBar } from "@/components/trip/FloatingActionBar";
 export { default as DayTimeline } from "@/components/trip/DayTimeline";
-export { default as TripPalette } from "@/components/trip/TripPalette";
 export { default as DayHeader } from "@/components/trip/DayHeader";
-export { default as QuickActionMenu } from "@/components/trip/QuickActionMenu";
+export { default as QuickActions } from "@/components/trip/QuickActions";
+export { default as TripBuilderPanel } from "@/components/trip/TripBuilderPanel";
 
-// TripBuilder subcomponents
-export { default as TripBuilderDayCard } from "@/components/trip/TripBuilder/TripBuilderDayCard";
-export { default as TripBuilderDrawer } from "@/components/trip/TripBuilder/TripBuilderDrawer";
-export { default as TripBuilderFloatingBar } from "@/components/trip/TripBuilder/TripBuilderFloatingBar";
+// TripBuilder subcomponents (from TripBuilder directory)
+export {
+  TripDrawer,
+  TripFloatingBar,
+  TripPanel,
+  TripDayCard,
+  TripItemRow,
+  TripEmptyState,
+  TripActions,
+  ResponsiveTripUI,
+  MobileTripSheet,
+  MobileTripCard,
+  MobileTripFloatingBar,
+} from "@/components/trip/TripBuilder";
 export { default as DestinationPalette } from "@/components/trip/TripBuilder/DestinationPalette";
 
 // ============================================================================
