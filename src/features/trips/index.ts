@@ -76,8 +76,8 @@ export { default as AirlineLogoBadge } from "@/components/trips/AirlineLogoBadge
 
 // Trip display cards
 export { default as TripCard } from "@/components/trips/TripCard";
-export { default as TripItemCard } from "@/components/trips/TripItemCard";
-export { default as TripCoverImage } from "@/components/trips/TripCoverImage";
+export { TripItemCard } from "@/components/trips/TripItemCard";
+export { TripCoverImage } from "@/components/trips/TripCoverImage";
 
 // ============================================================================
 // LEGACY CARDS (from trip/cards/)
@@ -113,7 +113,7 @@ export { default as ItineraryViewRedesign } from "@/components/trip/itinerary/It
 // Stats, health, and status displays
 // Use trips/ versions as canonical (AI-powered, more sophisticated)
 // ============================================================================
-export { default as TripStats } from "@/components/trips/TripStats";
+export { TripStats } from "@/components/trips/TripStats";
 export { default as TripHealthIndicator } from "@/components/trips/TripHealthIndicator";
 export { default as CrowdIndicator } from "@/components/trips/CrowdIndicator";
 export { default as OpeningHoursIndicator } from "@/components/trips/OpeningHoursIndicator";
