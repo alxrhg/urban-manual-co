@@ -16,14 +16,14 @@
 
 // Main search overlay and input
 export { default as SearchOverlay } from "@/components/search/SearchOverlay";
-export { default as SearchInput } from "@/components/navigation/SearchInput";
-export { default as SearchInputWithIndicator } from "@/components/SearchInputWithIndicator";
+export { SearchInput } from "@/components/navigation/SearchInput";
+export { SearchInputWithIndicator } from "@/components/SearchInputWithIndicator";
 
 // Search filters
-export { default as SearchFilters } from "@/components/SearchFilters";
+export { SearchFiltersComponent as SearchFilters } from "@/components/SearchFilters";
 
 // Response sections (for AI-powered search results)
-export { default as CompactResponseSection } from "@/components/search/CompactResponseSection";
+export { CompactResponseSection } from "@/components/search/CompactResponseSection";
 
 // ============================================================================
 // SEARCH SERVICES
@@ -35,7 +35,7 @@ export { contextualSearch } from "@/lib/contextual-search";
 // LOCAL SEARCH COMPONENTS
 // Components from src/features/search (new consolidated location)
 // ============================================================================
-export { default as LocalCompactResponseSection } from "./CompactResponseSection";
+export { CompactResponseSection as LocalCompactResponseSection } from "./CompactResponseSection";
 export { default as GreetingHero } from "./GreetingHero";
 export { default as SearchGridSkeleton } from "./SearchGridSkeleton";
-export { default as LocalSearchFilters } from "./SearchFilters";
+export { SearchFiltersComponent as LocalSearchFilters } from "./SearchFilters";
