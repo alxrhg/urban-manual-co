@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandling, createValidationError, createUnauthorizedError } from '@/lib/errors';
 import { createServerClient } from '@/lib/supabase/server';
 import { parseItineraryNotes } from '@/types/trip';
+import {
+  apiRatelimit,
+  memoryApiRatelimit,
+  getIdentifier,
+  isUpstashConfigured,
+  createRateLimitResponse,
+} from '@/lib/rate-limit';
 
 interface RouteItem {
   id: string;
@@ -114,6 +121,21 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   if (authError || !user) {
     throw createUnauthorizedError('Authentication required');
+  }
+
+  // Rate limiting
+  // Use apiRatelimit (10 req/10s) keyed by user ID
+  const identifier = getIdentifier(request, user.id);
+  const ratelimit = isUpstashConfigured() ? apiRatelimit : memoryApiRatelimit;
+  const { success, limit, remaining, reset } = await ratelimit.limit(identifier);
+
+  if (!success) {
+    return createRateLimitResponse(
+      'Too many optimization requests. Please wait a moment.',
+      limit,
+      remaining,
+      reset
+    );
   }
 
   // 2. Parse and validate request body
