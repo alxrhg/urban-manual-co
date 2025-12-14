@@ -4,6 +4,13 @@ import { conversationItineraryService } from '@/services/intelligence/conversati
 import { multiDayTripPlanningService } from '@/services/intelligence/multi-day-planning';
 import { itineraryIntelligenceService } from '@/services/intelligence/itinerary';
 import { withErrorHandling, createValidationError } from '@/lib/errors';
+import {
+  conversationRatelimit,
+  memoryConversationRatelimit,
+  getIdentifier,
+  isUpstashConfigured,
+  createRateLimitResponse,
+} from '@/lib/rate-limit';
 
 /**
  * POST /api/intelligence/itinerary/generate
@@ -12,6 +19,21 @@ import { withErrorHandling, createValidationError } from '@/lib/errors';
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  // Rate limiting (User based if authenticated, IP otherwise)
+  // Using conversationRatelimit (5 req/10s) as this triggers LLM operations
+  const identifier = getIdentifier(request, user?.id);
+  const ratelimit = isUpstashConfigured() ? conversationRatelimit : memoryConversationRatelimit;
+  const { success, limit, remaining, reset } = await ratelimit.limit(identifier);
+
+  if (!success) {
+    return createRateLimitResponse(
+      'Too many generation requests. Please wait a moment.',
+      limit,
+      remaining,
+      reset
+    );
+  }
 
   const body = await request.json();
   const {
@@ -94,4 +116,3 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     saved_id: savedId,
   });
 });
-
