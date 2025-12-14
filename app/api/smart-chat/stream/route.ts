@@ -3,9 +3,13 @@
  *
  * Server-Sent Events (SSE) endpoint for real-time streaming responses.
  * Provides word-by-word text streaming and progressive destination loading.
+ *
+ * Note: This endpoint returns a streaming Response (not NextResponse) for SSE,
+ * so it uses manual auth handling instead of withOptionalAuth wrapper.
  */
 
 import { NextRequest } from 'next/server';
+import { createServerClient } from '@/lib/supabase/server';
 import { smartConversationEngine, StreamChunk } from '@/services/intelligence/smart-conversation-engine';
 import {
   conversationRatelimit,
@@ -13,13 +17,20 @@ import {
   getIdentifier,
   isUpstashConfigured,
 } from '@/lib/rate-limit';
-import { withOptionalAuth, OptionalAuthContext, createValidationError } from '@/lib/errors';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export const POST = withOptionalAuth(async (request: NextRequest, { user }: OptionalAuthContext) => {
-  const userId = user?.id;
+export async function POST(request: NextRequest) {
+  // Get user if authenticated (optional auth)
+  let userId: string | undefined;
+  try {
+    const supabase = await createServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    userId = user?.id;
+  } catch {
+    // Auth is optional for this endpoint
+  }
 
   // Parse request
   const body = await request.json();
@@ -57,7 +68,17 @@ export const POST = withOptionalAuth(async (request: NextRequest, { user }: Opti
 
   // Validate message
   if (!message || message.trim().length < 2) {
-    throw createValidationError('Message too short');
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: 'Message too short',
+        errors: [{ code: 'VALIDATION_ERROR', message: 'Message too short' }],
+      }),
+      {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   // Create readable stream for SSE
@@ -85,12 +106,13 @@ export const POST = withOptionalAuth(async (request: NextRequest, { user }: Opti
         // Send done event
         controller.enqueue(encoder.encode('data: [DONE]\n\n'));
         controller.close();
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('[Smart Chat Stream] Error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Failed to process message';
         const errorChunk: StreamChunk = {
           type: 'complete',
           data: {
-            error: error.message || 'Failed to process message',
+            error: errorMessage,
             success: false,
           },
         };
@@ -108,4 +130,4 @@ export const POST = withOptionalAuth(async (request: NextRequest, { user }: Opti
       'X-Accel-Buffering': 'no',
     },
   });
-});
+}
