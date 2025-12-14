@@ -2,7 +2,7 @@
 
 import { useState, useCallback, memo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from 'framer-motion';
-import { X, MapPin, Calendar, ChevronRight, Plus, Navigation2 } from 'lucide-react';
+import { X, MapPin, Calendar, ChevronRight, Plus, Car } from 'lucide-react';
 import { useTripBuilder } from '@/contexts/TripBuilderContext';
 import MobileTripCard from './MobileTripCard';
 
@@ -171,19 +171,19 @@ const MobileTripSheet = memo(function MobileTripSheet() {
           {items.length === 0 ? (
             <EmptyDayState dayNumber={selectedDay} />
           ) : (
-            <div className="px-5 pb-8">
+            <div className="px-5 py-4">
               {items.map((item, index) => (
                 <div key={item.id}>
-                  {/* Travel time connector */}
-                  {index > 0 && item.travelTimeFromPrev && item.travelTimeFromPrev > 5 && (
-                    <TravelConnector minutes={item.travelTimeFromPrev} />
-                  )}
-
                   <MobileTripCard
                     item={item}
                     onRemove={() => removeFromTrip(item.id)}
                     isLast={index === items.length - 1}
                   />
+
+                  {/* Travel time connector - between items */}
+                  {index < items.length - 1 && (
+                    <TravelConnector minutes={item.travelTimeFromPrev || 5} />
+                  )}
                 </div>
               ))}
             </div>
@@ -237,9 +237,11 @@ function EmptyDayState({ dayNumber }: { dayNumber: number }) {
 
 /**
  * Visual connector between items showing travel time
+ * Matches the trip page design with vertical line + time badge
  */
 function TravelConnector({ minutes }: { minutes: number }) {
   const formatTime = (mins: number) => {
+    if (mins < 1) return '<1 min';
     if (mins < 60) return `${mins} min`;
     const hrs = Math.floor(mins / 60);
     const remaining = mins % 60;
@@ -247,14 +249,13 @@ function TravelConnector({ minutes }: { minutes: number }) {
   };
 
   return (
-    <div className="flex items-center gap-3 py-3 pl-6">
-      <div className="flex flex-col items-center">
-        <div className="w-0.5 h-3 bg-gray-200 dark:bg-gray-700" />
-        <div className="w-0.5 h-3 bg-gray-200 dark:bg-gray-700" />
-      </div>
-      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 dark:bg-white/5 rounded-full">
-        <Navigation2 className="w-3 h-3 text-gray-400" />
-        <span className="text-xs text-gray-500">{formatTime(minutes)}</span>
+    <div className="flex items-center gap-3 pl-6 py-1">
+      {/* Vertical line */}
+      <div className="w-px h-6 bg-gray-300 dark:bg-gray-600" />
+      {/* Time badge */}
+      <div className="flex items-center gap-1.5 text-xs text-gray-400">
+        <Car className="w-3 h-3" />
+        <span>{formatTime(minutes)}</span>
       </div>
     </div>
   );

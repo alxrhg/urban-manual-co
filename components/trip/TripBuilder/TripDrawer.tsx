@@ -3,7 +3,7 @@
 import { useState, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { X, MapPin, GripVertical, Calendar, ChevronRight, Plus } from 'lucide-react';
+import { X, MapPin, GripVertical, Calendar, ChevronRight, Plus, Car } from 'lucide-react';
 import { useTripBuilder } from '@/contexts/TripBuilderContext';
 
 /**
@@ -131,12 +131,16 @@ const TripDrawer = memo(function TripDrawer() {
           ) : (
             <div className="p-5">
               {items.map((item, index) => (
-                <ItemCard
-                  key={item.id}
-                  item={item}
-                  onRemove={() => removeFromTrip(item.id)}
-                  isLast={index === items.length - 1}
-                />
+                <div key={item.id}>
+                  <ItemCard
+                    item={item}
+                    onRemove={() => removeFromTrip(item.id)}
+                  />
+                  {/* Travel connector */}
+                  {index < items.length - 1 && (
+                    <TravelConnector minutes={item.travelTimeFromPrev || 5} />
+                  )}
+                </div>
               ))}
             </div>
           )}
@@ -191,112 +195,94 @@ function EmptyState({ dayNumber, onClose }: { dayNumber: number; onClose: () => 
 }
 
 /**
- * Item card - matching ItineraryCard style with time on left
+ * Item card - Timeline style with circular image on left
  */
 function ItemCard({
   item,
   onRemove,
-  isLast = false,
 }: {
   item: {
     id: string;
-    destination: { name: string; category?: string; image?: string; image_thumbnail?: string };
+    destination: { name: string; category?: string; image?: string; image_thumbnail?: string; michelin_stars?: number };
     timeSlot?: string;
     duration?: number;
   };
   onRemove: () => void;
-  isLast?: boolean;
 }) {
-  // Format time for display
-  const formatTime = (timeStr?: string | null) => {
-    if (!timeStr) return { time: '--:--', period: '' };
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const displayHours = hours % 12 || 12;
-    return { time: `${displayHours}:${minutes?.toString().padStart(2, '0')}`, period };
-  };
-
-  // Format duration
-  const formatDuration = (mins?: number) => {
-    if (!mins) return null;
-    if (mins < 60) return `${mins}m`;
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
-    return m > 0 ? `${h}h ${m}m` : `${h}h`;
-  };
-
-  const formattedTime = formatTime(item.timeSlot);
-  const formattedDuration = formatDuration(item.duration);
-
   return (
-    <div className="relative flex items-stretch gap-3 mb-3 group">
-      {/* Time column */}
-      <div className="flex-shrink-0 w-14 flex flex-col items-center justify-center py-2">
-        <span className="text-sm font-semibold text-gray-900 dark:text-white">
-          {formattedTime.time}
-        </span>
-        <span className="text-[10px] text-gray-400">
-          {formattedTime.period}
-        </span>
-        {formattedDuration && (
-          <span className="text-[10px] text-gray-400 mt-1 px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded">
-            {formattedDuration}
-          </span>
+    <div className="flex items-center gap-3 py-2 group">
+      {/* Circular image/icon */}
+      <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700">
+        {item.destination.image ? (
+          <Image
+            src={item.destination.image_thumbnail || item.destination.image}
+            alt=""
+            width={48}
+            height={48}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <MapPin className="w-5 h-5 text-gray-400" />
+          </div>
         )}
       </div>
 
-      {/* Card */}
-      <div className="flex-1 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 overflow-hidden">
-        <div className="flex items-center">
-          {/* Image */}
-          {item.destination.image && (
-            <div className="flex-shrink-0 w-16 h-16 relative">
-              <Image
-                src={item.destination.image_thumbnail || item.destination.image}
-                alt=""
-                fill
-                className="object-cover"
-                sizes="64px"
-              />
-            </div>
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+            {item.destination.name}
+          </p>
+          {/* Michelin star indicator */}
+          {item.destination.michelin_stars && item.destination.michelin_stars > 0 && (
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
           )}
-          {!item.destination.image && (
-            <div className="flex-shrink-0 w-16 h-16 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-              <MapPin className="w-5 h-5 text-gray-400" />
-            </div>
-          )}
-
-          {/* Content */}
-          <div className="flex-1 p-3 min-w-0">
-            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-              {item.destination.name}
-            </p>
-            {item.destination.category && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate capitalize mt-0.5">
-                {item.destination.category.replace(/_/g, ' ')}
-              </p>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-1 pr-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button className="p-1.5 cursor-grab hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
-              <GripVertical className="w-4 h-4 text-gray-400" />
-            </button>
-            <button
-              onClick={onRemove}
-              className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
-            >
-              <X className="w-4 h-4 text-gray-400 hover:text-red-500" />
-            </button>
-          </div>
         </div>
+        {item.destination.category && (
+          <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+            {item.destination.category.replace(/_/g, ' ')}
+          </p>
+        )}
       </div>
 
-      {/* Timeline connector */}
-      {!isLast && (
-        <div className="absolute left-7 top-full w-px h-3 bg-gray-200 dark:bg-gray-700 -translate-x-1/2" />
-      )}
+      {/* Actions */}
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button className="p-1.5 cursor-grab hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
+          <GripVertical className="w-4 h-4 text-gray-400" />
+        </button>
+        <button
+          onClick={onRemove}
+          className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+        >
+          <X className="w-4 h-4 text-gray-400 hover:text-red-500" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Travel time connector between items
+ */
+function TravelConnector({ minutes }: { minutes: number }) {
+  const formatTime = (mins: number) => {
+    if (mins < 1) return '<1 min';
+    if (mins < 60) return `${mins} min`;
+    const hrs = Math.floor(mins / 60);
+    const remaining = mins % 60;
+    return remaining > 0 ? `${hrs}h ${remaining}m` : `${hrs}h`;
+  };
+
+  return (
+    <div className="flex items-center gap-3 pl-6 py-1">
+      {/* Vertical line */}
+      <div className="w-px h-6 bg-gray-300 dark:bg-gray-600" />
+      {/* Time badge */}
+      <div className="flex items-center gap-1.5 text-xs text-gray-400">
+        <Car className="w-3 h-3" />
+        <span>{formatTime(minutes)}</span>
+      </div>
     </div>
   );
 }
