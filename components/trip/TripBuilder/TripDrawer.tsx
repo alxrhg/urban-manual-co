@@ -129,9 +129,14 @@ const TripDrawer = memo(function TripDrawer() {
           {items.length === 0 ? (
             <EmptyState dayNumber={selectedDay} onClose={closePanel} />
           ) : (
-            <div className="p-5 space-y-2">
-              {items.map((item) => (
-                <ItemCard key={item.id} item={item} onRemove={() => removeFromTrip(item.id)} />
+            <div className="p-5">
+              {items.map((item, index) => (
+                <ItemCard
+                  key={item.id}
+                  item={item}
+                  onRemove={() => removeFromTrip(item.id)}
+                  isLast={index === items.length - 1}
+                />
               ))}
             </div>
           )}
@@ -186,11 +191,12 @@ function EmptyState({ dayNumber, onClose }: { dayNumber: number; onClose: () => 
 }
 
 /**
- * Item card - cleaner design matching sheet aesthetic
+ * Item card - matching ItineraryCard style with time on left
  */
 function ItemCard({
   item,
   onRemove,
+  isLast = false,
 }: {
   item: {
     id: string;
@@ -199,57 +205,98 @@ function ItemCard({
     duration?: number;
   };
   onRemove: () => void;
+  isLast?: boolean;
 }) {
+  // Format time for display
+  const formatTime = (timeStr?: string | null) => {
+    if (!timeStr) return { time: '--:--', period: '' };
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    return { time: `${displayHours}:${minutes?.toString().padStart(2, '0')}`, period };
+  };
+
+  // Format duration
+  const formatDuration = (mins?: number) => {
+    if (!mins) return null;
+    if (mins < 60) return `${mins}m`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  };
+
+  const formattedTime = formatTime(item.timeSlot);
+  const formattedDuration = formatDuration(item.duration);
+
   return (
-    <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 group">
-      {/* Time */}
-      <div className="w-12 text-center flex-shrink-0">
-        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-          {item.timeSlot || '—'}
+    <div className="relative flex items-stretch gap-3 mb-3 group">
+      {/* Time column */}
+      <div className="flex-shrink-0 w-14 flex flex-col items-center justify-center py-2">
+        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+          {formattedTime.time}
         </span>
+        <span className="text-[10px] text-gray-400">
+          {formattedTime.period}
+        </span>
+        {formattedDuration && (
+          <span className="text-[10px] text-gray-400 mt-1 px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded">
+            {formattedDuration}
+          </span>
+        )}
       </div>
 
-      {/* Image */}
-      <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
-        {item.destination.image ? (
-          <Image
-            src={item.destination.image_thumbnail || item.destination.image}
-            alt=""
-            width={48}
-            height={48}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <MapPin className="w-4 h-4 text-gray-400" />
+      {/* Card */}
+      <div className="flex-1 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 overflow-hidden">
+        <div className="flex items-center">
+          {/* Image */}
+          {item.destination.image && (
+            <div className="flex-shrink-0 w-16 h-16 relative">
+              <Image
+                src={item.destination.image_thumbnail || item.destination.image}
+                alt=""
+                fill
+                className="object-cover"
+                sizes="64px"
+              />
+            </div>
+          )}
+          {!item.destination.image && (
+            <div className="flex-shrink-0 w-16 h-16 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+              <MapPin className="w-5 h-5 text-gray-400" />
+            </div>
+          )}
+
+          {/* Content */}
+          <div className="flex-1 p-3 min-w-0">
+            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+              {item.destination.name}
+            </p>
+            {item.destination.category && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate capitalize mt-0.5">
+                {item.destination.category.replace(/_/g, ' ')}
+              </p>
+            )}
           </div>
-        )}
+
+          {/* Actions */}
+          <div className="flex items-center gap-1 pr-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button className="p-1.5 cursor-grab hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
+              <GripVertical className="w-4 h-4 text-gray-400" />
+            </button>
+            <button
+              onClick={onRemove}
+              className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+            >
+              <X className="w-4 h-4 text-gray-400 hover:text-red-500" />
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-          {item.destination.name}
-        </p>
-        {item.destination.category && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-            {item.destination.category}
-          </p>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button className="p-1.5 cursor-grab hover:bg-gray-200 dark:hover:bg-gray-700 rounded">
-          <GripVertical className="w-4 h-4 text-gray-400" />
-        </button>
-        <button
-          onClick={onRemove}
-          className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
-        >
-          <X className="w-4 h-4 text-gray-400 hover:text-red-500" />
-        </button>
-      </div>
+      {/* Timeline connector */}
+      {!isLast && (
+        <div className="absolute left-7 top-full w-px h-3 bg-gray-200 dark:bg-gray-700 -translate-x-1/2" />
+      )}
     </div>
   );
 }
