@@ -18,7 +18,6 @@ import { generateTextEmbedding } from '@/lib/ml/embeddings';
 import { searchRankingAlgorithm, RankedResult } from '@/services/intelligence/search-ranking';
 import { intentAnalysisService, EnhancedIntent } from '@/services/intelligence/intent-analysis';
 import { extendedConversationMemoryService } from '@/services/intelligence/conversation-memory';
-import { tasteProfileEvolutionService } from '@/services/intelligence/taste-profile-evolution';
 import { getSeasonalContext } from '@/services/seasonality';
 import type { Destination } from '@/types/destination';
 import {
@@ -1173,23 +1172,6 @@ Be concise (2-3 sentences), helpful, natural. Don't list destinations - those ap
         timestamp: signal.timestamp,
         context: signal.context,
       });
-    }
-
-    // Evolve taste profile
-    if (session.userId) {
-      try {
-        await tasteProfileEvolutionService.evolveTasteProfile(
-          session.userId,
-          signals.map(s => ({
-            type: s.type,
-            destinationSlug: s.destinationSlug,
-            timestamp: s.timestamp,
-            context: s.context,
-          }))
-        );
-      } catch (error) {
-        console.error('[SearchSession] Taste profile update error:', error);
-      }
     }
   }
 
