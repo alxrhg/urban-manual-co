@@ -245,7 +245,7 @@ export type BehaviorTrackingRequest = z.infer<typeof BehaviorTrackingRequestSche
  */
 export const ItineraryBuildRequestSchema = z.object({
   city: z.string().min(1, 'City is required'),
-  duration: z.enum(['day', 'half_day', 'multi_day']).optional().default('day'),
+  duration: z.enum(['morning', 'afternoon', 'evening', 'day', 'weekend']).optional().default('day'),
   neighborhood: z.string().nullable().optional().transform((v) => v ?? null),
   sessionId: z.string().nullable().optional().transform((v) => v ?? null),
 });
