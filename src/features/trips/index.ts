@@ -99,10 +99,10 @@ export { default as TripCanvas } from "@/components/trip/canvas/TripCanvas";
 export { default as CanvasTimeline } from "@/components/trip/canvas/CanvasTimeline";
 export { default as StudioPanel } from "@/components/trip/canvas/StudioPanel";
 
-export { default as TimelineCard } from "@/components/trip/timeline/TimelineCard";
-export { default as TimeGrid } from "@/components/trip/timeline/TimeGrid";
-export { default as ConnectorLine } from "@/components/trip/timeline/ConnectorLine";
-export { default as CurrentTimeIndicator } from "@/components/trip/timeline/CurrentTimeIndicator";
+export { TimelineCard } from "@/components/trip/timeline/TimelineCard";
+export { TimeGrid } from "@/components/trip/timeline/TimeGrid";
+export { ConnectorLine } from "@/components/trip/timeline/ConnectorLine";
+export { CurrentTimeIndicator } from "@/components/trip/timeline/CurrentTimeIndicator";
 
 // Itinerary views
 export { default as ItineraryView } from "@/components/trip/ItineraryView";
