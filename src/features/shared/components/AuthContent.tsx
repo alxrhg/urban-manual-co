@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIntelligentDrawer } from './IntelligentDrawerContext';
 import { AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
 
 /**
  * AuthContent - Login/signup view for IntelligentDrawer

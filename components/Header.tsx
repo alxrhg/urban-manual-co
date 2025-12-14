@@ -6,15 +6,15 @@ import { User, Map } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import { useDrawer } from "@/contexts/DrawerContext";
-import { ChatDrawer } from "@/components/ChatDrawer";
-import { LoginDrawer } from "@/components/LoginDrawer";
+import { ChatDrawer } from "@/features/chat/components/ChatDrawer";
+import { LoginDrawer } from "@/features/account/components/LoginDrawer";
 import { LoginModal } from "@/components/LoginModal";
 import { CommandPalette } from "@/components/CommandPalette";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/ui/tooltip";
 import { ChristmasTree } from "@/components/ChristmasTree";
 import { useChristmasTheme } from "@/contexts/ChristmasThemeContext";
 

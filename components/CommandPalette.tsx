@@ -28,7 +28,7 @@ import {
   CommandList,
   CommandSeparator,
   CommandShortcut,
-} from '@/components/ui/command';
+} from '@/ui/command';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Popular cities for quick navigation

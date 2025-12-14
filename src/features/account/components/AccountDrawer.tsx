@@ -6,8 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useDrawer } from '@/contexts/DrawerContext';
 import { createClient } from '@/lib/supabase/client';
 import { useTheme } from 'next-themes';
-import { Drawer } from '@/components/ui/Drawer';
-import { Switch } from '@/components/ui/switch';
+import { Drawer } from '@/ui/Drawer';
+import { Switch } from '@/ui/switch';
 import {
   getTravelBadge,
   getMilestoneProgress,

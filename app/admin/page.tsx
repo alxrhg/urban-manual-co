@@ -1,6 +1,6 @@
 'use client';
 
-import { DashboardOverview } from '@/components/admin/dashboard';
+import { DashboardOverview } from '@/features/admin/components/dashboard';
 
 export const dynamic = 'force-dynamic';
 

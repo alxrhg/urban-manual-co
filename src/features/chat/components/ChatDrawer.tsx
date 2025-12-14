@@ -4,9 +4,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import { ConversationBubble } from '@/app/components/chat/ConversationBubble';
 import { useAuth } from '@/contexts/AuthContext';
-import { Drawer } from '@/components/ui/Drawer';
-import { DrawerHeader } from '@/components/ui/DrawerHeader';
-import { DrawerSection } from '@/components/ui/DrawerSection';
+import { Drawer } from '@/ui/Drawer';
+import { DrawerHeader } from '@/ui/DrawerHeader';
+import { DrawerSection } from '@/ui/DrawerSection';
 import { ensureConversationSessionToken, persistConversationSessionToken } from '@/lib/chat/sessionToken';
 
 interface ChatDrawerProps {

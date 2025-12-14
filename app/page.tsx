@@ -1,11 +1,11 @@
 import { Metadata } from 'next';
 import { prefetchHomepageData } from '@/lib/data/fetch-destinations';
 import { generateOrganizationSchema, generateWebSiteSchema } from '@/lib/metadata';
-import { HomepageDataProvider } from '@/components/homepage/HomepageDataProvider';
-import { HomepageContent } from '@/components/homepage/HomepageContent';
-import { AISearchChatWrapper } from '@/components/homepage/AISearchChatWrapper';
-import InteractiveHero from '@/components/homepage/InteractiveHero';
-import NavigationBar from '@/components/homepage/NavigationBar';
+import { HomepageDataProvider } from '@/features/homepage/components/HomepageDataProvider';
+import { HomepageContent } from '@/features/homepage/components/HomepageContent';
+import { AISearchChatWrapper } from '@/features/homepage/components/AISearchChatWrapper';
+import InteractiveHero from '@/features/homepage/components/InteractiveHero';
+import NavigationBar from '@/features/homepage/components/NavigationBar';
 
 /**
  * Homepage - Progressive Loading Architecture with Client Fallback

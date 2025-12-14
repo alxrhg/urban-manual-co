@@ -1,6 +1,6 @@
 "use client";
 
-import DiscoverTab from "@/components/admin/DiscoverTab";
+import DiscoverTab from "@/features/admin/components/DiscoverTab";
 
 export default function AdminDiscoverPage() {
   return (

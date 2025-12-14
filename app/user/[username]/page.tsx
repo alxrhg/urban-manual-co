@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 import { MapPin, Users, Heart, Calendar } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/ui/button';
 
 export default function UserProfilePage() {
   const params = useParams();

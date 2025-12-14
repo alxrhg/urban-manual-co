@@ -1,6 +1,6 @@
 'use client';
 
-import { UserManagement } from '@/components/admin/users';
+import { UserManagement } from '@/features/admin/components/users';
 
 export const dynamic = 'force-dynamic';
 

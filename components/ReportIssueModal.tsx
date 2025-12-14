@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { AlertTriangle, Send, Loader2, CheckCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import {
@@ -12,7 +12,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/ui/dialog';
 
 interface ReportIssueModalProps {
   isOpen: boolean;

@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Loader2, Check } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
-import { Button } from '@/components/ui/button';
+import { toast } from '@/ui/sonner';
+import { Button } from '@/ui/button';
 
 interface PreferencesFormProps {
   userId: string;

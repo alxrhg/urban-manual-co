@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { MapPin, Clock, Star, ExternalLink } from 'lucide-react';
-import { CrowdBadge } from '@/components/trip/CrowdIndicator';
+import { CrowdBadge } from '@/features/trip/components/CrowdIndicator';
 
 interface PlaceCardProps {
   name: string;

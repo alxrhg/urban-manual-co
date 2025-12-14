@@ -7,7 +7,7 @@
  * - No server-side blocking - page is fully pre-built
  */
 
-import HomepageClient from "@/components/homepage/HomepageClient";
+import HomepageClient from "@/features/homepage/components/HomepageClient";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

@@ -4,14 +4,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import UMSectionTitle from "@/components/ui/UMSectionTitle";
+import UMSectionTitle from "@/ui/UMSectionTitle";
 import { useDrawerStore } from "@/lib/stores/drawer-store";
 import { AlertCircle, MapPin, Plane, Plus } from 'lucide-react';
 import Image from 'next/image';
 import { formatTripDateRange } from '@/lib/utils';
 import { formatDestinationsFromField } from '@/types/trip';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
+import { Button } from '@/ui/button';
+import { Spinner } from '@/ui/spinner';
 
 const LOADING_TIMEOUT = 15000; // 15 seconds
 

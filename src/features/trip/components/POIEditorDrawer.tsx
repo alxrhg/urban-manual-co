@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { DrawerSection } from '@/components/ui/DrawerSection';
+import { DrawerSection } from '@/ui/DrawerSection';
 import { Loader2, X, Trash2 } from 'lucide-react';
 import GooglePlacesAutocompleteNative from '@/components/GooglePlacesAutocompleteNative';
 import { useToast } from '@/hooks/useToast';

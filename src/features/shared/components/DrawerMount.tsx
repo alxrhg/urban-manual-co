@@ -3,24 +3,24 @@
 import { useEffect, useState } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 
-import { AccountDrawer } from '@/components/AccountDrawer';
+import { AccountDrawer } from '@/features/account/components/AccountDrawer';
 // DestinationDrawer removed - now using IntelligentDrawer from app/layout.tsx
-import { SavedPlacesDrawer } from '@/components/SavedPlacesDrawer';
-import { VisitedPlacesDrawer } from '@/components/VisitedPlacesDrawer';
-import { TripsDrawer } from '@/components/TripsDrawer';
+import { SavedPlacesDrawer } from '@/features/lists/components/SavedPlacesDrawer';
+import { VisitedPlacesDrawer } from '@/features/lists/components/VisitedPlacesDrawer';
+import { TripsDrawer } from '@/features/trip/components/TripsDrawer';
 import { QuickTripSelector } from '@/components/QuickTripSelector';
 
-import AddHotelDrawer from '@/components/drawers/AddHotelDrawer';
-import AddFlightDrawer from '@/components/drawers/AddFlightDrawer';
-import AISuggestionsDrawer from '@/components/drawers/AISuggestionsDrawer';
-import TripListDrawer from '@/components/drawers/TripListDrawer';
-import TripOverviewDrawer from '@/components/drawers/TripOverviewDrawer';
-import TripOverviewQuickDrawer from '@/components/drawers/TripOverviewQuickDrawer';
-import PlaceSelectorDrawer from '@/components/drawers/PlaceSelectorDrawer';
-import TripSettingsDrawer from '@/components/drawers/TripSettingsDrawer';
-import AccountDrawerNew from '@/components/drawers/AccountDrawer';
-import { Drawer } from '@/components/ui/Drawer';
-import { useDrawerStyle } from '@/components/ui/UseDrawerStyle';
+import AddHotelDrawer from '@/features/trip/components/AddHotelDrawer';
+import AddFlightDrawer from '@/features/trip/components/AddFlightDrawer';
+import AISuggestionsDrawer from '@/features/trip/components/AISuggestionsDrawer';
+import TripListDrawer from '@/features/trip/components/TripListDrawer';
+import TripOverviewDrawer from '@/features/trip/components/TripOverviewDrawer';
+import TripOverviewQuickDrawer from '@/features/trip/components/TripOverviewQuickDrawer';
+import PlaceSelectorDrawer from '@/features/trip/components/PlaceSelectorDrawer';
+import TripSettingsDrawer from '@/features/trip/components/TripSettingsDrawer';
+import { AccountDrawer as AccountDrawerNew } from '@/features/account/components/AccountDrawer';
+import { Drawer } from '@/ui/Drawer';
+import { useDrawerStyle } from '@/ui/UseDrawerStyle';
 
 // Types that are handled by inline PanelLayout on desktop
 const INLINE_TYPES = ['account-new', 'trip-list', 'trip-settings', 'place-selector', 'trip-add-hotel', 'add-flight', 'trip-ai'];
@@ -67,7 +67,7 @@ export default function DrawerMount() {
           style={drawerStyle}
           position="right"
         >
-          <AccountDrawerNew isOpen={open} onClose={closeDrawer} />
+          <AccountDrawerNew />
         </Drawer>
       )}
 

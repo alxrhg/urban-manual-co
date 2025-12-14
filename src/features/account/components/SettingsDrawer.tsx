@@ -4,7 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrawer } from '@/contexts/DrawerContext';
-import { Drawer } from '@/components/ui/Drawer';
+import { Drawer } from '@/ui/Drawer';
 import { Settings, User, Shield, Bell, ChevronLeft, ChevronRight, X, Palette, Globe } from 'lucide-react';
 
 // Settings menu item

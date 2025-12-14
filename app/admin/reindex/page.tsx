@@ -1,6 +1,6 @@
 "use client";
 
-import ReindexTab from "@/components/admin/ReindexTab";
+import ReindexTab from "@/features/admin/components/ReindexTab";
 
 export default function AdminReindexPage() {
   return (

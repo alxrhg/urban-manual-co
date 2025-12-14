@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { WifiOff, MapPin, Calendar, Plane, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/ui/button';
 import type { Trip } from '@/types/trip';
 import { formatDestinationsFromField } from '@/types/trip';
 

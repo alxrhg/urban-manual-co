@@ -4,8 +4,8 @@ import React, { useState, useEffect, Suspense, useId } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { AlertCircle, CheckCircle2, Eye, EyeOff, X } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Drawer } from '@/components/ui/Drawer';
+import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
+import { Drawer } from '@/ui/Drawer';
 
 interface LoginDrawerProps {
   isOpen: boolean;

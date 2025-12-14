@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { MapPin, Check } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
-import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
+import { DestinationCardSkeleton } from '@/ui/DestinationCardSkeleton';
 import { DestinationBadges } from './DestinationBadges';
 import { QuickActions } from './QuickActions';
 

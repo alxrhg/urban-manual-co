@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import UMSectionTitle from "@/components/ui/UMSectionTitle";
+import UMSectionTitle from "@/ui/UMSectionTitle";
 import { useDrawerStore } from "@/lib/stores/drawer-store";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/ui/button";
+import { Input } from "@/ui/input";
+import { Card, CardContent } from "@/ui/card";
 import { MapPin } from "lucide-react";
 
 export default function AddHotelDrawer({

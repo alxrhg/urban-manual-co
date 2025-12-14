@@ -1,15 +1,15 @@
 'use client';
 
 import { Clock, MapPin } from 'lucide-react';
-import type { ItineraryItem, HotelBooking, TripSettings } from './ItineraryCard';
+import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
+import type { HotelBooking } from '@/types/trip';
 import { formatDuration } from '@/lib/utils/time-calculations';
 
 interface MinimalActivityCardProps {
-  item: ItineraryItem;
+  item: EnrichedItineraryItem;
   hotel?: HotelBooking;
   isSelected: boolean;
   onSelect: () => void;
-  tripSettings: TripSettings;
 }
 
 /**
@@ -22,10 +22,10 @@ export default function MinimalActivityCard({
   hotel,
   isSelected,
   onSelect,
-  tripSettings,
+  
 }: MinimalActivityCardProps) {
   const notes = item.parsedNotes;
-  const isHotelActivity = item.category === 'hotel_activity';
+  const isHotelActivity = notes?.category === 'hotel_activity';
   const location = notes?.location || (isHotelActivity ? hotel?.name : 'Airport');
 
   return (

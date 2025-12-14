@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { Plane } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Spinner } from '@/components/ui/spinner';
+import { Button } from '@/ui/button';
+import { Input } from '@/ui/input';
+import { Label } from '@/ui/label';
+import { Textarea } from '@/ui/textarea';
+import { Spinner } from '@/ui/spinner';
 
 interface AddFlightDrawerProps {
   tripId?: string;

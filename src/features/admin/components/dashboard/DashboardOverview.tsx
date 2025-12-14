@@ -26,12 +26,12 @@ import {
   Download,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/ui/card';
+import { Badge } from '@/ui/badge';
+import { Progress } from '@/ui/progress';
+import { Separator } from '@/ui/separator';
+import { Skeleton } from '@/ui/skeleton';
+import { Button } from '@/ui/button';
 
 interface DashboardStats {
   totalDestinations: number;

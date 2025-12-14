@@ -5,9 +5,9 @@
  *
  * This file re-exports the new TripPanel from TripBuilder
  * for backward compatibility. New code should import directly
- * from @/components/trip/TripBuilder.
+ * from @/features/trip/components/builder.
  *
- * @deprecated Use TripPanel from @/components/trip/TripBuilder instead
+ * @deprecated Use TripPanel from @/features/trip/components/builder instead
  */
 
-export { TripPanel as default } from './TripBuilder';
+export { TripPanel as default } from './builder';

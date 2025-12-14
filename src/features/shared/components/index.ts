@@ -6,7 +6,7 @@
  *
  * @example
  * // In your app layout:
- * import { IntelligentDrawerProvider, IntelligentDrawer } from '@/components/IntelligentDrawer';
+ * import { IntelligentDrawerProvider, IntelligentDrawer } from '@/features/shared/components/IntelligentDrawer';
  *
  * function Layout({ children }) {
  *   return (
@@ -18,7 +18,7 @@
  * }
  *
  * // To open a destination with trip awareness:
- * import { useDestinationDrawer } from '@/components/IntelligentDrawer';
+ * import { useDestinationDrawer } from '@/features/shared/components/IntelligentDrawerContext';
  *
  * function DestinationCard({ destination }) {
  *   const { openDestination, addToTripQuick, activeTripInfo } = useDestinationDrawer();
@@ -31,7 +31,7 @@
  * }
  *
  * // To open trip editor:
- * import { useTripDrawer } from '@/components/IntelligentDrawer';
+ * import { useTripDrawer } from '@/features/shared/components/IntelligentDrawer';
  *
  * function TripButton() {
  *   const { openTrip, openTripSelector, activeTripInfo } = useTripDrawer();

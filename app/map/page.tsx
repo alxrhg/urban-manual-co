@@ -12,7 +12,7 @@ import { Search, X, List, ChevronRight, SlidersHorizontal, Globe2, LayoutGrid, M
 import Image from 'next/image';
 
 // IntelligentDrawer for destination details
-import { useDestinationDrawer } from '@/components/IntelligentDrawer';
+import { useDestinationDrawer } from '@/features/shared/components/IntelligentDrawerContext';
 
 interface FilterState {
   categories: Set<string>;

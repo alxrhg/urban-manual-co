@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrawer } from '@/contexts/DrawerContext';
 import { createClient } from '@/lib/supabase/client';
-import { Drawer } from '@/components/ui/Drawer';
+import { Drawer } from '@/ui/Drawer';
 import { Loader2, Compass, ChevronLeft, X, ArrowRight, MapPin, Plus, Plane } from 'lucide-react';
 import Image from 'next/image';
 import { formatTripDateRange } from '@/lib/utils';
 import { formatDestinationsFromField } from '@/types/trip';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/ui/button';
 
 interface Trip {
   id: string;

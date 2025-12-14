@@ -34,31 +34,31 @@ import {
 import { supabase } from '@/lib/supabase';
 import type { Destination } from '@/types/destination';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
+import { Input } from '@/ui/input';
+import { Button } from '@/ui/button';
+import { Checkbox } from '@/ui/checkbox';
+import { Badge } from '@/ui/badge';
+import { Skeleton } from '@/ui/skeleton';
+import { Separator } from '@/ui/separator';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/ui/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@/ui/dropdown-menu';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
+} from '@/ui/popover';
 import {
   Command,
   CommandEmpty,
@@ -66,7 +66,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@/components/ui/command';
+} from '@/ui/command';
 
 interface ContentManagerProps {
   onEditDestination?: (destination: Destination) => void;

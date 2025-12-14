@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { useTheme } from 'next-themes';
-import { Switch } from '@/components/ui/switch';
+import { Switch } from '@/ui/switch';
 import { useIntelligentDrawer } from './IntelligentDrawerContext';
 import {
   getTravelBadge,

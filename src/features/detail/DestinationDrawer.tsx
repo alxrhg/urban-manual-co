@@ -30,8 +30,8 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+} from '@/ui/dropdown-menu';
+import { ToggleGroup, ToggleGroupItem } from '@/ui/toggle-group';
 import { Destination } from '@/types/destination';
 import type { ItineraryItemNotes } from '@/types/trip';
 import { useAuth } from '@/contexts/AuthContext';
@@ -46,13 +46,13 @@ import { NestedDestinations } from '@/components/NestedDestinations';
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { createClient } from '@/lib/supabase/client';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
-import { Drawer } from '@/components/ui/Drawer';
+import { Drawer } from '@/ui/Drawer';
 import { architectNameToSlug } from '@/lib/architect-utils';
 import { DestinationCard } from '@/components/DestinationCard';
 
 
 // Dynamically import GoogleStaticMap for small map in drawer
-const GoogleStaticMap = dynamic(() => import('@/components/maps/GoogleStaticMap'), {
+const GoogleStaticMap = dynamic(() => import('@/features/maps/components/GoogleStaticMap'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-48 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl">

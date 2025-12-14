@@ -40,7 +40,7 @@ import { getCategoryIconComponent } from "@/lib/icons/category-icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDrawer } from "@/contexts/DrawerContext";
 import { useDrawerStore } from "@/lib/stores/drawer-store";
-import { useDestinationDrawer } from "@/components/IntelligentDrawer";
+import { useDestinationDrawer } from '@/features/shared/components/IntelligentDrawerContext';
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";

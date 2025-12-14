@@ -441,7 +441,7 @@ export function ContentState({
  * Pre-configured content states for common scenarios
  */
 
-export function LoadingState({
+export function ContentLoadingState({
   title = 'Loading...',
   description,
   className,

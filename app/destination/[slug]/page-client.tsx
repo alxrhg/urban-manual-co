@@ -4,13 +4,13 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, MapPin, Bookmark, Check, Plus, ChevronDown, X, Phone, Globe, ExternalLink, Navigation, Clock, Tag, Building2, Share2 } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@/ui/skeleton';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@/ui/dropdown-menu';
 
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
@@ -30,7 +30,7 @@ import { SequencePredictionsInline } from '@/components/SequencePredictionsInlin
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 import { PRICE_LEVEL } from '@/lib/constants';
 import { HorizontalDestinationCard } from '@/components/HorizontalDestinationCard';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/ui/sonner';
 
 interface Recommendation {
   slug: string;

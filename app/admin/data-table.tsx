@@ -15,9 +15,9 @@ import {
   FilterFn,
 } from '@tanstack/react-table';
 import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Spinner } from '@/components/ui/spinner';
+import { Button } from '@/ui/button';
+import { Input } from '@/ui/input';
+import { Spinner } from '@/ui/spinner';
 import {
   Table,
   TableBody,
@@ -25,13 +25,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@/ui/table';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@/ui/dropdown-menu';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];

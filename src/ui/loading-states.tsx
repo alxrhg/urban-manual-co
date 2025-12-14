@@ -111,7 +111,7 @@ export function Skeleton({
 /**
  * Card skeleton for destination cards
  */
-export function CardSkeleton({ className }: { className?: string }) {
+export function LoadingCardSkeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
@@ -156,7 +156,7 @@ export function CardGridSkeleton({
       )}
     >
       {Array.from({ length: count }).map((_, i) => (
-        <CardSkeleton key={i} />
+        <LoadingCardSkeleton key={i} />
       ))}
     </div>
   );

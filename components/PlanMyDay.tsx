@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { Calendar, MapPin, Clock, Sparkles, Loader2, ChevronRight, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserContext, formatUserContextForAPI } from '@/hooks/useUserContext';
 import { cn } from '@/lib/utils';

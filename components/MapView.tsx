@@ -1,7 +1,7 @@
 'use client';
 
 import { Destination } from '@/types/destination';
-import GoogleInteractiveMap from '@/components/maps/GoogleInteractiveMap';
+import GoogleInteractiveMap from '@/features/maps/components/GoogleInteractiveMap';
 import { getDefaultProvider } from '@/lib/maps/provider';
 
 interface MapViewProps {

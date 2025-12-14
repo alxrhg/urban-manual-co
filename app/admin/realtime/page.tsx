@@ -1,6 +1,6 @@
 'use client';
 
-import { RealTimeAnalytics } from '@/components/admin/analytics';
+import { RealTimeAnalytics } from '@/features/admin/components/analytics';
 
 export const dynamic = 'force-dynamic';
 

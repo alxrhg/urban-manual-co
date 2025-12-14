@@ -1,13 +1,12 @@
 'use client';
 
-import type { ItineraryItem, TripSettings } from './ItineraryCard';
-import TransportCardBase from '@/components/trips/TransportCard';
+import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
+import TransportCardBase from '@/features/trip/components/TransportCard';
 
 interface TransportCardProps {
-  item: ItineraryItem;
+  item: EnrichedItineraryItem;
   isSelected: boolean;
   onSelect: () => void;
-  tripSettings: TripSettings;
 }
 
 /**
@@ -17,7 +16,7 @@ export default function TransportCard({
   item,
   isSelected,
   onSelect,
-  tripSettings,
+  
 }: TransportCardProps) {
   const notes = item.parsedNotes;
   const transportType = notes?.type === 'train' ? 'train' : 'drive';

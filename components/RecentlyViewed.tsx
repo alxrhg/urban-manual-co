@@ -8,7 +8,7 @@ import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { useAuth } from '@/contexts/AuthContext';
 import { Destination } from '@/types/destination';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
-import { getDestinationAltText } from './ui/DestinationImage';
+import { getDestinationAltText } from '@/ui/DestinationImage';
 
 function capitalizeCity(city: string): string {
   return city

@@ -6,8 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { X } from "lucide-react";
 import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { useToast } from "@/hooks/useToast";
-import { ContentManager } from '@/components/admin/cms';
-import { DestinationForm } from '@/components/admin/DestinationForm';
+import { ContentManager } from '@/features/admin/components/cms';
+import { DestinationForm } from '@/features/admin/components/DestinationForm';
 import type { Destination } from '@/types/destination';
 
 export const dynamic = 'force-dynamic';

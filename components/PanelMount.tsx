@@ -4,22 +4,22 @@ import * as React from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/ui/button';
+import { ScrollArea } from '@/ui/scroll-area';
 import {
   ResizablePanelGroup,
   ResizablePanel,
   ResizableHandle,
-} from '@/components/ui/resizable';
+} from '@/ui/resizable';
 
 // Import drawer content components
-import AddHotelDrawer from '@/components/drawers/AddHotelDrawer';
-import AddFlightDrawer from '@/components/drawers/AddFlightDrawer';
-import AISuggestionsDrawer from '@/components/drawers/AISuggestionsDrawer';
-import TripListDrawer from '@/components/drawers/TripListDrawer';
-import PlaceSelectorDrawer from '@/components/drawers/PlaceSelectorDrawer';
-import TripSettingsDrawer from '@/components/drawers/TripSettingsDrawer';
-import AccountDrawerNew from '@/components/drawers/AccountDrawer';
+import AddHotelDrawer from '@/features/trip/components/AddHotelDrawer';
+import AddFlightDrawer from '@/features/trip/components/AddFlightDrawer';
+import AISuggestionsDrawer from '@/features/trip/components/AISuggestionsDrawer';
+import TripListDrawer from '@/features/trip/components/TripListDrawer';
+import PlaceSelectorDrawer from '@/features/trip/components/PlaceSelectorDrawer';
+import TripSettingsDrawer from '@/features/trip/components/TripSettingsDrawer';
+import { AccountDrawer as AccountDrawerNew } from '@/features/account/components/AccountDrawer';
 // DestinationDrawer removed - now using IntelligentDrawer
 
 // Map of drawer types to their titles
@@ -73,7 +73,7 @@ export function PanelLayout({
     switch (type) {
       // 'destination' type now handled by IntelligentDrawer
       case 'account-new':
-        return <AccountDrawerNew isOpen={open} onClose={closeDrawer} />;
+        return <AccountDrawerNew />;
       case 'trip-list':
         return <TripListDrawer {...props} />;
       case 'trip-settings':
@@ -203,7 +203,7 @@ export function InlinePanelContent() {
   switch (type) {
     // 'destination' type now handled by IntelligentDrawer
     case 'account-new':
-      content = <AccountDrawerNew isOpen={open} onClose={closeDrawer} />;
+      content = <AccountDrawerNew />;
       break;
     case 'trip-list':
       content = <TripListDrawer {...props} />;

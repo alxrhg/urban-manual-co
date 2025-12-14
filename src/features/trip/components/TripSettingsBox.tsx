@@ -8,7 +8,7 @@ import Image from 'next/image';
 import type { Trip } from '@/types/trip';
 import { parseDestinations, stringifyDestinations } from '@/types/trip';
 import { MultiCityAutocompleteInput } from '@/components/MultiCityAutocompleteInput';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/ui/sonner';
 import {
   TripCard,
   TripCardHeader,
@@ -18,7 +18,7 @@ import {
   TripInput,
   TripLabel,
   TripButton,
-} from './ui';
+} from '.';
 
 // Common travel-related emojis
 const TRIP_EMOJIS = [

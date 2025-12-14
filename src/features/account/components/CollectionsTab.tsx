@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Collection } from '@/types/common';
 import { NoCollectionsEmptyState } from '@/components/EmptyStates';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/ui/sonner';
 
 interface CollectionsTabProps {
   collections: Collection[];

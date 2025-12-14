@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrawer } from '@/contexts/DrawerContext';
 import { createClient } from '@/lib/supabase/client';
-import { Drawer } from '@/components/ui/Drawer';
+import { Drawer } from '@/ui/Drawer';
 import { Loader2, MapPin, ChevronLeft, X, ArrowRight } from 'lucide-react';
 import { HorizontalDestinationCard } from '@/components/HorizontalDestinationCard';
 import type { Destination } from '@/types/destination';

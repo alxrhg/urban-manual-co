@@ -3,16 +3,16 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Search, Plus, Check, MapPin } from 'lucide-react';
-import { Spinner } from '@/components/ui/spinner';
+import { Spinner } from '@/ui/spinner';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/sonner';
+import { Button } from '@/ui/button';
+import { toast } from '@/ui/sonner';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
+} from '@/ui/popover';
 import {
   Command,
   CommandInput,
@@ -20,7 +20,7 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandItem,
-} from '@/components/ui/command';
+} from '@/ui/command';
 
 interface AddPlaceDropdownProps {
   onPlaceAdded?: () => void;

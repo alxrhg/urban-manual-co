@@ -6,7 +6,7 @@ import {
   getHoursVariant,
   getHoursIcon,
   getHoursLabel,
-} from '@/components/ui/InsightChip';
+} from '@/ui/InsightChip';
 
 interface OpeningHoursIndicatorProps {
   placeId?: string;

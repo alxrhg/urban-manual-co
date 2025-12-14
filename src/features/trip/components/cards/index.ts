@@ -1,5 +1,4 @@
 // Card components for itinerary items
-export { default as ItineraryCard } from './ItineraryCard';
 export { default as FlightCard } from './FlightCard';
 export { default as RestaurantCard } from './RestaurantCard';
 export { default as AttractionCard } from './AttractionCard';
@@ -9,11 +8,5 @@ export { default as TransportCard } from './TransportCard';
 export { default as FreeTimeGap } from './FreeTimeGap';
 export { default as CustomCard } from './CustomCard';
 
-// Types
-export type {
-  ItineraryItem,
-  Flight,
-  HotelBooking,
-  TripSettings,
-  ItineraryCardProps,
-} from './ItineraryCard';
+// Re-export types from their source locations
+export type { ItineraryItem, Flight, HotelBooking } from '@/types/trip';

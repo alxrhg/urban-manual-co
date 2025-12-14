@@ -49,7 +49,18 @@ export * from "./UMTagPill";
 export * from "./lazy-image";
 export * from "./empty-state";
 export * from "./content-state";
-export * from "./loading-states";
+// Explicitly export from loading-states to avoid conflicts with skeleton.tsx
+export {
+  LoadingState,
+  queryStatusToLoadingState,
+  LoadingCardSkeleton,
+  CardGridSkeleton,
+  ListItemSkeleton,
+  LoadingOverlay,
+  LoadingStateWrapper,
+  QueryStateWrapper,
+  ProgressIndicator,
+} from "./loading-states";
 export * from "./oauth-loading";
 export * from "./undo-toast";
 export * from "./pull-to-refresh";

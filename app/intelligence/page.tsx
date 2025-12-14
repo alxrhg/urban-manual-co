@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { IntelligenceDashboard } from '@/components/IntelligenceDashboard';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/ui/sonner';
 
 export default function IntelligencePage() {
   const [intelligence, setIntelligence] = useState<any>(null);

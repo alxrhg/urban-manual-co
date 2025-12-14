@@ -10,7 +10,7 @@
  *
  * @example
  * // Use the modern drawer interface
- * import { TripDrawer, TripFloatingBar } from '@/components/trip/TripBuilder';
+ * import { TripDrawer, TripFloatingBar } from '@/features/trip/components/builder';
  *
  * function App() {
  *   return (

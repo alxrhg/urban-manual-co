@@ -1,14 +1,13 @@
 'use client';
 
-import type { ItineraryItem, TripSettings } from './ItineraryCard';
-import PlaceCard from '@/components/trips/PlaceCard';
+import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
+import PlaceCard from '@/features/trip/components/PlaceCard';
 import { formatTimeDisplay } from '@/lib/utils/time-calculations';
 
 interface RestaurantCardProps {
-  item: ItineraryItem;
+  item: EnrichedItineraryItem;
   isSelected: boolean;
   onSelect: () => void;
-  tripSettings: TripSettings;
 }
 
 /**
@@ -19,7 +18,7 @@ export default function RestaurantCard({
   item,
   isSelected,
   onSelect,
-  tripSettings,
+  
 }: RestaurantCardProps) {
   const notes = item.parsedNotes;
 

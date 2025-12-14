@@ -1,13 +1,13 @@
 "use client";
 
-import UMSectionTitle from "@/components/ui/UMSectionTitle";
+import UMSectionTitle from "@/ui/UMSectionTitle";
 import { useDrawerStore } from "@/lib/stores/drawer-store";
 import { applyAIActions, applyPatch, applySuggestionPatches } from "@/lib/intelligence/actionRouter";
 import type { SuggestionPatch, TripPatch } from "@/lib/intelligence/types";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@/ui/button";
+import { Card, CardContent } from "@/ui/card";
+import { Separator } from "@/ui/separator";
 import { useState } from "react";
 import { Undo2 } from "lucide-react";
 

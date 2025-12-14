@@ -5,7 +5,7 @@
  * Uses skeleton components that match the final layout.
  */
 
-import { DestinationGridSkeleton } from "@/components/skeletons/DestinationCardSkeleton";
+import { DestinationGridSkeleton } from "@/ui/DestinationCardSkeleton";
 
 export default function HomeLoading() {
   return (

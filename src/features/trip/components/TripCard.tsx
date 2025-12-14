@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Calendar, MapPin, ArrowUpRight, Plane, Utensils } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Card } from "@/ui/card";
 import { formatTripDateRange, calculateTripDays } from "@/lib/utils";
 
 interface Trip {

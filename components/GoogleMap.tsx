@@ -1,7 +1,7 @@
 'use client';
 
-import GoogleStaticMap from '@/components/maps/GoogleStaticMap';
-import GoogleInteractiveMap from '@/components/maps/GoogleInteractiveMap';
+import GoogleStaticMap from '@/features/maps/components/GoogleStaticMap';
+import GoogleInteractiveMap from '@/features/maps/components/GoogleInteractiveMap';
 import { getDefaultProvider } from '@/lib/maps/provider';
 
 interface GoogleMapProps {

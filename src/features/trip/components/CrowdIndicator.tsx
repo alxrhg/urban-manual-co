@@ -11,6 +11,11 @@ interface CrowdIndicatorProps {
   onTimeClick?: (time: string) => void;
 }
 
+// CrowdBadge is an alias for CrowdIndicator in compact mode
+export function CrowdBadge({ category, time }: { category?: string; time?: string }) {
+  return <CrowdIndicator category={category} scheduledTime={time} compact />;
+}
+
 export default function CrowdIndicator({
   category,
   scheduledTime,

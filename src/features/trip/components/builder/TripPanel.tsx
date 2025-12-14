@@ -24,7 +24,7 @@ import TripEmptyState from './TripEmptyState';
 import TripActions from './TripActions';
 import DestinationPalette from './DestinationPalette';
 import DragPreview from './DragPreview';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/ui/sonner';
 import type { Destination } from '@/types/destination';
 
 /**

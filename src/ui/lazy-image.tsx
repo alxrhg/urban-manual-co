@@ -156,9 +156,9 @@ export function ImageSkeleton({
 }
 
 /**
- * Avatar image with fallback to initials
+ * Lazy avatar image with fallback to initials
  */
-interface AvatarImageProps extends Omit<LazyImageProps, 'width' | 'height' | 'fill'> {
+interface LazyAvatarImageProps extends Omit<LazyImageProps, 'width' | 'height' | 'fill'> {
   /** Size in pixels */
   size?: number;
   /** Fallback initials */
@@ -167,7 +167,7 @@ interface AvatarImageProps extends Omit<LazyImageProps, 'width' | 'height' | 'fi
   initialsBackground?: string;
 }
 
-export function AvatarImage({
+export function LazyAvatarImage({
   src,
   alt,
   size = 40,
@@ -175,7 +175,7 @@ export function AvatarImage({
   initialsBackground = '#6b7280',
   className,
   ...props
-}: AvatarImageProps) {
+}: LazyAvatarImageProps) {
   const [showFallback, setShowFallback] = React.useState(!src);
 
   React.useEffect(() => {

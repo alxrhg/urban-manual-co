@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/ui/tabs';
 
 const NAV_LINKS = [
   { href: '/admin', label: 'Overview', value: 'overview' },

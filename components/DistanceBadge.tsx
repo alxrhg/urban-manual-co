@@ -1,6 +1,6 @@
 'use client';
 
-import { InsightChip, InsightText } from '@/components/ui/InsightChip';
+import { InsightChip, InsightText } from '@/ui/InsightChip';
 
 interface Props {
   distanceKm: number;

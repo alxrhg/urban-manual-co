@@ -10,7 +10,7 @@ import Image from 'next/image';
 import { getCategoryIconComponent } from '@/lib/icons/category-icons';
 import { useRouter } from 'next/navigation';
 import { useTripBuilder } from '@/contexts/TripBuilderContext';
-import AddToTripButton from '@/components/trip/AddToTripButton';
+import AddToTripButton from '@/features/trip/components/AddToTripButton';
 
 // Deterministic UI types from travel-intelligence API
 interface SearchFilters {

@@ -9,9 +9,9 @@ import {
   SheetHeader,
   SheetTitle,
   SheetFooter,
-} from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+} from '@/ui/sheet';
+import { Button } from '@/ui/button';
+import { Separator } from '@/ui/separator';
 
 interface EventDetailDrawerProps {
   event: TimeBlock | null;

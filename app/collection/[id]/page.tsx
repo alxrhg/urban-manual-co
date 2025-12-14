@@ -9,7 +9,7 @@ import { CollectionDetailSkeleton } from '@/components/LoadingStates';
 import { EmptyState } from '@/components/EmptyStates';
 import { HorizontalDestinationCard } from '@/components/HorizontalDestinationCard';
 import type { Destination } from '@/types/destination';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/ui/sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +19,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '@/ui/alert-dialog';
 
 // Helper function to capitalize city names
 function capitalizeCity(city: string): string {

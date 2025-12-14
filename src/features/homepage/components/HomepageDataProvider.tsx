@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Destination } from '@/types/destination';
 import { createClient } from '@/lib/supabase/client';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
-import { useDestinationDrawer } from '@/components/IntelligentDrawer';
+import { useDestinationDrawer } from '@/features/shared/components/IntelligentDrawerContext';
 
 /**
  * Homepage Data Provider with Full Features

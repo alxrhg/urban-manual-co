@@ -3,8 +3,8 @@
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Camera, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/sonner';
+import { Button } from '@/ui/button';
+import { toast } from '@/ui/sonner';
 
 interface AvatarUploadProps {
   currentAvatarUrl?: string | null;

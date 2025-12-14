@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { formatDestinationsFromField } from '@/types/trip';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/ui/sonner';
 
 interface Trip {
   id: string;

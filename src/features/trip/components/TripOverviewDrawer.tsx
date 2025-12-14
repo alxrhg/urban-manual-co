@@ -2,16 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import UMSectionTitle from "@/components/ui/UMSectionTitle";
+import { Card } from "@/ui/card";
+import { Button } from "@/ui/button";
+import UMSectionTitle from "@/ui/UMSectionTitle";
 import { useDrawerStore } from "@/lib/stores/drawer-store";
 import { useTrip } from '@/hooks/useTrip';
 import Image from 'next/image';
 import { formatTripDateWithYear } from '@/lib/utils';
-import { Drawer } from '@/components/ui/Drawer';
-import { DrawerHeader } from '@/components/ui/DrawerHeader';
-import { useDrawerStyle } from '@/components/ui/UseDrawerStyle';
+import { Drawer } from '@/ui/Drawer';
+import { DrawerHeader } from '@/ui/DrawerHeader';
+import { useDrawerStyle } from '@/ui/UseDrawerStyle';
 
 interface Trip {
   id?: string;

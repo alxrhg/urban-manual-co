@@ -1,13 +1,13 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Drawer } from '@/components/ui/Drawer';
-import { DrawerHeader } from '@/components/ui/DrawerHeader';
+import { Drawer } from '@/ui/Drawer';
+import { DrawerHeader } from '@/ui/DrawerHeader';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import Image from 'next/image';
 import { useTrip } from '@/hooks/useTrip';
 import { formatTripDateWithYear } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/ui/button';
 import { MapPin, Calendar, ArrowRight } from 'lucide-react';
 
 interface Trip {

@@ -1,14 +1,14 @@
 'use client';
 
-import type { ItineraryItem, Flight, TripSettings } from './ItineraryCard';
-import FlightStatusCard from '@/components/trips/FlightStatusCard';
+import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
+import type { Flight } from '@/types/trip';
+import FlightStatusCard from '@/features/trip/components/FlightStatusCard';
 
 interface FlightCardProps {
-  item: ItineraryItem;
+  item: EnrichedItineraryItem;
   flight?: Flight;
   isSelected: boolean;
   onSelect: () => void;
-  tripSettings: TripSettings;
 }
 
 /**
@@ -20,22 +20,21 @@ export default function FlightCard({
   flight,
   isSelected,
   onSelect,
-  tripSettings,
 }: FlightCardProps) {
   // Build flight data from the flight booking or parsed notes
   const flightData = flight
     ? {
         airline: flight.airline,
         flightNumber: flight.flightNumber,
-        from: flight.from,
-        to: flight.to,
-        departureDate: flight.departureDate,
+        from: flight.departureAirport,
+        to: flight.arrivalAirport,
+        departureDate: flight.departureTime.split('T')[0],
         departureTime: flight.departureTime,
-        arrivalDate: flight.arrivalDate,
+        arrivalDate: flight.arrivalTime.split('T')[0],
         arrivalTime: flight.arrivalTime,
         confirmationNumber: flight.confirmationNumber,
-        terminal: flight.terminal,
-        gate: flight.gate,
+        terminal: flight.departureTerminal,
+        gate: flight.departureGate,
       }
     : item.parsedNotes;
 
@@ -56,7 +55,7 @@ export default function FlightCard({
     >
       <FlightStatusCard
         flight={flightData}
-        departureDate={flight?.departureDate || item.parsedNotes?.departureDate}
+        departureDate={flight ? flight.departureTime.split('T')[0] : item.parsedNotes?.departureDate}
         compact
       />
     </div>

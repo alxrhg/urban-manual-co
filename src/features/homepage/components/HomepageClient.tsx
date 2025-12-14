@@ -46,7 +46,7 @@ import { type ExtractedIntent } from "@/app/api/intent/schema";
 import { capitalizeCity } from "@/lib/utils";
 import { isOpenNow } from "@/lib/utils/opening-hours";
 import { DestinationCard } from "@/components/DestinationCard";
-import { DestinationGridSkeleton } from "@/components/skeletons/DestinationCardSkeleton";
+import { DestinationGridSkeleton } from "@/ui/DestinationCardSkeleton";
 import HomeMapSplitView from "@/components/HomeMapSplitView";
 import { EditModeToggle } from "@/components/EditModeToggle";
 import { useItemsPerPage } from "@/hooks/useGridColumns";
@@ -59,7 +59,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import type { User } from "@supabase/supabase-js";
 
 // Import IntelligentDrawer hook
-import { useDestinationDrawer } from "@/components/IntelligentDrawer";
+import { useDestinationDrawer } from '@/features/shared/components/IntelligentDrawerContext';
 
 // Lazy load heavy components
 const SmartRecommendations = dynamic(

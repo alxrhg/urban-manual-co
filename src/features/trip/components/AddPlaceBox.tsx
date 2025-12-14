@@ -24,7 +24,7 @@ import {
   TripInput,
   TripLabel,
   TripButton,
-} from './ui';
+} from '.';
 
 const CATEGORIES = ['All', 'Dining', 'Cafe', 'Bar', 'Culture', 'Shopping', 'Hotel'];
 

@@ -11,9 +11,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/sonner';
+} from '@/ui/dialog';
+import { Button } from '@/ui/button';
+import { toast } from '@/ui/sonner';
 
 interface SaveDestinationModalProps {
   destinationId: number;

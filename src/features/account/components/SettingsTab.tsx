@@ -3,7 +3,7 @@
 import React from 'react';
 import { ProfileEditor } from '@/components/ProfileEditor';
 import { AccountPrivacyManager } from '@/components/AccountPrivacyManager';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/ui/sonner';
 
 interface SettingsTabProps {
   userId: string;

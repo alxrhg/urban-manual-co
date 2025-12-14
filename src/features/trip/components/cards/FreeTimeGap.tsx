@@ -1,14 +1,13 @@
 'use client';
 
 import { Clock, Coffee } from 'lucide-react';
-import type { ItineraryItem, TripSettings } from './ItineraryCard';
+import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import { formatDuration } from '@/lib/utils/time-calculations';
 
 interface FreeTimeGapProps {
-  item: ItineraryItem;
+  item: EnrichedItineraryItem;
   isSelected: boolean;
   onSelect: () => void;
-  tripSettings: TripSettings;
 }
 
 /**
@@ -19,7 +18,7 @@ export default function FreeTimeGap({
   item,
   isSelected,
   onSelect,
-  tripSettings,
+  
 }: FreeTimeGapProps) {
   const notes = item.parsedNotes;
   const duration = notes?.duration;

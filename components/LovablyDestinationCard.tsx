@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { Destination } from '@/types/destination';
 import { DestinationBadges } from './DestinationBadges';
-import { getDestinationAltText } from './ui/DestinationImage';
+import { getDestinationAltText } from '@/ui/DestinationImage';
 
 interface LovablyDestinationCardProps {
   destination: Destination;

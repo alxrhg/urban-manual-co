@@ -22,8 +22,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 
 // Re-export LoadingState from loading-states for backward compatibility
-export { LoadingState } from '@/components/ui/loading-states';
-import { LoadingState } from '@/components/ui/loading-states';
+export { LoadingState } from '@/ui/loading-states';
+import { LoadingState } from '@/ui/loading-states';
 
 interface UseDataFetchingOptions<T> {
   /** Initial data */

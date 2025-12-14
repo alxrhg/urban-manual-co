@@ -20,18 +20,18 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
+import { Input } from '@/ui/input';
+import { Button } from '@/ui/button';
+import { Checkbox } from '@/ui/checkbox';
+import { Badge } from '@/ui/badge';
+import { Skeleton } from '@/ui/skeleton';
+import { Separator } from '@/ui/separator';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/ui/dialog';
 
 interface MediaItem {
   id: string;

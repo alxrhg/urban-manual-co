@@ -15,7 +15,7 @@ import {
   type TripStats as TripStatsType,
 } from '@/lib/trip';
 import type { Trip } from '@/types/trip';
-import TripSetupWizard from '@/components/trip/TripSetupWizard';
+import TripSetupWizard from '@/features/trip/components/TripSetupWizard';
 
 export interface TripWithStats extends Trip {
   stats: TripStatsType;

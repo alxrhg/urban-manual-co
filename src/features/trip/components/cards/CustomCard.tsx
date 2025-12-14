@@ -1,14 +1,13 @@
 'use client';
 
 import { FileText, Clock, MapPin } from 'lucide-react';
-import type { ItineraryItem, TripSettings } from './ItineraryCard';
+import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import { formatTimeDisplay, formatDuration } from '@/lib/utils/time-calculations';
 
 interface CustomCardProps {
-  item: ItineraryItem;
+  item: EnrichedItineraryItem;
   isSelected: boolean;
   onSelect: () => void;
-  tripSettings: TripSettings;
 }
 
 /**
@@ -19,7 +18,7 @@ export default function CustomCard({
   item,
   isSelected,
   onSelect,
-  tripSettings,
+  
 }: CustomCardProps) {
   const notes = item.parsedNotes;
 

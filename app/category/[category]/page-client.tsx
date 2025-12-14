@@ -10,7 +10,7 @@ import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/Ca
 import Image from 'next/image';
 import { SearchFiltersComponent, SearchFilters } from '@/src/features/search/SearchFilters';
 import { useDrawer } from '@/contexts/DrawerContext';
-import { useDestinationDrawer } from '@/components/IntelligentDrawer';
+import { useDestinationDrawer } from '@/features/shared/components/IntelligentDrawerContext';
 
 interface CategoryPageClientProps {
   category: string;

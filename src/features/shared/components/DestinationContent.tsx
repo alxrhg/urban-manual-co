@@ -26,7 +26,7 @@ import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 import { useTripBuilder } from '@/contexts/TripBuilderContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/ui/sonner';
 
 // ============================================
 // SMART CATEGORY DETECTION
@@ -357,7 +357,7 @@ const SECTION_PRIORITIES: Record<CategoryType, Record<string, number>> = {
 };
 
 // Lazy load map
-const GoogleStaticMap = dynamic(() => import('@/components/maps/GoogleStaticMap'), {
+const GoogleStaticMap = dynamic(() => import('@/features/maps/components/GoogleStaticMap'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800">

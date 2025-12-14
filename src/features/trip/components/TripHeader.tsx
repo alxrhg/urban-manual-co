@@ -8,7 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@/ui/dropdown-menu';
 import type { Trip } from '@/types/trip';
 import { parseDestinations, formatDestinations } from '@/types/trip';
 

@@ -16,7 +16,7 @@ import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { slugToArchitectName } from '@/lib/architect-utils';
 
 // IntelligentDrawer for destination details
-import { useDestinationDrawer } from '@/components/IntelligentDrawer';
+import { useDestinationDrawer } from '@/features/shared/components/IntelligentDrawerContext';
 
 function capitalizeCategory(category: string): string {
   return category
