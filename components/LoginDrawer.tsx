@@ -144,6 +144,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
                 </label>
                 <input
                   id={`login-name-${uniqueId}`}
+                  aria-label="Name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -162,6 +163,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
               </label>
               <input
                 id={`login-email-${uniqueId}`}
+                aria-label="Email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -180,6 +182,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
               <div className="relative">
                 <input
                   id={`login-password-${uniqueId}`}
+                  aria-label="Password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
