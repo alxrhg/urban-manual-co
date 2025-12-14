@@ -14,6 +14,50 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.urbanmanual.co
 // HMAC secret for signing OAuth state - required in production
 const STATE_SIGNING_SECRET = process.env.MCP_JWT_SECRET || process.env.SUPABASE_JWT_SECRET;
 
+// Allowed redirect URI patterns for OAuth clients
+// - localhost/127.0.0.1 for desktop apps (Claude Desktop, etc.)
+// - Custom URL schemes for native apps
+// - Specific production callbacks
+const ALLOWED_REDIRECT_PATTERNS = [
+  // Localhost for development/desktop apps
+  /^http:\/\/localhost(:\d+)?\/.*$/,
+  /^http:\/\/127\.0\.0\.1(:\d+)?\/.*$/,
+  // Custom URL schemes for native apps (e.g., claude://, chatgpt://)
+  /^[a-z][a-z0-9+.-]*:\/\/.*$/,
+];
+
+// Additional allowed exact redirect URIs (can be extended via environment variable)
+const ADDITIONAL_ALLOWED_URIS = process.env.MCP_ALLOWED_REDIRECT_URIS
+  ? process.env.MCP_ALLOWED_REDIRECT_URIS.split(",").map(u => u.trim())
+  : [];
+
+/**
+ * Validate redirect_uri against allowlist
+ * Prevents open redirect attacks
+ */
+function isValidRedirectUri(uri: string): boolean {
+  // Check exact matches first (includes env-configured URIs)
+  if (ADDITIONAL_ALLOWED_URIS.includes(uri)) {
+    return true;
+  }
+
+  // Check patterns
+  try {
+    const url = new URL(uri);
+
+    // Block javascript: and data: URIs
+    if (url.protocol === "javascript:" || url.protocol === "data:") {
+      return false;
+    }
+
+    // Check against allowed patterns
+    return ALLOWED_REDIRECT_PATTERNS.some(pattern => pattern.test(uri));
+  } catch {
+    // Invalid URL
+    return false;
+  }
+}
+
 /**
  * Create a signed OAuth state to prevent tampering
  */
@@ -63,6 +107,14 @@ export async function GET(request: NextRequest) {
   if (!validClients.includes(clientId) && !clientId.startsWith("um_")) {
     return NextResponse.json(
       { error: "invalid_client", error_description: "Unknown client_id" },
+      { status: 400 }
+    );
+  }
+
+  // Validate redirect_uri against allowlist to prevent open redirect attacks
+  if (!isValidRedirectUri(redirectUri)) {
+    return NextResponse.json(
+      { error: "invalid_request", error_description: "Invalid redirect_uri" },
       { status: 400 }
     );
   }
