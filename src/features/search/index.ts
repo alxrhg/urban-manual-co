@@ -29,7 +29,7 @@ export { CompactResponseSection } from "@/components/search/CompactResponseSecti
 // SEARCH SERVICES
 // Re-export search-related services for convenience
 // ============================================================================
-export { contextualSearch } from "@/lib/contextual-search";
+export { searchWithContext, hasModifiers } from "@/lib/contextual-search";
 
 // ============================================================================
 // LOCAL SEARCH COMPONENTS
