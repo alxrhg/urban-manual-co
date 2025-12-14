@@ -1,4 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  withErrorHandling,
+  createValidationError,
+  createSuccessResponse,
+} from '@/lib/errors';
+import {
+  proxyRatelimit,
+  memoryProxyRatelimit,
+  enforceRateLimit,
+} from '@/lib/rate-limit';
 
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
@@ -26,91 +36,95 @@ function getCategoryFromTypes(types: string[]): string {
   return 'Other';
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { query } = body;
+export const POST = withErrorHandling(async (request: NextRequest) => {
+  // Rate limiting for external API proxy
+  const rateLimitResponse = await enforceRateLimit({
+    request,
+    message: 'Too many Google Places requests. Please try again later.',
+    limiter: proxyRatelimit,
+    memoryLimiter: memoryProxyRatelimit,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
 
-    if (!query) {
-      return NextResponse.json({ error: 'Query is required' }, { status: 400 });
-    }
-
-    if (!GOOGLE_API_KEY) {
-      return NextResponse.json({ error: 'Google API Key not configured' }, { status: 500 });
-    }
-
-    // Use Places API (New) - Text Search
-    const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Goog-Api-Key': GOOGLE_API_KEY,
-        'X-Goog-FieldMask': [
-          'places.id',
-          'places.displayName',
-          'places.formattedAddress',
-          'places.location',
-          'places.rating',
-          'places.userRatingCount',
-          'places.priceLevel',
-          'places.types',
-          'places.photos',
-          'places.primaryTypeDisplayName',
-          'places.websiteUri',
-          'places.internationalPhoneNumber'
-        ].join(','),
-      },
-      body: JSON.stringify({
-        textQuery: query,
-        maxResultCount: 10,
-        languageCode: 'en',
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Google Places Search API error: ${response.status}`, errorText);
-      throw new Error(`Google Places API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    // Transform results
-    const places = (data.places || []).map((place: any) => {
-      let imageUrl = null;
-      if (place.photos && place.photos.length > 0) {
-        const photo = place.photos[0];
-        if (photo.name) {
-          imageUrl = `https://places.googleapis.com/v1/${photo.name}/media?maxWidthPx=500&key=${GOOGLE_API_KEY}`;
-        }
-      }
-
-      const category = getCategoryFromTypes(place.types || []);
-
-      return {
-        id: place.id,
-        name: place.displayName?.text || '',
-        formatted_address: place.formattedAddress || '',
-        latitude: place.location?.latitude,
-        longitude: place.location?.longitude,
-        rating: place.rating,
-        user_ratings_total: place.userRatingCount,
-        price_level: place.priceLevel ? priceLevelToNumber(place.priceLevel) : null,
-        category,
-        types: place.types || [],
-        image: imageUrl,
-        website: place.websiteUri,
-        phone: place.internationalPhoneNumber,
-      };
-    });
-
-    return NextResponse.json({ places });
-
-  } catch (error: any) {
-    console.error('Google Places Search error:', error);
-    return NextResponse.json({ error: error.message || 'Search failed' }, { status: 500 });
+  // Validate API key early
+  if (!GOOGLE_API_KEY) {
+    throw createValidationError('Google API Key not configured');
   }
-}
+
+  const body = await request.json();
+  const { query } = body;
+
+  if (!query) {
+    throw createValidationError('Query is required');
+  }
+
+  // Use Places API (New) - Text Search
+  const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': GOOGLE_API_KEY,
+      'X-Goog-FieldMask': [
+        'places.id',
+        'places.displayName',
+        'places.formattedAddress',
+        'places.location',
+        'places.rating',
+        'places.userRatingCount',
+        'places.priceLevel',
+        'places.types',
+        'places.photos',
+        'places.primaryTypeDisplayName',
+        'places.websiteUri',
+        'places.internationalPhoneNumber'
+      ].join(','),
+    },
+    body: JSON.stringify({
+      textQuery: query,
+      maxResultCount: 10,
+      languageCode: 'en',
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`[Google Places Search] API error: ${response.status}`, errorText);
+    throw new Error(`Google Places API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  // Transform results
+  const places = (data.places || []).map((place: any) => {
+    let imageUrl = null;
+    if (place.photos && place.photos.length > 0) {
+      const photo = place.photos[0];
+      if (photo.name) {
+        imageUrl = `https://places.googleapis.com/v1/${photo.name}/media?maxWidthPx=500&key=${GOOGLE_API_KEY}`;
+      }
+    }
+
+    const category = getCategoryFromTypes(place.types || []);
+
+    return {
+      id: place.id,
+      name: place.displayName?.text || '',
+      formatted_address: place.formattedAddress || '',
+      latitude: place.location?.latitude,
+      longitude: place.location?.longitude,
+      rating: place.rating,
+      user_ratings_total: place.userRatingCount,
+      price_level: place.priceLevel ? priceLevelToNumber(place.priceLevel) : null,
+      category,
+      types: place.types || [],
+      image: imageUrl,
+      website: place.websiteUri,
+      phone: place.internationalPhoneNumber,
+    };
+  });
+
+  return createSuccessResponse({ places });
+})
 
 function priceLevelToNumber(priceLevel: string): number | null {
   const mapping: Record<string, number> = {

@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { withErrorHandling } from '@/lib/errors';
 
-export async function GET() {
+export const GET = withErrorHandling(async (_request: NextRequest) => {
   const checks = {
     DATABASE_URL: !!(process.env.DATABASE_URL || process.env.POSTGRES_URL),
     PAYLOAD_SECRET: !!process.env.PAYLOAD_SECRET,
@@ -23,4 +24,4 @@ export async function GET() {
   }, {
     status: allPassing ? 200 : 503,
   });
-}
+});

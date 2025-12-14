@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Buffer } from 'buffer';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { sendPrivacyEmail } from '@/lib/utils/privacy-email';
+import { withErrorHandling, createSuccessResponse, createUnauthorizedError } from '@/lib/errors';
 
 const EXPORT_BATCH_SIZE = 5;
 const DELETION_BATCH_SIZE = 3;
 
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandling(async (request: NextRequest) => {
   if (!isAuthorized(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    throw createUnauthorizedError();
   }
 
   const serviceClient = createServiceRoleClient();
@@ -17,16 +18,11 @@ export async function GET(request: NextRequest) {
     deletions: [],
   };
 
-  try {
-    results.exports = await processExportRequests(serviceClient);
-    results.deletions = await processDeletionRequests(serviceClient);
+  results.exports = await processExportRequests(serviceClient);
+  results.deletions = await processDeletionRequests(serviceClient);
 
-    return NextResponse.json({ success: true, ...results });
-  } catch (error) {
-    console.error('[account-data-requests] Cron error', error);
-    return NextResponse.json({ error: 'Cron execution failed' }, { status: 500 });
-  }
-}
+  return createSuccessResponse({ ...results });
+});
 
 function isAuthorized(request: NextRequest) {
   const authHeader = request.headers.get('authorization');

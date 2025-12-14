@@ -1,90 +1,60 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { getHybridRecommendations, getColdStartRecommendations } from '@/lib/recommendations';
+import { withAuth, createSuccessResponse, createValidationError } from '@/lib/errors';
 
 /**
  * POST /api/personalized-recommendations
  *
  * Returns personalized recommendations based on user behavior and preferences
  */
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { userId, sessionId, limit = 20, algorithm = 'hybrid' } = body;
+export const POST = withAuth(async (request: NextRequest, { user }) => {
+  const body = await request.json();
+  const { sessionId, limit = 20, algorithm = 'hybrid' } = body;
 
-    // Validate required parameters
-    if (!sessionId) {
-      return NextResponse.json(
-        { error: 'Session ID is required' },
-        { status: 400 }
-      );
-    }
-
-    let recommendations;
-
-    switch (algorithm) {
-      case 'cold_start':
-        recommendations = await getColdStartRecommendations(limit);
-        break;
-      case 'hybrid':
-      default:
-        recommendations = await getHybridRecommendations(userId || null, sessionId, limit);
-        break;
-    }
-
-    return NextResponse.json({
-      success: true,
-      algorithm,
-      recommendations,
-      count: recommendations.length,
-    });
-  } catch (error: any) {
-    console.error('Error generating recommendations:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: error.message || 'Failed to generate recommendations',
-      },
-      { status: 500 }
-    );
+  // Validate required parameters
+  if (!sessionId) {
+    throw createValidationError('Session ID is required');
   }
-}
+
+  let recommendations;
+
+  switch (algorithm) {
+    case 'cold_start':
+      recommendations = await getColdStartRecommendations(limit);
+      break;
+    case 'hybrid':
+    default:
+      recommendations = await getHybridRecommendations(user.id, sessionId, limit);
+      break;
+  }
+
+  return createSuccessResponse({
+    algorithm,
+    recommendations,
+    count: recommendations.length,
+  });
+});
 
 /**
- * GET /api/personalized-recommendations?userId=xxx&sessionId=xxx&limit=20
+ * GET /api/personalized-recommendations?sessionId=xxx&limit=20
  */
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-    const sessionId = searchParams.get('sessionId');
-    const limit = parseInt(searchParams.get('limit') || '20', 10);
+export const GET = withAuth(async (request: NextRequest, { user }) => {
+  const { searchParams } = new URL(request.url);
+  const sessionId = searchParams.get('sessionId');
+  const limit = parseInt(searchParams.get('limit') || '20', 10);
 
-    if (!sessionId) {
-      return NextResponse.json(
-        { error: 'Session ID is required' },
-        { status: 400 }
-      );
-    }
-
-    const recommendations = await getHybridRecommendations(
-      userId || null,
-      sessionId,
-      limit
-    );
-
-    return NextResponse.json({
-      success: true,
-      recommendations,
-      count: recommendations.length,
-    });
-  } catch (error: any) {
-    console.error('Error generating recommendations:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: error.message || 'Failed to generate recommendations',
-      },
-      { status: 500 }
-    );
+  if (!sessionId) {
+    throw createValidationError('Session ID is required');
   }
-}
+
+  const recommendations = await getHybridRecommendations(
+    user.id,
+    sessionId,
+    limit
+  );
+
+  return createSuccessResponse({
+    recommendations,
+    count: recommendations.length,
+  });
+});

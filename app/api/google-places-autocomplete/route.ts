@@ -1,23 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  withErrorHandling,
+  createValidationError,
+  createSuccessResponse,
+} from '@/lib/errors';
+import {
+  proxyRatelimit,
+  memoryProxyRatelimit,
+  enforceRateLimit,
+} from '@/lib/rate-limit';
 
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
-export async function GET(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams;
-    const query = searchParams.get('input') || '';
-    const sessionToken = searchParams.get('sessionToken') || '';
-    const location = searchParams.get('location'); // Optional: "lat,lng" for location bias
-    const radius = searchParams.get('radius'); // Optional: radius in meters
-    const types = searchParams.get('types') || 'establishment'; // Optional: restrict to specific types
+export const GET = withErrorHandling(async (request: NextRequest) => {
+  // Rate limiting for external API proxy
+  const rateLimitResponse = await enforceRateLimit({
+    request,
+    message: 'Too many autocomplete requests. Please try again later.',
+    limiter: proxyRatelimit,
+    memoryLimiter: memoryProxyRatelimit,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
 
-    if (!query || query.length < 2) {
-      return NextResponse.json({ predictions: [] });
-    }
+  const searchParams = request.nextUrl.searchParams;
+  const query = searchParams.get('input') || '';
+  const sessionToken = searchParams.get('sessionToken') || '';
+  const location = searchParams.get('location'); // Optional: "lat,lng" for location bias
+  const radius = searchParams.get('radius'); // Optional: radius in meters
+  const types = searchParams.get('types') || 'establishment'; // Optional: restrict to specific types
 
-    if (!GOOGLE_API_KEY) {
-      return NextResponse.json({ error: 'Google API key not configured' }, { status: 500 });
-    }
+  if (!query || query.length < 2) {
+    return createSuccessResponse({ predictions: [], sessionToken });
+  }
+
+  if (!GOOGLE_API_KEY) {
+    throw createValidationError('Google API key not configured');
+  }
 
     // Use Places API (New) - Autocomplete
     const requestBody: any = {
@@ -98,17 +116,9 @@ export async function GET(request: NextRequest) {
         };
       });
 
-    return NextResponse.json({
-      predictions,
-      sessionToken: data.sessionToken || sessionToken,
-    });
-
-  } catch (error: any) {
-    console.error('Google Places Autocomplete error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Autocomplete failed', predictions: [] },
-      { status: 500 }
-    );
-  }
-}
+  return createSuccessResponse({
+    predictions,
+    sessionToken: data.sessionToken || sessionToken,
+  });
+})
 

@@ -2,34 +2,24 @@
  * API Route: Get City-Level Google Trends
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { fetchCityTrends } from '@/lib/google-trends';
+import { withErrorHandling, createSuccessResponse, createValidationError } from '@/lib/errors';
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const city = searchParams.get('city');
+export const GET = withErrorHandling(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url);
+  const city = searchParams.get('city');
 
-    if (!city) {
-      return NextResponse.json(
-        { error: 'City parameter is required' },
-        { status: 400 }
-      );
-    }
-
-    const trends = await fetchCityTrends(city);
-
-    return NextResponse.json({
-      city,
-      ...trends,
-      fetchedAt: new Date().toISOString(),
-    });
-  } catch (error: any) {
-    console.error('Error fetching city trends:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch city trends', details: error.message },
-      { status: 500 }
-    );
+  if (!city) {
+    throw createValidationError('City parameter is required');
   }
-}
+
+  const trends = await fetchCityTrends(city);
+
+  return createSuccessResponse({
+    city,
+    ...trends,
+    fetchedAt: new Date().toISOString(),
+  });
+});
 

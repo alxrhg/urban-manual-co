@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { htmlToPlainText } from '@/lib/sanitize';
+import {
+  withErrorHandling,
+  createValidationError,
+  createNotFoundError,
+  createSuccessResponse,
+} from '@/lib/errors';
+import {
+  proxyRatelimit,
+  memoryProxyRatelimit,
+  enforceRateLimit,
+} from '@/lib/rate-limit';
 
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
@@ -158,142 +169,145 @@ function transformOpeningHours(hours: any): any {
   };
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { name, city, placeId, minimal } = body;
+export const POST = withErrorHandling(async (request: NextRequest) => {
+  // Rate limiting for external API proxy
+  const rateLimitResponse = await enforceRateLimit({
+    request,
+    message: 'Too many place detail requests. Please try again later.',
+    limiter: proxyRatelimit,
+    memoryLimiter: memoryProxyRatelimit,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
 
-    // If placeId is provided directly, use it (from autocomplete)
-    let finalPlaceId: string | null = null;
+  const body = await request.json();
+  const { name, city, placeId, minimal } = body;
 
-    if (placeId) {
-      finalPlaceId = placeId;
-    } else if (name) {
-      // Build search query
-      const query = city ? `${name}, ${city}` : name;
+  // If placeId is provided directly, use it (from autocomplete)
+  let finalPlaceId: string | null = null;
 
-      // Find place ID
-      finalPlaceId = await findPlaceId(query, name, city);
-      if (!finalPlaceId) {
-        return NextResponse.json({ error: 'Place not found' }, { status: 404 });
-      }
-    } else {
-      return NextResponse.json({ error: 'Name or placeId is required' }, { status: 400 });
-    }
+  if (placeId) {
+    finalPlaceId = placeId;
+  } else if (name) {
+    // Build search query
+    const query = city ? `${name}, ${city}` : name;
 
-    // Ensure we have a valid placeId
+    // Find place ID
+    finalPlaceId = await findPlaceId(query, name, city);
     if (!finalPlaceId) {
-      return NextResponse.json({ error: 'Place ID is required' }, { status: 400 });
+      throw createNotFoundError('Place');
     }
+  } else {
+    throw createValidationError('Name or placeId is required');
+  }
 
-    // Get place details (skip photos in minimal mode for faster itinerary additions)
-    const details = await getPlaceDetails(finalPlaceId, minimal === true);
-    if (!details) {
-      return NextResponse.json({ error: 'Failed to fetch place details' }, { status: 500 });
+  // Ensure we have a valid placeId
+  if (!finalPlaceId) {
+    throw createValidationError('Place ID is required');
+  }
+
+  // Get place details (skip photos in minimal mode for faster itinerary additions)
+  const details = await getPlaceDetails(finalPlaceId, minimal === true);
+  if (!details) {
+    throw createNotFoundError('Place details');
+  }
+
+  // Extract city from address components (more reliable) or formatted address
+  let extractedCity = city;
+  if (!extractedCity && details.address_components) {
+    // Try to find city from address components
+    for (const component of details.address_components) {
+      if (component.types?.includes('locality')) {
+        extractedCity = component.longText || component.shortText || extractedCity;
+        break;
+      }
     }
-
-    // Extract city from address components (more reliable) or formatted address
-    let extractedCity = city;
-    if (!extractedCity && details.address_components) {
-      // Try to find city from address components
+    // Fallback to administrative_area_level_1 if locality not found
+    if (!extractedCity) {
       for (const component of details.address_components) {
-        if (component.types?.includes('locality')) {
+        if (component.types?.includes('administrative_area_level_1')) {
           extractedCity = component.longText || component.shortText || extractedCity;
           break;
         }
       }
-      // Fallback to administrative_area_level_1 if locality not found
-      if (!extractedCity) {
-        for (const component of details.address_components) {
-          if (component.types?.includes('administrative_area_level_1')) {
-            extractedCity = component.longText || component.shortText || extractedCity;
-            break;
-          }
-        }
-      }
     }
-    // Last resort: extract from formatted address
-    if (!extractedCity && details.formatted_address) {
-      const addressParts = details.formatted_address.split(',').map((p: string) => p.trim());
-      if (addressParts.length >= 2) {
-        // Usually city is second-to-last (before country) or third-to-last
-        extractedCity = addressParts[addressParts.length - 3] || addressParts[addressParts.length - 2] || '';
-      }
+  }
+  // Last resort: extract from formatted address
+  if (!extractedCity && details.formatted_address) {
+    const addressParts = details.formatted_address.split(',').map((p: string) => p.trim());
+    if (addressParts.length >= 2) {
+      // Usually city is second-to-last (before country) or third-to-last
+      extractedCity = addressParts[addressParts.length - 3] || addressParts[addressParts.length - 2] || '';
     }
+  }
 
-    // Determine category from types
-    let category = '';
-    if (details.types && Array.isArray(details.types)) {
-      // Priority order for category mapping
-      const categoryMap: Record<string, string> = {
-        'restaurant': 'restaurant',
-        'cafe': 'cafe',
-        'bar': 'bar',
-        'lodging': 'hotel',
-        'museum': 'museum',
-        'art_gallery': 'gallery',
-        'shopping_mall': 'shopping',
-        'store': 'shopping',
-        'park': 'park',
-        'tourist_attraction': 'attraction',
-        'church': 'attraction',
-        'temple': 'attraction',
-      };
-      
-      for (const type of details.types) {
-        if (categoryMap[type]) {
-          category = categoryMap[type];
-          break;
-        }
-      }
-      
-      if (!category) {
-        category = details.types[0]?.replace(/_/g, ' ') || '';
-      }
-    }
-
-    // Get first photo if available
-    let imageUrl = null;
-    if (details.photos && details.photos.length > 0) {
-      const photo = details.photos[0];
-      // New Places API uses 'name' property which is a full path like 'places/ChIJ.../photos/photo_reference'
-      if (photo.name) {
-        // Use our proxy endpoint to fetch the photo (avoids CORS and auth issues)
-        imageUrl = `/api/google-place-photo?name=${encodeURIComponent(photo.name)}&maxWidth=1200`;
-      } else if (photo.photo_reference) {
-        // Fallback to old API format if photo_reference exists
-        imageUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=${photo.photo_reference}&key=${GOOGLE_API_KEY}`;
-      }
-    }
-
-    // Build response with form-friendly data
-    const editorialSummary = htmlToPlainText(details.editorial_summary?.overview || '');
-    const result = {
-      name: details.name || name,
-      city: extractedCity || city || '',
-      category: category,
-      description: editorialSummary,
-      content: editorialSummary,
-      image: imageUrl,
-      address: details.formatted_address || '',
-      formatted_address: details.formatted_address || '',
-      phone: details.international_phone_number || '',
-      website: details.website || '',
-      rating: details.rating || null,
-      price_level: details.price_level || null,
-      opening_hours: details.current_opening_hours || details.opening_hours || null,
-      place_types: details.types || [],
-      cuisine_type: extractCuisineType(details.types || []),
-      // Include coordinates for transit connector
-      latitude: details.geometry?.location?.lat || null,
-      longitude: details.geometry?.location?.lng || null,
-      place_id: finalPlaceId,
+  // Determine category from types
+  let category = '';
+  if (details.types && Array.isArray(details.types)) {
+    // Priority order for category mapping
+    const categoryMap: Record<string, string> = {
+      'restaurant': 'restaurant',
+      'cafe': 'cafe',
+      'bar': 'bar',
+      'lodging': 'hotel',
+      'museum': 'museum',
+      'art_gallery': 'gallery',
+      'shopping_mall': 'shopping',
+      'store': 'shopping',
+      'park': 'park',
+      'tourist_attraction': 'attraction',
+      'church': 'attraction',
+      'temple': 'attraction',
     };
 
-    return NextResponse.json(result);
+    for (const type of details.types) {
+      if (categoryMap[type]) {
+        category = categoryMap[type];
+        break;
+      }
+    }
 
-  } catch (error: any) {
-    console.error('Fetch Google Place error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to fetch place data' }, { status: 500 });
+    if (!category) {
+      category = details.types[0]?.replace(/_/g, ' ') || '';
+    }
   }
-}
+
+  // Get first photo if available
+  let imageUrl = null;
+  if (details.photos && details.photos.length > 0) {
+    const photo = details.photos[0];
+    // New Places API uses 'name' property which is a full path like 'places/ChIJ.../photos/photo_reference'
+    if (photo.name) {
+      // Use our proxy endpoint to fetch the photo (avoids CORS and auth issues)
+      imageUrl = `/api/google-place-photo?name=${encodeURIComponent(photo.name)}&maxWidth=1200`;
+    } else if (photo.photo_reference) {
+      // Fallback to old API format if photo_reference exists
+      imageUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=${photo.photo_reference}&key=${GOOGLE_API_KEY}`;
+    }
+  }
+
+  // Build response with form-friendly data
+  const editorialSummary = htmlToPlainText(details.editorial_summary?.overview || '');
+  const result = {
+    name: details.name || name,
+    city: extractedCity || city || '',
+    category: category,
+    description: editorialSummary,
+    content: editorialSummary,
+    image: imageUrl,
+    address: details.formatted_address || '',
+    formatted_address: details.formatted_address || '',
+    phone: details.international_phone_number || '',
+    website: details.website || '',
+    rating: details.rating || null,
+    price_level: details.price_level || null,
+    opening_hours: details.current_opening_hours || details.opening_hours || null,
+    place_types: details.types || [],
+    cuisine_type: extractCuisineType(details.types || []),
+    // Include coordinates for transit connector
+    latitude: details.geometry?.location?.lat || null,
+    longitude: details.geometry?.location?.lng || null,
+    place_id: finalPlaceId,
+  };
+
+  return createSuccessResponse(result);
+})

@@ -9,4 +9,5 @@ export * from './types';
 export * from './handlers';
 export * from './api-handler';
 export * from './sanitize';
+export * from './auth';
 
