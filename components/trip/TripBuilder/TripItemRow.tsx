@@ -127,7 +127,7 @@ const TripItemRow = memo(function TripItemRow({
       {/* Travel time connector */}
       {showTravelTime && item.travelTimeFromPrev && item.travelTimeFromPrev > 5 && (
         <div
-          className="flex items-center gap-2 py-1.5 px-3 text-[11px] text-gray-400"
+          className="flex items-center gap-2 py-1.5 px-3 text-xs text-gray-400"
           aria-label={`${formatDuration(item.travelTimeFromPrev)} travel time`}
         >
           <Navigation className="w-3 h-3" aria-hidden="true" />
@@ -171,19 +171,19 @@ const TripItemRow = memo(function TripItemRow({
                 type="time"
                 defaultValue={item.timeSlot || ''}
                 onBlur={() => setIsEditingTime(false)}
-                className="w-full text-[11px] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-gray-900 dark:focus:ring-white"
+                className="w-full text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-gray-900 dark:focus:ring-white"
               />
             </form>
           ) : (
             <button
               onClick={() => setIsEditingTime(true)}
-              className="text-[12px] font-medium text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              className="text-xs font-medium text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               aria-label={`Time: ${item.timeSlot || 'Set time'}`}
             >
               {item.timeSlot || '--:--'}
             </button>
           )}
-          <div className="text-[9px] text-gray-400 mt-0.5">
+          <div className="text-[10px] text-gray-400 mt-0.5">
             {formatDuration(item.duration)}
           </div>
         </div>
@@ -213,12 +213,12 @@ const TripItemRow = memo(function TripItemRow({
         <div className="flex-1 min-w-0 py-0.5">
           <button
             onClick={handleOpenDestination}
-            className="text-[13px] font-medium text-gray-900 dark:text-white truncate block text-left hover:underline focus:outline-none"
+            className="text-sm font-medium text-gray-900 dark:text-white truncate block text-left hover:underline focus:outline-none"
           >
             {item.destination.name}
           </button>
 
-          <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
             {capitalizeCategory(item.destination.category)}
           </p>
 
@@ -261,7 +261,7 @@ const TripItemRow = memo(function TripItemRow({
                   if (e.key === 'Enter') handleNotesSubmit();
                   if (e.key === 'Escape') handleNotesCancel();
                 }}
-                className="flex-1 text-[11px] px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-900 dark:focus:ring-white transition-shadow"
+                className="flex-1 text-xs px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-900 dark:focus:ring-white transition-shadow"
               />
               <button
                 onClick={handleNotesSubmit}
@@ -320,14 +320,14 @@ const TripItemRow = memo(function TripItemRow({
               className="absolute right-0 top-full mt-1 w-32 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
               role="menu"
             >
-              <p className="px-3 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+              <p className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 Move to
               </p>
               {otherDays.map((dayNum) => (
                 <button
                   key={dayNum}
                   onClick={() => handleMoveToDay(dayNum)}
-                  className="w-full px-3 py-2 text-left text-[12px] hover:bg-gray-100 dark:hover:bg-white/10 flex items-center gap-2 transition-colors"
+                  className="w-full px-3 py-2 text-left text-xs hover:bg-gray-100 dark:hover:bg-white/10 flex items-center gap-2 transition-colors"
                   role="menuitem"
                 >
                   <ArrowRight className="w-3 h-3 text-gray-400" aria-hidden="true" />
