@@ -181,7 +181,8 @@ export default function InteractiveHero() {
   const [isLoadingInstant, setIsLoadingInstant] = useState(false);
   const [showInstantResults, setShowInstantResults] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const debouncedQuery = useDebounce(localSearchTerm, 150);
+  // ⚡ Performance: Increased debounce to 300ms to reduce API calls to /api/search/instant while typing
+  const debouncedQuery = useDebounce(localSearchTerm, 300);
 
   // Inline chat state
   const [chatResponse, setChatResponse] = useState('');
