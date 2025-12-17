@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripBuilder } from '@/contexts/TripBuilderContext';
-import { ensureConversationSessionToken, persistConversationSessionToken } from '@/lib/chat/sessionToken';
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -63,11 +62,9 @@ export default function ArtifactPage() {
  */
 function ChatPanel() {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [conversationHistory, setConversationHistory] = useState<Array<{role: string, content: string}>>([]);
   const [input, setInput] = useState('');
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [streamingContent, setStreamingContent] = useState('');
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [guestSessionToken, setGuestSessionToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { user } = useAuth();
@@ -75,147 +72,59 @@ function ChatPanel() {
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, streamingContent]);
-
-  // Initialize session token
-  useEffect(() => {
-    if (!user) {
-      const token = ensureConversationSessionToken();
-      if (token) {
-        setGuestSessionToken(token);
-      }
-    } else {
-      setGuestSessionToken(null);
-    }
-  }, [user]);
-
-  // Load conversation history
-  useEffect(() => {
-    if (user?.id || guestSessionToken) {
-      loadConversationHistory();
-    }
-  }, [user?.id, guestSessionToken]);
-
-  async function loadConversationHistory() {
-    try {
-      const isGuest = !user?.id;
-      const resolvedToken = isGuest ? guestSessionToken : undefined;
-      if (isGuest && !resolvedToken) return;
-      const userId = user?.id || 'guest';
-      const tokenQuery = resolvedToken ? `?session_token=${resolvedToken}` : '';
-      const response = await fetch(`/api/conversation/${userId}${tokenQuery}`);
-      if (response.ok) {
-        const data = await response.json();
-        setMessages(data.messages || []);
-        setSessionId(data.session_id || null);
-        if (isGuest && data.session_token) {
-          persistConversationSessionToken(data.session_token);
-          setGuestSessionToken(data.session_token);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading conversation:', error);
-    }
-  }
+  }, [messages]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!input.trim() || isStreaming) return;
+    if (!input.trim() || isLoading) return;
 
     const userMessage = input.trim();
     setInput('');
-    setIsStreaming(true);
-    setStreamingContent('');
+    setIsLoading(true);
     setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
 
     try {
-      const isGuest = !user?.id;
-      let resolvedToken = isGuest ? guestSessionToken : undefined;
-      if (isGuest && !resolvedToken) {
-        resolvedToken = ensureConversationSessionToken();
-        if (resolvedToken) {
-          setGuestSessionToken(resolvedToken);
-        }
-      }
-      const userId = user?.id || 'guest';
-      const response = await fetch(`/api/conversation-stream/${userId}`, {
+      // Use the same AI chat endpoint as homepage
+      const response = await fetch('/api/ai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: userMessage,
-          session_token: resolvedToken,
+          query: userMessage,
+          userId: user?.id,
+          conversationHistory: conversationHistory,
         }),
       });
 
-      if (!response.ok) throw new Error('Streaming conversation failed');
+      if (!response.ok) throw new Error('Chat request failed');
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
+      const data = await response.json();
 
-      if (!reader) throw new Error('No reader available');
-
-      let fullResponse = '';
-      let lastSuggestions: string[] = [];
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
-
-              switch (data.type) {
-                case 'chunk':
-                  fullResponse += data.content;
-                  setStreamingContent(fullResponse);
-                  break;
-
-                case 'complete':
-                  setSessionId(data.session_id || sessionId);
-                  lastSuggestions = data.suggestions || [];
-                  break;
-
-                case 'error':
-                  console.error('Streaming error:', data.error);
-                  fullResponse = "Sorry, I encountered an error. Please try again.";
-                  setStreamingContent(fullResponse);
-                  break;
-              }
-            } catch (e) {
-              // Ignore parsing errors for partial chunks
-            }
-          }
-        }
-      }
+      // Update conversation history for context
+      const newHistory = [
+        ...conversationHistory,
+        { role: 'user', content: userMessage },
+        { role: 'assistant', content: data.content || '' },
+      ];
+      setConversationHistory(newHistory);
 
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: fullResponse,
-          suggestions: lastSuggestions,
+          content: data.content || 'I couldn\'t find anything. Try another search.',
         },
       ]);
-      if (isGuest && resolvedToken) {
-        persistConversationSessionToken(resolvedToken);
-      }
     } catch (error) {
-      console.error('Streaming conversation error:', error);
+      console.error('Chat error:', error);
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: "Sorry, I encountered an error. Please try again.",
+          content: 'Sorry, I encountered an error. Please try again.',
         },
       ]);
     } finally {
-      setIsStreaming(false);
-      setStreamingContent('');
+      setIsLoading(false);
     }
   }
 
@@ -248,7 +157,7 @@ function ChatPanel() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-        {messages.length === 0 && !isStreaming && (
+        {messages.length === 0 && !isLoading && (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="w-16 h-16 rounded-full bg-stone-100 dark:bg-gray-900 flex items-center justify-center mb-4">
               <Sparkles className="w-8 h-8 text-stone-400 dark:text-gray-600" />
@@ -287,14 +196,7 @@ function ChatPanel() {
               onSuggestionClick={handleSuggestionClick}
             />
           ))}
-          {isStreaming && streamingContent && (
-            <ChatBubble
-              role="assistant"
-              content={streamingContent}
-              isStreaming={true}
-            />
-          )}
-          {isStreaming && !streamingContent && (
+          {isLoading && (
             <ChatBubble
               role="assistant"
               content=""
@@ -316,11 +218,11 @@ function ChatPanel() {
             placeholder="Ask about restaurants, hotels, cities..."
             rows={1}
             className="w-full px-4 py-3 pr-12 bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-stone-400 dark:focus:ring-gray-600 text-stone-900 dark:text-gray-100 resize-none"
-            disabled={isStreaming}
+            disabled={isLoading}
           />
           <button
             type="submit"
-            disabled={!input.trim() || isStreaming}
+            disabled={!input.trim() || isLoading}
             className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-stone-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:bg-stone-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send className="h-4 w-4" />
