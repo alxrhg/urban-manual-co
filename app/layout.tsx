@@ -57,10 +57,18 @@ export const metadata: Metadata = {
       { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     ],
   },
+  // International SEO - hreflang tags
+  alternates: {
+    canonical: 'https://www.urbanmanual.co',
+    languages: {
+      'en': 'https://www.urbanmanual.co',
+      'x-default': 'https://www.urbanmanual.co',
+    },
+  },
   openGraph: {
     title: "The Urban Manual - Curated Travel Guide",
     description: "Discover handpicked luxury hotels, Michelin-starred restaurants, and hidden gems across 50+ cities worldwide.",
-    url: "https://urbanmanual.co",
+    url: "https://www.urbanmanual.co",
     siteName: "The Urban Manual",
     images: [
       {
@@ -78,6 +86,10 @@ export const metadata: Metadata = {
     title: "The Urban Manual - Curated Travel Guide",
     description: "Discover handpicked luxury hotels, Michelin-starred restaurants, and hidden gems across 50+ cities worldwide.",
     images: ['/og-image.jpg'],
+  },
+  // Additional meta tags for international SEO
+  other: {
+    'content-language': 'en-US',
   },
 };
 
@@ -145,6 +157,20 @@ export default function RootLayout({
           type="application/rss+xml"
           title="The Urban Manual RSS Feed"
           href="https://www.urbanmanual.co/feed.xml"
+        />
+        {/* Atom Feed */}
+        <link
+          rel="alternate"
+          type="application/atom+xml"
+          title="The Urban Manual Atom Feed"
+          href="https://www.urbanmanual.co/feed.atom"
+        />
+        {/* JSON Feed */}
+        <link
+          rel="alternate"
+          type="application/feed+json"
+          title="The Urban Manual JSON Feed"
+          href="https://www.urbanmanual.co/feed.json"
         />
 
         {/* Google AdSense */}

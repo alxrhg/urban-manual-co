@@ -65,22 +65,62 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Feature pages
   const featurePages: MetadataRoute.Sitemap = [
     {
-      url: `${baseUrl}/lists`,
+      url: `${baseUrl}/map`,
       lastModified: currentDate,
       changeFrequency: 'daily',
+      priority: 0.85,
+    },
+    {
+      url: `${baseUrl}/discover`,
+      lastModified: currentDate,
+      changeFrequency: 'daily',
+      priority: 0.85,
+    },
+    {
+      url: `${baseUrl}/chat`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/feed`,
+      url: `${baseUrl}/movements`,
       lastModified: currentDate,
-      changeFrequency: 'hourly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/trips`,
-      lastModified: currentDate,
-      changeFrequency: 'daily',
+      changeFrequency: 'monthly',
       priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/architects`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+  ];
+
+  // Long-tail keyword pages - SEO landing pages
+  const seoPages: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/best-michelin-restaurants`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/luxury-hotels`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/design-hotels`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.85,
+    },
+    {
+      url: `${baseUrl}/hidden-gems`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.85,
     },
   ];
 
@@ -123,6 +163,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...mainPages,
     ...featurePages,
+    ...seoPages,
     ...cityPages,
     ...destinationPages,
     ...staticPages,
