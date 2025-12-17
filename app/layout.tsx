@@ -26,6 +26,89 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { CookieConsent } from "@/components/CookieConsent";
 import { NotificationPrompt } from "@/components/NotificationPrompt";
 import { NativeExperienceProvider } from "@/components/NativeExperienceProvider";
+import { baseURL } from "@/baseUrl";
+
+/**
+ * ChatGPT Apps SDK Bootstrap component.
+ * Patches browser APIs to function correctly within ChatGPT's iframe environment.
+ */
+function NextChatSDKBootstrap({ baseUrl }: { baseUrl: string }) {
+  return (
+    <>
+      <base href={baseUrl} />
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              window.innerBaseUrl = "${baseUrl}";
+
+              // Remove attributes ChatGPT adds to HTML element (except suppresshydrationwarning)
+              var observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                  if (mutation.type === 'attributes' && mutation.attributeName !== 'suppresshydrationwarning') {
+                    document.documentElement.removeAttribute(mutation.attributeName);
+                  }
+                });
+              });
+              observer.observe(document.documentElement, { attributes: true });
+
+              // Normalize URLs in history state methods
+              var originalPushState = history.pushState;
+              var originalReplaceState = history.replaceState;
+
+              history.pushState = function(state, title, url) {
+                if (url && typeof url === 'string' && !url.startsWith('http')) {
+                  url = window.innerBaseUrl + (url.startsWith('/') ? '' : '/') + url;
+                }
+                return originalPushState.call(this, state, title, url);
+              };
+
+              history.replaceState = function(state, title, url) {
+                if (url && typeof url === 'string' && !url.startsWith('http')) {
+                  url = window.innerBaseUrl + (url.startsWith('/') ? '' : '/') + url;
+                }
+                return originalReplaceState.call(this, state, title, url);
+              };
+
+              // Handle external link clicks to work with OpenAI client
+              document.addEventListener('click', function(e) {
+                var target = e.target;
+                while (target && target.tagName !== 'A') {
+                  target = target.parentElement;
+                }
+                if (target && target.href && !target.href.startsWith(window.innerBaseUrl)) {
+                  e.preventDefault();
+                  if (window.parent && window.parent.postMessage) {
+                    window.parent.postMessage({ type: 'openUrl', url: target.href }, '*');
+                  } else {
+                    window.open(target.href, '_blank');
+                  }
+                }
+              });
+
+              // Wrap fetch for iframe environment
+              if (window.self !== window.top) {
+                var originalFetch = window.fetch;
+                window.fetch = function(input, init) {
+                  var url = typeof input === 'string' ? input : input.url;
+                  if (url && !url.startsWith('http') && !url.startsWith('//')) {
+                    url = window.innerBaseUrl + (url.startsWith('/') ? '' : '/') + url;
+                    if (typeof input === 'string') {
+                      input = url;
+                    } else {
+                      input = new Request(url, input);
+                    }
+                  }
+                  return originalFetch.call(this, input, init);
+                };
+              }
+            })();
+          `,
+        }}
+      />
+    </>
+  );
+}
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -127,6 +210,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
         
+        {/* ChatGPT Apps SDK Bootstrap - patches browser APIs for iframe compatibility */}
+        <NextChatSDKBootstrap baseUrl={baseURL} />
+
         {/* DNS Prefetch for additional domains */}
         <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
         <link rel="dns-prefetch" href="https://guide.michelin.com" />

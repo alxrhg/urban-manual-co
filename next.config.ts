@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 import withPWAInit from "@ducanh2912/next-pwa";
+import { baseURL } from "./baseUrl";
 
 const cspDirectives = [
   "default-src 'self'",
@@ -15,7 +16,8 @@ const cspDirectives = [
   "connect-src 'self' https://*.supabase.co https://*.supabase.in https://maps.googleapis.com https://api.openai.com https://*.upstash.io https://*.googleapis.com https://cdn.jsdelivr.net https://googleads.g.doubleclick.net https://*.doubleclick.net https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://*.api.sanity.io https://*.sentry.io https://*.ingest.sentry.io https://*.apple-mapkit.com https://*.ls.apple.com https://*.apple.com https://cdn.apple-mapkit.com https://*.mzstatic.com https://*.geo.apple.com https://*.cdn-apple.com https://featureassets.org https://prodregistryv2.org https://api.open-meteo.com https://geocoding-api.open-meteo.com https://analytics.google.com https://*.google-analytics.com",
   "worker-src 'self' blob:",
   "child-src 'none'",
-  "frame-ancestors 'none'",
+  // Allow ChatGPT to embed this app in an iframe for Apps SDK integration
+  "frame-ancestors 'self' https://chatgpt.com https://*.chatgpt.com https://*.openai.com",
   "form-action 'self'",
   "base-uri 'self'",
   "manifest-src 'self'",
@@ -26,7 +28,9 @@ const cspDirectives = [
 ]
 
 const securityHeaders: { key: string; value: string }[] = [
-  { key: 'X-Frame-Options', value: 'DENY' },
+  // Changed from DENY to SAMEORIGIN for ChatGPT Apps SDK iframe compatibility
+  // CSP frame-ancestors directive handles ChatGPT domain allowlisting
+  { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'X-XSS-Protection', value: '1; mode=block' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
@@ -74,6 +78,9 @@ const securityHeaders: { key: string; value: string }[] = [
 
 const nextConfig: NextConfig = {
   /* config options here */
+  // Asset prefix for ChatGPT Apps SDK iframe compatibility
+  assetPrefix: baseURL,
+
   // Enable compression
   compress: true,
 
