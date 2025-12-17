@@ -248,12 +248,24 @@ export default defineType({
       group: 'media',
       options: {
         hotspot: true,
+        aiAssist: {
+          imageDescriptionField: 'alt',
+        },
       },
       fields: [
         {
           name: 'alt',
           type: 'string',
           title: 'Alt Text',
+          description: 'Important for SEO and accessibility. Use AI Assist to auto-generate.',
+          validation: (rule) =>
+            rule.custom((value, context) => {
+              const parent = context.parent as { asset?: { _ref?: string } };
+              if (parent?.asset?._ref && !value) {
+                return 'Alt text is required for accessibility';
+              }
+              return true;
+            }),
         },
         {
           name: 'caption',

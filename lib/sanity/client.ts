@@ -1,37 +1,75 @@
-import { createClient } from '@sanity/client';
+/**
+ * Sanity Client Configuration
+ *
+ * This module exports a configured Sanity client for use throughout the application.
+ * Uses stega encoding for visual editing support in the Presentation Tool.
+ */
 
-const projectId =
-  process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
-  || process.env.SANITY_STUDIO_PROJECT_ID
-  || process.env.SANITY_API_PROJECT_ID;
+import { createClient, type QueryParams } from 'next-sanity';
+import { apiVersion, dataset, projectId, studioUrl } from './env';
 
-const dataset =
-  process.env.NEXT_PUBLIC_SANITY_DATASET
-  || process.env.SANITY_STUDIO_DATASET
-  || process.env.SANITY_API_DATASET
-  || 'production';
-
-const apiVersion =
-  process.env.NEXT_PUBLIC_SANITY_API_VERSION
-  || process.env.SANITY_API_VERSION
-  || '2023-10-01';
-
-if (!projectId) {
-  throw new Error('Missing Sanity project ID. Set NEXT_PUBLIC_SANITY_PROJECT_ID or SANITY_STUDIO_PROJECT_ID.');
-}
-
-const token =
-  process.env.SANITY_TOKEN
-  || process.env.SANITY_API_WRITE_TOKEN
-  || process.env.SANITY_API_READ_TOKEN;
-
-export const sanityClient = createClient({
+/**
+ * Main Sanity client for fetching published content
+ * Includes stega configuration for visual editing
+ */
+export const client = createClient({
   projectId,
   dataset,
   apiVersion,
-  useCdn: process.env.NEXT_PUBLIC_SANITY_USE_CDN !== 'false',
+  useCdn: process.env.NODE_ENV === 'production',
   perspective: 'published',
-  token,
+  stega: {
+    studioUrl,
+    // Uncomment for verbose logging during development
+    // logger: console,
+    filter: (props) => {
+      // Only encode 'title' and similar display fields
+      if (props.sourcePath.at(-1) === 'title') {
+        return true;
+      }
+      return props.filterDefault(props);
+    },
+  },
 });
 
-export type SanityClient = typeof sanityClient;
+/**
+ * Write client with authentication token
+ * Use this for mutations (create, update, delete)
+ */
+export function getWriteClient() {
+  const token = process.env.SANITY_API_WRITE_TOKEN || process.env.SANITY_TOKEN;
+
+  if (!token) {
+    throw new Error('Missing SANITY_API_WRITE_TOKEN for write operations');
+  }
+
+  return createClient({
+    projectId,
+    dataset,
+    apiVersion,
+    useCdn: false,
+    token,
+  });
+}
+
+/**
+ * Fetch helper with consistent error handling
+ */
+export async function sanityFetch<T>({
+  query,
+  params = {},
+  tags = [],
+}: {
+  query: string;
+  params?: QueryParams;
+  tags?: string[];
+}): Promise<T> {
+  return client.fetch<T>(query, params, {
+    next: {
+      revalidate: process.env.NODE_ENV === 'development' ? 30 : 3600,
+      tags,
+    },
+  });
+}
+
+export type SanityClient = typeof client;
