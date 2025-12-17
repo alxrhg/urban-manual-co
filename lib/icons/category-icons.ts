@@ -86,8 +86,21 @@ export const CATEGORY_ICON_MAP: Record<string, string> = {
   'parks': 'tree',
   'outdoor': 'tree',
   'beach': 'waves',
-  
-  // Other - no icon needed (will return null)
+
+  // Wellness & Nightlife
+  'spa': 'sparkles',
+  'wellness': 'sparkles',
+  'club': 'music',
+  'clubs': 'music',
+  'nightclub': 'music',
+
+  // Markets
+  'market': 'shopping-bag',
+  'markets': 'shopping-bag',
+  'flea market': 'shopping-bag',
+
+  // Other (generic)
+  'other': 'sparkles',
 };
 
 /**

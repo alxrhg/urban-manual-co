@@ -25,6 +25,14 @@ const CATEGORY_COLORS: Record<string, { bg: string; border: string; text: string
   cafe: { bg: 'bg-rose-50', border: 'border-l-rose-400', text: 'text-rose-600' },
   shop: { bg: 'bg-pink-50', border: 'border-l-pink-400', text: 'text-pink-600' },
   park: { bg: 'bg-emerald-50', border: 'border-l-emerald-400', text: 'text-emerald-600' },
+  gallery: { bg: 'bg-fuchsia-50', border: 'border-l-fuchsia-400', text: 'text-fuchsia-600' },
+  landmark: { bg: 'bg-orange-50', border: 'border-l-orange-400', text: 'text-orange-600' },
+  beach: { bg: 'bg-cyan-50', border: 'border-l-cyan-400', text: 'text-cyan-600' },
+  spa: { bg: 'bg-violet-50', border: 'border-l-violet-400', text: 'text-violet-600' },
+  club: { bg: 'bg-rose-50', border: 'border-l-rose-400', text: 'text-rose-600' },
+  theater: { bg: 'bg-red-50', border: 'border-l-red-400', text: 'text-red-600' },
+  market: { bg: 'bg-yellow-50', border: 'border-l-yellow-400', text: 'text-yellow-600' },
+  other: { bg: 'bg-gray-50', border: 'border-l-gray-400', text: 'text-gray-600' },
   default: { bg: 'bg-gray-50', border: 'border-l-gray-400', text: 'text-gray-600' },
 };
 
@@ -40,6 +48,14 @@ const CATEGORY_COLORS_DARK: Record<string, { bg: string; border: string; text: s
   cafe: { bg: 'dark:bg-rose-950/30', border: 'dark:border-l-rose-500', text: 'dark:text-rose-400' },
   shop: { bg: 'dark:bg-pink-950/30', border: 'dark:border-l-pink-500', text: 'dark:text-pink-400' },
   park: { bg: 'dark:bg-emerald-950/30', border: 'dark:border-l-emerald-500', text: 'dark:text-emerald-400' },
+  gallery: { bg: 'dark:bg-fuchsia-950/30', border: 'dark:border-l-fuchsia-500', text: 'dark:text-fuchsia-400' },
+  landmark: { bg: 'dark:bg-orange-950/30', border: 'dark:border-l-orange-500', text: 'dark:text-orange-400' },
+  beach: { bg: 'dark:bg-cyan-950/30', border: 'dark:border-l-cyan-500', text: 'dark:text-cyan-400' },
+  spa: { bg: 'dark:bg-violet-950/30', border: 'dark:border-l-violet-500', text: 'dark:text-violet-400' },
+  club: { bg: 'dark:bg-rose-950/30', border: 'dark:border-l-rose-500', text: 'dark:text-rose-400' },
+  theater: { bg: 'dark:bg-red-950/30', border: 'dark:border-l-red-500', text: 'dark:text-red-400' },
+  market: { bg: 'dark:bg-yellow-950/30', border: 'dark:border-l-yellow-500', text: 'dark:text-yellow-400' },
+  other: { bg: 'dark:bg-gray-800/50', border: 'dark:border-l-gray-500', text: 'dark:text-gray-400' },
   default: { bg: 'dark:bg-gray-800/50', border: 'dark:border-l-gray-500', text: 'dark:text-gray-400' },
 };
 

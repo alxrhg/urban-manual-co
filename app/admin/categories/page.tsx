@@ -36,6 +36,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   market: '#eab308',
   spa: '#a855f7',
   club: '#f43f5e',
+  theater: '#dc2626',
+  other: '#6b7280',
 };
 
 export default function CategoriesPage() {
