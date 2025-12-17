@@ -15,15 +15,13 @@ import { presentationTool } from 'sanity/presentation';
 import { visionTool } from '@sanity/vision';
 import { assist } from '@sanity/assist';
 import { unsplashImageAsset } from 'sanity-plugin-asset-source-unsplash';
-import {
-  dashboardTool,
-  projectInfoWidget,
-  projectUsersWidget,
-} from '@sanity/dashboard';
-import { documentListWidget } from 'sanity-plugin-dashboard-widget-document-list';
 import { googleMapsInput } from '@sanity/google-maps-input';
 import { schemaTypes } from './sanity/schemas';
 import { apiVersion, dataset, projectId, studioUrl } from './lib/sanity/env';
+
+// NOTE: Dashboard plugin temporarily disabled - not compatible with Sanity v5
+// import { dashboardTool, projectInfoWidget, projectUsersWidget } from '@sanity/dashboard';
+// import { documentListWidget } from 'sanity-plugin-dashboard-widget-document-list';
 
 // Preview URL for Presentation Tool
 const PREVIEW_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -60,32 +58,8 @@ export default defineConfig({
   },
 
   plugins: [
-    // Dashboard Tool - Project overview and widgets
-    dashboardTool({
-      widgets: [
-        // Recent destinations
-        documentListWidget({
-          title: 'Recently Updated Destinations',
-          query: '*[_type == "destination"] | order(_updatedAt desc) [0...10]',
-          layout: { width: 'medium' },
-        }),
-        // Featured destinations
-        documentListWidget({
-          title: 'Featured (Crown)',
-          query: '*[_type == "destination" && crown == true] | order(_updatedAt desc) [0...5]',
-          layout: { width: 'small' },
-        }),
-        // Michelin starred
-        documentListWidget({
-          title: 'Michelin Starred',
-          query: '*[_type == "destination" && michelinStars > 0] | order(michelinStars desc) [0...5]',
-          layout: { width: 'small' },
-        }),
-        // Project info and users
-        projectInfoWidget(),
-        projectUsersWidget(),
-      ],
-    }),
+    // NOTE: Dashboard Tool temporarily disabled - not compatible with Sanity v5
+    // Re-enable when @sanity/dashboard supports Sanity v5
 
     // Structure Tool - Document organization and list customization
     structureTool({
