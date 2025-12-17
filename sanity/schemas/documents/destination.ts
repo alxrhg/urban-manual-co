@@ -38,15 +38,6 @@ const PRICE_LEVEL_OPTIONS = [
   { title: '$$$$ - Very Expensive', value: 4 },
 ];
 
-// Publishing status options
-const STATUS_OPTIONS = [
-  { title: 'Draft', value: 'draft' },
-  { title: 'In Review', value: 'review' },
-  { title: 'Published', value: 'published' },
-  { title: 'Scheduled', value: 'scheduled' },
-  { title: 'Archived', value: 'archived' },
-];
-
 export default defineType({
   name: 'destination',
   title: 'Destination',
@@ -61,43 +52,11 @@ export default defineType({
     { name: 'architecture', title: 'Architecture & Design' },
     { name: 'booking', title: 'Booking & Contact' },
     { name: 'enrichment', title: 'Enrichment Data' },
-    { name: 'publishing', title: 'Publishing' },
   ],
 
   fields: [
     // ═══════════════════════════════════════════════════════════════════
-    // PUBLISHING & STATUS (shown at top for visibility)
-    // ═══════════════════════════════════════════════════════════════════
-    defineField({
-      name: 'status',
-      title: 'Status',
-      type: 'string',
-      group: 'publishing',
-      options: {
-        list: STATUS_OPTIONS,
-        layout: 'radio',
-      },
-      initialValue: 'draft',
-      validation: (rule) => rule.required(),
-    }),
-    defineField({
-      name: 'publishedAt',
-      title: 'Published At',
-      type: 'datetime',
-      group: 'publishing',
-      description: 'When this destination was/will be published',
-    }),
-    defineField({
-      name: 'scheduledFor',
-      title: 'Scheduled For',
-      type: 'datetime',
-      group: 'publishing',
-      description: 'If status is "scheduled", publish at this time',
-      hidden: ({ document }) => document?.status !== 'scheduled',
-    }),
-
-    // ═══════════════════════════════════════════════════════════════════
-    // EDITORIAL - Core content fields (primary editing)
+    // EDITORIAL - Core content fields
     // ═══════════════════════════════════════════════════════════════════
     defineField({
       name: 'name',
@@ -550,17 +509,14 @@ export default defineType({
       title: 'name',
       subtitle: 'city',
       media: 'heroImage',
-      status: 'status',
       categories: 'categories',
       michelinStars: 'michelinStars',
       crown: 'crown',
     },
-    prepare({ title, subtitle, media, status, categories, michelinStars, crown }) {
+    prepare({ title, subtitle, media, categories, michelinStars, crown }) {
       const badges: string[] = [];
       if (crown) badges.push('👑');
       if (michelinStars) badges.push('⭐'.repeat(michelinStars));
-      if (status === 'draft') badges.push('📝');
-      if (status === 'scheduled') badges.push('⏰');
 
       const badgeStr = badges.length > 0 ? ` ${badges.join(' ')}` : '';
       const categoryDisplay = Array.isArray(categories) && categories.length > 0
@@ -591,11 +547,6 @@ export default defineType({
       title: 'Recently Updated',
       name: 'updatedDesc',
       by: [{ field: '_updatedAt', direction: 'desc' }],
-    },
-    {
-      title: 'Status',
-      name: 'statusAsc',
-      by: [{ field: 'status', direction: 'asc' }],
     },
   ],
 });
