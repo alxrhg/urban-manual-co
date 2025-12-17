@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
-import { User, Map } from "lucide-react";
+import { User, Map, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import { useDrawer } from "@/contexts/DrawerContext";
@@ -114,6 +114,23 @@ export function Header() {
           {buildVersion}
         </span>
       )}
+
+      {/* AI Chat button */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={() => navigate('/ai')}
+            className="flex items-center justify-center gap-1.5 px-2 py-2 h-[34px] bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-full text-sm font-medium hover:opacity-90 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+            aria-label="Open AI chat"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span className="hidden sm:inline text-[12px]">AI</span>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Chat with AI concierge</p>
+        </TooltipContent>
+      </Tooltip>
 
       {/* Trips button - always visible */}
       <Tooltip>
