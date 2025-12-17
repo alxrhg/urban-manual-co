@@ -17,7 +17,6 @@ import crypto from 'crypto';
 import {
   mapSanityToSupabase,
   shouldSyncToSupabase,
-  isReadyToPublish,
   detectConflicts,
   type SanityDestination,
   type ConflictInfo,
@@ -130,12 +129,9 @@ async function fetchSanityDocument(documentId: string): Promise<SanityDestinatio
     _createdAt,
     _updatedAt,
     _rev,
-    status,
-    publishedAt,
-    scheduledFor,
     name,
     slug,
-    category,
+    categories,
     microDescription,
     description,
     content,
@@ -220,7 +216,7 @@ async function syncDocumentToSupabase(
     return { slug: doc._id, status: 'skipped', error: 'No slug found' };
   }
 
-  // Check publishing status
+  // Check if document is published (uses Sanity's native publish state)
   const shouldSync = shouldSyncToSupabase(doc);
 
   // Get existing record from Supabase
@@ -230,18 +226,9 @@ async function syncDocumentToSupabase(
     .eq('slug', slug)
     .maybeSingle();
 
-  // Handle scheduled publishing
-  if (doc.status === 'scheduled' && isReadyToPublish(doc)) {
-    // This will be handled by a separate cron job
-    return { slug, status: 'skipped', error: 'Scheduled for future publishing' };
-  }
-
-  // Handle unpublishing (draft, review, archived)
+  // Handle unpublishing (document is a draft)
   if (!shouldSync && existing) {
     // Document exists but is no longer published
-    // Option 1: Delete from Supabase
-    // Option 2: Mark as hidden/archived
-    // For now, we'll leave it but log the unpublish action
     await logAuditEntry(supabase, {
       action: 'unpublish',
       documentId: doc._id,
@@ -253,9 +240,9 @@ async function syncDocumentToSupabase(
     return { slug, status: 'unpublished' };
   }
 
-  // Skip if document shouldn't be synced
+  // Skip if document is still a draft
   if (!shouldSync) {
-    return { slug, status: 'skipped', error: `Status is '${doc.status}', not published` };
+    return { slug, status: 'skipped', error: 'Document is not published' };
   }
 
   // Check for conflicts
