@@ -109,8 +109,8 @@ async function syncDestination(
   isDryRun: boolean
 ): Promise<void> {
   try {
-    const supabaseData = mapSanityToSupabase(sanityDoc);
-    const slug = sanityDoc.slug?.current || sanityDoc._id;
+    const supabaseData = { ...mapSanityToSupabase(sanityDoc), slug: sanityDoc.slug?.current || sanityDoc._id };
+    const slug = supabaseData.slug;
 
     if (!slug) {
       stats.skipped++;
