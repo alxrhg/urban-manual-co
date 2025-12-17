@@ -77,6 +77,14 @@ const nextConfig: NextConfig = {
   // Enable compression
   compress: true,
 
+  // Externalize packages that don't bundle well with Turbopack
+  // These are Node.js native packages used by @copilotkit/runtime
+  serverExternalPackages: [
+    'pino',
+    'pino-pretty',
+    'thread-stream',
+  ],
+
   // Advanced optimizations for fastest loading
   experimental: {
     // Optimize CSS bundling
