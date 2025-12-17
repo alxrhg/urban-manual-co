@@ -80,6 +80,8 @@ interface SupabaseDestination {
   main_image?: string | null;
   michelin_stars?: number | null;
   crown?: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
   updated_at?: string;
   created_at?: string;
 }
@@ -123,6 +125,16 @@ function mapToSanityDocument(dest: SupabaseDestination): any {
   // Map category to array format (Sanity schema expects array)
   const categories = dest.category ? [dest.category] : [];
 
+  // Build geopoint from latitude/longitude if available
+  const geopoint =
+    dest.latitude != null && dest.longitude != null
+      ? {
+          _type: 'geopoint',
+          lat: dest.latitude,
+          lng: dest.longitude,
+        }
+      : undefined;
+
   // For images, we'll store the URL as a string
   // To upload images to Sanity, you'd need to use Sanity's asset upload API
   // For now, we'll store the URL and you can manually upload images in Studio if needed
@@ -142,6 +154,7 @@ function mapToSanityDocument(dest: SupabaseDestination): any {
     // For now, we'll skip it and you can upload manually in Studio
     // Or extend the schema to include imageUrl field
     categories: categories,
+    geopoint,
     lastSyncedAt: new Date().toISOString(),
   };
 }
