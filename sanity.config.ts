@@ -207,9 +207,8 @@ export default defineConfig({
     unsplashImageAsset(),
 
     // Google Maps Input - Visual map picker for geopoint fields
-    // Requires SANITY_STUDIO_GOOGLE_MAPS_API_KEY environment variable
     googleMapsInput({
-      apiKey: process.env.SANITY_STUDIO_GOOGLE_MAPS_API_KEY || '',
+      apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '',
       defaultZoom: 15,
       defaultLocation: {
         lat: 40.7128,
