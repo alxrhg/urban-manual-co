@@ -28,8 +28,10 @@ export default defineCliConfig({
   studioHost: 'urban-manual',
 
   /**
-   * Enable auto-updates for Sanity-hosted studios
-   * This keeps your deployed studio up to date with the latest Sanity version
+   * Deployment settings
+   * Auto-updates keeps your deployed studio up to date with the latest Sanity version
    */
-  autoUpdates: true,
+  deployment: {
+    autoUpdates: true,
+  },
 });
