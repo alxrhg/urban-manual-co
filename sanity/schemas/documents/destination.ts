@@ -124,14 +124,15 @@ export default defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
-      name: 'category',
-      title: 'Category',
-      type: 'string',
+      name: 'categories',
+      title: 'Categories',
+      type: 'array',
       group: 'editorial',
+      of: [{ type: 'string' }],
       options: {
         list: CATEGORY_OPTIONS,
       },
-      validation: (rule) => rule.required(),
+      validation: (rule) => rule.required().min(1),
     }),
     defineField({
       name: 'microDescription',
@@ -550,11 +551,11 @@ export default defineType({
       subtitle: 'city',
       media: 'heroImage',
       status: 'status',
-      category: 'category',
+      categories: 'categories',
       michelinStars: 'michelinStars',
       crown: 'crown',
     },
-    prepare({ title, subtitle, media, status, category, michelinStars, crown }) {
+    prepare({ title, subtitle, media, status, categories, michelinStars, crown }) {
       const badges: string[] = [];
       if (crown) badges.push('👑');
       if (michelinStars) badges.push('⭐'.repeat(michelinStars));
@@ -562,10 +563,13 @@ export default defineType({
       if (status === 'scheduled') badges.push('⏰');
 
       const badgeStr = badges.length > 0 ? ` ${badges.join(' ')}` : '';
+      const categoryDisplay = Array.isArray(categories) && categories.length > 0
+        ? categories.join(', ')
+        : 'Uncategorized';
 
       return {
         title: `${title}${badgeStr}`,
-        subtitle: `${category || 'Uncategorized'} • ${subtitle || 'No city'}`,
+        subtitle: `${categoryDisplay} • ${subtitle || 'No city'}`,
         media,
       };
     },

@@ -30,7 +30,7 @@ export interface SanityDestination {
   // Editorial
   name: string;
   slug: { _type: 'slug'; current: string };
-  category?: string;
+  categories?: string[];
   microDescription?: string;
   description?: PortableTextBlock[];
   content?: PortableTextBlock[];
@@ -136,7 +136,13 @@ export const FIELD_MAPPINGS: FieldMapping[] = [
     transformToSupabase: (value) => value?.current || value,
   },
   { sanity: 'name', supabase: 'name', direction: 'toSupabase' },
-  { sanity: 'category', supabase: 'category', direction: 'toSupabase' },
+  {
+    sanity: 'categories',
+    supabase: 'category',
+    direction: 'toSupabase',
+    // Supabase stores single category, so we take the first one from the array
+    transformToSupabase: (value) => (Array.isArray(value) && value.length > 0 ? value[0] : null),
+  },
   { sanity: 'microDescription', supabase: 'micro_description', direction: 'toSupabase' },
   {
     sanity: 'description',
