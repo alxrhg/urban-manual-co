@@ -24,7 +24,8 @@ export const destinationCardFields = groq`
   _type,
   name,
   "slug": slug.current,
-  category,
+  categories,
+  "category": categories[0],
   microDescription,
   city,
   country,
@@ -57,8 +58,6 @@ export const destinationDetailFields = groq`
   ${destinationCardFields},
   _createdAt,
   _updatedAt,
-  status,
-  publishedAt,
   description,
   content,
   tags,
@@ -111,9 +110,10 @@ export const destinationDetailFields = groq`
 
 /**
  * Get all published destinations (for list views)
+ * Uses Sanity's native publish state - excludes documents with 'drafts.' prefix
  */
 export const allDestinationsQuery = groq`
-  *[_type == "destination" && status == "published"] | order(name asc) {
+  *[_type == "destination" && !(_id in path("drafts.**"))] | order(name asc) {
     ${destinationCardFields}
   }
 `;
@@ -122,7 +122,7 @@ export const allDestinationsQuery = groq`
  * Get destinations by city
  */
 export const destinationsByCityQuery = groq`
-  *[_type == "destination" && status == "published" && city == $city] | order(name asc) {
+  *[_type == "destination" && !(_id in path("drafts.**")) && city == $city] | order(name asc) {
     ${destinationCardFields}
   }
 `;
@@ -131,7 +131,7 @@ export const destinationsByCityQuery = groq`
  * Get destinations by category
  */
 export const destinationsByCategoryQuery = groq`
-  *[_type == "destination" && status == "published" && category == $category] | order(name asc) {
+  *[_type == "destination" && !(_id in path("drafts.**")) && $category in categories] | order(name asc) {
     ${destinationCardFields}
   }
 `;
@@ -140,7 +140,7 @@ export const destinationsByCategoryQuery = groq`
  * Get featured/crown destinations
  */
 export const featuredDestinationsQuery = groq`
-  *[_type == "destination" && status == "published" && crown == true] | order(name asc) {
+  *[_type == "destination" && !(_id in path("drafts.**")) && crown == true] | order(name asc) {
     ${destinationCardFields}
   }
 `;
@@ -149,7 +149,7 @@ export const featuredDestinationsQuery = groq`
  * Get Michelin-starred destinations
  */
 export const michelinDestinationsQuery = groq`
-  *[_type == "destination" && status == "published" && michelinStars > 0] | order(michelinStars desc, name asc) {
+  *[_type == "destination" && !(_id in path("drafts.**")) && michelinStars > 0] | order(michelinStars desc, name asc) {
     ${destinationCardFields}
   }
 `;
@@ -176,7 +176,7 @@ export const getDestinationByIdQuery = groq`
  * Get related destinations (same city, different destination)
  */
 export const relatedDestinationsQuery = groq`
-  *[_type == "destination" && status == "published" && city == $city && slug.current != $currentSlug][0...6] {
+  *[_type == "destination" && !(_id in path("drafts.**")) && city == $city && slug.current != $currentSlug][0...6] {
     ${destinationCardFields}
   }
 `;
@@ -185,11 +185,11 @@ export const relatedDestinationsQuery = groq`
  * Search destinations by name or city
  */
 export const searchDestinationsQuery = groq`
-  *[_type == "destination" && status == "published" && (
+  *[_type == "destination" && !(_id in path("drafts.**")) && (
     name match $searchTerm ||
     city match $searchTerm ||
     country match $searchTerm ||
-    category match $searchTerm
+    $searchTerm in categories
   )] | order(name asc) {
     ${destinationCardFields}
   }
@@ -203,7 +203,7 @@ export const searchDestinationsQuery = groq`
  * Get all destination slugs (for static generation)
  */
 export const allDestinationSlugsQuery = groq`
-  *[_type == "destination" && status == "published" && defined(slug.current)] {
+  *[_type == "destination" && !(_id in path("drafts.**")) && defined(slug.current)] {
     "slug": slug.current
   }
 `;
@@ -212,21 +212,21 @@ export const allDestinationSlugsQuery = groq`
  * Get all unique cities
  */
 export const allCitiesQuery = groq`
-  array::unique(*[_type == "destination" && status == "published"].city)
+  array::unique(*[_type == "destination" && !(_id in path("drafts.**"))].city)
 `;
 
 /**
  * Get all unique categories
  */
 export const allCategoriesQuery = groq`
-  array::unique(*[_type == "destination" && status == "published"].category)
+  array::unique(*[_type == "destination" && !(_id in path("drafts.**"))].categories[])
 `;
 
 /**
  * Sitemap data - all destinations with update timestamps
  */
 export const sitemapDestinationsQuery = groq`
-  *[_type == "destination" && status == "published"] {
+  *[_type == "destination" && !(_id in path("drafts.**"))] {
     "slug": slug.current,
     _updatedAt
   }

@@ -2,10 +2,12 @@
  * Sync Sanity CMS documents to Supabase
  *
  * This script:
- * 1. Fetches all destination documents from Sanity
- * 2. Maps them to Supabase format
+ * 1. Fetches all PUBLISHED destination documents from Sanity
+ * 2. Maps them to Supabase format using shared field mapping
  * 3. Creates or updates records in Supabase
  * 4. Supports incremental sync (only updates changed records)
+ *
+ * Note: Only published documents are synced. Drafts are excluded.
  *
  * Usage:
  *   npx tsx scripts/sync-sanity-to-supabase.ts              # Full sync
@@ -18,6 +20,10 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { createClient as createSanityClient } from '@sanity/client';
 import dotenv from 'dotenv';
 import path from 'path';
+import {
+  mapSanityToSupabase,
+  type SanityDestination,
+} from '../lib/sanity/field-mapping';
 
 // Load environment variables
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
@@ -76,63 +82,6 @@ interface SyncStats {
 }
 
 /**
- * Convert Sanity Portable Text to plain text
- */
-function portableTextToPlainText(blocks: any[]): string {
-  if (!blocks || !Array.isArray(blocks)) return '';
-  
-  return blocks
-    .map((block) => {
-      if (block._type !== 'block' || !block.children) return '';
-      return block.children
-        .map((child: any) => (child.text || ''))
-        .join('');
-    })
-    .join('\n\n');
-}
-
-/**
- * Map Sanity document to Supabase format
- */
-function mapToSupabase(sanityDoc: any): any {
-  // Extract slug from Sanity slug object
-  const slug = sanityDoc.slug?.current || sanityDoc._id;
-  
-  // Convert Portable Text description to plain text
-  const description = portableTextToPlainText(sanityDoc.description || []);
-  
-  // Extract category from categories array (take first one)
-  const category = Array.isArray(sanityDoc.categories) && sanityDoc.categories.length > 0
-    ? sanityDoc.categories[0]
-    : null;
-  
-  // Get image URL from heroImage
-  // Note: If heroImage is a reference, we'd need to fetch the asset
-  // For now, we'll try to get the URL if available
-  let imageUrl: string | null = null;
-  if (sanityDoc.heroImage) {
-    if (sanityDoc.heroImage.asset?._ref) {
-      // It's a reference, would need to fetch from Sanity asset API
-      // For now, we'll skip it
-      imageUrl = null;
-    } else if (sanityDoc.heroImage.asset?.url) {
-      imageUrl = sanityDoc.heroImage.asset.url;
-    }
-  }
-
-  return {
-    slug,
-    name: sanityDoc.name || '',
-    city: sanityDoc.city || '',
-    country: sanityDoc.country || null,
-    category: category || null,
-    description: description || null,
-    image: imageUrl,
-    updated_at: new Date().toISOString(),
-  };
-}
-
-/**
  * Check if a destination exists in Supabase
  */
 async function destinationExists(slug: string): Promise<boolean> {
@@ -155,12 +104,12 @@ async function destinationExists(slug: string): Promise<boolean> {
  * Sync a single destination
  */
 async function syncDestination(
-  sanityDoc: any,
+  sanityDoc: SanityDestination,
   stats: SyncStats,
   isDryRun: boolean
 ): Promise<void> {
   try {
-    const supabaseData = mapToSupabase(sanityDoc);
+    const supabaseData = { ...mapSanityToSupabase(sanityDoc), slug: sanityDoc.slug?.current || sanityDoc._id };
     const slug = supabaseData.slug;
 
     if (!slug) {
@@ -171,8 +120,10 @@ async function syncDestination(
 
     const exists = await destinationExists(slug);
 
+    const name = sanityDoc.name || slug;
+
     if (isDryRun) {
-      console.log(`  ${exists ? '📝 Would update' : '➕ Would create'}: ${supabaseData.name} (${slug})`);
+      console.log(`  ${exists ? '📝 Would update' : '➕ Would create'}: ${name} (${slug})`);
       if (exists) stats.updated++;
       else stats.created++;
       return;
@@ -188,7 +139,7 @@ async function syncDestination(
       if (error) throw error;
 
       stats.updated++;
-      console.log(`  ✅ Updated: ${supabaseData.name} (${slug})`);
+      console.log(`  ✅ Updated: ${name} (${slug})`);
     } else {
       // Create new destination
       const { error } = await supabase
@@ -201,16 +152,16 @@ async function syncDestination(
       if (error) throw error;
 
       stats.created++;
-      console.log(`  ➕ Created: ${supabaseData.name} (${slug})`);
+      console.log(`  ➕ Created: ${name} (${slug})`);
     }
   } catch (error: any) {
     stats.errors++;
-    const slug = sanityDoc.slug?.current || sanityDoc._id;
+    const errorSlug = sanityDoc.slug?.current || sanityDoc._id;
     stats.errorDetails.push({
-      slug,
+      slug: errorSlug,
       error: error.message || String(error),
     });
-    console.error(`  ❌ Error syncing ${slug}:`, error.message);
+    console.error(`  ❌ Error syncing ${errorSlug}:`, error.message);
   }
 }
 
@@ -231,14 +182,15 @@ async function syncToSupabase(options: {
   }
 
   try {
-    // Build GROQ query
-    let query = '*[_type == "destination"]';
-    
+    // Build GROQ query - only fetch PUBLISHED documents (exclude drafts)
+    // In Sanity, published documents don't have 'drafts.' prefix in their _id
+    let query = '*[_type == "destination" && !(_id in path("drafts.**"))]';
+
     if (slug) {
-      query = `*[_type == "destination" && slug.current == $slug]`;
-      console.log(`📍 Syncing specific destination: ${slug}\n`);
+      query = `*[_type == "destination" && !(_id in path("drafts.**")) && slug.current == $slug]`;
+      console.log(`📍 Syncing specific published destination: ${slug}\n`);
     } else {
-      console.log('📥 Fetching all destinations from Sanity...');
+      console.log('📥 Fetching all PUBLISHED destinations from Sanity (excluding drafts)...');
     }
 
     const params = slug ? { slug } : {};
@@ -250,7 +202,7 @@ async function syncToSupabase(options: {
     }
 
     const toSync = limit ? documents.slice(0, limit) : documents;
-    console.log(`✅ Found ${documents.length} total destinations in Sanity`);
+    console.log(`✅ Found ${documents.length} published destinations in Sanity`);
     console.log(`📦 Syncing ${toSync.length} destinations...\n`);
 
     const stats: SyncStats = {
