@@ -15,6 +15,11 @@ import { presentationTool } from 'sanity/presentation';
 import { visionTool } from '@sanity/vision';
 import { assist } from '@sanity/assist';
 import { unsplashImageAsset } from 'sanity-plugin-asset-source-unsplash';
+import {
+  dashboardTool,
+  projectInfoWidget,
+  projectUsersWidget,
+} from '@sanity/dashboard';
 import { schemaTypes } from './sanity/schemas';
 import { apiVersion, dataset, projectId, studioUrl } from './lib/sanity/env';
 
@@ -46,7 +51,18 @@ export default defineConfig({
   basePath: studioUrl,
   apiVersion,
 
+  // Media Library - Centralized asset management
+  // Requires Sanity plan with Media Library feature
+  mediaLibrary: {
+    enabled: true,
+  },
+
   plugins: [
+    // Dashboard Tool - Project overview and widgets
+    dashboardTool({
+      widgets: [projectInfoWidget(), projectUsersWidget()],
+    }),
+
     // Structure Tool - Document organization and list customization
     structureTool({
       structure: (S) =>
