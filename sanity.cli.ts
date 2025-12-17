@@ -22,14 +22,16 @@ export default defineCliConfig({
   },
 
   /**
-   * Sanity-hosted Studio configuration
+   * Deployment configuration for Sanity-hosted studios
    * Run `npx sanity deploy` to deploy to Sanity hosting
    */
-  studioHost: 'urban-manual',
+  deployment: {
+    appId: 'zrbwei86rxluvt09l2hz28bx',
+    autoUpdates: true,
+  },
 
   /**
-   * Enable auto-updates for Sanity-hosted studios
-   * This keeps your deployed studio up to date with the latest Sanity version
+   * Sanity-hosted Studio hostname
    */
-  autoUpdates: true,
+  studioHost: 'urban-manual',
 });
