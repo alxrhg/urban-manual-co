@@ -22,11 +22,6 @@ export interface SanityDestination {
   _updatedAt?: string;
   _rev?: string;
 
-  // Publishing
-  status?: 'draft' | 'review' | 'published' | 'scheduled' | 'archived';
-  publishedAt?: string;
-  scheduledFor?: string;
-
   // Editorial
   name: string;
   slug: { _type: 'slug'; current: string };
@@ -489,20 +484,9 @@ function valuesEqual(a: any, b: any): boolean {
 
 /**
  * Check if a document should be synced to Supabase
- * Only published content should be visible on the site
+ * Uses Sanity's native publish state - documents with 'drafts.' prefix are drafts
  */
 export function shouldSyncToSupabase(sanityDoc: SanityDestination): boolean {
-  const status = sanityDoc.status || 'draft';
-  return status === 'published';
-}
-
-/**
- * Check if a scheduled document is ready to be published
- */
-export function isReadyToPublish(sanityDoc: SanityDestination): boolean {
-  if (sanityDoc.status !== 'scheduled') return false;
-  if (!sanityDoc.scheduledFor) return false;
-
-  const scheduledTime = new Date(sanityDoc.scheduledFor).getTime();
-  return Date.now() >= scheduledTime;
+  // In Sanity, published documents don't have 'drafts.' prefix in their _id
+  return !sanityDoc._id.startsWith('drafts.');
 }
