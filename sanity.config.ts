@@ -15,6 +15,7 @@ import { presentationTool } from 'sanity/presentation';
 import { visionTool } from '@sanity/vision';
 import { assist } from '@sanity/assist';
 import { unsplashImageAsset } from 'sanity-plugin-asset-source-unsplash';
+import { googleMapsInput } from '@sanity/google-maps-input';
 import { schemaTypes } from './sanity/schemas';
 import { apiVersion, dataset, projectId, studioUrl } from './lib/sanity/env';
 
@@ -204,6 +205,17 @@ export default defineConfig({
 
     // Unsplash - Stock photo integration
     unsplashImageAsset(),
+
+    // Google Maps Input - Visual map picker for geopoint fields
+    // Requires SANITY_STUDIO_GOOGLE_MAPS_API_KEY environment variable
+    googleMapsInput({
+      apiKey: process.env.SANITY_STUDIO_GOOGLE_MAPS_API_KEY || '',
+      defaultZoom: 15,
+      defaultLocation: {
+        lat: 40.7128,
+        lng: -74.006,
+      },
+    }),
   ],
 
   schema: {
