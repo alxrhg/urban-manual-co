@@ -534,10 +534,13 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 </span>
               )}
               {destination.brand && (
-                <span className="px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-[13px] font-medium flex items-center gap-1.5">
+                <a
+                  href={`/brand/${encodeURIComponent(destination.brand)}`}
+                  className="px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-[13px] font-medium flex items-center gap-1.5 hover:bg-white/30 transition-colors"
+                >
                   <Building2 className="h-3.5 w-3.5" />
                   {destination.brand}
-                </span>
+                </a>
               )}
             </div>
           </div>

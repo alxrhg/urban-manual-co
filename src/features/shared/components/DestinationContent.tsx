@@ -1608,6 +1608,16 @@ const DestinationContent = memo(function DestinationContent({
             {destination.category && capitalizeCategory(destination.category)}
             {destination.city && ` · ${capitalizeCity(destination.city)}`}
           </p>
+          {/* Brand link */}
+          {destination.brand && (
+            <Link
+              href={`/brand/${encodeURIComponent(destination.brand)}`}
+              className="inline-flex items-center gap-1.5 mt-2 text-[12px] text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              <Building2 className="h-3 w-3" />
+              {destination.brand}
+            </Link>
+          )}
           {/* Rating with review count */}
           {rating && (
             <div className="flex items-center gap-1.5 mt-2">
