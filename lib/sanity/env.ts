@@ -16,7 +16,7 @@ export const dataset =
 export const projectId =
   process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ||
   process.env.SANITY_STUDIO_PROJECT_ID ||
-  '';
+  'ryd11bal';
 
 // Used for preview/visual editing
 export const studioUrl = process.env.NEXT_PUBLIC_SANITY_STUDIO_URL || '/studio';
