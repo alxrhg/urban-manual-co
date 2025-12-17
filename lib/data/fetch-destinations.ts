@@ -363,3 +363,84 @@ export async function prefetchHomepageData() {
     trending,
   };
 }
+
+/**
+ * Fetch brand statistics for the brands listing page
+ * Cached for 10 minutes
+ */
+export const fetchBrandStats = unstable_cache(
+  async (): Promise<Array<{
+    brand: string;
+    count: number;
+    featuredImage?: string;
+    categories: string[];
+  }>> => {
+    // Skip database queries during build if Supabase isn't configured
+    if (!isSupabaseConfigured()) {
+      return [];
+    }
+
+    try {
+      const supabase = createServiceRoleClient();
+
+      const { data, error } = await supabase
+        .from('destinations')
+        .select('brand, category, image')
+        .not('brand', 'is', null);
+
+      if (error) {
+        console.error('[SSR] Error fetching brand stats:', error.message);
+        return [];
+      }
+
+      const destinations = data || [];
+
+      // Count brands and get featured image
+      const brandData = destinations.reduce((acc, dest: { brand?: string | null; category?: string | null; image?: string | null }) => {
+        const brand = (dest.brand ?? '').toString().trim();
+        if (!brand) return acc;
+
+        if (!acc[brand]) {
+          acc[brand] = {
+            count: 0,
+            featuredImage: dest.image || undefined,
+            categories: new Set<string>(),
+          };
+        }
+
+        acc[brand].count += 1;
+
+        // Update featured image if current one doesn't have image but this one does
+        if (!acc[brand].featuredImage && dest.image) {
+          acc[brand].featuredImage = dest.image;
+        }
+
+        // Track unique categories
+        if (dest.category) {
+          acc[brand].categories.add(dest.category);
+        }
+
+        return acc;
+      }, {} as Record<string, { count: number; featuredImage?: string; categories: Set<string> }>);
+
+      const stats = Object.entries(brandData)
+        .map(([brand, data]) => ({
+          brand,
+          count: data.count,
+          featuredImage: data.featuredImage,
+          categories: Array.from(data.categories) as string[],
+        }))
+        .sort((a, b) => b.count - a.count);
+
+      return stats;
+    } catch (error) {
+      console.error('[SSR] Exception fetching brand stats:', error);
+      return [];
+    }
+  },
+  ['brand-stats'],
+  {
+    revalidate: 600, // 10 minutes
+    tags: ['destinations', 'brands'],
+  }
+);

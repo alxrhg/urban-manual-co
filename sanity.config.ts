@@ -20,6 +20,8 @@ import {
   projectInfoWidget,
   projectUsersWidget,
 } from '@sanity/dashboard';
+import { documentListWidget } from 'sanity-plugin-dashboard-widget-document-list';
+import { googleMapsInput } from '@sanity/google-maps-input';
 import { schemaTypes } from './sanity/schemas';
 import { apiVersion, dataset, projectId, studioUrl } from './lib/sanity/env';
 
@@ -60,7 +62,29 @@ export default defineConfig({
   plugins: [
     // Dashboard Tool - Project overview and widgets
     dashboardTool({
-      widgets: [projectInfoWidget(), projectUsersWidget()],
+      widgets: [
+        // Recent destinations
+        documentListWidget({
+          title: 'Recently Updated Destinations',
+          query: '*[_type == "destination"] | order(_updatedAt desc) [0...10]',
+          layout: { width: 'medium' },
+        }),
+        // Featured destinations
+        documentListWidget({
+          title: 'Featured (Crown)',
+          query: '*[_type == "destination" && crown == true] | order(_updatedAt desc) [0...5]',
+          layout: { width: 'small' },
+        }),
+        // Michelin starred
+        documentListWidget({
+          title: 'Michelin Starred',
+          query: '*[_type == "destination" && michelinStars > 0] | order(michelinStars desc) [0...5]',
+          layout: { width: 'small' },
+        }),
+        // Project info and users
+        projectInfoWidget(),
+        projectUsersWidget(),
+      ],
     }),
 
     // Structure Tool - Document organization and list customization
@@ -220,6 +244,16 @@ export default defineConfig({
 
     // Unsplash - Stock photo integration
     unsplashImageAsset(),
+
+    // Google Maps Input - Visual map picker for geopoint fields
+    googleMapsInput({
+      apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '',
+      defaultZoom: 15,
+      defaultLocation: {
+        lat: 40.7128,
+        lng: -74.006,
+      },
+    }),
   ],
 
   schema: {

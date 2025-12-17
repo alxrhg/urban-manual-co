@@ -462,6 +462,116 @@ export function generateCitiesCollectionSchema(cities: Array<{ city: string; cou
 }
 
 /**
+ * Generate breadcrumb schema for brands listing page
+ */
+export function generateBrandsListBreadcrumb() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://www.urbanmanual.co',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Brands',
+        item: 'https://www.urbanmanual.co/brands',
+      },
+    ],
+  };
+}
+
+/**
+ * Generate CollectionPage schema for brands listing
+ */
+export function generateBrandsCollectionSchema(brands: Array<{ brand: string; count: number; categories?: string[] }>) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Discover Brands - The Urban Manual',
+    description: 'Explore curated travel destinations by brand. Find the best hotels, restaurants, and experiences from world-renowned brands.',
+    url: 'https://www.urbanmanual.co/brands',
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: brands.length,
+      itemListElement: brands.slice(0, 30).map((brand, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: brand.brand,
+        url: `https://www.urbanmanual.co/brand/${encodeURIComponent(brand.brand)}`,
+        description: `${brand.count} curated destinations from ${brand.brand}`,
+      })),
+    },
+  };
+}
+
+/**
+ * Generate breadcrumb schema for individual brand page
+ */
+export function generateBrandBreadcrumb(brand: string) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://www.urbanmanual.co',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Brands',
+        item: 'https://www.urbanmanual.co/brands',
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: brand,
+        item: `https://www.urbanmanual.co/brand/${encodeURIComponent(brand)}`,
+      },
+    ],
+  };
+}
+
+/**
+ * Generate metadata for individual brand page
+ */
+export function generateBrandMetadata(brand: string, count?: number): Metadata {
+  const title = `${brand} - Hotels & Restaurants | The Urban Manual`;
+  const description = count
+    ? `Discover ${count} curated ${brand} destinations worldwide. Find the best hotels, restaurants, and experiences from ${brand}.`
+    : `Discover curated ${brand} destinations worldwide. Find the best hotels, restaurants, and experiences.`;
+  const canonicalUrl = `https://www.urbanmanual.co/brand/${encodeURIComponent(brand)}`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      siteName: 'The Urban Manual',
+      locale: 'en_US',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  };
+}
+
+/**
  * Generate FAQ schema for destination pages
  */
 export function generateDestinationFAQ(destination: Destination) {
