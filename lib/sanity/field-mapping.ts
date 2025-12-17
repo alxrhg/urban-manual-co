@@ -227,6 +227,23 @@ export const FIELD_MAPPINGS: FieldMapping[] = [
   { sanity: 'googleMapsUrl', supabase: 'google_maps_url', direction: 'toSupabase' },
 
   // ─────────────────────────────────────────────────────────────────────────
+  // Location Data (Supabase → Sanity)
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    sanity: 'geopoint',
+    supabase: 'latitude', // Primary field - transform accesses full row for both lat/lng
+    direction: 'toSanity',
+    transformToSanity: (value, row) => {
+      const lat = row.latitude;
+      const lng = row.longitude;
+      if (lat != null && lng != null) {
+        return { _type: 'geopoint', lat, lng };
+      }
+      return null;
+    },
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
   // Enrichment Data (Supabase → Sanity, read-only in Sanity)
   // ─────────────────────────────────────────────────────────────────────────
   { sanity: 'placeId', supabase: 'place_id', direction: 'toSanity' },
