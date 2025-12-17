@@ -205,11 +205,11 @@ export function IntelligenceDashboard({ intelligence, onReset }: IntelligenceDas
                     {rec.type || 'Recommendation'}
                   </span>
                   <h4 className="text-sm font-medium text-gray-900 dark:text-white mt-2">
-                    {rec.title || rec.name}
+                    {rec.title}
                   </h4>
-                  {rec.reason && (
+                  {rec.description && (
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                      {rec.reason}
+                      {rec.description}
                     </p>
                   )}
                 </div>
