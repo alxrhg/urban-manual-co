@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/ui/button';
 import { useFollow } from '@/hooks/useFollow';
 import { UserPlus, UserMinus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';

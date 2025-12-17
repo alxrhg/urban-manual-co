@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
-import { LoginDrawer } from '@/components/LoginDrawer';
+import { LoginDrawer } from '@/features/account/components/LoginDrawer';
 
 function LoginPageContent() {
   const router = useRouter();

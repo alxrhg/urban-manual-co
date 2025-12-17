@@ -1,6 +1,6 @@
 'use client';
 
-import { GridSkeleton, Skeleton } from '@/src/ui/Skeleton';
+import { GridSkeleton, Skeleton } from '@/ui/skeleton';
 
 export default function SearchGridSkeleton() {
   return (

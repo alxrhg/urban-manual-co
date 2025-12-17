@@ -1,6 +1,6 @@
 'use client';
 
-import { HomepageVisualEditor } from '@/components/admin/HomepageVisualEditor';
+import { HomepageVisualEditor } from '@/features/admin/components/HomepageVisualEditor';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';

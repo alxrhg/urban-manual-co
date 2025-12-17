@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 import { MessageCircle, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/ui/sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +15,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '@/ui/alert-dialog';
 
 interface CollectionCommentsProps {
   collectionId: string;

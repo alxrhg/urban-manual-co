@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Collection } from '@/types/personalization';
 import { Plus, X, Edit2, Trash2, Folder, FolderOpen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/ui/sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +15,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '@/ui/alert-dialog';
 
 interface CollectionsManagerProps {
   destinationId: number;

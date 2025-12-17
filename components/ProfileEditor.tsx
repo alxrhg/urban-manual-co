@@ -5,14 +5,14 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Save, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { cityCountryMap, countryOrder } from '@/data/cityCountryMap';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Spinner } from '@/components/ui/spinner';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+import { Button } from '@/ui/button';
+import { Input } from '@/ui/input';
+import { Textarea } from '@/ui/textarea';
+import { Alert, AlertTitle, AlertDescription } from '@/ui/alert';
+import { Skeleton } from '@/ui/skeleton';
+import { Spinner } from '@/ui/spinner';
+import { Label } from '@/ui/label';
+import { Switch } from '@/ui/switch';
 import {
   Select,
   SelectContent,
@@ -21,7 +21,7 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/ui/select';
 
 interface ProfileEditorProps {
   userId: string;

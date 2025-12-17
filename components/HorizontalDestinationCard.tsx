@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { MapPin } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
-import { getDestinationAltText } from './ui/DestinationImage';
+import { getDestinationAltText } from '@/ui/DestinationImage';
 
 interface HorizontalDestinationCardProps {
   destination: Destination;

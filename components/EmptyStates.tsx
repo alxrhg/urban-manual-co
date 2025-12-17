@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { LucideIcon, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
+import { Button } from '@/ui/button';
 
 interface EmptyStateProps {
   icon?: string; // Emoji

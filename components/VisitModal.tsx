@@ -9,10 +9,10 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+} from '@/ui/dialog';
+import { Button } from '@/ui/button';
+import { Textarea } from '@/ui/textarea';
+import { Label } from '@/ui/label';
 
 interface VisitModalProps {
   isOpen: boolean;

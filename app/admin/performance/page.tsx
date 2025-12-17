@@ -12,7 +12,7 @@ import {
   ArrowDown,
   RefreshCw,
 } from 'lucide-react';
-import { MetricCard } from '@/components/admin/analytics';
+import { MetricCard } from '@/features/admin/components/analytics';
 
 export const dynamic = 'force-dynamic';
 

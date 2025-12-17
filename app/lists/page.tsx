@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Plus, Lock, Globe, Trash2, Loader2, Heart, MapPin, X } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/components/ui/sonner";
+import { Skeleton } from "@/ui/skeleton";
+import { toast } from "@/ui/sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +16,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/ui/alert-dialog";
 
 interface List {
   id: string;

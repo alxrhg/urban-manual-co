@@ -16,7 +16,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '@/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 
 export type ConfirmDialogType = 'danger' | 'warning' | 'info';

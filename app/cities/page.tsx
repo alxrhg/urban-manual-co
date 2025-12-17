@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import CitiesPageClient from './page-client';
 import { fetchCityStats } from '@/lib/data/fetch-destinations';
 import SearchGridSkeleton from '@/src/features/search/SearchGridSkeleton';
-import { ErrorState } from '@/components/ui/empty-state';
+import { ErrorState } from '@/ui/empty-state';
 import {
   generateCitiesListBreadcrumb,
   generateCitiesCollectionSchema

@@ -29,7 +29,7 @@ export interface CityPageClientProps {
 }
 
 // IntelligentDrawer for destination details
-import { useDestinationDrawer } from '@/components/IntelligentDrawer';
+import { useDestinationDrawer } from '@/features/shared/components/IntelligentDrawerContext';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 
 function capitalizeCity(city: string): string {

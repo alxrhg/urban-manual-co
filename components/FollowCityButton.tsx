@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Heart } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/ui/sonner';
 
 interface FollowCityButtonProps {
   citySlug: string;

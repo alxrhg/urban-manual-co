@@ -2,7 +2,7 @@
 
 import { Component, ReactNode } from 'react';
 import { AlertCircle, RefreshCw, Home, HelpCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/ui/button';
 import { logger } from '@/lib/logging';
 import { sanitizeError } from '@/lib/errors/sanitize';
 

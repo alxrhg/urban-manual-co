@@ -7,7 +7,7 @@ import { MapPin, Sparkles } from 'lucide-react';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
 import Link from 'next/link';
 import { useMemo, memo } from 'react';
-import { getDestinationAltText } from './ui/DestinationImage';
+import { getDestinationAltText } from '@/ui/DestinationImage';
 
 interface PersonalizedRecommendationsProps {
   limit?: number;

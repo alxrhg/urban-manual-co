@@ -1,7 +1,7 @@
 'use client';
 
-import { Spinner as UISpinner } from "@/components/ui/spinner";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner as UISpinner } from "@/ui/spinner";
+import { Skeleton } from "@/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 // ============================================

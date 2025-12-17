@@ -12,17 +12,17 @@ import {
   Calendar,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/ui/badge';
+import { Button } from '@/ui/button';
+import { Separator } from '@/ui/separator';
+import { Skeleton } from '@/ui/skeleton';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/ui/select';
 
 type SearchLog = {
   id: number;

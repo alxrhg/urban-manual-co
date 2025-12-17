@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Share2, Download, X } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/ui/sonner';
 
 interface SharingCardProps {
   title: string;

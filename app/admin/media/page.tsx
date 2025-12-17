@@ -1,6 +1,6 @@
 'use client';
 
-import { MediaLibrary } from '@/components/admin/cms';
+import { MediaLibrary } from '@/features/admin/components/cms';
 
 export const dynamic = 'force-dynamic';
 

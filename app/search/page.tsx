@@ -12,7 +12,7 @@ import { SmartEmptyState } from '@/components/SmartEmptyState';
 import { ContextualLoadingState } from '@/components/ContextualLoadingState';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { MultiplexAd } from '@/components/GoogleAd';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@/ui/skeleton';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
