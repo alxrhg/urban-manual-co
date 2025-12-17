@@ -6,6 +6,7 @@ import { Destination } from '@/types/destination';
 import { UniversalGrid } from '@/components/UniversalGrid';
 import { DestinationCard } from '@/components/DestinationCard';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
+import { supabase } from '@/lib/supabase';
 
 export interface BrandStats {
   brand: string;
@@ -51,9 +52,82 @@ export default function BrandsPageClient({
   const [categories, setCategories] = useState<string[]>(initialCategories);
   const [selectedCategory, setSelectedCategory] = useState('');
   // Skip loading state if we have SSR data
-  const [loading] = useState(!hasSSRData);
+  const [loading, setLoading] = useState(!hasSSRData);
   const itemsPerPage = useItemsPerPage(4); // Items to add per "Show More" click
   const [displayCount, setDisplayCount] = useState(itemsPerPage);
+
+  // Client-side fetch fallback when SSR data is not available
+  useEffect(() => {
+    if (!hasSSRData) {
+      fetchBrandStats();
+    }
+  }, [hasSSRData]);
+
+  const fetchBrandStats = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('destinations')
+        .select('brand, category, image')
+        .not('brand', 'is', null);
+
+      if (error) {
+        console.error('Error fetching brand stats:', error.message);
+        setLoading(false);
+        return;
+      }
+
+      const destinations = data || [];
+
+      // Count brands and get featured image
+      const brandData: Record<string, { count: number; featuredImage?: string; categories: Set<string> }> = {};
+
+      destinations.forEach((dest: { brand?: string | null; category?: string | null; image?: string | null }) => {
+        const brand = (dest.brand ?? '').toString().trim();
+        if (!brand) return;
+
+        if (!brandData[brand]) {
+          brandData[brand] = {
+            count: 0,
+            featuredImage: dest.image || undefined,
+            categories: new Set<string>(),
+          };
+        }
+
+        brandData[brand].count += 1;
+
+        if (!brandData[brand].featuredImage && dest.image) {
+          brandData[brand].featuredImage = dest.image;
+        }
+
+        if (dest.category) {
+          brandData[brand].categories.add(dest.category);
+        }
+      });
+
+      const stats = Object.entries(brandData)
+        .map(([brand, data]) => ({
+          brand,
+          count: data.count,
+          featuredImage: data.featuredImage,
+          categories: Array.from(data.categories) as string[],
+        }))
+        .sort((a, b) => b.count - a.count);
+
+      setBrandStats(stats);
+      setFilteredBrands(stats);
+
+      // Extract unique categories
+      const allCategories = Array.from(
+        new Set(stats.flatMap(s => s.categories).filter(Boolean))
+      ).sort();
+      setCategories(allCategories);
+
+      setLoading(false);
+    } catch (error) {
+      console.error('Exception fetching brand stats:', error);
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     applyFilters(brandStats, selectedCategory);
