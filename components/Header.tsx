@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
 import { User, Map } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,6 +20,7 @@ import { useChristmasTheme } from "@/contexts/ChristmasThemeContext";
 
 export function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useAuth();
   const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
   const { isChristmasMode } = useChristmasTheme();
@@ -98,6 +99,11 @@ export function Header() {
 
     fetchUserData();
   }, [user, isAdmin]);
+
+  // Hide header on Sanity Studio pages
+  if (pathname?.startsWith('/studio')) {
+    return null;
+  }
 
   const navigate = (path: string) => {
     router.push(path);

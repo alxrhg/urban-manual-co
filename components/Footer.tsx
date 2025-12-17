@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import { openCookieSettings } from '@/components/CookieConsent';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -55,7 +56,13 @@ const sitemapSections = [
 ];
 
 export function Footer() {
+  const pathname = usePathname();
   const [isSitemapExpanded, setIsSitemapExpanded] = useState(false);
+
+  // Hide footer on Sanity Studio pages
+  if (pathname?.startsWith('/studio')) {
+    return null;
+  }
 
   return (
     <footer className="mt-20 border-t border-gray-200 dark:border-gray-800 relative" role="contentinfo">
