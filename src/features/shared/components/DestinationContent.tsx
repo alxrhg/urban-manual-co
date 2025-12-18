@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, memo, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import {
   MapPin,
   Star,
@@ -487,6 +488,7 @@ const DestinationContent = memo(function DestinationContent({
   onOpenRelated,
   onShowSimilar,
 }: DestinationContentProps) {
+  const router = useRouter();
   const { user } = useAuth();
   const { activeTrip, addToTrip, startTrip } = useTripBuilder();
   const { close: closeDrawer } = useIntelligentDrawer();
@@ -1794,14 +1796,16 @@ const DestinationContent = memo(function DestinationContent({
         })}
 
         {/* View Full Page */}
-        <Link
-          href={`/destination/${destination.slug}`}
-          onClick={closeDrawer}
+        <button
+          onClick={() => {
+            closeDrawer();
+            router.push(`/destination/${destination.slug}`);
+          }}
           className="flex items-center justify-between w-full mt-6 py-4 border-t border-gray-100 dark:border-white/10 group"
         >
           <span className="text-[15px] font-medium text-gray-900 dark:text-white">View full page</span>
           <ExternalLink className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
-        </Link>
+        </button>
       </div>
     </div>
   );
