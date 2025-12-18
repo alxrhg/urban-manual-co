@@ -97,9 +97,13 @@ export function ImageCarousel({
     }
   }, [goToNext, goToPrev]);
 
+  // Check if className includes rounded override
+  const hasRoundedOverride = className.includes('rounded');
+  const roundedClass = hasRoundedOverride ? '' : 'rounded-3xl';
+
   if (images.length === 0) {
     return (
-      <div className={`${aspectRatioClass} bg-gray-100 dark:bg-gray-800 rounded-3xl ${className}`} />
+      <div className={`${aspectRatioClass} bg-gray-100 dark:bg-gray-800 ${roundedClass} ${className}`} />
     );
   }
 
@@ -121,7 +125,7 @@ export function ImageCarousel({
   return (
     <div
       ref={containerRef}
-      className={`relative overflow-hidden rounded-3xl bg-gray-100 dark:bg-gray-800 ${className}`}
+      className={`relative overflow-hidden bg-gray-100 dark:bg-gray-800 ${roundedClass} ${className}`}
       tabIndex={0}
       role="region"
       aria-label="Image carousel"
