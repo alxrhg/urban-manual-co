@@ -3,11 +3,21 @@
  *
  * These functions fetch data on the server and can be used in Server Components
  * to provide initial data, reducing client-side loading time.
+ *
+ * Data Source Priority:
+ * 1. Sanity CMS (primary source for editorial content)
+ * 2. Supabase (fallback, kept in sync via Sanity Functions)
  */
 
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { Destination } from '@/types/destination';
 import { unstable_cache } from 'next/cache';
+import {
+  getDestinations,
+  getFilterOptions as getFilterOptionsFromService,
+  getCityDestinations as getCityDestinationsFromService,
+  getFeaturedDestinations as getFeaturedDestinationsFromService,
+} from '@/lib/destinations';
 
 /**
  * Check if Supabase is properly configured for server-side use
@@ -22,53 +32,16 @@ function isSupabaseConfigured(): boolean {
 
 /**
  * Fetch initial destinations for the homepage
- * Uses service role client for unauthenticated server-side fetching
- * Cached for 5 minutes to reduce database load
+ * Uses Sanity as primary source with Supabase fallback
+ * Cached for 5 minutes to reduce API load
  */
 export const fetchInitialDestinations = unstable_cache(
   async (limit: number = 100): Promise<Destination[]> => {
-    // Skip database queries during build if Supabase isn't configured
-    if (!isSupabaseConfigured()) {
-      console.log('[SSR] Supabase not configured, skipping destination fetch');
-      return [];
-    }
-
     try {
-      const supabase = createServiceRoleClient();
-
-      const { data, error } = await supabase
-        .from('destinations')
-        .select(`
-          id,
-          slug,
-          name,
-          city,
-          country,
-          neighborhood,
-          category,
-          micro_description,
-          description,
-          content,
-          image,
-          image_thumbnail,
-          michelin_stars,
-          crown,
-          rating,
-          price_level,
-          tags,
-          opening_hours_json,
-          latitude,
-          longitude
-        `)
-        .order('rating', { ascending: false, nullsFirst: false })
-        .limit(limit);
-
-      if (error) {
-        console.error('[SSR] Error fetching destinations:', error.message);
-        return [];
-      }
-
-      return (data || []) as Destination[];
+      // Use the new destination service (Sanity-first with Supabase fallback)
+      const destinations = await getDestinations({ limit, orderBy: 'rating' });
+      console.log(`[SSR] Fetched ${destinations.length} destinations`);
+      return destinations;
     } catch (error) {
       console.error('[SSR] Exception fetching destinations:', error);
       return [];
@@ -83,54 +56,14 @@ export const fetchInitialDestinations = unstable_cache(
 
 /**
  * Fetch unique cities and categories for filters
+ * Uses Sanity as primary source with Supabase fallback
  * Cached for 10 minutes since this data changes infrequently
  */
 export const fetchFilterOptions = unstable_cache(
   async (): Promise<{ cities: string[]; categories: string[] }> => {
-    // Skip database queries during build if Supabase isn't configured
-    if (!isSupabaseConfigured()) {
-      return { cities: [], categories: [] };
-    }
-
     try {
-      const supabase = createServiceRoleClient();
-
-      const { data, error } = await supabase
-        .from('destinations')
-        .select('city, category');
-
-      if (error) {
-        console.error('[SSR] Error fetching filter options:', error.message);
-        return { cities: [], categories: [] };
-      }
-
-      const destinations = data || [];
-
-      // Extract unique cities and categories
-      const citySet = new Set<string>();
-      const categoryLowerSet = new Set<string>();
-      const categoryArray: string[] = [];
-
-      destinations.forEach((dest: { city?: string | null; category?: string | null }) => {
-        const city = (dest.city ?? '').toString().trim();
-        const category = (dest.category ?? '').toString().trim();
-
-        if (city) {
-          citySet.add(city);
-        }
-        if (category) {
-          const categoryLower = category.toLowerCase();
-          if (!categoryLowerSet.has(categoryLower)) {
-            categoryLowerSet.add(categoryLower);
-            categoryArray.push(category);
-          }
-        }
-      });
-
-      return {
-        cities: Array.from(citySet).sort(),
-        categories: categoryArray.sort(),
-      };
+      // Use the new destination service (Sanity-first with Supabase fallback)
+      return await getFilterOptionsFromService();
     } catch (error) {
       console.error('[SSR] Exception fetching filter options:', error);
       return { cities: [], categories: [] };
@@ -145,51 +78,16 @@ export const fetchFilterOptions = unstable_cache(
 
 /**
  * Fetch destinations for a specific city
+ * Uses Sanity as primary source with Supabase fallback
  * Cached per city for 5 minutes
  */
 export const fetchCityDestinations = unstable_cache(
   async (citySlug: string): Promise<Destination[]> => {
-    // Skip database queries during build if Supabase isn't configured
-    if (!isSupabaseConfigured()) {
-      return [];
-    }
-
     try {
-      const supabase = createServiceRoleClient();
-
-      const { data, error } = await supabase
-        .from('destinations')
-        .select(`
-          id,
-          slug,
-          name,
-          city,
-          country,
-          neighborhood,
-          category,
-          micro_description,
-          description,
-          content,
-          image,
-          image_thumbnail,
-          michelin_stars,
-          crown,
-          rating,
-          price_level,
-          tags,
-          opening_hours_json,
-          latitude,
-          longitude
-        `)
-        .eq('city', citySlug)
-        .order('name');
-
-      if (error) {
-        console.error(`[SSR] Error fetching destinations for city ${citySlug}:`, error.message);
-        return [];
-      }
-
-      return (data || []) as Destination[];
+      // Use the new destination service (Sanity-first with Supabase fallback)
+      const destinations = await getCityDestinationsFromService(citySlug);
+      console.log(`[SSR] Fetched ${destinations.length} destinations for city ${citySlug}`);
+      return destinations;
     } catch (error) {
       console.error(`[SSR] Exception fetching destinations for city ${citySlug}:`, error);
       return [];
@@ -283,52 +181,17 @@ export const fetchCityStats = unstable_cache(
 );
 
 /**
- * Fetch trending destinations
- * Based on recent activity and ratings
+ * Fetch trending/featured destinations
+ * Uses Sanity as primary source with Supabase fallback
  * Cached for 5 minutes
  */
 export const fetchTrendingDestinations = unstable_cache(
   async (limit: number = 12): Promise<Destination[]> => {
-    // Skip database queries during build if Supabase isn't configured
-    if (!isSupabaseConfigured()) {
-      return [];
-    }
-
     try {
-      const supabase = createServiceRoleClient();
-
-      // Get destinations with high ratings and crown/michelin badges
-      const { data, error } = await supabase
-        .from('destinations')
-        .select(`
-          id,
-          slug,
-          name,
-          city,
-          country,
-          category,
-          micro_description,
-          image,
-          image_thumbnail,
-          michelin_stars,
-          crown,
-          rating,
-          tags
-        `)
-        .order('rating', { ascending: false, nullsFirst: false })
-        .limit(limit * 2); // Fetch more to filter
-
-      if (error) {
-        console.error('[SSR] Error fetching trending destinations:', error.message);
-        return [];
-      }
-
-      // Prioritize destinations with badges
-      const destinations = (data || []) as Destination[];
-      const withBadges = destinations.filter(d => d.crown || (d.michelin_stars && d.michelin_stars > 0));
-      const others = destinations.filter(d => !d.crown && (!d.michelin_stars || d.michelin_stars === 0));
-
-      return [...withBadges, ...others].slice(0, limit);
+      // Use the new destination service (Sanity-first with Supabase fallback)
+      const destinations = await getFeaturedDestinationsFromService(limit);
+      console.log(`[SSR] Fetched ${destinations.length} trending destinations`);
+      return destinations;
     } catch (error) {
       console.error('[SSR] Exception fetching trending destinations:', error);
       return [];
