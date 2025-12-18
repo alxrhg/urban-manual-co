@@ -748,7 +748,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
         {/* Desktop Content */}
         <div className="max-w-7xl mx-auto px-8 py-8">
-          <div className="grid grid-cols-[1fr,400px] gap-12">
+          <div className="grid grid-cols-[1fr_400px] gap-12">
             {/* Left Column - Images & Reviews */}
             <div className="space-y-8">
               {/* Main Image with Thumbnails */}
