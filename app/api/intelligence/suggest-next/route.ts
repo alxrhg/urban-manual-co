@@ -1,6 +1,11 @@
 import { NextRequest } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { withErrorHandling, createSuccessResponse, createValidationError } from '@/lib/errors';
+import {
+  searchRatelimit,
+  memorySearchRatelimit,
+  enforceRateLimit,
+} from '@/lib/rate-limit';
 
 /**
  * POST /api/intelligence/suggest-next
@@ -12,6 +17,19 @@ import { withErrorHandling, createSuccessResponse, createValidationError } from 
  * - Category balance
  */
 export const POST = withErrorHandling(async (request: NextRequest) => {
+  // Rate limiting (IP-based as this is a public endpoint)
+  const rateLimitResponse = await enforceRateLimit({
+    request,
+    userId: null, // Public endpoint, use IP
+    message: 'Too many suggestion requests',
+    limiter: searchRatelimit,
+    memoryLimiter: memorySearchRatelimit,
+  });
+
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   const body = await request.json();
   const { city, currentItems = [], timeOfDay = 'afternoon' } = body;
 
