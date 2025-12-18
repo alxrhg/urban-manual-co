@@ -26,11 +26,6 @@ dependencies:
   cached_network_image: ^3.3.1
   shimmer: ^3.0.0
 
-  # Maps
-  mapbox_maps_flutter: ^1.0.0
-  geolocator: ^11.0.0
-  geocoding: ^3.0.0
-
   # Authentication
   google_sign_in: ^6.2.1
   sign_in_with_apple: ^6.1.0
