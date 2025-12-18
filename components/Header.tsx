@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import { User, Map } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
-import { useDrawer } from "@/contexts/DrawerContext";
+import { useDrawerStore } from "@/lib/stores/drawer-store";
 import { ChatDrawer } from "@/features/chat/components/ChatDrawer";
 import { LoginDrawer } from "@/features/account/components/LoginDrawer";
 import { LoginModal } from "@/components/LoginModal";
@@ -22,7 +22,7 @@ export function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuth();
-  const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
+  const { openDrawer, isDrawerOpen, closeDrawer } = useDrawerStore();
   const { isChristmasMode } = useChristmasTheme();
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);

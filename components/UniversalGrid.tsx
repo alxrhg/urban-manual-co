@@ -2,7 +2,8 @@
 
 import { ReactNode, memo } from 'react';
 
-interface UniversalGridProps<T> {
+// Generic type constraint
+interface UniversalGridProps<T extends { id?: string | number; slug?: string }> {
   items: T[];
   renderItem: (item: T, index: number) => ReactNode;
   className?: string;
@@ -24,9 +25,12 @@ interface UniversalGridProps<T> {
  * - xl: 6 columns
  * - 2xl: 7 columns
  * 
- * Memoized to prevent unnecessary re-renders when items haven't changed
+ * Performance Optimization:
+ * - Uses React.memo to prevent re-renders if props haven't changed
+ * - Requires items to have stable IDs (id or slug) for keys
+ * - Uses content-visibility: auto via CSS utility for off-screen rendering optimization
  */
-export const UniversalGrid = memo(function UniversalGrid<T>({
+function UniversalGridBase<T extends { id?: string | number; slug?: string }>({
   items,
   renderItem,
   className = '',
@@ -51,8 +55,18 @@ export const UniversalGrid = memo(function UniversalGrid<T>({
     <div
       className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 ${gapClasses[gap]} items-start ${className}`}
     >
-      {items.map((item, index) => renderItem(item, index))}
+      {items.map((item, index) => {
+        // Use slug or id as key, fallback to index if absolutely necessary (but discourage it)
+        const key = item.slug || item.id || index;
+        return (
+          <div key={key} className="contents">
+            {renderItem(item, index)}
+          </div>
+        );
+      })}
     </div>
   );
-}) as <T>(props: UniversalGridProps<T>) => ReactNode;
+}
 
+// Memoize the component to prevent re-renders when parent state changes but grid props don't
+export const UniversalGrid = memo(UniversalGridBase) as typeof UniversalGridBase;

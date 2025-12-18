@@ -10,7 +10,6 @@ import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDrawer } from '@/contexts/DrawerContext';
 import { DestinationCard } from '@/components/DestinationCard';
 import { EditModeToggle } from '@/components/EditModeToggle';
 import { UniversalGrid } from '@/components/UniversalGrid';
@@ -89,7 +88,6 @@ export default function CityPageClient({
 
   const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
 
-  const { openDrawer, isDrawerOpen: isDrawerTypeOpen, closeDrawer } = useDrawer();
   const { openDrawer: openGlobalDrawer } = useDrawerStore();
 
   const handleAdminEdit = (destination: Destination) => {
@@ -442,7 +440,6 @@ export default function CityPageClient({
                         destination={destination}
                         onClick={() => {
                           openIntelligentDrawer(destination);
-                          openDrawer('destination');
                         }}
                         index={globalIndex}
                         isVisited={isVisited}
