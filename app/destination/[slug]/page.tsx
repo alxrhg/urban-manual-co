@@ -137,13 +137,24 @@ export default async function DestinationPage({
 
   // Load parent destination if this is a nested destination
   let parentDestination: Destination | null = null;
+  let siblingDestinations: Destination[] = [];
   if (destination?.parent_destination_id) {
     const { data: parent } = await supabase
       .from('destinations')
       .select('id, slug, name, city, category, image')
       .eq('id', destination.parent_destination_id)
       .maybeSingle();
-    if (parent) parentDestination = parent as Destination;
+    if (parent) {
+      parentDestination = parent as Destination;
+      // Fetch sibling destinations (other places inside the same parent)
+      const { data: siblings } = await supabase.rpc('get_nested_destinations', {
+        parent_id: destination.parent_destination_id,
+      });
+      if (siblings) {
+        // Filter out the current destination from siblings
+        siblingDestinations = (siblings as Destination[]).filter(s => s.slug !== destination.slug);
+      }
+    }
   }
 
   // Load nested destinations if this is a parent
@@ -201,12 +212,13 @@ export default async function DestinationPage({
 
       {/* Render client component with server-fetched data */}
       <Suspense fallback={<DetailSkeleton />}>
-        <DestinationPageClient 
+        <DestinationPageClient
           initialDestination={{
             ...(destination as Destination),
             nested_destinations: nestedDestinations,
           }}
           parentDestination={parentDestination}
+          siblingDestinations={siblingDestinations}
         />
       </Suspense>
     </>
