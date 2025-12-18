@@ -6,9 +6,9 @@ const cspDirectives = [
   "default-src 'self'",
   // Inline scripts are occasionally required for Next.js hydration/runtime.
   // Added external script sources: Google Ads, Google Analytics, Vercel Live, Apple MapKit
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://cdn.amcharts.com https://*.supabase.co https://*.supabase.in https://pagead2.googlesyndication.com https://www.googletagmanager.com https://fundingchoicesmessages.google.com https://ep2.adtrafficquality.google https://vercel.live https://cdn.apple-mapkit.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://cdn.amcharts.com https://*.supabase.co https://*.supabase.in https://pagead2.googlesyndication.com https://www.googletagmanager.com https://fundingchoicesmessages.google.com https://ep2.adtrafficquality.google https://vercel.live https://cdn.apple-mapkit.com https://*.sanity-cdn.com https://*.sanity.io",
   // More granular control for script elements (separate from inline scripts)
-  "script-src-elem 'self' 'unsafe-inline' https://maps.googleapis.com https://cdn.amcharts.com https://*.supabase.co https://*.supabase.in https://pagead2.googlesyndication.com https://www.googletagmanager.com https://fundingchoicesmessages.google.com https://ep2.adtrafficquality.google https://vercel.live https://cdn.apple-mapkit.com",
+  "script-src-elem 'self' 'unsafe-inline' https://maps.googleapis.com https://cdn.amcharts.com https://*.supabase.co https://*.supabase.in https://pagead2.googlesyndication.com https://www.googletagmanager.com https://fundingchoicesmessages.google.com https://ep2.adtrafficquality.google https://vercel.live https://cdn.apple-mapkit.com https://*.sanity-cdn.com https://*.sanity.io",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https://*",
   "font-src 'self' data: https://fonts.gstatic.com",
