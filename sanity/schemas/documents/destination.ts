@@ -161,14 +161,13 @@ export default defineType({
       group: 'editorial',
       description: 'Select the brand/chain this destination belongs to',
     }),
-    // Keep legacy brand field for backwards compatibility during migration
+    // Legacy brand field - kept for backwards compatibility
     defineField({
       name: 'brand',
       title: 'Brand (Legacy)',
       type: 'string',
       group: 'editorial',
-      description: 'Legacy brand name field - use Brand reference above instead',
-      hidden: ({ document }) => !!document?.brandRef,
+      description: 'Legacy brand name - use Brand reference above instead',
     }),
 
     // ═══════════════════════════════════════════════════════════════════
