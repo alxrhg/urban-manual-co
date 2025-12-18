@@ -177,6 +177,16 @@ export default defineConfig({
                   .filter('_type == "destination" && michelinStars > 0')
                   .defaultOrdering([{ field: 'michelinStars', direction: 'desc' }])
               ),
+            S.divider(),
+            // Brands catalog
+            S.listItem()
+              .title('Brands')
+              .schemaType('brand')
+              .child(
+                S.documentTypeList('brand')
+                  .title('All Brands')
+                  .defaultOrdering([{ field: 'name', direction: 'asc' }])
+              ),
           ]),
     }),
 
