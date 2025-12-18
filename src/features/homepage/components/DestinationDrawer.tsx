@@ -3,20 +3,16 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { X, MapPin, ExternalLink, Star, Bookmark, Share2, Navigation, Clock, Phone, Globe, ChevronRight } from 'lucide-react';
+import { X, MapPin, ExternalLink, Star, Heart, Share2, Navigation, Clock, Phone, Globe, ChevronRight, ArrowUpRight } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { useHomepageData } from './HomepageDataProvider';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 
 /**
- * Destination Drawer - Apple Design System
+ * Destination Drawer - Portal Design System
  *
  * A slide-over drawer for viewing destination details.
- * Follows Apple's sheet/drawer patterns:
- * - Slides in from right
- * - Subtle backdrop blur
- * - Smooth spring animations
- * - Touch-friendly close gestures
+ * Dark theme with structured sections for contact, architecture, and map.
  */
 
 export function DestinationDrawer() {
@@ -83,12 +79,18 @@ export function DestinationDrawer() {
   if (!selectedDestination) return null;
 
   const imageUrl = selectedDestination.image || selectedDestination.image_thumbnail;
+  const cityName = selectedDestination.city ? capitalizeCity(selectedDestination.city) : '';
+  const categoryName = selectedDestination.category ? capitalizeCategory(selectedDestination.category) : '';
+
+  // Mock data for architecture (replace with actual data when available)
+  const architect = selectedDestination.architect || null;
+  const designStyle = selectedDestination.design_style || selectedDestination.architectural_style || null;
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
           isDrawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={closeDrawer}
@@ -97,14 +99,14 @@ export function DestinationDrawer() {
       {/* Drawer */}
       <div
         ref={drawerRef}
-        className={`fixed right-0 top-0 z-50 h-full w-full max-w-lg bg-white dark:bg-[#1c1c1e]
+        className={`fixed right-0 top-0 z-50 h-full w-full max-w-md bg-[#1c1c1e]
                     shadow-2xl transform transition-transform duration-300 ease-out
                     ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
         {/* Scroll container */}
         <div className="h-full overflow-y-auto overscroll-contain">
-          {/* Header Image */}
-          <div className="relative aspect-[4/3] bg-gray-100 dark:bg-gray-800">
+          {/* Header Image with overlay content */}
+          <div className="relative aspect-[4/3] bg-gray-800">
             {imageUrl ? (
               <Image
                 src={imageUrl}
@@ -115,9 +117,12 @@ export function DestinationDrawer() {
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <MapPin className="w-16 h-16 text-gray-300 dark:text-gray-600" />
+                <MapPin className="w-16 h-16 text-gray-600" />
               </div>
             )}
+
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
             {/* Close button */}
             <button
@@ -130,76 +135,75 @@ export function DestinationDrawer() {
               <X className="w-5 h-5 text-white" />
             </button>
 
-            {/* Badges */}
-            <div className="absolute bottom-4 left-4 flex gap-2">
-              {selectedDestination.michelin_stars && selectedDestination.michelin_stars > 0 && (
-                <div className="px-3 py-1.5 rounded-full bg-white/90 dark:bg-black/70 backdrop-blur-md
-                                text-[12px] font-medium text-gray-800 dark:text-white
-                                flex items-center gap-1.5">
-                  <img src="/michelin-star.svg" alt="Michelin" className="w-3.5 h-3.5" />
-                  {selectedDestination.michelin_stars} Star{selectedDestination.michelin_stars > 1 ? 's' : ''}
-                </div>
-              )}
-              {selectedDestination.crown && (
-                <div className="px-3 py-1.5 rounded-full bg-amber-500/90 backdrop-blur-md
-                                text-[12px] font-medium text-white
-                                flex items-center gap-1.5">
-                  <Star className="w-3.5 h-3.5 fill-current" />
-                  Crown
-                </div>
-              )}
+            {/* Save button on image */}
+            <button
+              onClick={() => setIsSaved(!isSaved)}
+              className="absolute top-4 right-16 w-10 h-10 rounded-full
+                         bg-black/40 backdrop-blur-md
+                         flex items-center justify-center
+                         hover:bg-black/60 transition-colors"
+            >
+              <Heart className={`w-5 h-5 text-white ${isSaved ? 'fill-white' : ''}`} />
+            </button>
+
+            {/* Title overlay on image */}
+            <div className="absolute bottom-4 left-4 right-4">
+              <h2 className="text-[22px] font-semibold text-white tracking-tight mb-1">
+                {selectedDestination.name}
+              </h2>
+              <p className="text-[14px] text-white/70">
+                {categoryName}{categoryName && cityName && ' · '}{cityName}
+              </p>
             </div>
           </div>
 
           {/* Content */}
-          <div className="p-6">
-            {/* Title & Category */}
-            <div className="mb-4">
-              <h2 className="text-[22px] font-semibold text-gray-900 dark:text-white tracking-tight mb-1">
-                {selectedDestination.name}
-              </h2>
-              <p className="text-[15px] text-gray-500 dark:text-gray-400">
-                {selectedDestination.category && capitalizeCategory(selectedDestination.category)}
-                {selectedDestination.category && selectedDestination.city && ' · '}
-                {selectedDestination.city && capitalizeCity(selectedDestination.city)}
-                {selectedDestination.neighborhood && `, ${selectedDestination.neighborhood}`}
-              </p>
-            </div>
+          <div className="p-5">
+            {/* Rating */}
+            {selectedDestination.rating && (
+              <div className="flex items-center gap-2 mb-5">
+                <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
+                <span className="text-[17px] font-semibold text-white">
+                  {selectedDestination.rating.toFixed(1)}
+                </span>
+                {selectedDestination.user_ratings_total && (
+                  <span className="text-[14px] text-gray-400">
+                    ({selectedDestination.user_ratings_total} reviews)
+                  </span>
+                )}
+              </div>
+            )}
 
-            {/* Action Buttons - Apple style */}
+            {/* Action Buttons */}
             <div className="flex gap-2 mb-6">
               <button
                 onClick={() => setIsSaved(!isSaved)}
-                className={`flex-1 h-11 rounded-[12px] text-[14px] font-medium
+                className={`flex-1 h-12 rounded-xl text-[15px] font-medium
                             flex items-center justify-center gap-2 transition-all
                             ${isSaved
-                              ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                              : 'bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20'
+                              ? 'bg-white text-gray-900'
+                              : 'bg-[#2c2c2e] text-white hover:bg-[#3c3c3e]'
                             }`}
               >
-                <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
-                {isSaved ? 'Saved' : 'Save'}
+                <Heart className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
+                Save
               </button>
               <button
                 onClick={handleShare}
-                className="flex-1 h-11 rounded-[12px] bg-gray-100 dark:bg-white/10
-                           text-[14px] font-medium text-gray-900 dark:text-white
-                           flex items-center justify-center gap-2
-                           hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+                className="w-12 h-12 rounded-xl bg-[#2c2c2e]
+                           flex items-center justify-center
+                           hover:bg-[#3c3c3e] transition-colors"
               >
-                <Share2 className="w-4 h-4" />
-                Share
+                <Share2 className="w-5 h-5 text-white" />
               </button>
               {(selectedDestination.latitude && selectedDestination.longitude) && (
                 <button
                   onClick={handleDirections}
-                  className="flex-1 h-11 rounded-[12px] bg-gray-100 dark:bg-white/10
-                             text-[14px] font-medium text-gray-900 dark:text-white
-                             flex items-center justify-center gap-2
-                             hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+                  className="w-12 h-12 rounded-xl bg-[#2c2c2e]
+                             flex items-center justify-center
+                             hover:bg-[#3c3c3e] transition-colors"
                 >
-                  <Navigation className="w-4 h-4" />
-                  Directions
+                  <Navigation className="w-5 h-5 text-white" />
                 </button>
               )}
             </div>
@@ -207,87 +211,151 @@ export function DestinationDrawer() {
             {/* Description */}
             {(selectedDestination.micro_description || selectedDestination.description) && (
               <div className="mb-6">
-                <p className="text-[15px] leading-relaxed text-gray-700 dark:text-gray-300">
+                <p className="text-[15px] leading-relaxed text-gray-300">
                   {selectedDestination.micro_description || selectedDestination.description}
                 </p>
               </div>
             )}
 
-            {/* Details List - Apple style */}
-            <div className="border-t border-gray-200 dark:border-white/10 pt-4 mb-6">
-              {/* Rating */}
-              {selectedDestination.rating && (
-                <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-white/5">
-                  <span className="text-[15px] text-gray-500 dark:text-gray-400">Rating</span>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                    <span className="text-[15px] font-medium text-gray-900 dark:text-white">
-                      {selectedDestination.rating.toFixed(1)}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Price Level */}
-              {selectedDestination.price_level && (
-                <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-white/5">
-                  <span className="text-[15px] text-gray-500 dark:text-gray-400">Price</span>
-                  <span className="text-[15px] font-medium text-gray-900 dark:text-white">
-                    {'$'.repeat(selectedDestination.price_level)}
-                  </span>
-                </div>
-              )}
-
-              {/* Tags */}
-              {selectedDestination.tags && selectedDestination.tags.length > 0 && (
-                <div className="py-3">
-                  <span className="text-[15px] text-gray-500 dark:text-gray-400 block mb-2">Tags</span>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedDestination.tags.slice(0, 5).map((tag, i) => (
-                      <span
-                        key={i}
-                        className="px-3 py-1 rounded-full bg-gray-100 dark:bg-white/10
-                                   text-[13px] text-gray-700 dark:text-gray-300"
-                      >
-                        {tag}
+            {/* Contact & Hours Section */}
+            {(selectedDestination.formatted_address || selectedDestination.phone_number || selectedDestination.website) && (
+              <div className="mb-6">
+                <h3 className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-4">
+                  Contact & Hours
+                </h3>
+                <div className="space-y-3">
+                  {/* Address */}
+                  {selectedDestination.formatted_address && (
+                    <div className="flex items-start gap-3">
+                      <MapPin className="w-5 h-5 text-gray-500 mt-0.5 flex-shrink-0" />
+                      <span className="text-[15px] text-white">
+                        {selectedDestination.formatted_address}
                       </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+                    </div>
+                  )}
 
-            {/* View Full Page Link */}
+                  {/* Phone */}
+                  {selectedDestination.phone_number && (
+                    <a
+                      href={`tel:${selectedDestination.phone_number}`}
+                      className="flex items-center gap-3 group"
+                    >
+                      <Phone className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                      <span className="text-[15px] text-white group-hover:text-gray-300 transition-colors">
+                        {selectedDestination.phone_number}
+                      </span>
+                    </a>
+                  )}
+
+                  {/* Website */}
+                  {selectedDestination.website && (
+                    <a
+                      href={selectedDestination.website.startsWith('http') ? selectedDestination.website : `https://${selectedDestination.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 group"
+                    >
+                      <Globe className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                      <span className="text-[15px] text-cyan-400 group-hover:text-cyan-300 transition-colors">
+                        {selectedDestination.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                      </span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Design & Architecture Section */}
+            {(architect || designStyle) && (
+              <div className="mb-6">
+                <h3 className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-4">
+                  Design & Architecture
+                </h3>
+                <div className="space-y-4">
+                  {/* Architect */}
+                  {architect && (
+                    <div className="flex items-center gap-3 py-3 border-b border-white/10">
+                      <div className="w-10 h-10 rounded-full bg-[#2c2c2e] flex items-center justify-center flex-shrink-0">
+                        <span className="text-[14px] font-medium text-gray-400">A</span>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+                          Architect
+                        </p>
+                        <p className="text-[15px] text-white">
+                          {architect}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Style */}
+                  {designStyle && (
+                    <div className="flex items-center gap-3 py-3 border-b border-white/10">
+                      <div className="w-10 h-10 rounded-full bg-[#2c2c2e] flex items-center justify-center flex-shrink-0">
+                        <span className="text-[14px] font-medium text-gray-400">S</span>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+                          Style
+                        </p>
+                        <p className="text-[15px] text-white">
+                          {designStyle}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Map Preview */}
+            {(selectedDestination.latitude && selectedDestination.longitude) && (
+              <div className="mb-6">
+                <div className="bg-[#2c2c2e] rounded-2xl p-6">
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <MapPin className="w-8 h-8 text-gray-500 mb-2" />
+                    <span className="text-[14px] text-gray-400">Map Preview</span>
+                  </div>
+                  <button
+                    onClick={handleDirections}
+                    className="w-full py-3 px-4 bg-[#3c3c3e] rounded-xl text-[15px] font-medium text-white
+                               hover:bg-[#4c4c4e] transition-colors"
+                  >
+                    View larger map
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* View Full Details Button */}
             <Link
               href={`/destination/${selectedDestination.slug}`}
-              className="flex items-center justify-between w-full py-4 px-4 -mx-4
-                         bg-gray-50 dark:bg-white/5 rounded-[12px]
-                         hover:bg-gray-100 dark:hover:bg-white/10 transition-colors mb-6"
+              className="flex items-center justify-center gap-2 w-full py-4 px-6
+                         bg-white rounded-2xl
+                         hover:bg-gray-100 transition-colors"
             >
-              <div className="flex items-center gap-3">
-                <ExternalLink className="w-5 h-5 text-gray-400" />
-                <span className="text-[15px] font-medium text-gray-900 dark:text-white">
-                  View full page
-                </span>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
+              <span className="text-[17px] font-semibold text-gray-900">
+                View Full Details
+              </span>
+              <ArrowUpRight className="w-5 h-5 text-gray-900" />
             </Link>
 
             {/* Related Destinations */}
             {relatedDestinations.length > 0 && (
-              <div>
-                <h3 className="text-[13px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-                  More in {capitalizeCity(selectedDestination.city)}
+              <div className="mt-8">
+                <h3 className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-4">
+                  More in {cityName}
                 </h3>
                 <div className="space-y-3">
                   {relatedDestinations.map((dest) => (
                     <button
                       key={dest.slug}
                       onClick={() => openDestination(dest)}
-                      className="flex items-center gap-3 w-full p-2 -mx-2 rounded-[12px]
-                                 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors text-left"
+                      className="flex items-center gap-3 w-full p-2 -mx-2 rounded-xl
+                                 hover:bg-white/5 transition-colors text-left"
                     >
-                      <div className="w-14 h-14 rounded-[10px] bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0">
+                      <div className="w-14 h-14 rounded-xl bg-gray-800 overflow-hidden flex-shrink-0">
                         {(dest.image || dest.image_thumbnail) && (
                           <Image
                             src={dest.image_thumbnail || dest.image || ''}
@@ -299,14 +367,14 @@ export function DestinationDrawer() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">
+                        <p className="text-[14px] font-medium text-white truncate">
                           {dest.name}
                         </p>
-                        <p className="text-[13px] text-gray-500 dark:text-gray-400 truncate">
+                        <p className="text-[13px] text-gray-400 truncate">
                           {dest.category && capitalizeCategory(dest.category)}
                         </p>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <ChevronRight className="w-4 h-4 text-gray-500 flex-shrink-0" />
                     </button>
                   ))}
                 </div>
