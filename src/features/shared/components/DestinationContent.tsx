@@ -1912,14 +1912,46 @@ function parseTimeToMinutes(timeStr: string): number | null {
 
 /**
  * Parse opening hours to get open/close times
+ * Handles formats like:
+ * - "Monday: 9:00 AM – 10:00 PM" (both have AM/PM)
+ * - "Monday: 6:00 – 8:00 PM" (only closing has PM - opening should inherit PM)
+ * - "Monday: 9:00 – 22:00" (24-hour format)
  */
 function parseHoursRange(hoursStr: string): { open: number; close: number } | null {
-  // Parse formats like "Monday: 9:00 AM – 10:00 PM", "Monday: 9:00 – 22:00"
   const timeMatch = hoursStr.match(/(\d{1,2}:?\d{0,2}\s*(?:AM|PM)?)\s*[–\-]\s*(\d{1,2}:?\d{0,2}\s*(?:AM|PM)?)/i);
   if (!timeMatch) return null;
 
-  const open = parseTimeToMinutes(timeMatch[1]);
-  const close = parseTimeToMinutes(timeMatch[2]);
+  let openStr = timeMatch[1].trim();
+  const closeStr = timeMatch[2].trim();
+
+  // Check if open time is missing AM/PM but close time has it
+  const openHasPeriod = /AM|PM/i.test(openStr);
+  const closeHasPeriod = /AM|PM/i.test(closeStr);
+
+  if (!openHasPeriod && closeHasPeriod) {
+    // Extract the period from close time
+    const closePeriod = closeStr.match(/AM|PM/i)?.[0] || '';
+    const openHour = parseInt(openStr.match(/\d{1,2}/)?.[0] || '0', 10);
+    const closeHour = parseInt(closeStr.match(/\d{1,2}/)?.[0] || '0', 10);
+
+    // If open hour > close hour (e.g., 10:00 – 2:00 AM), open is PM
+    // If open hour <= close hour in same period, they share the same period
+    // E.g., "6:00 – 8:00 PM" means 6 PM to 8 PM
+    // But "10:00 AM – 6:00 PM" would have both periods explicit
+    if (closePeriod.toUpperCase() === 'PM' && openHour <= closeHour) {
+      // Same PM period: 6:00 – 8:00 PM means 6 PM – 8 PM
+      openStr = openStr + ' ' + closePeriod;
+    } else if (closePeriod.toUpperCase() === 'AM' && openHour > closeHour) {
+      // Overnight: 10:00 – 2:00 AM means 10 PM – 2 AM
+      openStr = openStr + ' PM';
+    } else {
+      // Default: assume same period
+      openStr = openStr + ' ' + closePeriod;
+    }
+  }
+
+  const open = parseTimeToMinutes(openStr);
+  const close = parseTimeToMinutes(closeStr);
 
   if (open === null || close === null) return null;
   return { open, close: close < open ? close + 24 * 60 : close }; // Handle overnight hours
