@@ -31,6 +31,7 @@ import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 import { PRICE_LEVEL } from '@/lib/constants';
 import { HorizontalDestinationCard } from '@/components/HorizontalDestinationCard';
 import { toast } from '@/ui/sonner';
+import GoogleMap from '@/components/GoogleMap';
 
 interface Recommendation {
   slug: string;
@@ -1091,6 +1092,30 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 )}
               </div>
             )}
+
+            {/* Map - Mobile */}
+            {destination.latitude && destination.longitude && (
+              <div className="mt-6">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Map</h2>
+                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-gray-100 dark:border-white/10">
+                  <GoogleMap
+                    latitude={destination.latitude}
+                    longitude={destination.longitude}
+                    height="100%"
+                    className="w-full h-full"
+                    interactive={false}
+                    staticMode={true}
+                    showInfoWindow={true}
+                    infoWindowContent={{
+                      title: destination.name,
+                      address: enrichedData?.formatted_address || destination.formatted_address,
+                      category: destination.category,
+                      rating: enrichedData?.rating || destination.rating,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1226,16 +1251,21 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                     </a>
                   </div>
                   <div className="relative aspect-[2/1] rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800">
-                    <iframe
-                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${destination.longitude - 0.01},${destination.latitude - 0.005},${destination.longitude + 0.01},${destination.latitude + 0.005}&layer=mapnik&marker=${destination.latitude},${destination.longitude}`}
+                    <GoogleMap
+                      latitude={destination.latitude}
+                      longitude={destination.longitude}
+                      height="100%"
                       className="w-full h-full"
-                      style={{ border: 0 }}
-                      loading="lazy"
+                      interactive={false}
+                      staticMode={true}
+                      showInfoWindow={true}
+                      infoWindowContent={{
+                        title: destination.name,
+                        address: enrichedData?.formatted_address || destination.formatted_address,
+                        category: destination.category,
+                        rating: enrichedData?.rating || destination.rating,
+                      }}
                     />
-                    <div className="absolute bottom-4 left-4 bg-white dark:bg-gray-900 rounded-lg px-4 py-2 shadow-lg">
-                      <p className="text-[13px] text-gray-500 dark:text-gray-400">Address</p>
-                      <p className="text-[14px] font-medium text-gray-900 dark:text-white">{enrichedData?.formatted_address || destination.formatted_address || `${cityName}, ${destination.country || ''}`}</p>
-                    </div>
                   </div>
                 </div>
               )}
