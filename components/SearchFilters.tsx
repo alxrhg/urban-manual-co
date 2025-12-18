@@ -106,7 +106,7 @@ export function SearchFiltersComponent({
                 else if (key === 'crown' && value === true) displayValue = 'Crown';
                 else if (key === 'minPrice') displayValue = `Min $${'$'.repeat(value as number)}`;
                 else if (key === 'maxPrice') displayValue = `Max $${'$'.repeat(value as number)}`;
-                else if (key === 'minRating') displayValue = `${value}+ ⭐`;
+                else if (key === 'minRating') displayValue = `${value}+`;
 
                 return (
                   <Badge
@@ -220,10 +220,10 @@ export function SearchFiltersComponent({
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white focus:outline-none"
               >
                 <option value="">Any</option>
-                <option value="4.5">4.5+ ⭐</option>
-                <option value="4.0">4.0+ ⭐</option>
-                <option value="3.5">3.5+ ⭐</option>
-                <option value="3.0">3.0+ ⭐</option>
+                <option value="4.5">4.5+ rating</option>
+                <option value="4.0">4.0+ rating</option>
+                <option value="3.5">3.5+ rating</option>
+                <option value="3.0">3.0+ rating</option>
               </select>
             </div>
 

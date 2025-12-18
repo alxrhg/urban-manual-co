@@ -279,7 +279,7 @@ export default function DestinationBox({
             {/* Rating badge */}
             {rating && (
               <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-lg bg-stone-800/80 backdrop-blur-sm">
-                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                <img src="/google-logo.svg" alt="Google" className="w-3.5 h-3.5" />
                 <span className="text-sm font-medium text-white">{rating.toFixed(1)}</span>
               </div>
             )}
@@ -335,7 +335,7 @@ export default function DestinationBox({
             <div className="flex items-center justify-between py-3 border-t border-stone-100 dark:border-gray-800">
               <span className="text-sm text-stone-500 dark:text-gray-400">Rating</span>
               <div className="flex items-center gap-1">
-                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                <img src="/google-logo.svg" alt="Google" className="w-4 h-4" />
                 <span className="text-sm font-medium text-stone-900 dark:text-white">{rating.toFixed(1)}</span>
               </div>
             </div>

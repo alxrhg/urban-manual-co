@@ -149,7 +149,10 @@ export function CommandPalette() {
                     )}
                   </div>
                   {result.michelin_stars && result.michelin_stars > 0 && (
-                    <span className="ml-auto text-xs text-amber-500 shrink-0">{'★'.repeat(result.michelin_stars)}</span>
+                    <span className="ml-auto text-xs shrink-0 flex items-center gap-1">
+                      <img src="/michelin-star.svg" alt="Michelin" className="h-3 w-3" />
+                      {result.michelin_stars}
+                    </span>
                   )}
                 </CommandItem>
               ))}

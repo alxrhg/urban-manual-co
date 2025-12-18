@@ -330,8 +330,9 @@ export default function PlaceSelectorDrawer({
                         </span>
                       )}
                       {googlePlace.rating && (
-                        <span className="px-2 py-1 bg-stone-100 dark:bg-stone-800 rounded-full">
-                          ★ {googlePlace.rating}
+                        <span className="px-2 py-1 bg-stone-100 dark:bg-stone-800 rounded-full flex items-center gap-1">
+                          <img src="/google-logo.svg" alt="Google" className="h-3 w-3" />
+                          {googlePlace.rating}
                         </span>
                       )}
                       {googlePlace.price_level && (

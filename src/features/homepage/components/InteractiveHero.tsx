@@ -1125,9 +1125,8 @@ export default function InteractiveHero() {
                       : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                    src="/michelin-star.svg"
                     alt="Michelin"
                     className="w-4 h-4"
                   />

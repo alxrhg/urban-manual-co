@@ -159,7 +159,7 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
                   )}
                   {destination.michelin_stars && destination.michelin_stars > 0 && (
                     <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-2 py-1 rounded text-xs font-bold flex items-center gap-1 shadow-lg">
-                      <span>⭐</span>
+                      <img src="/michelin-star.svg" alt="Michelin" className="h-3 w-3" />
                       <span>{destination.michelin_stars}</span>
                     </div>
                   )}

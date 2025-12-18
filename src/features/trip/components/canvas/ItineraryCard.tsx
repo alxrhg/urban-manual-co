@@ -187,7 +187,7 @@ function PlaceTicket({
       <div className="flex-shrink-0 flex items-center gap-1 pr-3">
         {dest.rating && (
           <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700">
-            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+            <img src="/google-logo.svg" alt="Google" className="w-3 h-3" />
             <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300">
               {dest.rating.toFixed(1)}
             </span>
@@ -387,7 +387,7 @@ function HotelCard({
         {/* Stars */}
         {dest.rating && (
           <div className="absolute top-2 right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-black/40 backdrop-blur-sm">
-            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+            <img src="/google-logo.svg" alt="Google" className="w-3 h-3" />
             <span className="text-xs font-medium text-white">{dest.rating.toFixed(1)}</span>
           </div>
         )}

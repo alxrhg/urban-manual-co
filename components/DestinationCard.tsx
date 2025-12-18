@@ -189,18 +189,35 @@ export const DestinationCard = memo(function DestinationCard({
                   `}
                 >
                   <img
-                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                    src="/michelin-star.svg"
                     alt="Michelin star"
                     className="h-3 w-3"
-                    onError={(e) => {
-                      // Fallback to local file if external URL fails
-                      const target = e.currentTarget;
-                      if (target.src !== '/michelin-star.svg') {
-                        target.src = '/michelin-star.svg';
-                      }
-                    }}
                   />
                   <span>{destination.michelin_stars}</span>
+                </div>
+              )}
+
+            {/* Google Rating - Bottom Right */}
+            {typeof destination.rating === 'number' &&
+              destination.rating > 0 && (
+                <div
+                  className={`
+                    absolute bottom-2 right-2 z-10
+                    px-3 py-1 border border-gray-200 dark:border-gray-800
+                    rounded-2xl text-gray-600 dark:text-gray-400 text-xs
+                    bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm
+                    flex items-center gap-1.5
+                    transform scale-100 group-hover:scale-[1.02]
+                    transition-transform duration-300
+                    shadow-sm group-hover:shadow-md
+                  `}
+                >
+                  <img
+                    src="/google-logo.svg"
+                    alt="Google rating"
+                    className="h-3 w-3"
+                  />
+                  <span>{destination.rating.toFixed(1)}</span>
                 </div>
               )}
           </>

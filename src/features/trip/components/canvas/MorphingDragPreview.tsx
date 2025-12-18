@@ -143,7 +143,7 @@ export default function MorphingDragPreview({
           {/* Rating */}
           {destination.rating && (
             <div className="flex items-center gap-1 mt-2">
-              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              <img src="/google-logo.svg" alt="Google" className="w-3.5 h-3.5" />
               <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
                 {destination.rating.toFixed(1)}
               </span>

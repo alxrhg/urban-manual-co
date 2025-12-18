@@ -426,8 +426,8 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                     {formatLabel(destination.category)}
                   </span>
                   {(enrichedData?.rating || destination.rating) && (
-                    <span className="flex items-center gap-1 text-gray-900 dark:text-white font-medium">
-                      <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+                    <span className="flex items-center gap-1.5 text-gray-900 dark:text-white font-medium">
+                      <img src="/google-logo.svg" alt="Google" className="w-3.5 h-3.5" />
                       {(enrichedData?.rating || destination.rating).toFixed(1)}
                     </span>
                   )}
@@ -456,7 +456,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 <div className="flex flex-wrap gap-2 mb-4">
                   {destination.michelin_stars && destination.michelin_stars > 0 && (
                     <span className="px-3 py-1.5 rounded-full bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-[12px] font-medium text-red-700 dark:text-red-300 flex items-center gap-1.5">
-                      <Star className="w-3 h-3 fill-current" />
+                      <img src="/michelin-star.svg" alt="Michelin" className="w-3 h-3" />
                       {destination.michelin_stars} Michelin {destination.michelin_stars === 1 ? 'Star' : 'Stars'}
                     </span>
                   )}
@@ -777,7 +777,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                             )}
                             {rec.michelin_stars && rec.michelin_stars > 0 && (
                               <div className="absolute bottom-2 left-2 px-2 py-1 rounded-lg bg-red-600 text-white text-[10px] font-medium flex items-center gap-1">
-                                <Star className="w-2.5 h-2.5 fill-current" />
+                                <img src="/michelin-star.svg" alt="Michelin" className="w-2.5 h-2.5" />
                                 {rec.michelin_stars}
                               </div>
                             )}

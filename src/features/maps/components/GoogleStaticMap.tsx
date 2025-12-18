@@ -74,7 +74,7 @@ export default function GoogleStaticMap({
           {infoWindowContent.title && <p className="text-sm font-semibold text-gray-900 dark:text-white">{infoWindowContent.title}</p>}
           {infoWindowContent.category && <p className="text-gray-600 dark:text-gray-400 mt-1">{infoWindowContent.category}</p>}
           {infoWindowContent.address && <p className="text-gray-500 dark:text-gray-500 mt-1 line-clamp-2">{infoWindowContent.address}</p>}
-          {infoWindowContent.rating && <p className="text-gray-600 dark:text-gray-400 mt-1">⭐ {infoWindowContent.rating.toFixed(1)}</p>}
+          {infoWindowContent.rating && <p className="text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-1"><img src="/google-logo.svg" alt="Google" className="h-3 w-3 inline" /> {infoWindowContent.rating.toFixed(1)}</p>}
         </div>
       )}
       <div className="absolute bottom-3 right-3 bg-white/80 dark:bg-gray-900/70 text-[10px] uppercase tracking-wide px-2 py-1 rounded z-10">

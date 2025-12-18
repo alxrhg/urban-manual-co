@@ -115,7 +115,7 @@ export default function PlaceCard({
         <div className="flex items-center justify-between">
           {rating ? (
             <div className="flex items-center gap-1">
-              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+              <img src="/google-logo.svg" alt="Google" className="w-3 h-3" />
               <span className="text-xs font-medium text-stone-600 dark:text-gray-300">
                 {rating.toFixed(1)}
               </span>

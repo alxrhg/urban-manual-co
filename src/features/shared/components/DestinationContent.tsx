@@ -1576,8 +1576,8 @@ const DestinationContent = memo(function DestinationContent({
         <div className="absolute bottom-3 left-3 flex gap-1.5">
           {destination.michelin_stars && destination.michelin_stars > 0 && (
             <span className="px-2 py-0.5 rounded-full bg-white/95 text-[11px] font-medium flex items-center gap-1">
-              <img src="/michelin-star.svg" alt="" className="w-3 h-3" />
-              {destination.michelin_stars}★
+              <img src="/michelin-star.svg" alt="Michelin" className="w-3 h-3" />
+              {destination.michelin_stars}
             </span>
           )}
           {destination.crown && (
@@ -1621,7 +1621,7 @@ const DestinationContent = memo(function DestinationContent({
           {/* Rating with review count */}
           {rating && (
             <div className="flex items-center gap-1.5 mt-2">
-              <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+              <img src="/google-logo.svg" alt="Google" className="h-3.5 w-3.5" />
               <span className="text-[13px] font-medium text-gray-900 dark:text-white">{rating.toFixed(1)}</span>
               {reviewCount && (
                 <span className="text-[13px] text-gray-500">({reviewCount.toLocaleString()} reviews)</span>

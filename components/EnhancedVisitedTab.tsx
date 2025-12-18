@@ -211,7 +211,8 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
                 </div>
                 {place.rating && (
                   <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
-                    ⭐ {place.rating}
+                    <img src="/google-logo.svg" alt="Google" className="h-3 w-3" />
+                    {place.rating}
                   </div>
                 )}
               </div>
@@ -253,7 +254,7 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
                 </div>
                 <div className="text-xs text-gray-400 mt-0.5">
                   {place.visited_at && new Date(place.visited_at).toLocaleDateString()}
-                  {place.rating && ` • ⭐ ${place.rating}`}
+                  {place.rating && <span className="inline-flex items-center gap-1 ml-1"> • <img src="/google-logo.svg" alt="Google" className="h-3 w-3 inline" /> {place.rating}</span>}
                 </div>
               </div>
             </button>

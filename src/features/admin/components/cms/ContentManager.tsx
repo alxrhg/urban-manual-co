@@ -8,7 +8,6 @@ import {
   Edit3,
   Trash2,
   Copy,
-  Star,
   Crown,
   Globe,
   Image as ImageIcon,
@@ -623,7 +622,7 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
                   onClick={() => setMichelinOnly(!michelinOnly)}
                   className="h-8"
                 >
-                  <Star className={`w-3.5 h-3.5 mr-1.5 ${michelinOnly ? 'text-red-200' : 'text-red-500'}`} />
+                  <img src="/michelin-star.svg" alt="Michelin" className="w-3.5 h-3.5 mr-1.5" />
                   Michelin Only
                 </Button>
               </div>
@@ -985,9 +984,9 @@ function TableView({
                       <span className="text-sm font-medium text-black dark:text-white truncate">{dest.name}</span>
                       {dest.crown && <Crown className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
                       {dest.michelin_stars && dest.michelin_stars > 0 && (
-                        <div className="flex">
+                        <div className="flex items-center gap-0.5">
                           {Array.from({ length: dest.michelin_stars }).map((_, i) => (
-                            <Star key={i} className="w-3 h-3 text-red-500 fill-red-500" />
+                            <img key={i} src="/michelin-star.svg" alt="Michelin" className="w-3 h-3" />
                           ))}
                         </div>
                       )}
@@ -1109,9 +1108,9 @@ function GridView({
               )}
               {/* Michelin stars badge */}
               {dest.michelin_stars && dest.michelin_stars > 0 && (
-                <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
+                <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-1 rounded text-xs font-medium flex items-center gap-0.5">
                   {Array.from({ length: dest.michelin_stars }).map((_, i) => (
-                    <Star key={i} className="w-3 h-3 text-red-500 fill-red-500" />
+                    <img key={i} src="/michelin-star.svg" alt="Michelin" className="w-3 h-3" />
                   ))}
                 </div>
               )}

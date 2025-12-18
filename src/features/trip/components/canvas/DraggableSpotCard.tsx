@@ -73,17 +73,16 @@ export default function DraggableSpotCard({ destination }: DraggableSpotCardProp
 
         {/* Michelin Star */}
         {destination.michelin_stars && destination.michelin_stars > 0 && (
-          <div className="absolute bottom-2 left-2 flex items-center gap-1">
-            {Array.from({ length: destination.michelin_stars }).map((_, i) => (
-              <Sparkles key={i} className="w-4 h-4 text-amber-400 drop-shadow-md" />
-            ))}
+          <div className="absolute bottom-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm">
+            <img src="/michelin-star.svg" alt="Michelin" className="w-3 h-3" />
+            <span className="text-xs font-medium text-gray-900 dark:text-white">{destination.michelin_stars}</span>
           </div>
         )}
 
         {/* Rating */}
         {destination.rating && (
           <div className="absolute bottom-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/40 backdrop-blur-sm">
-            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+            <img src="/google-logo.svg" alt="Google" className="w-3 h-3" />
             <span className="text-xs font-medium text-white">
               {destination.rating.toFixed(1)}
             </span>

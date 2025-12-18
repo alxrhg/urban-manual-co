@@ -154,7 +154,7 @@ function Inspector() {
         <div className="flex items-center gap-4">
           {destination.rating && (
             <div className="flex items-center gap-1.5">
-              <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+              <img src="/google-logo.svg" alt="Google" className="w-4 h-4" />
               <span className="text-sm font-medium text-gray-900 dark:text-white">
                 {destination.rating.toFixed(1)}
               </span>
