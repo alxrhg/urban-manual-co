@@ -31,6 +31,7 @@ import { PageLoader } from '@/components/LoadingStates';
 import { createClient } from '@/lib/supabase/client';
 import type { Destination } from '@/types/destination';
 import TripSettingsBox from '@/features/trip/components/TripSettingsBox';
+import TripOverviewSidebar from '@/features/trip/components/TripOverviewSidebar';
 import DestinationBox from '@/features/trip/components/DestinationBox';
 import AddPlacePanel from '@/features/trip/components/AddPlacePanel';
 import { NeighborhoodTags } from '@/features/trip/components/NeighborhoodBreakdown';
@@ -103,6 +104,7 @@ export default function TripPage() {
 
   // Sidebar states (desktop)
   const [showTripSettings, setShowTripSettings] = useState(false);
+  const [showOverview, setShowOverview] = useState(false);
   const [selectedItem, setSelectedItem] = useState<EnrichedItineraryItem | null>(null);
   const [sidebarAddDay, setSidebarAddDay] = useState<number | null>(null); // Which day is adding via sidebar
 
@@ -365,13 +367,35 @@ export default function TripPage() {
                 )}
               </button>
 
-              <button
-                onClick={() => { setShowTripSettings(true); setSelectedItem(null); }}
-                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-              >
-                <Settings className="w-3.5 h-3.5" />
-                Settings
-              </button>
+              <div className="hidden lg:flex items-center gap-1">
+                <button
+                  onClick={() => { setShowOverview(true); setShowTripSettings(false); setSelectedItem(null); setSidebarAddDay(null); }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] transition-colors rounded-full ${
+                    showOverview
+                      ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                  }`}
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="3" y="3" width="7" height="7" rx="1" />
+                    <rect x="14" y="3" width="7" height="7" rx="1" />
+                    <rect x="3" y="14" width="7" height="7" rx="1" />
+                    <rect x="14" y="14" width="7" height="7" rx="1" />
+                  </svg>
+                  Overview
+                </button>
+                <button
+                  onClick={() => { setShowTripSettings(true); setShowOverview(false); setSelectedItem(null); setSidebarAddDay(null); }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] transition-colors rounded-full ${
+                    showTripSettings
+                      ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                  }`}
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  Settings
+                </button>
+              </div>
             </div>
 
         {/* Trip Notes - expandable (mobile only, desktop uses sidebar) */}
@@ -631,8 +655,21 @@ export default function TripPage() {
                 />
               )}
 
+              {/* Trip Overview */}
+              {showOverview && !sidebarAddDay && (
+                <TripOverviewSidebar
+                  trip={trip}
+                  days={days}
+                  onClose={() => setShowOverview(false)}
+                  onDayClick={(dayNumber) => {
+                    setSelectedDayNumber(dayNumber);
+                    setShowOverview(false);
+                  }}
+                />
+              )}
+
               {/* Trip Intelligence */}
-              {!sidebarAddDay && (
+              {!sidebarAddDay && !showOverview && !showTripSettings && (
                 <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
                   <TripIntelligence
                     days={days}
@@ -645,7 +682,7 @@ export default function TripPage() {
               )}
 
               {/* Drag & Drop Palette */}
-              {!sidebarAddDay && !selectedItem && (
+              {!sidebarAddDay && !selectedItem && !showOverview && !showTripSettings && (
                 <SidebarDestinationPalette
                   city={primaryCity}
                   selectedDayNumber={selectedDayNumber}
@@ -654,7 +691,7 @@ export default function TripPage() {
               )}
 
               {/* Checklist */}
-              {!sidebarAddDay && (
+              {!sidebarAddDay && !showOverview && !showTripSettings && (
                 <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
                   <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-3">Checklist</h3>
                   <TripChecklist
