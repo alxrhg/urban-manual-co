@@ -20,12 +20,6 @@ abstract class Env {
     defaultValue: '',
   );
 
-  // Sentry Configuration
-  static const String sentryDsn = String.fromEnvironment(
-    'SENTRY_DSN',
-    defaultValue: '',
-  );
-
   // App Configuration
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
