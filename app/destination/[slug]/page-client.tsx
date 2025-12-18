@@ -1220,6 +1220,20 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 </div>
               )}
 
+              {/* Parent Destination - Located Inside */}
+              {parentDestination && (
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-5">Located Inside</h2>
+                  <div className="p-4 border border-gray-100 dark:border-gray-800 rounded-2xl hover:shadow-md transition-shadow">
+                    <HorizontalDestinationCard
+                      destination={parentDestination}
+                      onClick={() => router.push(`/destination/${parentDestination.slug}`)}
+                      showBadges={true}
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Nested Destinations */}
               {destination.nested_destinations && destination.nested_destinations.length > 0 && (
                 <NestedDestinations destinations={destination.nested_destinations} parentName={destination.name} onDestinationClick={(nested) => router.push(`/destination/${nested.slug}`)} />
