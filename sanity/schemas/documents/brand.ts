@@ -23,7 +23,6 @@ export default defineType({
   name: 'brand',
   title: 'Brand',
   type: 'document',
-  icon: () => '🏷️',
 
   groups: [
     { name: 'info', title: 'Brand Info', default: true },
@@ -192,11 +191,6 @@ export default defineType({
       type: 'string',
       group: 'media',
       description: 'Primary brand color (hex code, e.g., #1a1a1a)',
-      validation: (rule) =>
-        rule.regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, {
-          name: 'hex color',
-          invert: false,
-        }),
     }),
 
     // ═══════════════════════════════════════════════════════════════════

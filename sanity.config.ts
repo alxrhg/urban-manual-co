@@ -77,6 +77,15 @@ export default defineConfig({
                   .title('All Destinations')
                   .defaultOrdering([{ field: 'name', direction: 'asc' }])
               ),
+            // Brands catalog
+            S.listItem()
+              .title('Brands')
+              .schemaType('brand')
+              .child(
+                S.documentTypeList('brand')
+                  .title('All Brands')
+                  .defaultOrdering([{ field: 'name', direction: 'asc' }])
+              ),
             S.divider(),
             // By Status
             S.listItem()
