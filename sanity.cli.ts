@@ -22,16 +22,8 @@ export default defineCliConfig({
   },
 
   /**
-   * Deployment configuration for Sanity-hosted studios
-   * Run `npx sanity deploy` to deploy to Sanity hosting
-   */
-  deployment: {
-    appId: 'zrbwei86rxluvt09l2hz28bx',
-    autoUpdates: true,
-  },
-
-  /**
    * Sanity-hosted Studio hostname
+   * Run `npx sanity deploy` to deploy to Sanity hosting
    */
   studioHost: 'urban-manual',
 });
