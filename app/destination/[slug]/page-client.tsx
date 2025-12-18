@@ -568,16 +568,27 @@ export default function DestinationPageClient({ initialDestination, parentDestin
         <div className="px-5 space-y-5 pb-8">
           {/* Parent Destination */}
           {parentDestination && (
-            <button onClick={() => router.push(`/destination/${parentDestination.slug}`)} className="w-full flex items-center gap-4 p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-colors">
-              <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
-                {parentDestination.image ? <Image src={parentDestination.image} alt={parentDestination.name} fill className="object-cover" /> : <div className="w-full h-full bg-white/10 flex items-center justify-center"><MapPin className="w-5 h-5 text-gray-600" /></div>}
-              </div>
-              <div className="flex-1 text-left">
-                <p className="text-[11px] uppercase tracking-wide text-gray-500 mb-1">Located inside</p>
-                <p className="text-[15px] font-medium text-white">{parentDestination.name}</p>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-500" />
-            </button>
+            <div className="bg-white/5 rounded-2xl p-5">
+              <p className="text-[11px] uppercase tracking-wide text-gray-400 mb-4">Located inside</p>
+              <button onClick={() => router.push(`/destination/${parentDestination.slug}`)} className="w-full flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors border border-white/10">
+                <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
+                  {parentDestination.image ? <Image src={parentDestination.image} alt={parentDestination.name} fill className="object-cover" /> : <div className="w-full h-full bg-white/10 flex items-center justify-center"><MapPin className="w-5 h-5 text-gray-600" /></div>}
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-[16px] font-semibold text-white mb-1">{parentDestination.name}</p>
+                  <p className="text-[13px] text-gray-400 flex items-center gap-1.5">
+                    {parentDestination.category && <span>{formatLabel(parentDestination.category)}</span>}
+                    {parentDestination.category && parentDestination.city && <span>·</span>}
+                    {parentDestination.city && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {capitalizeCity(parentDestination.city)}
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </button>
+            </div>
           )}
 
           {/* Location Card */}
