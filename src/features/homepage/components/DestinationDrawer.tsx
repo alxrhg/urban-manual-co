@@ -331,6 +331,7 @@ export function DestinationDrawer() {
             {/* View Full Details Button */}
             <Link
               href={`/destination/${selectedDestination.slug}`}
+              onClick={closeDrawer}
               className="flex items-center justify-center gap-2 w-full py-4 px-6
                          bg-white rounded-2xl
                          hover:bg-gray-100 transition-colors"
