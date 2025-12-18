@@ -11,7 +11,6 @@
 import settings from './singletons/settings';
 
 // Documents
-import brand from './documents/brand';
 import destination from './documents/destination';
 
 // Objects
@@ -22,7 +21,6 @@ export const schemaTypes = [
   settings,
 
   // Documents
-  brand,
   destination,
 
   // Objects

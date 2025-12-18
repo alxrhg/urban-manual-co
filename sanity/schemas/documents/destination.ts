@@ -154,20 +154,11 @@ export default defineType({
       initialValue: false,
     }),
     defineField({
-      name: 'brandRef',
-      title: 'Brand',
-      type: 'reference',
-      to: [{ type: 'brand' }],
-      group: 'editorial',
-      description: 'Select the brand/chain this destination belongs to',
-    }),
-    // Legacy brand field - kept for backwards compatibility
-    defineField({
       name: 'brand',
-      title: 'Brand (Legacy)',
+      title: 'Brand',
       type: 'string',
       group: 'editorial',
-      description: 'Legacy brand name - use Brand reference above instead',
+      description: 'Brand name if part of a chain (e.g., Four Seasons)',
     }),
 
     // ═══════════════════════════════════════════════════════════════════
