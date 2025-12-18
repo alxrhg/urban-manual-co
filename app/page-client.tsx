@@ -38,7 +38,6 @@ import {
 } from "lucide-react";
 import { getCategoryIconComponent } from "@/lib/icons/category-icons";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDrawer } from "@/contexts/DrawerContext";
 import { useDrawerStore } from "@/lib/stores/drawer-store";
 import { useDestinationDrawer } from '@/features/shared/components/IntelligentDrawerContext';
 import dynamic from "next/dynamic";
@@ -419,7 +418,7 @@ export default function HomePageClient({
   const [searchTier, setSearchTier] = useState<string | null>(null);
   const [selectedDestination, setSelectedDestination] =
     useState<Destination | null>(null);
-  const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
+  const { openDrawer } = useDrawerStore();
   const { openDestination: openIntelligentDestination } = useDestinationDrawer();
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
   const [showTripPlanner, setShowTripPlanner] = useState(false);
@@ -2869,7 +2868,7 @@ export default function HomePageClient({
                   <button
                     onClick={() => {
                       setEditingDestination(null);
-                      openGlobalDrawer('poi-editor', {
+                      openDrawer('poi-editor', {
                         destination: null,
                         onSave: async () => {
                           await new Promise(resolve => setTimeout(resolve, 200));
@@ -2942,7 +2941,7 @@ export default function HomePageClient({
                         <button
                           onClick={() => {
                             setEditingDestination(null);
-                            openGlobalDrawer('poi-editor', {
+                            openDrawer('poi-editor', {
                               destination: null,
                               onSave: async () => {
                                 await new Promise(resolve => setTimeout(resolve, 200));

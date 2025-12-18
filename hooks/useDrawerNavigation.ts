@@ -8,7 +8,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { useDrawer, type DrawerType } from '@/contexts/DrawerContext';
+import { useDrawerStore, type DrawerType } from '@/lib/stores/drawer-store';
 
 interface DrawerHistoryEntry {
   type: DrawerType;
@@ -28,7 +28,17 @@ export function useDrawerNavigation(
   options: UseDrawerNavigationOptions = {}
 ) {
   const { maxHistorySize = 10 } = options;
-  const drawer = useDrawer();
+  const drawerStore = useDrawerStore();
+
+  // Map zustand store to legacy drawer shape expected by this hook
+  // This allows us to keep the hook's API mostly compatible
+  const drawer = {
+    activeDrawer: drawerStore.drawer,
+    openDrawer: drawerStore.openDrawer,
+    closeDrawer: drawerStore.closeDrawer,
+    isDrawerOpen: drawerStore.isDrawerOpen,
+  };
+
   const [history, setHistory] = useState<DrawerHistoryEntry[]>([]);
   const [drawerData, setDrawerData] = useState<Record<string, unknown>>({});
 
@@ -43,7 +53,7 @@ export function useDrawerNavigation(
           const newHistory = [
             ...prev,
             {
-              type: drawer.activeDrawer,
+              type: drawer.activeDrawer!,
               data: drawerData,
               timestamp: Date.now(),
             },
@@ -59,7 +69,7 @@ export function useDrawerNavigation(
       }
 
       // Open the drawer
-      drawer.openDrawer(type);
+      drawer.openDrawer(type, data);
     },
     [drawer, drawerData, maxHistorySize]
   );
@@ -72,7 +82,7 @@ export function useDrawerNavigation(
       const prev = history[history.length - 1];
       setHistory((h) => h.slice(0, -1));
       setDrawerData(prev.data || {});
-      drawer.openDrawer(prev.type);
+      drawer.openDrawer(prev.type, prev.data);
     } else {
       drawer.closeDrawer();
       setDrawerData({});
@@ -96,7 +106,7 @@ export function useDrawerNavigation(
       if (data) {
         setDrawerData(data);
       }
-      drawer.openDrawer(type);
+      drawer.openDrawer(type, data);
     },
     [drawer]
   );
