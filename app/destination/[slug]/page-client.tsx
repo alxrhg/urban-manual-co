@@ -423,8 +423,8 @@ export default function DestinationPageClient({ initialDestination, parentDestin
             <X className="w-5 h-5" />
           </button>
 
-          {/* Full-width Image Carousel */}
-          {allImages.length > 0 ? (
+          {/* Full-width Image */}
+          {allImages.length > 1 ? (
             <ImageCarousel
               images={allImages}
               alt={`${destination.name} - ${destination.category} in ${destination.city}`}
@@ -433,6 +433,16 @@ export default function DestinationPageClient({ initialDestination, parentDestin
               showDots={true}
               className="rounded-none"
             />
+          ) : allImages.length === 1 ? (
+            <div className="aspect-[4/3] relative">
+              <Image
+                src={allImages[0]}
+                alt={`${destination.name} - ${destination.category} in ${destination.city}`}
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
           ) : (
             <div className="aspect-[4/3] bg-gray-800 flex items-center justify-center">
               <MapPin className="w-12 h-12 text-gray-600" />
