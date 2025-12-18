@@ -256,16 +256,9 @@ export default function ArchitectPageClient() {
                   }`}
                 >
                   <img
-                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                    src="/michelin-star.svg"
                     alt="Michelin star"
                     className="h-3 w-3"
-                    onError={(e) => {
-                      // Fallback to local file if external URL fails
-                      const target = e.currentTarget;
-                      if (target.src !== '/michelin-star.svg') {
-                        target.src = '/michelin-star.svg';
-                      }
-                    }}
                   />
                   Michelin
                 </button>

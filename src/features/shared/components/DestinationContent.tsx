@@ -1576,8 +1576,8 @@ const DestinationContent = memo(function DestinationContent({
         <div className="absolute bottom-3 left-3 flex gap-1.5">
           {destination.michelin_stars && destination.michelin_stars > 0 && (
             <span className="px-2 py-0.5 rounded-full bg-white/95 text-[11px] font-medium flex items-center gap-1">
-              <img src="/michelin-star.svg" alt="" className="w-3 h-3" />
-              {destination.michelin_stars}★
+              <img src="/michelin-star.svg" alt="Michelin" className="w-3 h-3" />
+              {destination.michelin_stars}
             </span>
           )}
           {destination.crown && (

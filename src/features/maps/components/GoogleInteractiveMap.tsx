@@ -117,7 +117,7 @@ export default function GoogleInteractiveMap({
                 ${dest.city ? `<span style="font-size: 12px; color: #888;">${dest.city}</span>` : ''}
               </div>
               ${dest.rating ? `<div style="display: flex; align-items: center; gap: 4px; font-size: 13px; color: #1a1a1a; font-weight: 500;">
-                <span style="font-size: 14px;">⭐</span>
+                <img src="/google-logo.svg" alt="Google" style="width: 14px; height: 14px;" />
                 <span>${dest.rating.toFixed(1)}</span>
               </div>` : ''}
             </div>

@@ -90,13 +90,14 @@ export const HorizontalDestinationCard = memo(function HorizontalDestinationCard
             )}
             {destination.michelin_stars && destination.michelin_stars > 0 && (
               <span className="text-xs px-2 py-0.5 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 flex items-center gap-1">
-                <span>⭐</span>
+                <img src="/michelin-star.svg" alt="Michelin" className="h-3 w-3" />
                 {destination.michelin_stars} {destination.michelin_stars === 1 ? 'star' : 'stars'}
               </span>
             )}
             {destination.rating && (
-              <span className="text-xs px-2 py-0.5 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300">
-                {destination.rating.toFixed(1)} ⭐
+              <span className="text-xs px-2 py-0.5 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                <img src="/google-logo.svg" alt="Google" className="h-3 w-3" />
+                {destination.rating.toFixed(1)}
               </span>
             )}
           </div>
