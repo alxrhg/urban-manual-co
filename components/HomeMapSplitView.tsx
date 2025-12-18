@@ -414,7 +414,7 @@ export default function HomeMapSplitView({
             <div className="flex items-center gap-3 flex-wrap">
               {rating && (
                 <div className="flex items-center gap-1.5 text-sm">
-                  <Star className="h-4 w-4 fill-current text-yellow-500" />
+                  <img src="/google-logo.svg" alt="Google" className="h-4 w-4" />
                   <span className="font-medium">{rating.toFixed(1)}</span>
                 </div>
               )}

@@ -185,7 +185,7 @@ export default function ExplorePage() {
                     {/* Michelin Stars */}
                     {dest.michelin_stars && dest.michelin_stars > 0 && (
                       <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-lg">
-                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                        <img src="/michelin-star.svg" alt="Michelin" className="h-3 w-3" />
                         <span className="text-stone-900 dark:text-white">{dest.michelin_stars}</span>
                       </div>
                     )}

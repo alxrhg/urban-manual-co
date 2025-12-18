@@ -119,8 +119,9 @@ export const createColumns = (
     cell: ({ row }) => {
       const rating = row.original.rating;
       return rating ? (
-        <div className="text-right text-xs text-green-600 dark:text-green-400">
-          ⭐ {rating.toFixed(1)}
+        <div className="text-right text-xs text-green-600 dark:text-green-400 flex items-center justify-end gap-1">
+          <img src="/google-logo.svg" alt="Google" className="h-3 w-3" />
+          {rating.toFixed(1)}
         </div>
       ) : (
         <div className="text-right text-xs text-gray-400">—</div>

@@ -251,7 +251,7 @@ export function DashboardOverview() {
             loading={loading}
           />
           <DefinitionItem
-            icon={<Star className="w-4 h-4 text-red-500 fill-red-500" />}
+            icon={<img src="/michelin-star.svg" alt="Michelin" className="w-4 h-4" />}
             term="Michelin Spots"
             value={stats?.michelinSpots || 0}
             loading={loading}

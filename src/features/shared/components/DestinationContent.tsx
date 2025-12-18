@@ -1621,7 +1621,7 @@ const DestinationContent = memo(function DestinationContent({
           {/* Rating with review count */}
           {rating && (
             <div className="flex items-center gap-1.5 mt-2">
-              <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+              <img src="/google-logo.svg" alt="Google" className="h-3.5 w-3.5" />
               <span className="text-[13px] font-medium text-gray-900 dark:text-white">{rating.toFixed(1)}</span>
               {reviewCount && (
                 <span className="text-[13px] text-gray-500">({reviewCount.toLocaleString()} reviews)</span>

@@ -130,7 +130,7 @@ export default function HotelCard({
             {/* Rating badge */}
             {rating && (
               <div className="absolute top-2 right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-black/40 backdrop-blur-sm">
-                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                <img src="/google-logo.svg" alt="Google" className="w-3 h-3" />
                 <span className="text-xs font-medium text-white">{rating.toFixed(1)}</span>
               </div>
             )}
@@ -195,7 +195,7 @@ export default function HotelCard({
               </div>
             ) : rating ? (
               <>
-                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                <img src="/google-logo.svg" alt="Google" className="w-3.5 h-3.5" />
                 <span className="text-sm font-medium text-white">{rating.toFixed(1)}</span>
               </>
             ) : null}

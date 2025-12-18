@@ -603,7 +603,7 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
                             {dest.category && capitalizeCategory(dest.category)}
                             {dest.category && dest.city && ' · '}
                             {dest.city && capitalizeCity(dest.city)}
-                            {dest.rating && ` · ⭐ ${dest.rating}`}
+                            {dest.rating && <span className="inline-flex items-center gap-1"> · <img src="/google-logo.svg" alt="Google" className="h-3 w-3 inline" /> {dest.rating}</span>}
                           </p>
                         </div>
                         <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />

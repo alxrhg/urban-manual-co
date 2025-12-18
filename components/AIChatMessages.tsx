@@ -97,7 +97,7 @@ export default function AIChatMessages({ messages, searching = false }: AIChatMe
                       )}
                       {dest.michelin_stars && dest.michelin_stars > 0 && (
                         <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                          <span>⭐</span>
+                          <img src="/michelin-star.svg" alt="Michelin" className="h-3 w-3" />
                           <span>{dest.michelin_stars}</span>
                         </div>
                       )}

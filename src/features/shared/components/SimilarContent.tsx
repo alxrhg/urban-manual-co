@@ -213,7 +213,7 @@ function GridCard({
       </div>
       {destination.rating && (
         <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full bg-black/40 backdrop-blur-sm">
-          <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+          <img src="/google-logo.svg" alt="Google" className="w-3 h-3" />
           <span className="text-[11px] font-medium text-white">
             {destination.rating.toFixed(1)}
           </span>
@@ -264,7 +264,7 @@ function ListCard({
           </p>
           {destination.rating && (
             <div className="flex items-center gap-0.5 flex-shrink-0">
-              <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+              <img src="/google-logo.svg" alt="Google" className="w-3 h-3" />
               <span className="text-[11px] text-gray-500">
                 {destination.rating.toFixed(1)}
               </span>

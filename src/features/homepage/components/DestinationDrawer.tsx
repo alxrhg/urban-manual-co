@@ -162,7 +162,7 @@ export function DestinationDrawer() {
             {/* Rating */}
             {selectedDestination.rating && (
               <div className="flex items-center gap-2 mb-5">
-                <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
+                <img src="/google-logo.svg" alt="Google" className="w-5 h-5" />
                 <span className="text-[17px] font-semibold text-white">
                   {selectedDestination.rating.toFixed(1)}
                 </span>
