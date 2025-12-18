@@ -82,9 +82,9 @@ export function DestinationDrawer() {
   const cityName = selectedDestination.city ? capitalizeCity(selectedDestination.city) : '';
   const categoryName = selectedDestination.category ? capitalizeCategory(selectedDestination.category) : '';
 
-  // Mock data for architecture (replace with actual data when available)
+  // Architecture data
   const architect = selectedDestination.architect || null;
-  const designStyle = selectedDestination.design_style || selectedDestination.architectural_style || null;
+  const designStyle = selectedDestination.architectural_style || null;
 
   return (
     <>
