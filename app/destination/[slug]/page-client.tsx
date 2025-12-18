@@ -410,52 +410,54 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
   return (
     <>
-      {/* ========== MOBILE LAYOUT (Dark Theme) ========== */}
+      {/* ========== MOBILE LAYOUT (Card Design) ========== */}
       <main className="lg:hidden w-full min-h-screen bg-black">
-        {/* Full-width Image Section */}
-        <div className="relative">
-          {/* Close/Back Button */}
-          <button
-            onClick={() => router.back()}
-            className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/70 transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
+        {/* Card Container - Centered */}
+        <div className="max-w-lg mx-auto">
+          {/* Image Card Section */}
+          <div className="relative px-4 pt-4 pb-2">
+            {/* Close/Back Button */}
+            <button
+              onClick={() => router.back()}
+              className="absolute top-6 right-6 z-20 w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
-          {/* Full-width Image */}
-          {allImages.length > 1 ? (
-            <ImageCarousel
-              images={allImages}
-              alt={`${destination.name} - ${destination.category} in ${destination.city}`}
-              aspectRatio="4/3"
-              showNavigation={false}
-              showDots={true}
-              className="rounded-none"
-            />
-          ) : allImages.length === 1 ? (
-            <div className="aspect-[4/3] relative">
-              <Image
-                src={allImages[0]}
+            {/* Image Carousel Card */}
+            {allImages.length > 1 ? (
+              <ImageCarousel
+                images={allImages}
                 alt={`${destination.name} - ${destination.category} in ${destination.city}`}
-                fill
-                className="object-cover"
-                priority
+                aspectRatio="4/3"
+                showNavigation={false}
+                showDots={true}
+                className="shadow-2xl"
               />
-            </div>
-          ) : (
-            <div className="aspect-[4/3] bg-gray-800 flex items-center justify-center">
-              <MapPin className="w-12 h-12 text-gray-600" />
-            </div>
-          )}
-        </div>
+            ) : allImages.length === 1 ? (
+              <div className="aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl relative">
+                <Image
+                  src={allImages[0]}
+                  alt={`${destination.name} - ${destination.category} in ${destination.city}`}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              </div>
+            ) : (
+              <div className="aspect-[4/3] bg-gray-800 rounded-3xl flex items-center justify-center">
+                <MapPin className="w-12 h-12 text-gray-600" />
+              </div>
+            )}
+          </div>
 
-        {/* Product Info Section */}
-        <div className="px-5 py-5">
-          {/* Name and Quick Actions Row */}
-          <div className="flex items-start justify-between gap-4 mb-3">
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-white leading-tight mb-1">
+          {/* Product Info Section */}
+          <div className="px-6 py-6">
+            {/* Name and Quick Actions Row */}
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold text-white leading-tight mb-2">
                 {destination.name}
               </h1>
               <div className="flex items-center gap-2 text-gray-400 text-[14px]">
@@ -555,17 +557,17 @@ export default function DestinationPageClient({ initialDestination, parentDestin
             )}
           </div>
 
-          {/* Description */}
-          {(destination.micro_description || destination.content) && (
-            <p className="text-[15px] leading-relaxed text-gray-300 mb-5">
-              {destination.micro_description || htmlToPlainText(destination.content || '').slice(0, 200)}
-              {destination.content && destination.content.length > 200 && '...'}
-            </p>
-          )}
-        </div>
+            {/* Description */}
+            {(destination.micro_description || destination.content) && (
+              <p className="text-[15px] leading-relaxed text-gray-300 mb-6">
+                {destination.micro_description || htmlToPlainText(destination.content || '').slice(0, 200)}
+                {destination.content && destination.content.length > 200 && '...'}
+              </p>
+            )}
+          </div>
 
-        {/* Content Sections */}
-        <div className="px-5 space-y-5 pb-8">
+          {/* Content Sections */}
+          <div className="px-6 space-y-6 pb-8">
           {/* Parent Destination */}
           {parentDestination && (
             <div className="bg-white/5 rounded-2xl p-5">
@@ -738,6 +740,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
               </div>
             </div>
           )}
+          </div>
         </div>
       </main>
 
