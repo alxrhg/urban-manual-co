@@ -665,7 +665,7 @@ function DestinationCard({
         <h3 className="name">{dest.name}</h3>
         <p className="meta">
           {dest.category} • {dest.city}
-          {dest.michelin_stars && ` • ${'★'.repeat(dest.michelin_stars)}`}
+          {dest.michelin_stars && <> • {Array.from({ length: dest.michelin_stars }).map((_, i) => <img key={i} src="/michelin-star.svg" alt="Michelin" className="h-3 w-3 inline" />)}</>}
         </p>
         {!compact && dest.micro_description && (
           <p className="description">{dest.micro_description}</p>
