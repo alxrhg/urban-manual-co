@@ -1,0 +1,87 @@
+name: urban_manual
+description: Urban Manual - Curated travel guide with 897+ destinations worldwide.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Supabase
+  supabase_flutter: ^2.3.0
+
+  # State Management
+  flutter_riverpod: ^2.4.9
+  riverpod_annotation: ^2.3.3
+
+  # Routing
+  go_router: ^13.0.0
+
+  # UI Components
+  cupertino_icons: ^1.0.6
+  flutter_svg: ^2.0.9
+  cached_network_image: ^3.3.1
+  shimmer: ^3.0.0
+
+  # Maps
+  mapbox_maps_flutter: ^1.0.0
+  geolocator: ^11.0.0
+  geocoding: ^3.0.0
+
+  # Authentication
+  google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.0
+
+  # Storage & Caching
+  shared_preferences: ^2.2.2
+  flutter_secure_storage: ^9.0.0
+  hive_flutter: ^1.1.0
+
+  # Networking
+  dio: ^5.4.0
+  connectivity_plus: ^5.0.2
+
+  # Utilities
+  intl: ^0.19.0
+  url_launcher: ^6.2.2
+  share_plus: ^7.2.1
+  package_info_plus: ^5.0.1
+
+  # Analytics & Monitoring
+  sentry_flutter: ^7.14.0
+
+  # Image handling
+  image_picker: ^1.0.7
+  photo_view: ^0.14.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+  riverpod_generator: ^2.3.9
+  build_runner: ^2.4.8
+  json_serializable: ^6.7.1
+  freezed: ^2.4.6
+  freezed_annotation: ^2.4.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/fonts/
+
+  fonts:
+    - family: Geist
+      fonts:
+        - asset: assets/fonts/Geist-Regular.otf
+        - asset: assets/fonts/Geist-Medium.otf
+          weight: 500
+        - asset: assets/fonts/Geist-SemiBold.otf
+          weight: 600
+        - asset: assets/fonts/Geist-Bold.otf
+          weight: 700

@@ -1,0 +1,15 @@
+# Shorebird configuration for Urban Manual iOS app
+# This enables over-the-air (OTA) updates without App Store review
+
+# App ID - set this after running `shorebird init`
+app_id: # Will be set after shorebird init
+
+# Flavors configuration (optional)
+# flavors:
+#   development:
+#     app_id: urban_manual_dev
+#   production:
+#     app_id: urban_manual_prod
+
+# Auto-update behavior
+# auto_update: true  # Automatically check for and apply updates on app launch
