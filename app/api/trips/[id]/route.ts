@@ -123,6 +123,16 @@ export const PATCH = withErrorHandling(async (request: NextRequest, context: Rou
   if (body.is_public !== undefined) updates.is_public = body.is_public;
   if (body.cover_image !== undefined) updates.cover_image = body.cover_image;
   if (body.notes !== undefined) updates.notes = body.notes;
+  // Accommodation fields (for AI-native trip planning)
+  if (body.accommodation_destination_id !== undefined) updates.accommodation_destination_id = body.accommodation_destination_id;
+  if (body.accommodation_slug !== undefined) updates.accommodation_slug = body.accommodation_slug;
+  if (body.accommodation_name !== undefined) updates.accommodation_name = body.accommodation_name;
+  if (body.accommodation_checkin !== undefined) updates.accommodation_checkin = body.accommodation_checkin;
+  if (body.accommodation_checkout !== undefined) updates.accommodation_checkout = body.accommodation_checkout;
+  if (body.accommodation_coordinates !== undefined) updates.accommodation_coordinates = body.accommodation_coordinates;
+  if (body.accommodation_neighborhood !== undefined) updates.accommodation_neighborhood = body.accommodation_neighborhood;
+  if (body.traveler_count !== undefined) updates.traveler_count = body.traveler_count;
+  if (body.trip_style !== undefined) updates.trip_style = body.trip_style;
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });

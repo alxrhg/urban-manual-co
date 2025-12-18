@@ -25,6 +25,44 @@ import { getSeasonalContext, getAllSeasonalEvents } from '@/services/seasonality
 // TYPES
 // ============================================
 
+// Trip context type for AI-native trip planning
+export interface EngineTripContext {
+  tripId: string;
+  title: string;
+  city: string;
+  destinations: string[];
+  dates: { start: string; end: string };
+  currentDay?: number;
+  accommodation?: {
+    slug: string;
+    name: string;
+    coordinates: { latitude: number; longitude: number };
+    neighborhood?: string;
+    checkinTime?: string;
+    checkoutTime?: string;
+  };
+  itinerary: Array<{
+    id: string;
+    day: number;
+    timeSlot: string;
+    destinationSlug: string;
+    destinationName: string;
+    category: string;
+    duration: number;
+    coordinates?: { latitude: number; longitude: number };
+  }>;
+  scheduleGaps: Array<{
+    day: number;
+    date: string;
+    slot: 'breakfast' | 'morning' | 'lunch' | 'afternoon' | 'dinner' | 'evening';
+    startTime: string;
+    endTime: string;
+    durationMinutes: number;
+  }>;
+  travelers: number;
+  tripStyle?: string[];
+}
+
 export interface ConversationMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -177,6 +215,33 @@ export interface SmartResponse {
     isActive: boolean;
     daysUntil?: number;
   };
+  // NEW: Trip-aware response fields
+  executableActions?: ExecutableAction[];
+  tripAwareness?: TripAwarenessMetadata;
+}
+
+// Executable action that client can trigger
+export interface ExecutableAction {
+  type: 'add_to_trip' | 'set_accommodation' | 'remove_from_trip' | 'move_item' | 'fill_gap';
+  label: string;
+  params: {
+    tripId?: string;
+    destinationSlug?: string;
+    day?: number;
+    timeSlot?: string;
+    duration?: number;
+  };
+  reasoning?: string;
+}
+
+// Trip awareness metadata for UI
+export interface TripAwarenessMetadata {
+  hasTripContext: boolean;
+  suggestedForSlot?: { day: number; slot: string };
+  distanceFromHotel?: string;
+  walkingTimeMinutes?: number;
+  fitsSchedule: boolean;
+  complementsExisting?: string;
 }
 
 // "Why This?" - Each destination includes reasoning
@@ -415,6 +480,8 @@ class SmartConversationEngine {
     options?: {
       includeProactiveActions?: boolean;
       maxDestinations?: number;
+      // Trip context for AI-native trip planning
+      tripContext?: EngineTripContext;
     }
   ): Promise<SmartResponse> {
     const startTime = Date.now();
@@ -476,13 +543,14 @@ class SmartConversationEngine {
       options?.maxDestinations || 10
     );
 
-    // 4. Generate smart response
+    // 4. Generate smart response (now with trip context)
     const response = await this.generateSmartResponse(
       message,
       intent,
       searchResults,
       session,
-      intelligenceContext
+      intelligenceContext,
+      options?.tripContext // Pass trip context for contextual responses
     );
 
     // 5. Generate contextual suggestions
@@ -548,6 +616,18 @@ class SmartConversationEngine {
     // 11. Get seasonal context for proactive awareness
     const seasonalContext = intent.city ? this.buildSeasonalContext(intent.city) : undefined;
 
+    // 12. Generate executable actions for trip integration
+    const executableActions = this.generateExecutableActions(
+      searchResults,
+      options?.tripContext
+    );
+
+    // 13. Build trip awareness metadata
+    const tripAwareness = this.buildTripAwareness(
+      searchResults,
+      options?.tripContext
+    );
+
     return {
       content: response,
       destinations: searchResults,
@@ -560,6 +640,9 @@ class SmartConversationEngine {
       intent,
       confidence: intent.confidence || 0.8,
       seasonalContext,
+      // NEW: Trip-aware response fields
+      executableActions,
+      tripAwareness,
     };
   }
 
@@ -968,7 +1051,8 @@ Return ONLY valid JSON:
     intent: QueryIntent,
     results: any[],
     session: ConversationSession,
-    intelligenceContext: UnifiedContext | null
+    intelligenceContext: UnifiedContext | null,
+    tripContext?: EngineTripContext
   ): Promise<string> {
     if (results.length === 0) {
       return this.generateNoResultsResponse(intent, session);
@@ -977,8 +1061,13 @@ Return ONLY valid JSON:
     // Build rich context for response
     const contextParts: string[] = [];
 
-    // Trip context
-    if (intelligenceContext?.activeTrip) {
+    // Trip context (enhanced with full details)
+    if (tripContext) {
+      contextParts.push(`For your "${tripContext.title}" trip`);
+      if (tripContext.accommodation) {
+        contextParts.push(`staying at ${tripContext.accommodation.name}`);
+      }
+    } else if (intelligenceContext?.activeTrip) {
       const trip = intelligenceContext.activeTrip;
       contextParts.push(`For your ${trip.name} trip`);
     }
@@ -1010,6 +1099,12 @@ Return ONLY valid JSON:
           model: 'gemini-1.5-flash-latest',
         });
 
+        // Build trip-aware prompt section
+        let tripAwareSection = '';
+        if (tripContext) {
+          tripAwareSection = this.buildTripAwarePromptSection(tripContext, results);
+        }
+
         const prompt = `Generate a brief, conversational response for a travel search.
 
 User asked: "${message}"
@@ -1017,9 +1112,12 @@ Found ${results.length} results.
 Top results: ${results.slice(0, 3).map((r: any) => r.name).join(', ')}
 Context: ${contextString}
 
+${tripAwareSection}
+
 ${session.messages.length > 2 ? 'This is an ongoing conversation, be natural and build on previous context.' : 'This is the start of the conversation.'}
 
-Be concise (2-3 sentences max), helpful, and personalized. Don't list destinations - those will be shown as cards.`;
+Be concise (2-3 sentences max), helpful, and personalized. Don't list destinations - those will be shown as cards.
+${tripContext ? 'If relevant, mention proximity to their hotel or suggest a specific time slot for the recommendation.' : ''}`;
 
         const result = await model.generateContent(prompt);
         return result.response.text();
@@ -1032,6 +1130,200 @@ Be concise (2-3 sentences max), helpful, and personalized. Don't list destinatio
     const city = intent.city ? ` in ${intent.city}` : '';
     const category = intent.category || 'places';
     return `I found ${results.length} ${category}${city}${contextString}. Here are my top picks for you.`;
+  }
+
+  /**
+   * Build trip-aware section for the AI prompt
+   */
+  private buildTripAwarePromptSection(
+    tripContext: EngineTripContext,
+    results: any[]
+  ): string {
+    const parts: string[] = [];
+
+    parts.push('=== TRIP CONTEXT ===');
+    parts.push(`Trip: ${tripContext.title}`);
+    parts.push(`Dates: ${tripContext.dates.start} to ${tripContext.dates.end}`);
+    parts.push(`Travelers: ${tripContext.travelers}`);
+
+    if (tripContext.accommodation) {
+      parts.push(`\nAccommodation: ${tripContext.accommodation.name}`);
+      if (tripContext.accommodation.neighborhood) {
+        parts.push(`Location: ${tripContext.accommodation.neighborhood}`);
+      }
+
+      // Calculate distances for top results
+      if (tripContext.accommodation.coordinates.latitude !== 0) {
+        const topResult = results[0];
+        if (topResult?.latitude && topResult?.longitude) {
+          const distance = this.calculateDistance(
+            tripContext.accommodation.coordinates.latitude,
+            tripContext.accommodation.coordinates.longitude,
+            topResult.latitude,
+            topResult.longitude
+          );
+          const walkingTime = Math.round(distance / 80); // ~80m per minute walking
+          parts.push(`\nTop result "${topResult.name}" is approximately ${walkingTime} min walk from hotel`);
+        }
+      }
+    }
+
+    if (tripContext.itinerary.length > 0) {
+      parts.push(`\nAlready planned: ${tripContext.itinerary.length} items`);
+      const planSummary = tripContext.itinerary.slice(0, 3).map(item =>
+        `Day ${item.day} ${item.timeSlot}: ${item.destinationName}`
+      ).join(', ');
+      parts.push(`Recent: ${planSummary}`);
+    }
+
+    if (tripContext.scheduleGaps.length > 0) {
+      const nextGap = tripContext.scheduleGaps[0];
+      parts.push(`\nNext open slot: Day ${nextGap.day} ${nextGap.slot} (${nextGap.startTime}-${nextGap.endTime})`);
+      parts.push('IMPORTANT: Suggest adding to this slot if the recommendation fits the time of day.');
+    }
+
+    return parts.join('\n');
+  }
+
+  /**
+   * Generate executable actions for trip integration
+   */
+  private generateExecutableActions(
+    results: any[],
+    tripContext?: EngineTripContext
+  ): ExecutableAction[] {
+    const actions: ExecutableAction[] = [];
+
+    if (!tripContext || results.length === 0) {
+      return actions;
+    }
+
+    // Find the best gap for the top result
+    const topResult = results[0];
+    const category = topResult.category?.toLowerCase() || '';
+
+    // Determine appropriate slot based on category
+    let targetSlot = tripContext.scheduleGaps[0];
+
+    // Try to match category to appropriate meal time
+    if (['restaurant', 'cafe', 'bakery'].includes(category)) {
+      // Find a meal-appropriate gap
+      const mealGaps = tripContext.scheduleGaps.filter(g =>
+        ['breakfast', 'lunch', 'dinner'].includes(g.slot)
+      );
+      if (mealGaps.length > 0) {
+        targetSlot = mealGaps[0];
+      }
+    } else if (['bar', 'club', 'lounge'].includes(category)) {
+      // Find evening gap
+      const eveningGaps = tripContext.scheduleGaps.filter(g =>
+        ['dinner', 'evening'].includes(g.slot)
+      );
+      if (eveningGaps.length > 0) {
+        targetSlot = eveningGaps[0];
+      }
+    } else if (['museum', 'gallery', 'attraction'].includes(category)) {
+      // Find morning/afternoon gap
+      const dayGaps = tripContext.scheduleGaps.filter(g =>
+        ['morning', 'afternoon'].includes(g.slot)
+      );
+      if (dayGaps.length > 0) {
+        targetSlot = dayGaps[0];
+      }
+    }
+
+    if (targetSlot) {
+      actions.push({
+        type: 'add_to_trip',
+        label: `Add to Day ${targetSlot.day} (${targetSlot.slot})`,
+        params: {
+          tripId: tripContext.tripId,
+          destinationSlug: topResult.slug,
+          day: targetSlot.day,
+          timeSlot: targetSlot.startTime,
+          duration: 90, // Default 90 minutes
+        },
+        reasoning: `Perfect for your ${targetSlot.slot} slot on Day ${targetSlot.day}`,
+      });
+    }
+
+    // If this looks like a hotel, offer to set as accommodation
+    if (['hotel', 'resort', 'accommodation'].includes(category) && !tripContext.accommodation) {
+      actions.push({
+        type: 'set_accommodation',
+        label: `Set as your hotel`,
+        params: {
+          tripId: tripContext.tripId,
+          destinationSlug: topResult.slug,
+        },
+        reasoning: 'Would you like to stay here?',
+      });
+    }
+
+    return actions;
+  }
+
+  /**
+   * Build trip awareness metadata for UI
+   */
+  private buildTripAwareness(
+    results: any[],
+    tripContext?: EngineTripContext
+  ): TripAwarenessMetadata {
+    if (!tripContext) {
+      return { hasTripContext: false, fitsSchedule: false };
+    }
+
+    const topResult = results[0];
+    let distanceFromHotel: string | undefined;
+    let walkingTimeMinutes: number | undefined;
+
+    // Calculate distance from hotel
+    if (tripContext.accommodation?.coordinates && topResult?.latitude && topResult?.longitude) {
+      const distance = this.calculateDistance(
+        tripContext.accommodation.coordinates.latitude,
+        tripContext.accommodation.coordinates.longitude,
+        topResult.latitude,
+        topResult.longitude
+      );
+      walkingTimeMinutes = Math.round(distance / 80); // ~80m per minute
+      if (walkingTimeMinutes <= 5) {
+        distanceFromHotel = `${walkingTimeMinutes} min walk`;
+      } else if (walkingTimeMinutes <= 20) {
+        distanceFromHotel = `${walkingTimeMinutes} min walk`;
+      } else if (walkingTimeMinutes <= 40) {
+        distanceFromHotel = `${Math.round(walkingTimeMinutes / 10) * 10} min walk or quick taxi`;
+      } else {
+        distanceFromHotel = `${Math.round(distance / 1000)} km away`;
+      }
+    }
+
+    // Find suggested slot
+    let suggestedForSlot: { day: number; slot: string } | undefined;
+    if (tripContext.scheduleGaps.length > 0) {
+      const gap = tripContext.scheduleGaps[0];
+      suggestedForSlot = { day: gap.day, slot: gap.slot };
+    }
+
+    // Check if it complements existing items
+    let complementsExisting: string | undefined;
+    if (tripContext.itinerary.length > 0) {
+      const sameCategory = tripContext.itinerary.filter(
+        item => item.category === topResult?.category
+      );
+      if (sameCategory.length === 0 && topResult?.category) {
+        complementsExisting = `Adds ${topResult.category} diversity to your trip`;
+      }
+    }
+
+    return {
+      hasTripContext: true,
+      suggestedForSlot,
+      distanceFromHotel,
+      walkingTimeMinutes,
+      fitsSchedule: tripContext.scheduleGaps.length > 0,
+      complementsExisting,
+    };
   }
 
   private generateNoResultsResponse(intent: QueryIntent, session: ConversationSession): string {

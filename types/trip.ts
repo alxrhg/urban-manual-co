@@ -341,6 +341,106 @@ export interface ScheduleGap {
   nextItem?: ItineraryItemV2;
 }
 
+// ============================================
+// AI-NATIVE TRIP CONTEXT TYPES
+// ============================================
+
+/**
+ * Accommodation info for AI context
+ * Used when AI needs to know where user is staying
+ */
+export interface TripAccommodation {
+  destinationId?: number;
+  slug: string;
+  name: string;
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
+  neighborhood?: string;
+  checkinTime?: string; // "15:00"
+  checkoutTime?: string; // "11:00"
+}
+
+/**
+ * Simplified itinerary item for AI context
+ * Excludes heavy fields not needed for recommendations
+ */
+export interface ItineraryItemForAI {
+  id: string;
+  day: number;
+  timeSlot: string;
+  destinationSlug: string;
+  destinationName: string;
+  category: string;
+  duration: number;
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  };
+}
+
+/**
+ * Schedule gap with date info for AI
+ */
+export interface ScheduleGapForAI {
+  day: number;
+  date: string;
+  slot: 'breakfast' | 'morning' | 'lunch' | 'afternoon' | 'dinner' | 'evening';
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+}
+
+/**
+ * Full trip context passed to AI endpoints
+ * This is what the chat API receives to make contextual recommendations
+ */
+export interface TripContextForAI {
+  tripId: string;
+  title: string;
+  city: string;
+  destinations: string[]; // city names for multi-city trips
+  dates: {
+    start: string; // ISO date
+    end: string;
+  };
+  currentDay?: number; // Which day of the trip (1-indexed)
+  accommodation?: TripAccommodation;
+  itinerary: ItineraryItemForAI[];
+  scheduleGaps: ScheduleGapForAI[];
+  travelers: number;
+  tripStyle?: string[]; // ['food', 'architecture', 'nightlife']
+}
+
+/**
+ * Executable action that AI can suggest
+ * Client handles executing these when user clicks
+ */
+export interface AIExecutableAction {
+  type: 'add_to_trip' | 'set_accommodation' | 'remove_from_trip' | 'move_item' | 'fill_gap';
+  label: string;
+  params: {
+    tripId?: string;
+    destinationSlug?: string;
+    day?: number;
+    timeSlot?: string;
+    duration?: number;
+  };
+  reasoning?: string;
+}
+
+/**
+ * Trip-aware metadata in AI response
+ */
+export interface TripAwarenessMetadata {
+  suggestedForSlot?: { day: number; slot: string };
+  distanceFromHotel?: string; // "10 min walk"
+  walkingTimeMinutes?: number;
+  fitsSchedule: boolean;
+  complementsExisting?: string; // "Great after your museum visit"
+}
+
 export interface TravelEstimate {
   durationMinutes: number;
   distanceKm: number;
@@ -380,6 +480,16 @@ export interface Trip {
   notes: string | null; // TEXT (JSON with TripNotes structure)
   created_at: string; // TIMESTAMP WITH TIME ZONE
   updated_at: string; // TIMESTAMP WITH TIME ZONE
+  // Accommodation fields (added for AI-native trip planning)
+  accommodation_destination_id: number | null; // FK to destinations
+  accommodation_slug: string | null; // Slug for lookups
+  accommodation_name: string | null; // Display name
+  accommodation_checkin: string | null; // TIME e.g. "15:00"
+  accommodation_checkout: string | null; // TIME e.g. "11:00"
+  accommodation_coordinates: { lat: number; lng: number } | null; // JSONB
+  accommodation_neighborhood: string | null; // TEXT
+  traveler_count: number; // INTEGER DEFAULT 1
+  trip_style: string[] | null; // TEXT[] e.g. ['food', 'architecture']
 }
 
 /**
@@ -496,6 +606,16 @@ export interface InsertTrip {
   is_public?: boolean;
   cover_image?: string | null;
   notes?: string | null;
+  // Accommodation fields
+  accommodation_destination_id?: number | null;
+  accommodation_slug?: string | null;
+  accommodation_name?: string | null;
+  accommodation_checkin?: string | null;
+  accommodation_checkout?: string | null;
+  accommodation_coordinates?: { lat: number; lng: number } | null;
+  accommodation_neighborhood?: string | null;
+  traveler_count?: number;
+  trip_style?: string[] | null;
 }
 
 export interface UpdateTrip {
@@ -508,6 +628,16 @@ export interface UpdateTrip {
   is_public?: boolean;
   cover_image?: string | null;
   notes?: string | null;
+  // Accommodation fields
+  accommodation_destination_id?: number | null;
+  accommodation_slug?: string | null;
+  accommodation_name?: string | null;
+  accommodation_checkin?: string | null;
+  accommodation_checkout?: string | null;
+  accommodation_coordinates?: { lat: number; lng: number } | null;
+  accommodation_neighborhood?: string | null;
+  traveler_count?: number;
+  trip_style?: string[] | null;
 }
 
 export type ItineraryItemType = 'place' | 'flight' | 'train' | 'drive' | 'hotel' | 'breakfast' | 'event' | 'activity' | 'custom';
