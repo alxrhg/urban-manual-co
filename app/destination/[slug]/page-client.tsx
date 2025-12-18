@@ -418,76 +418,65 @@ export default function DestinationPageClient({ initialDestination, parentDestin
           <div className="lg:flex lg:gap-8">
             {/* Main content column */}
             <div className="flex-1 min-w-0">
-              {/* Header */}
+              {/* Header - Redesigned */}
               <div className="mb-6">
-                {/* Category & Rating */}
-                <div className="flex items-center gap-3 text-[13px] mb-3">
-                  <span className="uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
-                    {formatLabel(destination.category)}
-                  </span>
-                  {(enrichedData?.rating || destination.rating) && (
-                    <span className="flex items-center gap-1.5 text-gray-900 dark:text-white font-medium">
-                      <img src="/google-logo.svg" alt="Google" className="w-3.5 h-3.5" />
-                      {(enrichedData?.rating || destination.rating).toFixed(1)}
-                    </span>
-                  )}
-                  {(enrichedData?.price_level || destination.price_level) && (
-                    <span className="text-gray-500 dark:text-gray-400">
-                      {PRICE_LEVEL.LABELS[(enrichedData?.price_level || destination.price_level) as keyof typeof PRICE_LEVEL.LABELS]}
-                    </span>
-                  )}
-                </div>
-
                 {/* Title */}
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white leading-tight mb-3">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white leading-tight mb-1">
                   {destination.name}
                 </h1>
 
-                {/* Location */}
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-4">
-                  <MapPin className="w-4 h-4" />
-                  <span className="text-[14px]">
-                    {destination.neighborhood && `${destination.neighborhood} · `}
-                    {cityName}{destination.country ? `, ${destination.country}` : ''}
-                  </span>
-                </div>
+                {/* Category · City */}
+                <p className="text-[15px] text-gray-500 dark:text-gray-400 mb-2">
+                  {formatLabel(destination.category)} · {cityName}
+                </p>
 
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {destination.michelin_stars && destination.michelin_stars > 0 && (
-                    <span className="px-3 py-1.5 rounded-full bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-[12px] font-medium text-red-700 dark:text-red-300 flex items-center gap-1.5">
-                      <img src="/michelin-star.svg" alt="Michelin" className="w-3 h-3" />
-                      {destination.michelin_stars} Michelin {destination.michelin_stars === 1 ? 'Star' : 'Stars'}
+                {/* Rating with review count */}
+                {(enrichedData?.rating || destination.rating) && (
+                  <div className="flex items-center gap-1.5 mb-5">
+                    <img src="/google-logo.svg" alt="Google" className="w-4 h-4" />
+                    <span className="text-[15px] font-semibold text-gray-900 dark:text-white">
+                      {(enrichedData?.rating || destination.rating).toFixed(1)}
                     </span>
-                  )}
-                  {destination.crown && (
-                    <span className="px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-[12px] font-medium text-amber-700 dark:text-amber-300">
-                      Crown
-                    </span>
-                  )}
-                  {destination.brand && (
-                    <Link
-                      href={`/brand/${encodeURIComponent(destination.brand)}`}
-                      className="px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 text-[12px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-                    >
-                      <Building2 className="w-3 h-3" />
-                      {destination.brand}
-                    </Link>
-                  )}
-                </div>
+                    {(enrichedData?.user_ratings_total || destination.user_ratings_total) && (
+                      <span className="text-[14px] text-gray-500 dark:text-gray-400">
+                        ({enrichedData?.user_ratings_total || destination.user_ratings_total} reviews)
+                      </span>
+                    )}
+                  </div>
+                )}
 
-                {/* Action buttons */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleShare}
-                    className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-full text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    Share
-                  </button>
+                {/* Tags - Inline badges */}
+                {(destination.michelin_stars || destination.crown || destination.brand) && (
+                  <div className="flex flex-wrap gap-2 mb-5">
+                    {destination.michelin_stars && destination.michelin_stars > 0 && (
+                      <span className="px-3 py-1.5 rounded-full bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-[12px] font-medium text-red-700 dark:text-red-300 flex items-center gap-1.5">
+                        <img src="/michelin-star.svg" alt="Michelin" className="w-3 h-3" />
+                        {destination.michelin_stars} Michelin {destination.michelin_stars === 1 ? 'Star' : 'Stars'}
+                      </span>
+                    )}
+                    {destination.crown && (
+                      <span className="px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-[12px] font-medium text-amber-700 dark:text-amber-300">
+                        Crown
+                      </span>
+                    )}
+                    {destination.brand && (
+                      <Link
+                        href={`/brand/${encodeURIComponent(destination.brand)}`}
+                        className="px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 text-[12px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                      >
+                        <Building2 className="w-3 h-3" />
+                        {destination.brand}
+                      </Link>
+                    )}
+                  </div>
+                )}
+
+                {/* Action buttons - Redesigned */}
+                <div className="flex items-center gap-2 mb-3">
+                  {/* Save button - Primary */}
                   <button
                     onClick={() => user ? (!isSaved && setShowSaveModal(true)) : router.push('/auth/login')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium transition-colors ${
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-[14px] font-medium transition-colors ${
                       isSaved
                         ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                         : 'border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -496,46 +485,84 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                     <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
                     {isSaved ? 'Saved' : 'Save'}
                   </button>
-                  <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        onClick={(e) => {
-                          if (!isVisited) {
-                            e.preventDefault();
-                            user ? handleVisitToggle() : router.push('/auth/login');
-                          }
-                        }}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium transition-colors ${
-                          isVisited
-                            ? 'bg-green-600 text-white'
-                            : 'border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                        }`}
-                      >
-                        <Check className={`w-4 h-4 ${isVisited ? 'stroke-[3]' : ''}`} />
-                        {isVisited ? 'Visited' : 'Mark Visited'}
-                        {isVisited && <ChevronDown className="w-3 h-3" />}
-                      </button>
-                    </DropdownMenuTrigger>
-                    {isVisited && (
-                      <DropdownMenuContent align="start" className="w-48">
-                        <DropdownMenuItem onClick={() => {
-                          setShowVisitedModal(true);
-                          setShowVisitedDropdown(false);
-                        }}>
-                          <Plus className="h-3 w-3 mr-2" />
-                          Add Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => {
-                          handleVisitToggle();
-                          setShowVisitedDropdown(false);
-                        }}>
-                          <X className="h-3 w-3 mr-2" />
-                          Remove Visit
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    )}
-                  </DropdownMenu>
+
+                  {/* Share button - Icon only */}
+                  <button
+                    onClick={handleShare}
+                    className="w-11 h-11 flex items-center justify-center border border-gray-200 dark:border-gray-700 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    aria-label="Share"
+                  >
+                    <Share2 className="w-5 h-5" />
+                  </button>
+
+                  {/* Edit button - Icon only (link to report/suggest edit) */}
+                  <button
+                    onClick={() => {
+                      // Could link to a suggest-edit modal or external form
+                      toast.info('Suggest an edit feature coming soon');
+                    }}
+                    className="w-11 h-11 flex items-center justify-center border border-gray-200 dark:border-gray-700 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    aria-label="Suggest edit"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+
+                  {/* Directions button - Icon only */}
+                  {destination.latitude && destination.longitude && (
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${destination.latitude},${destination.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-11 h-11 flex items-center justify-center border border-gray-200 dark:border-gray-700 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      aria-label="Get directions"
+                    >
+                      <Navigation className="w-5 h-5" />
+                    </a>
+                  )}
                 </div>
+
+                {/* Been Here button - Full width */}
+                <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      onClick={(e) => {
+                        if (!isVisited) {
+                          e.preventDefault();
+                          user ? handleVisitToggle() : router.push('/auth/login');
+                        }
+                      }}
+                      className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-[14px] font-medium transition-colors ${
+                        isVisited
+                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                          : 'border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      <Check className={`w-4 h-4 ${isVisited ? 'text-gray-900 dark:text-white' : ''}`} />
+                      {isVisited ? 'Been Here' : 'Been Here'}
+                      {isVisited && <ChevronDown className="w-3 h-3 ml-1" />}
+                    </button>
+                  </DropdownMenuTrigger>
+                  {isVisited && (
+                    <DropdownMenuContent align="center" className="w-48">
+                      <DropdownMenuItem onClick={() => {
+                        setShowVisitedModal(true);
+                        setShowVisitedDropdown(false);
+                      }}>
+                        <Plus className="h-3 w-3 mr-2" />
+                        Add Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => {
+                        handleVisitToggle();
+                        setShowVisitedDropdown(false);
+                      }}>
+                        <X className="h-3 w-3 mr-2" />
+                        Remove Visit
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  )}
+                </DropdownMenu>
               </div>
 
               {/* Main Image */}
@@ -599,24 +626,93 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 </div>
               )}
 
-              {/* Description */}
+              {/* Description - Simplified */}
               {(destination.micro_description || destination.content) && (
-                <div className="mb-6 p-5 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
-                  <h2 className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-3">About</h2>
-                  {destination.micro_description && (
-                    <p className="text-[15px] font-medium text-gray-900 dark:text-white mb-2">
-                      {destination.micro_description}
-                    </p>
-                  )}
-                  {destination.content && (
-                    <p className="text-[14px] leading-relaxed text-gray-600 dark:text-gray-400">
-                      {htmlToPlainText(destination.content)}
-                    </p>
-                  )}
+                <div className="mb-8">
+                  <p className="text-[16px] leading-relaxed text-gray-700 dark:text-gray-300">
+                    {destination.micro_description || htmlToPlainText(destination.content || '')}
+                  </p>
                 </div>
               )}
 
-              {/* Architecture & Design */}
+              {/* Contact & Hours - Redesigned */}
+              {(enrichedData?.formatted_address || destination.formatted_address ||
+                enrichedData?.international_phone_number || destination.phone_number ||
+                enrichedData?.website || destination.website) && (
+                <div className="mb-8 lg:hidden">
+                  <div className="flex items-center gap-2 mb-4">
+                    <h2 className="text-[12px] font-medium text-gray-400 uppercase tracking-wider">Contact & Hours</h2>
+                    {destination.timezone && (
+                      <span className="text-[12px] text-gray-400">
+                        · {new Date().toLocaleTimeString('en-US', {
+                            timeZone: destination.timezone,
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                          })} local
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* Address */}
+                    {(enrichedData?.formatted_address || destination.formatted_address) && (
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                          <MapPin className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        </div>
+                        <p className="text-[15px] text-gray-700 dark:text-gray-300 leading-relaxed pt-1">
+                          {enrichedData?.formatted_address || destination.formatted_address}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Phone */}
+                    {(enrichedData?.international_phone_number || destination.phone_number) && (
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                          <Phone className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        </div>
+                        <a
+                          href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
+                          className="text-[15px] text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                        >
+                          {enrichedData?.international_phone_number || destination.phone_number}
+                        </a>
+                      </div>
+                    )}
+
+                    {/* Website */}
+                    {(enrichedData?.website || destination.website) && (
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                          <Globe className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        </div>
+                        <a
+                          href={(() => {
+                            const url = enrichedData?.website || destination.website || '';
+                            return url.startsWith('http') ? url : `https://${url}`;
+                          })()}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[15px] text-blue-600 dark:text-blue-400 hover:underline truncate"
+                        >
+                          {(() => {
+                            const url = enrichedData?.website || destination.website || '';
+                            try {
+                              return new URL(url.startsWith('http') ? url : `https://${url}`).hostname.replace('www.', '');
+                            } catch {
+                              return url;
+                            }
+                          })()}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Architecture & Design - Redesigned */}
               <ArchitectDesignInfo destination={destination} />
 
               {/* ML Intelligence */}

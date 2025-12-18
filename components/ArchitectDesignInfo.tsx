@@ -1,6 +1,6 @@
 'use client';
 
-import { Building2, Palette, Calendar, ExternalLink, Globe, Sparkles } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { Destination } from '@/types/destination';
 import { Architect, DesignFirm, DesignMovement } from '@/types/architecture';
@@ -52,217 +52,160 @@ export function ArchitectDesignInfo({ destination }: ArchitectDesignInfoProps) {
   };
 
   return (
-    <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
-      <h2 className="text-sm font-medium mb-4">Architecture & Design</h2>
+    <div className="mb-8">
+      <h2 className="text-[12px] font-medium text-gray-400 uppercase tracking-wider mb-4">Design & Architecture</h2>
       <div className="space-y-4">
-        {/* Architect - Enhanced with rich data */}
+        {/* Architect - Avatar style */}
         {architect && (
-          <div className="flex items-start gap-3">
-            <Building2 className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
+          <Link
+            href={architectObj?.slug ? `/architect/${architectObj.slug}` : `/architect/${architectNameToSlug(architect)}`}
+            className="flex items-center gap-3 group"
+          >
+            <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+              <span className="text-[14px] font-medium text-gray-500 dark:text-gray-400">a</span>
+            </div>
             <div className="flex-1 min-w-0">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Architect</div>
-              <div className="space-y-1">
-                <Link
-                  href={architectObj?.slug ? `/architect/${architectObj.slug}` : `/architect/${architectNameToSlug(architect)}`}
-                  className="text-sm text-gray-900 dark:text-white font-medium hover:underline inline-block"
-                >
-                  {architect}
-                </Link>
-                {architectObj && (
-                  <div className="space-y-1.5">
-                    {(architectObj.birth_year || architectObj.death_year) && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {formatArchitectYears(architectObj)}
-                      </div>
-                    )}
-                    {architectObj.nationality && (
-                      <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                        <Globe className="h-3 w-3" />
-                        <span>{architectObj.nationality}</span>
-                      </div>
-                    )}
-                    {architectObj.design_philosophy && (
-                      <div className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
-                        <div className="flex items-start gap-1.5 mb-1">
-                          <Sparkles className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Design Philosophy</span>
-                        </div>
-                        <p className="text-xs text-gray-700 dark:text-gray-300">{architectObj.design_philosophy}</p>
-                      </div>
-                    )}
-                    {architectObj.bio && (
-                      <div className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mt-2">
-                        <p>{architectObj.bio}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
+              <div className="text-[12px] text-gray-400 dark:text-gray-500">Architect</div>
+              <div className="text-[15px] text-gray-900 dark:text-white font-medium group-hover:underline flex items-center gap-1">
+                {architect}
+                <svg className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+          </Link>
+        )}
+
+        {/* Design Firm - Avatar style */}
+        {designFirm && !architect && (
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+              <span className="text-[14px] font-medium text-gray-500 dark:text-gray-400">d</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[12px] text-gray-400 dark:text-gray-500">Design Firm</div>
+              <div className="text-[15px] text-gray-900 dark:text-white font-medium">
+                {designFirm}
               </div>
             </div>
           </div>
         )}
 
-        {/* Design Firm - Enhanced */}
-        {designFirm && (
-          <div className="flex items-start gap-3">
-            <Building2 className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Design Firm</div>
-              <div className="space-y-1">
-                <div className="text-sm text-gray-900 dark:text-white font-medium">
-                  {designFirm}
-                </div>
-                {designFirmObj && (
-                  <div className="space-y-1.5">
-                    {designFirmObj.founded_year && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        Founded {designFirmObj.founded_year}
-                      </div>
-                    )}
-                    {designFirmObj.description && (
-                      <div className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mt-2">
-                        <p>{designFirmObj.description}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Interior Designer - Enhanced */}
+        {/* Interior Designer - Avatar style */}
         {interiorDesigner && (
-          <div className="flex items-start gap-3">
-            <Palette className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+              <span className="text-[14px] font-medium text-gray-500 dark:text-gray-400">i</span>
+            </div>
             <div className="flex-1 min-w-0">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Interior Designer</div>
-              <div className="space-y-1">
-                <div className="text-sm text-gray-900 dark:text-white font-medium">
-                  {interiorDesigner}
-                </div>
-                {interiorDesignerObj && (
-                  <div className="space-y-1.5">
-                    {(interiorDesignerObj.birth_year || interiorDesignerObj.death_year) && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {formatArchitectYears(interiorDesignerObj)}
-                      </div>
-                    )}
-                    {interiorDesignerObj.nationality && (
-                      <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                        <Globe className="h-3 w-3" />
-                        <span>{interiorDesignerObj.nationality}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
+              <div className="text-[12px] text-gray-400 dark:text-gray-500">Interior Designer</div>
+              <div className="text-[15px] text-gray-900 dark:text-white font-medium">
+                {interiorDesigner}
               </div>
             </div>
           </div>
         )}
 
-        {/* Architectural Style */}
+        {/* Architectural Style - Avatar style */}
         {architecturalStyle && (
-          <div className="flex items-start gap-3">
-            <Palette className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+              <span className="text-[14px] font-medium text-gray-500 dark:text-gray-400">s</span>
+            </div>
             <div className="flex-1 min-w-0">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Style</div>
-              <div className="text-sm text-gray-900 dark:text-white font-medium capitalize">
+              <div className="text-[12px] text-gray-400 dark:text-gray-500">Style</div>
+              <div className="text-[15px] text-gray-900 dark:text-white font-medium capitalize">
                 {architecturalStyle}
               </div>
             </div>
           </div>
         )}
 
-        {/* Design Movement */}
+        {/* Design Movement - Avatar style with link */}
         {movementObj && (
-          <div className="flex items-start gap-3">
-            <Palette className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
+          <Link
+            href={`/movement/${movementObj.slug}`}
+            className="flex items-center gap-3 group"
+          >
+            <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+              <span className="text-[14px] font-medium text-gray-500 dark:text-gray-400">m</span>
+            </div>
             <div className="flex-1 min-w-0">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Movement</div>
-              <div className="space-y-1">
-                <Link
-                  href={`/movement/${movementObj.slug}`}
-                  className="text-sm text-gray-900 dark:text-white font-medium hover:underline inline-block"
-                >
-                  {movementObj.name}
-                </Link>
-                {movementObj.description && (
-                  <div className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mt-2">
-                    <p>{movementObj.description}</p>
-                  </div>
-                )}
-                {(movementObj.period_start || movementObj.period_end) && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {movementObj.period_start}
-                    {movementObj.period_end ? `–${movementObj.period_end}` : '–present'}
-                  </div>
-                )}
+              <div className="text-[12px] text-gray-400 dark:text-gray-500">Movement</div>
+              <div className="text-[15px] text-gray-900 dark:text-white font-medium group-hover:underline flex items-center gap-1">
+                {movementObj.name}
+                <svg className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </div>
             </div>
-          </div>
+          </Link>
         )}
 
-        {/* Design Period (legacy) */}
+        {/* Design Period (legacy) - Avatar style */}
         {designPeriod && !movementObj && (
-          <div className="flex items-start gap-3">
-            <Calendar className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+              <span className="text-[14px] font-medium text-gray-500 dark:text-gray-400">p</span>
+            </div>
             <div className="flex-1 min-w-0">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Period</div>
-              <div className="text-sm text-gray-900 dark:text-white font-medium">
+              <div className="text-[12px] text-gray-400 dark:text-gray-500">Period</div>
+              <div className="text-[15px] text-gray-900 dark:text-white font-medium">
                 {designPeriod}
               </div>
             </div>
           </div>
         )}
-        
-        {/* Architectural Significance */}
-        {architecturalSignificance && (
-          <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
-            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Significance</div>
-            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-              {architecturalSignificance}
-            </p>
-          </div>
-        )}
-        
-        {/* Design Story */}
-        {designStory && (
-          <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
-            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Design Story</div>
-            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-              {designStory}
-            </p>
-          </div>
-        )}
-        
-        {/* Construction Year */}
+
+        {/* Construction Year - Avatar style */}
         {constructionYear && (
-          <div className="flex items-start gap-3">
-            <Calendar className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+              <span className="text-[14px] font-medium text-gray-500 dark:text-gray-400">y</span>
+            </div>
             <div className="flex-1 min-w-0">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Construction</div>
-              <div className="text-sm text-gray-900 dark:text-white font-medium">
+              <div className="text-[12px] text-gray-400 dark:text-gray-500">Year Built</div>
+              <div className="text-[15px] text-gray-900 dark:text-white font-medium">
                 {constructionYear}
               </div>
             </div>
           </div>
         )}
 
+        {/* Architectural Significance - Expandable section */}
+        {architecturalSignificance && (
+          <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
+            <div className="text-[12px] font-medium text-gray-400 uppercase tracking-wider mb-2">Significance</div>
+            <p className="text-[14px] text-gray-600 dark:text-gray-400 leading-relaxed">
+              {architecturalSignificance}
+            </p>
+          </div>
+        )}
+
+        {/* Design Story */}
+        {designStory && (
+          <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
+            <div className="text-[12px] font-medium text-gray-400 uppercase tracking-wider mb-2">Design Story</div>
+            <p className="text-[14px] text-gray-600 dark:text-gray-400 leading-relaxed">
+              {designStory}
+            </p>
+          </div>
+        )}
+
         {/* Sources */}
         {sources && sources.length > 0 && (
-          <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Sources</div>
-            <div className="space-y-1.5">
+          <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
+            <div className="text-[12px] font-medium text-gray-400 uppercase tracking-wider mb-2">Sources</div>
+            <div className="space-y-2">
               {sources.slice(0, 3).map((source: any, idx: number) => (
                 <a
                   key={idx}
                   href={source.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors group"
+                  className="flex items-center gap-2 text-[13px] text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors group"
                 >
-                  <ExternalLink className="h-3 w-3 opacity-50 group-hover:opacity-100" />
+                  <ExternalLink className="h-3.5 w-3.5 opacity-50 group-hover:opacity-100" />
                   <span className="truncate">{source.title || source.url}</span>
                 </a>
               ))}
