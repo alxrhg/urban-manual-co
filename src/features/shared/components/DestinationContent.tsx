@@ -25,6 +25,7 @@ import { Destination } from '@/types/destination';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 import { useTripBuilder } from '@/contexts/TripBuilderContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIntelligentDrawer } from './IntelligentDrawerContext';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from '@/ui/sonner';
 
@@ -488,6 +489,7 @@ const DestinationContent = memo(function DestinationContent({
 }: DestinationContentProps) {
   const { user } = useAuth();
   const { activeTrip, addToTrip, startTrip } = useTripBuilder();
+  const { close: closeDrawer } = useIntelligentDrawer();
 
   // Smart category detection
   const categoryType = getCategoryType(destination.category);
@@ -1794,6 +1796,7 @@ const DestinationContent = memo(function DestinationContent({
         {/* View Full Page */}
         <Link
           href={`/destination/${destination.slug}`}
+          onClick={closeDrawer}
           className="flex items-center justify-between w-full mt-6 py-4 border-t border-gray-100 dark:border-white/10 group"
         >
           <span className="text-[15px] font-medium text-gray-900 dark:text-white">View full page</span>
