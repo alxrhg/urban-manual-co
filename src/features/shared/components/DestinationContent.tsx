@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
+import { CITY_TIMEZONES } from '@/lib/constants';
 import { useTripBuilder } from '@/contexts/TripBuilderContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
@@ -95,36 +96,106 @@ function getCategoryType(category?: string): CategoryType {
 /**
  * Get local time at destination for context
  * Returns formatted time string like "10:30 AM local"
+ * Uses timezone_id or city timezone mapping for accuracy
  */
-function getLocalTimeAtDestination(utcOffsetMinutes: number | null | undefined): string | null {
-  if (utcOffsetMinutes == null) return null;
-
-  // Get current UTC time
+function getLocalTimeAtDestination(
+  utcOffsetMinutes: number | null | undefined,
+  city?: string | null,
+  timezoneId?: string | null
+): string | null {
   const now = new Date();
-  const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
 
-  // Apply destination's UTC offset
-  const localTime = new Date(utcTime + (utcOffsetMinutes * 60000));
+  // Best: Use timezone_id (handles DST automatically)
+  if (timezoneId) {
+    try {
+      return now.toLocaleTimeString('en-US', {
+        timeZone: timezoneId,
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      });
+    } catch {
+      // Invalid timezone, fall through
+    }
+  }
 
-  // Format as 12-hour time
-  const hours = localTime.getHours();
-  const minutes = localTime.getMinutes();
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  const hour12 = hours % 12 || 12;
-  const minuteStr = minutes.toString().padStart(2, '0');
+  // Good: Use city timezone mapping
+  if (city) {
+    const cityKey = city.toLowerCase().replace(/\s+/g, '-');
+    const cityTimezone = CITY_TIMEZONES[cityKey];
+    if (cityTimezone) {
+      try {
+        return now.toLocaleTimeString('en-US', {
+          timeZone: cityTimezone,
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        });
+      } catch {
+        // Invalid timezone, fall through
+      }
+    }
+  }
 
-  return `${hour12}:${minuteStr} ${ampm}`;
+  // Okay: Use UTC offset (static, doesn't handle DST)
+  if (utcOffsetMinutes != null) {
+    const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const localTime = new Date(utcTime + (utcOffsetMinutes * 60000));
+    const hours = localTime.getHours();
+    const minutes = localTime.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const hour12 = hours % 12 || 12;
+    const minuteStr = minutes.toString().padStart(2, '0');
+    return `${hour12}:${minuteStr} ${ampm}`;
+  }
+
+  return null;
 }
 
 /**
  * Get destination local hour and day of week
- * If utc_offset not available, falls back to user's local time
+ * Uses timezone_id, city timezone mapping, or utc_offset for accuracy
+ * Falls back to UTC (not user's local time) if no timezone info available
  */
-function getDestinationLocalTime(utcOffsetMinutes: number | null | undefined): { hour: number; dayOfWeek: number; isWeekend: boolean } {
+function getDestinationLocalTime(
+  utcOffsetMinutes: number | null | undefined,
+  city?: string | null,
+  timezoneId?: string | null
+): { hour: number; dayOfWeek: number; isWeekend: boolean } {
   const now = new Date();
 
+  // Best: Use timezone_id (handles DST automatically)
+  if (timezoneId) {
+    try {
+      const localString = now.toLocaleString('en-US', { timeZone: timezoneId });
+      const localTime = new Date(localString);
+      const hour = localTime.getHours();
+      const dayOfWeek = localTime.getDay();
+      return { hour, dayOfWeek, isWeekend: dayOfWeek === 0 || dayOfWeek === 6 };
+    } catch {
+      // Invalid timezone, fall through
+    }
+  }
+
+  // Good: Use city timezone mapping
+  if (city) {
+    const cityKey = city.toLowerCase().replace(/\s+/g, '-');
+    const cityTimezone = CITY_TIMEZONES[cityKey];
+    if (cityTimezone) {
+      try {
+        const localString = now.toLocaleString('en-US', { timeZone: cityTimezone });
+        const localTime = new Date(localString);
+        const hour = localTime.getHours();
+        const dayOfWeek = localTime.getDay();
+        return { hour, dayOfWeek, isWeekend: dayOfWeek === 0 || dayOfWeek === 6 };
+      } catch {
+        // Invalid timezone, fall through
+      }
+    }
+  }
+
+  // Okay: Use UTC offset (static, doesn't handle DST)
   if (utcOffsetMinutes != null) {
-    // Calculate destination's local time
     const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
     const localTime = new Date(utcTime + (utcOffsetMinutes * 60000));
     const hour = localTime.getHours();
@@ -132,9 +203,11 @@ function getDestinationLocalTime(utcOffsetMinutes: number | null | undefined): {
     return { hour, dayOfWeek, isWeekend: dayOfWeek === 0 || dayOfWeek === 6 };
   }
 
-  // Fallback to user's local time
-  const hour = now.getHours();
-  const dayOfWeek = now.getDay();
+  // Fallback: Use UTC (not user's local time for consistency)
+  const utcString = now.toLocaleString('en-US', { timeZone: 'UTC' });
+  const utcTime = new Date(utcString);
+  const hour = utcTime.getHours();
+  const dayOfWeek = utcTime.getDay();
   return { hour, dayOfWeek, isWeekend: dayOfWeek === 0 || dayOfWeek === 6 };
 }
 
@@ -154,7 +227,7 @@ interface SubtleContext {
 /**
  * Analyze context subtly based on time, category, and data
  * No user interaction required - just works
- * Uses destination's local time when utcOffsetMinutes is available
+ * Uses destination's local time based on city timezone or utcOffsetMinutes
  */
 function getSubtleContext(
   categoryType: CategoryType,
@@ -162,10 +235,11 @@ function getSubtleContext(
   rating?: number,
   reviewCount?: number,
   isOpen?: boolean | null,
-  utcOffsetMinutes?: number | null
+  utcOffsetMinutes?: number | null,
+  city?: string | null
 ): SubtleContext {
   // Use destination's local time, not user's
-  const { hour, isWeekend } = getDestinationLocalTime(utcOffsetMinutes);
+  const { hour, isWeekend } = getDestinationLocalTime(utcOffsetMinutes, city);
   const context: SubtleContext = {};
 
   // Determine meal context based on time
@@ -872,10 +946,10 @@ const DestinationContent = memo(function DestinationContent({
 
   // Parse opening hours with smart analysis - use destination's local time
   const openingHours = enrichedData?.opening_hours?.weekday_text || [];
-  const todayHours = getTodayHours(openingHours, enrichedData?.utc_offset);
-  const hoursAnalysis = analyzeHours(openingHours, enrichedData?.utc_offset);
+  const todayHours = getTodayHours(openingHours, enrichedData?.utc_offset, destination.city);
+  const hoursAnalysis = analyzeHours(openingHours, enrichedData?.utc_offset, destination.city);
   const isOpenNow = hoursAnalysis.isOpen;
-  const bestTimeHint = getBestTimeHint(categoryType, openingHours, enrichedData?.utc_offset);
+  const bestTimeHint = getBestTimeHint(categoryType, openingHours, enrichedData?.utc_offset, destination.city);
 
   // Has architecture info
   const hasArchInfo = enrichedData?.architect_obj || enrichedData?.interior_designer_obj ||
@@ -987,8 +1061,9 @@ const DestinationContent = memo(function DestinationContent({
     rating ?? undefined,
     reviewCount ?? undefined,
     isOpenNow,
-    enrichedData?.utc_offset
-  ), [categoryType, enrichedData?.price_level, rating, reviewCount, isOpenNow, enrichedData?.utc_offset]);
+    enrichedData?.utc_offset,
+    destination.city
+  ), [categoryType, enrichedData?.price_level, rating, reviewCount, isOpenNow, enrichedData?.utc_offset, destination.city]);
 
   const subtleRecommendation = useMemo(() => getSubtleRecommendation(
     categoryType,
@@ -1122,7 +1197,7 @@ const DestinationContent = memo(function DestinationContent({
         );
 
       case 'hours':
-        const localTimeStr = getLocalTimeAtDestination(enrichedData?.utc_offset);
+        const localTimeStr = getLocalTimeAtDestination(enrichedData?.utc_offset, destination.city);
         return (
           <div key="hours" className="mt-6">
             <div className="flex items-center justify-between mb-3">
@@ -1807,12 +1882,12 @@ const DestinationContent = memo(function DestinationContent({
 /**
  * Get today's hours string - uses destination's local time
  */
-function getTodayHours(hours: string[], utcOffsetMinutes?: number | null): string | null {
+function getTodayHours(hours: string[], utcOffsetMinutes?: number | null, city?: string | null): string | null {
   if (!hours || hours.length === 0) return null;
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   // Use destination's local day, not user's
-  const { dayOfWeek } = getDestinationLocalTime(utcOffsetMinutes);
+  const { dayOfWeek } = getDestinationLocalTime(utcOffsetMinutes, city);
   const today = dayNames[dayOfWeek];
   return hours.find(h => h.startsWith(today)) || null;
 }
@@ -1859,9 +1934,9 @@ interface SmartHoursResult {
 
 /**
  * Smart hours analysis - returns human-friendly status
- * Uses destination's local time when utcOffsetMinutes is provided
+ * Uses destination's local time based on city timezone or utcOffsetMinutes
  */
-function analyzeHours(hours: string[], utcOffsetMinutes?: number | null): SmartHoursResult {
+function analyzeHours(hours: string[], utcOffsetMinutes?: number | null, city?: string | null): SmartHoursResult {
   const defaultResult: SmartHoursResult = {
     isOpen: null,
     status: '',
@@ -1871,14 +1946,14 @@ function analyzeHours(hours: string[], utcOffsetMinutes?: number | null): SmartH
 
   if (!hours || hours.length === 0) return defaultResult;
 
-  const todayHours = getTodayHours(hours, utcOffsetMinutes);
+  const todayHours = getTodayHours(hours, utcOffsetMinutes, city);
   if (!todayHours) return defaultResult;
 
   // Check if closed today
   if (todayHours.toLowerCase().includes('closed')) {
     // Find next open day
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const { dayOfWeek: todayIndex } = getDestinationLocalTime(utcOffsetMinutes);
+    const { dayOfWeek: todayIndex } = getDestinationLocalTime(utcOffsetMinutes, city);
 
     for (let i = 1; i <= 7; i++) {
       const nextDayIndex = (todayIndex + i) % 7;
@@ -1901,14 +1976,42 @@ function analyzeHours(hours: string[], utcOffsetMinutes?: number | null): SmartH
   if (!range) return { ...defaultResult, isOpen: true, status: 'Open', category: 'open' };
 
   // Use destination's local time, not user's
+  const { hour, dayOfWeek } = getDestinationLocalTime(utcOffsetMinutes, city);
   const now = new Date();
+  // Get minutes from getDestinationLocalTime result
   let currentMinutes: number;
-  if (utcOffsetMinutes != null) {
+
+  // Try city timezone first
+  if (city) {
+    const cityKey = city.toLowerCase().replace(/\s+/g, '-');
+    const cityTimezone = CITY_TIMEZONES[cityKey];
+    if (cityTimezone) {
+      try {
+        const localString = now.toLocaleString('en-US', { timeZone: cityTimezone });
+        const localTime = new Date(localString);
+        currentMinutes = localTime.getHours() * 60 + localTime.getMinutes();
+      } catch {
+        currentMinutes = hour * 60 + now.getMinutes();
+      }
+    } else if (utcOffsetMinutes != null) {
+      const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const localTime = new Date(utcTime + (utcOffsetMinutes * 60000));
+      currentMinutes = localTime.getHours() * 60 + localTime.getMinutes();
+    } else {
+      // Fallback to UTC
+      const utcString = now.toLocaleString('en-US', { timeZone: 'UTC' });
+      const utcTime = new Date(utcString);
+      currentMinutes = utcTime.getHours() * 60 + utcTime.getMinutes();
+    }
+  } else if (utcOffsetMinutes != null) {
     const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
     const localTime = new Date(utcTime + (utcOffsetMinutes * 60000));
     currentMinutes = localTime.getHours() * 60 + localTime.getMinutes();
   } else {
-    currentMinutes = now.getHours() * 60 + now.getMinutes();
+    // Fallback to UTC
+    const utcString = now.toLocaleString('en-US', { timeZone: 'UTC' });
+    const utcTime = new Date(utcString);
+    currentMinutes = utcTime.getHours() * 60 + utcTime.getMinutes();
   }
 
   // Check if currently open
@@ -1974,9 +2077,9 @@ function analyzeHours(hours: string[], utcOffsetMinutes?: number | null): SmartH
 
 /**
  * Get best time hint based on category
- * Uses destination's local time when utcOffsetMinutes is available
+ * Uses destination's local time based on city timezone or utcOffsetMinutes
  */
-function getBestTimeHint(categoryType: CategoryType, hours: string[], utcOffsetMinutes?: number | null): string | null {
+function getBestTimeHint(categoryType: CategoryType, hours: string[], utcOffsetMinutes?: number | null, city?: string | null): string | null {
   const hints: Record<CategoryType, string[]> = {
     dining: ['Best for dinner: 7-9 PM', 'Lunch crowds: 12-1:30 PM', 'Quietest: 3-5 PM'],
     nightlife: ['Peak hours: 10 PM - 1 AM', 'Happy hour vibes: 5-7 PM'],
@@ -1992,7 +2095,7 @@ function getBestTimeHint(categoryType: CategoryType, hours: string[], utcOffsetM
   if (!categoryHints.length) return null;
 
   // Return a contextual hint based on destination's local time
-  const { hour } = getDestinationLocalTime(utcOffsetMinutes);
+  const { hour } = getDestinationLocalTime(utcOffsetMinutes, city);
 
   if (categoryType === 'dining') {
     if (hour >= 10 && hour < 14) return 'Currently: lunch rush';
@@ -2016,9 +2119,9 @@ function getBestTimeHint(categoryType: CategoryType, hours: string[], utcOffsetM
 /**
  * Check if currently open (simplified)
  */
-function checkIfOpen(hours: string[]): boolean | null {
+function checkIfOpen(hours: string[], utcOffsetMinutes?: number | null, city?: string | null): boolean | null {
   if (!hours || hours.length === 0) return null;
-  const todayHours = getTodayHours(hours);
+  const todayHours = getTodayHours(hours, utcOffsetMinutes, city);
   if (!todayHours) return null;
   if (todayHours.includes('Closed')) return false;
   return true;
