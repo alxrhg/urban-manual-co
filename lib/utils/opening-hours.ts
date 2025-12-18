@@ -3,38 +3,7 @@
  * Uses timezone_id, utc_offset, or city mapping for accurate timezone handling
  */
 
-// City timezone mapping (fallback if timezone_id not available)
-const CITY_TIMEZONES: Record<string, string> = {
-  'tokyo': 'Asia/Tokyo',
-  'new-york': 'America/New_York',
-  'london': 'Europe/London',
-  'paris': 'Europe/Paris',
-  'los-angeles': 'America/Los_Angeles',
-  'singapore': 'Asia/Singapore',
-  'hong-kong': 'Asia/Hong_Kong',
-  'sydney': 'Australia/Sydney',
-  'dubai': 'Asia/Dubai',
-  'bangkok': 'Asia/Bangkok',
-  'seoul': 'Asia/Seoul',
-  'taipei': 'Asia/Taipei',
-  'osaka': 'Asia/Tokyo', // Same timezone as Tokyo
-  'kyoto': 'Asia/Tokyo',
-  'berlin': 'Europe/Berlin',
-  'rome': 'Europe/Rome',
-  'madrid': 'Europe/Madrid',
-  'amsterdam': 'Europe/Amsterdam',
-  'vienna': 'Europe/Vienna',
-  'prague': 'Europe/Prague',
-  'stockholm': 'Europe/Stockholm',
-  'copenhagen': 'Europe/Copenhagen',
-  'mumbai': 'Asia/Kolkata',
-  'delhi': 'Asia/Kolkata',
-  'jakarta': 'Asia/Jakarta',
-  'manila': 'Asia/Manila',
-  'kuala-lumpur': 'Asia/Kuala_Lumpur',
-  'ho-chi-minh': 'Asia/Ho_Chi_Minh',
-  'hanoi': 'Asia/Ho_Chi_Minh',
-};
+import { CITY_TIMEZONES } from '@/lib/constants';
 
 /**
  * Get current time in destination's timezone
@@ -68,13 +37,23 @@ function getCurrentTimeInTimezone(
   }
 
   // Okay: Use UTC offset (static, doesn't handle DST)
+  // We need getHours()/getDay() to return destination's local time
+  // Calculate: UTC time + user's offset (to get "raw" time) + dest offset
   if (utcOffset !== null && utcOffset !== undefined) {
-    const utcNow = new Date();
-    return new Date(utcNow.getTime() + (utcOffset * 60 * 1000));
+    const now = new Date();
+    // now.getTimezoneOffset() returns minutes BEHIND UTC (positive for west of UTC)
+    // utcOffset is minutes AHEAD of UTC (positive for east of UTC)
+    const userOffsetMs = now.getTimezoneOffset() * 60000;
+    const destOffsetMs = utcOffset * 60000;
+    // This creates a Date where getHours()/getDay() returns destination's local values
+    const destTimeMs = now.getTime() + userOffsetMs + destOffsetMs;
+    return new Date(destTimeMs);
   }
 
-  // Fallback: UTC
-  return new Date();
+  // Fallback: Use UTC (better than user's local time for consistency)
+  const now = new Date();
+  const utcString = now.toLocaleString('en-US', { timeZone: 'UTC' });
+  return new Date(utcString);
 }
 
 /**
