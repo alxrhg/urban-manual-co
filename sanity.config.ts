@@ -15,14 +15,8 @@ import { presentationTool } from 'sanity/presentation';
 import { visionTool } from '@sanity/vision';
 import { assist } from '@sanity/assist';
 import { unsplashImageAsset } from 'sanity-plugin-asset-source-unsplash';
-// NOTE: Google Maps Input temporarily disabled - not compatible with Sanity v5
-// import { googleMapsInput } from '@sanity/google-maps-input';
 import { schemaTypes } from './sanity/schemas';
 import { apiVersion, dataset, projectId, studioUrl } from './lib/sanity/env';
-
-// NOTE: Dashboard plugin temporarily disabled - not compatible with Sanity v5
-// import { dashboardTool, projectInfoWidget, projectUsersWidget } from '@sanity/dashboard';
-// import { documentListWidget } from 'sanity-plugin-dashboard-widget-document-list';
 
 // Preview URL for Presentation Tool
 const PREVIEW_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -52,15 +46,7 @@ export default defineConfig({
   basePath: studioUrl,
   apiVersion,
 
-  // Media Library - Centralized asset management
-  // Requires Sanity plan with Media Library feature
-  mediaLibrary: {
-    enabled: true,
-  },
-
   plugins: [
-    // NOTE: Dashboard Tool temporarily disabled - not compatible with Sanity v5
-    // Re-enable when @sanity/dashboard supports Sanity v5
 
     // Structure Tool - Document organization and list customization
     structureTool({
@@ -219,16 +205,6 @@ export default defineConfig({
 
     // Unsplash - Stock photo integration
     unsplashImageAsset(),
-
-    // NOTE: Google Maps Input temporarily disabled - not compatible with Sanity v5
-    // googleMapsInput({
-    //   apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '',
-    //   defaultZoom: 15,
-    //   defaultLocation: {
-    //     lat: 40.7128,
-    //     lng: -74.006,
-    //   },
-    // }),
   ],
 
   schema: {
