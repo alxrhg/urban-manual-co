@@ -48,6 +48,15 @@ export const destinationCardFields = groq`
     },
     alt,
     hotspot
+  },
+  brand,
+  "brandRef": brandRef->{
+    _id,
+    name,
+    "slug": slug.current,
+    "logoUrl": logo.asset->url,
+    "logoIconUrl": logoIcon.asset->url,
+    brandColor
   }
 `;
 
@@ -62,6 +71,33 @@ export const destinationDetailFields = groq`
   content,
   tags,
   brand,
+  "brandRef": brandRef->{
+    _id,
+    name,
+    "slug": slug.current,
+    "logo": logo {
+      asset->{
+        _id,
+        url,
+        metadata {
+          dimensions,
+          lqip
+        }
+      },
+      alt
+    },
+    "logoDark": logoDark {
+      asset->{
+        _id,
+        url
+      },
+      alt
+    },
+    "logoIcon": logoIcon.asset->url,
+    brandColor,
+    tier,
+    website
+  },
   neighborhood,
   geopoint,
   formattedAddress,
@@ -229,6 +265,114 @@ export const sitemapDestinationsQuery = groq`
   *[_type == "destination" && !(_id in path("drafts.**"))] {
     "slug": slug.current,
     _updatedAt
+  }
+`;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BRAND QUERIES
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Brand fields for list views and cards
+ */
+export const brandCardFields = groq`
+  _id,
+  _type,
+  name,
+  "slug": slug.current,
+  description,
+  categories,
+  tier,
+  "logo": logo {
+    asset->{
+      _id,
+      url,
+      metadata {
+        dimensions,
+        lqip
+      }
+    },
+    alt
+  },
+  "logoDark": logoDark {
+    asset->{
+      _id,
+      url
+    },
+    alt
+  },
+  "logoIcon": logoIcon.asset->url,
+  brandColor,
+  website
+`;
+
+/**
+ * Full brand fields for detail pages
+ */
+export const brandDetailFields = groq`
+  ${brandCardFields},
+  _createdAt,
+  _updatedAt,
+  founded,
+  headquarters,
+  "heroImage": heroImage {
+    asset->{
+      _id,
+      url,
+      metadata {
+        dimensions,
+        lqip
+      }
+    },
+    alt,
+    caption
+  },
+  instagramHandle,
+  linkedinUrl
+`;
+
+/**
+ * Get all brands
+ */
+export const allBrandsQuery = groq`
+  *[_type == "brand" && !(_id in path("drafts.**"))] | order(name asc) {
+    ${brandCardFields}
+  }
+`;
+
+/**
+ * Get a single brand by slug
+ */
+export const getBrandBySlugQuery = groq`
+  *[_type == "brand" && slug.current == $slug][0] {
+    ${brandDetailFields}
+  }
+`;
+
+/**
+ * Get a brand by ID
+ */
+export const getBrandByIdQuery = groq`
+  *[_type == "brand" && _id == $id][0] {
+    ${brandDetailFields}
+  }
+`;
+
+/**
+ * Get all brand slugs (for static generation)
+ */
+export const allBrandSlugsQuery = groq`
+  *[_type == "brand" && !(_id in path("drafts.**")) && defined(slug.current)] {
+    "slug": slug.current
+  }
+`;
+
+/**
+ * Get destinations by brand reference
+ */
+export const destinationsByBrandQuery = groq`
+  *[_type == "destination" && !(_id in path("drafts.**")) && brandRef._ref == $brandId] | order(name asc) {
+    ${destinationCardFields}
   }
 `;
 

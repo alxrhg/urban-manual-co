@@ -154,11 +154,21 @@ export default defineType({
       initialValue: false,
     }),
     defineField({
-      name: 'brand',
+      name: 'brandRef',
       title: 'Brand',
+      type: 'reference',
+      to: [{ type: 'brand' }],
+      group: 'editorial',
+      description: 'Select the brand/chain this destination belongs to',
+    }),
+    // Keep legacy brand field for backwards compatibility during migration
+    defineField({
+      name: 'brand',
+      title: 'Brand (Legacy)',
       type: 'string',
       group: 'editorial',
-      description: 'Brand name if part of a chain (e.g., Four Seasons)',
+      description: 'Legacy brand name field - use Brand reference above instead',
+      hidden: ({ document }) => !!document?.brandRef,
     }),
 
     // ═══════════════════════════════════════════════════════════════════
