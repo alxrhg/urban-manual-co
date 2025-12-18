@@ -60,9 +60,10 @@ function formatLabel(value: string): string {
 interface DestinationPageClientProps {
   initialDestination: Destination;
   parentDestination?: Destination | null;
+  siblingDestinations?: Destination[];
 }
 
-export default function DestinationPageClient({ initialDestination, parentDestination }: DestinationPageClientProps) {
+export default function DestinationPageClient({ initialDestination, parentDestination, siblingDestinations = [] }: DestinationPageClientProps) {
   const router = useRouter();
   const { user } = useAuth();
   const { trackAction, predictions } = useSequenceTracker();
@@ -599,6 +600,25 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                     onClick={() => router.push(`/destination/${parentDestination.slug}`)}
                     showBadges={true}
                   />
+                </div>
+              )}
+
+              {/* Also Inside (Sibling Destinations) */}
+              {siblingDestinations.length > 0 && parentDestination && (
+                <div>
+                  <h3 className="text-[15px] font-semibold text-gray-900 dark:text-white mb-4">
+                    Also inside {parentDestination.name}
+                  </h3>
+                  <div className="space-y-3">
+                    {siblingDestinations.slice(0, 4).map((sibling) => (
+                      <HorizontalDestinationCard
+                        key={sibling.slug}
+                        destination={sibling}
+                        onClick={() => router.push(`/destination/${sibling.slug}`)}
+                        showBadges={true}
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -1230,6 +1250,24 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                       onClick={() => router.push(`/destination/${parentDestination.slug}`)}
                       showBadges={true}
                     />
+                  </div>
+                </div>
+              )}
+
+              {/* Also Inside (Sibling Destinations) */}
+              {siblingDestinations.length > 0 && parentDestination && (
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-5">Also inside {parentDestination.name}</h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    {siblingDestinations.slice(0, 4).map((sibling) => (
+                      <div key={sibling.slug} className="p-4 border border-gray-100 dark:border-gray-800 rounded-2xl hover:shadow-md transition-shadow">
+                        <HorizontalDestinationCard
+                          destination={sibling}
+                          onClick={() => router.push(`/destination/${sibling.slug}`)}
+                          showBadges={true}
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
