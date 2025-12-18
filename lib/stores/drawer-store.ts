@@ -25,7 +25,15 @@ export type DrawerType =
   | 'trip-add-hotel'
   | 'add-flight'
   | 'trip-ai'
-  | 'poi-editor' // Added poi-editor for admin functionality
+  | 'poi-editor'
+  // More legacy types found via compilation errors
+  | 'quick-trip-selector'
+  | 'trip-overview'
+  | 'add-hotel'
+  | 'ai-suggestions'
+  | 'trip-overview-quick'
+  | 'trip-day'
+  | 'trip-editor'
   | null;
 
 /**
@@ -53,6 +61,7 @@ interface DrawerState {
   toggleDrawer: (drawer: DrawerType) => void;
   goBack: () => void;
   setDisplayMode: (mode: "overlay" | "inline") => void;
+  setProps: (key: string, value: unknown) => void; // New action for safe mutation
 
   // Legacy compatibility helpers (to minimize refactor friction)
   open: boolean;
@@ -145,6 +154,12 @@ export const useDrawerStore = create<DrawerState>((set, get) => ({
   },
 
   setDisplayMode: (mode) => set({ displayMode: mode }),
+
+  setProps: (key, value) => {
+    set((state) => ({
+      props: { ...state.props, [key]: value }
+    }));
+  },
 
   // Legacy support
   open: false,

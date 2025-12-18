@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { router, protectedProcedure } from '../trpc';
-import { SupabaseAIService } from '@/server/services/ai/ai.service';
+import { SupabaseAIService } from '../services/ai/ai.service';
 
 export const aiRouter = router({
   chat: protectedProcedure
