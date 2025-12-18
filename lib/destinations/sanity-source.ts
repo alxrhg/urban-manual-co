@@ -264,3 +264,82 @@ export async function fetchNestedDestinationsFromSanity(
     return [];
   }
 }
+
+/**
+ * City stats type
+ */
+export interface CityStats {
+  city: string;
+  country: string;
+  count: number;
+  featuredImage?: string;
+}
+
+/**
+ * Fetch city statistics from Sanity
+ */
+export async function fetchCityStatsFromSanity(): Promise<CityStats[]> {
+  if (!isSanityConfigured()) {
+    return [];
+  }
+
+  try {
+    const query = groq`
+      *[_type == "destination" && !(_id in path("drafts.**"))] {
+        city,
+        country,
+        "image": coalesce(heroImage.asset->url, imageUrl)
+      }
+    `;
+
+    const data = await sanityFetch<Array<{ city: string; country?: string; image?: string }>>({
+      query,
+      tags: ['destinations', 'cities'],
+    });
+
+    if (!data || !Array.isArray(data)) {
+      return [];
+    }
+
+    // Aggregate by city
+    const cityData = data.reduce(
+      (acc, dest) => {
+        const citySlug = (dest.city ?? '').toString().trim();
+        if (!citySlug) return acc;
+
+        if (!acc[citySlug]) {
+          acc[citySlug] = {
+            count: 0,
+            featuredImage: dest.image || undefined,
+            country: dest.country || 'Unknown',
+          };
+        }
+
+        acc[citySlug].count += 1;
+
+        if (!acc[citySlug].featuredImage && dest.image) {
+          acc[citySlug].featuredImage = dest.image;
+        }
+
+        if (acc[citySlug].country === 'Unknown' && dest.country) {
+          acc[citySlug].country = dest.country;
+        }
+
+        return acc;
+      },
+      {} as Record<string, { count: number; featuredImage?: string; country: string }>
+    );
+
+    return Object.entries(cityData)
+      .map(([city, data]) => ({
+        city,
+        country: data.country,
+        count: data.count,
+        featuredImage: data.featuredImage,
+      }))
+      .sort((a, b) => b.count - a.count);
+  } catch (error) {
+    console.error('[Sanity] Error fetching city stats:', error);
+    throw error;
+  }
+}

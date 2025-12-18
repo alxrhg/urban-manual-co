@@ -31,6 +31,8 @@ import {
   fetchCityDestinationsFromSanity,
   fetchFeaturedDestinationsFromSanity,
   fetchNestedDestinationsFromSanity,
+  fetchCityStatsFromSanity,
+  type CityStats,
 } from './sanity-source';
 
 // Supabase (fallback)
@@ -42,7 +44,11 @@ import {
   fetchFilterOptionsFromSupabase,
   fetchNestedDestinationsFromSupabase,
   fetchParentDestinationFromSupabase,
+  fetchCityStatsFromSupabase,
 } from './supabase-fallback';
+
+// Re-export CityStats type
+export type { CityStats };
 
 // Re-export types
 export * from './types';
@@ -247,6 +253,32 @@ export async function getParentDestination(
   }
 
   return null;
+}
+
+/**
+ * Get city statistics (count, country, featured image per city)
+ */
+export async function getCityStats(): Promise<CityStats[]> {
+  // Try Sanity first
+  if (isSanityConfigured()) {
+    try {
+      const stats = await fetchCityStatsFromSanity();
+      if (stats.length > 0) {
+        console.log(`[Destinations] Fetched ${stats.length} city stats from Sanity`);
+        return stats;
+      }
+    } catch (error) {
+      console.warn('[Destinations] Sanity city stats fetch failed:', error);
+    }
+  }
+
+  // Fallback to Supabase
+  if (isSupabaseConfigured()) {
+    console.log('[Destinations] Falling back to Supabase for city stats');
+    return fetchCityStatsFromSupabase();
+  }
+
+  return [];
 }
 
 /**

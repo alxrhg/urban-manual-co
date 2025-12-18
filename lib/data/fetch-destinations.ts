@@ -17,6 +17,7 @@ import {
   getFilterOptions as getFilterOptionsFromService,
   getCityDestinations as getCityDestinationsFromService,
   getFeaturedDestinations as getFeaturedDestinationsFromService,
+  getCityStats as getCityStatsFromService,
 } from '@/lib/destinations';
 
 /**
@@ -102,6 +103,7 @@ export const fetchCityDestinations = unstable_cache(
 
 /**
  * Fetch city statistics for the cities listing page
+ * Uses Sanity as primary source with Supabase fallback
  * Cached for 10 minutes
  */
 export const fetchCityStats = unstable_cache(
@@ -111,62 +113,10 @@ export const fetchCityStats = unstable_cache(
     count: number;
     featuredImage?: string;
   }>> => {
-    // Skip database queries during build if Supabase isn't configured
-    if (!isSupabaseConfigured()) {
-      return [];
-    }
-
     try {
-      const supabase = createServiceRoleClient();
-
-      const { data, error } = await supabase
-        .from('destinations')
-        .select('city, country, image');
-
-      if (error) {
-        console.error('[SSR] Error fetching city stats:', error.message);
-        return [];
-      }
-
-      const destinations = data || [];
-
-      // Count cities and get featured image
-      const cityData = destinations.reduce((acc, dest: { city?: string | null; country?: string | null; image?: string | null }) => {
-        const citySlug = (dest.city ?? '').toString().trim();
-        if (!citySlug) return acc;
-
-        if (!acc[citySlug]) {
-          acc[citySlug] = {
-            count: 0,
-            featuredImage: dest.image || undefined,
-            country: dest.country || 'Unknown',
-          };
-        }
-
-        acc[citySlug].count += 1;
-
-        // Update featured image if current one doesn't have image but this one does
-        if (!acc[citySlug].featuredImage && dest.image) {
-          acc[citySlug].featuredImage = dest.image;
-        }
-
-        // Update country if we have a better value
-        if ((acc[citySlug].country === 'Unknown') && dest.country) {
-          acc[citySlug].country = dest.country;
-        }
-
-        return acc;
-      }, {} as Record<string, { count: number; featuredImage?: string; country: string }>);
-
-      const stats = Object.entries(cityData)
-        .map(([city, data]) => ({
-          city,
-          country: data.country,
-          count: data.count,
-          featuredImage: data.featuredImage,
-        }))
-        .sort((a, b) => b.count - a.count);
-
+      // Use the new destination service (Sanity-first with Supabase fallback)
+      const stats = await getCityStatsFromService();
+      console.log(`[SSR] Fetched ${stats.length} city stats`);
       return stats;
     } catch (error) {
       console.error('[SSR] Exception fetching city stats:', error);

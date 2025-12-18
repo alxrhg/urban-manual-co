@@ -340,3 +340,81 @@ export async function fetchParentDestinationFromSupabase(
     return null;
   }
 }
+
+/**
+ * City stats type
+ */
+export interface CityStats {
+  city: string;
+  country: string;
+  count: number;
+  featuredImage?: string;
+}
+
+/**
+ * Fetch city statistics from Supabase (fallback)
+ */
+export async function fetchCityStatsFromSupabase(): Promise<CityStats[]> {
+  if (!isSupabaseConfigured()) {
+    return [];
+  }
+
+  try {
+    const supabase = createServiceRoleClient();
+
+    const { data, error } = await supabase
+      .from('destinations')
+      .select('city, country, image');
+
+    if (error) {
+      console.error('[Supabase Fallback] Error fetching city stats:', error.message);
+      return [];
+    }
+
+    const destinations = data || [];
+
+    // Aggregate by city
+    const cityData = destinations.reduce(
+      (
+        acc,
+        dest: { city?: string | null; country?: string | null; image?: string | null }
+      ) => {
+        const citySlug = (dest.city ?? '').toString().trim();
+        if (!citySlug) return acc;
+
+        if (!acc[citySlug]) {
+          acc[citySlug] = {
+            count: 0,
+            featuredImage: dest.image || undefined,
+            country: dest.country || 'Unknown',
+          };
+        }
+
+        acc[citySlug].count += 1;
+
+        if (!acc[citySlug].featuredImage && dest.image) {
+          acc[citySlug].featuredImage = dest.image;
+        }
+
+        if (acc[citySlug].country === 'Unknown' && dest.country) {
+          acc[citySlug].country = dest.country;
+        }
+
+        return acc;
+      },
+      {} as Record<string, { count: number; featuredImage?: string; country: string }>
+    );
+
+    return Object.entries(cityData)
+      .map(([city, data]) => ({
+        city,
+        country: data.country,
+        count: data.count,
+        featuredImage: data.featuredImage,
+      }))
+      .sort((a, b) => b.count - a.count);
+  } catch (error) {
+    console.error('[Supabase Fallback] Exception fetching city stats:', error);
+    return [];
+  }
+}
