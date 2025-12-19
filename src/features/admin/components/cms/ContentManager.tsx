@@ -453,72 +453,82 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
       </div>
 
       {/* Toolbar */}
-      <div className="border-b border-gray-200 dark:border-gray-800 pb-4 space-y-4">
+      <div className="pb-4 space-y-3">
         {/* Search + View Toggle */}
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <Input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search..."
-              className="pl-10"
+              className="pl-9 h-8 text-xs rounded-lg border-gray-200 dark:border-gray-800 bg-transparent"
             />
           </div>
 
-          <Button
-            variant={showFilters || hasActiveFilters ? 'outline' : 'ghost'}
+          <button
             onClick={() => setShowFilters(!showFilters)}
-            className={showFilters || hasActiveFilters ? 'border-black dark:border-white' : ''}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
+              showFilters || hasActiveFilters
+                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }`}
           >
-            <SlidersHorizontal className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Filters</span>
+            <SlidersHorizontal className="w-3 h-3" />
+            <span>Filters</span>
             {activeFilterCount > 0 && (
-              <Badge variant="secondary" className="ml-2 h-5 min-w-[20px] text-xs">
+              <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-full">
                 {activeFilterCount}
-              </Badge>
+              </span>
             )}
-          </Button>
+          </button>
 
-          <div className="hidden sm:flex items-center border border-gray-200 dark:border-gray-800 rounded-lg p-0.5">
-            <Button
-              variant="ghost"
-              size="icon"
+          <div className="hidden sm:flex items-center gap-0.5">
+            <button
               onClick={() => setViewMode('table')}
-              className={viewMode === 'table' ? 'bg-gray-100 dark:bg-gray-800' : ''}
+              className={`p-1.5 rounded-md transition-colors ${
+                viewMode === 'table'
+                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+              }`}
             >
-              <LayoutList className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
+              <LayoutList className="w-3.5 h-3.5" />
+            </button>
+            <button
               onClick={() => setViewMode('grid')}
-              className={viewMode === 'grid' ? 'bg-gray-100 dark:bg-gray-800' : ''}
+              className={`p-1.5 rounded-md transition-colors ${
+                viewMode === 'grid'
+                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+              }`}
             >
-              <LayoutGrid className="w-4 h-4" />
-            </Button>
+              <LayoutGrid className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
 
         {/* Filters Panel */}
         {showFilters && (
-          <div className="space-y-3 pt-2">
+          <div className="space-y-3 pt-3 border-t border-gray-100 dark:border-gray-800/50">
             {/* Row 1: City, Category, Status */}
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-1.5">
               {/* City Filter */}
               <Popover open={showCityDropdown} onOpenChange={setShowCityDropdown}>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={selectedCity ? 'border-black dark:border-white' : ''}
+                  <button
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
+                      selectedCity
+                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    }`}
                   >
-                    <MapPin className="w-4 h-4 mr-2 text-gray-400" />
-                    {selectedCity || 'All Cities'}
-                    <ChevronDown className="w-4 h-4 ml-2 text-gray-400" />
-                  </Button>
+                    <MapPin className="w-3 h-3" />
+                    <span>{selectedCity || 'All Cities'}</span>
+                    <ChevronDown className="w-3 h-3 opacity-50" />
+                  </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-64 p-0" align="start">
+                <PopoverContent className="w-64 p-0 rounded-xl" align="start">
                   <Command>
                     <CommandInput
                       placeholder="Search cities..."
@@ -560,130 +570,173 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
               </Popover>
 
               {/* Category Filter */}
-              <Select value={selectedCategory || 'all'} onValueChange={(val) => setSelectedCategory(val === 'all' ? '' : val)}>
-                <SelectTrigger className="w-[160px]">
-                  <Tag className="w-4 h-4 mr-2 text-gray-400" />
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
+                      selectedCategory
+                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <Tag className="w-3 h-3" />
+                    <span>{selectedCategory ? selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1) : 'All Categories'}</span>
+                    <ChevronDown className="w-3 h-3 opacity-50" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="rounded-xl">
+                  <DropdownMenuItem onClick={() => setSelectedCategory('')} className={!selectedCategory ? 'font-medium' : ''}>
+                    All Categories
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   {CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat} className="capitalize">
+                    <DropdownMenuItem
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={selectedCategory === cat ? 'font-medium' : ''}
+                    >
                       {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                    </SelectItem>
+                    </DropdownMenuItem>
                   ))}
-                </SelectContent>
-              </Select>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Enrichment Status Filter */}
-              <Select value={enrichedFilter} onValueChange={(val) => setEnrichedFilter(val as EnrichedFilter)}>
-                <SelectTrigger className="w-[150px]">
-                  <Sparkles className="w-4 h-4 mr-2 text-gray-400" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="enriched">Enriched</SelectItem>
-                  <SelectItem value="not_enriched">Not Enriched</SelectItem>
-                </SelectContent>
-              </Select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
+                      enrichedFilter !== 'all'
+                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    <span>{enrichedFilter === 'all' ? 'All Status' : enrichedFilter === 'enriched' ? 'Enriched' : 'Not Enriched'}</span>
+                    <ChevronDown className="w-3 h-3 opacity-50" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="rounded-xl">
+                  <DropdownMenuItem onClick={() => setEnrichedFilter('all')} className={enrichedFilter === 'all' ? 'font-medium' : ''}>
+                    All Status
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setEnrichedFilter('enriched')} className={enrichedFilter === 'enriched' ? 'font-medium' : ''}>
+                    Enriched
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setEnrichedFilter('not_enriched')} className={enrichedFilter === 'not_enriched' ? 'font-medium' : ''}>
+                    Not Enriched
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Missing Data Filter */}
-              <Select value={missingDataFilter} onValueChange={(val) => setMissingDataFilter(val as MissingDataFilter)}>
-                <SelectTrigger className="w-[160px]">
-                  <AlertTriangle className="w-4 h-4 mr-2 text-gray-400" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Data</SelectItem>
-                  <SelectItem value="no_image">Missing Image</SelectItem>
-                  <SelectItem value="no_description">Missing Description</SelectItem>
-                  <SelectItem value="no_content">Missing Content</SelectItem>
-                </SelectContent>
-              </Select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
+                      missingDataFilter !== 'all'
+                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <AlertTriangle className="w-3 h-3" />
+                    <span>{missingDataFilter === 'all' ? 'All Data' : missingDataFilter === 'no_image' ? 'Missing Image' : missingDataFilter === 'no_description' ? 'Missing Description' : 'Missing Content'}</span>
+                    <ChevronDown className="w-3 h-3 opacity-50" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="rounded-xl">
+                  <DropdownMenuItem onClick={() => setMissingDataFilter('all')} className={missingDataFilter === 'all' ? 'font-medium' : ''}>
+                    All Data
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setMissingDataFilter('no_image')} className={missingDataFilter === 'no_image' ? 'font-medium' : ''}>
+                    Missing Image
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setMissingDataFilter('no_description')} className={missingDataFilter === 'no_description' ? 'font-medium' : ''}>
+                    Missing Description
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setMissingDataFilter('no_content')} className={missingDataFilter === 'no_content' ? 'font-medium' : ''}>
+                    Missing Content
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Row 2: Quick Filters + Sort */}
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-1.5">
               {/* Quick Filter Toggles */}
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={crownOnly ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setCrownOnly(!crownOnly)}
-                  className="h-8"
-                >
-                  <Crown className={`w-3.5 h-3.5 mr-1.5 ${crownOnly ? 'text-amber-200' : 'text-amber-500'}`} />
-                  Crown Only
-                </Button>
-                <Button
-                  variant={michelinOnly ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setMichelinOnly(!michelinOnly)}
-                  className="h-8"
-                >
-                  <img src="/michelin-star.svg" alt="Michelin" className="w-3.5 h-3.5 mr-1.5" />
-                  Michelin Only
-                </Button>
-              </div>
-
-              <Separator orientation="vertical" className="h-6" />
-
-              {/* Sort */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Sort:</span>
-                <Select
-                  value={`${sortField}-${sortOrder}`}
-                  onValueChange={(value) => {
-                    const [field, order] = value.split('-') as [SortField, SortOrder];
-                    setSortField(field);
-                    setSortOrder(order);
-                  }}
-                >
-                  <SelectTrigger className="w-[160px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="name-asc">Name A-Z</SelectItem>
-                    <SelectItem value="name-desc">Name Z-A</SelectItem>
-                    <SelectItem value="city-asc">City A-Z</SelectItem>
-                    <SelectItem value="city-desc">City Z-A</SelectItem>
-                    <SelectItem value="category-asc">Category A-Z</SelectItem>
-                    <SelectItem value="updated_at-desc">Recently Updated</SelectItem>
-                    <SelectItem value="created_at-desc">Recently Added</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Items per page */}
-              <div className="flex items-center gap-2 ml-auto">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Show:</span>
-                <Select
-                  value={String(itemsPerPage)}
-                  onValueChange={(val) => setItemsPerPage(Number(val))}
-                >
-                  <SelectTrigger className="w-[80px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ITEMS_PER_PAGE_OPTIONS.map((n) => (
-                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <button
+                onClick={() => setCrownOnly(!crownOnly)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
+                  crownOnly
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+              >
+                <Crown className="w-3 h-3 text-amber-500" />
+                <span>Crown Only</span>
+              </button>
+              <button
+                onClick={() => setMichelinOnly(!michelinOnly)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
+                  michelinOnly
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+              >
+                <img src="/michelin-star.svg" alt="Michelin" className="w-3 h-3" />
+                <span>Michelin Only</span>
+              </button>
 
               {hasActiveFilters && (
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <button
                   onClick={clearFilters}
-                  className="text-xs text-gray-500"
+                  className="inline-flex items-center gap-1 px-2 py-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                 >
-                  <X className="w-3 h-3 mr-1" />
-                  Clear all
-                </Button>
+                  <X className="w-3 h-3" />
+                  <span>Clear</span>
+                </button>
               )}
+
+              {/* Sort + Show - right aligned */}
+              <div className="flex items-center gap-1.5 ml-auto">
+                <span className="text-[10px] text-gray-400 uppercase tracking-wider">Sort</span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-150">
+                      <span>{sortField === 'name' ? (sortOrder === 'asc' ? 'Name A-Z' : 'Name Z-A') : sortField === 'city' ? (sortOrder === 'asc' ? 'City A-Z' : 'City Z-A') : sortField === 'category' ? 'Category A-Z' : sortField === 'updated_at' ? 'Recently Updated' : 'Recently Added'}</span>
+                      <ChevronDown className="w-3 h-3 opacity-50" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="rounded-xl">
+                    <DropdownMenuItem onClick={() => { setSortField('name'); setSortOrder('asc'); }}>Name A-Z</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => { setSortField('name'); setSortOrder('desc'); }}>Name Z-A</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => { setSortField('city'); setSortOrder('asc'); }}>City A-Z</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => { setSortField('city'); setSortOrder('desc'); }}>City Z-A</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => { setSortField('category'); setSortOrder('asc'); }}>Category A-Z</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => { setSortField('updated_at'); setSortOrder('desc'); }}>Recently Updated</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => { setSortField('created_at'); setSortOrder('desc'); }}>Recently Added</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <span className="text-[10px] text-gray-400 uppercase tracking-wider">Show</span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-150">
+                      <span>{itemsPerPage}</span>
+                      <ChevronDown className="w-3 h-3 opacity-50" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="rounded-xl">
+                    {ITEMS_PER_PAGE_OPTIONS.map((n) => (
+                      <DropdownMenuItem key={n} onClick={() => setItemsPerPage(n)}>{n}</DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
         )}
@@ -691,7 +744,7 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
 
       {/* Bulk Actions */}
       {selectedItems.size > 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
+        <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800/50 rounded-xl">
           <Badge variant="secondary" className="font-medium">{selectedItems.size} selected</Badge>
           <Separator orientation="vertical" className="h-5" />
 
@@ -831,21 +884,20 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-800">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {((page - 1) * itemsPerPage) + 1}–{Math.min(page * itemsPerPage, totalCount)} of {totalCount}
+        <div className="flex items-center justify-between pt-4">
+          <p className="text-sm text-gray-400 dark:text-gray-500">
+            {((page - 1) * itemsPerPage) + 1}–{Math.min(page * itemsPerPage, totalCount)} of {totalCount.toLocaleString()}
           </p>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
+          <div className="flex items-center gap-0.5">
+            <button
               onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page === 1}
+              className="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
-            </Button>
+            </button>
             {/* Page numbers */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center">
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNum: number;
                 if (totalPages <= 5) {
@@ -858,26 +910,27 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
                   pageNum = page - 2 + i;
                 }
                 return (
-                  <Button
+                  <button
                     key={pageNum}
-                    variant={page === pageNum ? 'default' : 'ghost'}
-                    size="sm"
                     onClick={() => setPage(pageNum)}
-                    className="w-8 h-8"
+                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                      page === pageNum
+                        ? 'bg-black text-white dark:bg-white dark:text-black'
+                        : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    }`}
                   >
                     {pageNum}
-                  </Button>
+                  </button>
                 );
               })}
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
+            <button
               onClick={() => setPage(Math.min(totalPages, page + 1))}
               disabled={page === totalPages}
+              className="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
-            </Button>
+            </button>
           </div>
         </div>
       )}
@@ -916,72 +969,76 @@ function TableView({
   const SortButton = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <button
       onClick={() => handleSort(field)}
-      className="flex items-center gap-1 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white font-medium"
+      className={`flex items-center gap-1.5 text-[11px] uppercase tracking-wide font-medium transition-colors ${
+        sortField === field
+          ? 'text-black dark:text-white'
+          : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
+      }`}
     >
       {children}
-      {sortField === field && (
-        <ArrowUpDown className={`w-3 h-3 ${sortOrder === 'desc' ? 'rotate-180' : ''}`} />
-      )}
+      <ArrowUpDown className={`w-3 h-3 ${sortField === field ? 'opacity-100' : 'opacity-0'} ${sortOrder === 'desc' ? 'rotate-180' : ''} transition-all`} />
     </button>
   );
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-800/50">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-gray-200 dark:border-gray-800">
-            <th className="w-10 px-3 py-3 text-left">
+          <tr className="border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30">
+            <th className="w-10 px-4 py-3 text-left">
               <Checkbox
                 checked={selectedItems.size === destinations.length && destinations.length > 0}
                 onCheckedChange={toggleSelectAll}
               />
             </th>
-            <th className="px-3 py-3 text-left">
+            <th className="px-4 py-3 text-left">
               <SortButton field="name">Name</SortButton>
             </th>
-            <th className="px-3 py-3 text-left hidden md:table-cell">
+            <th className="px-4 py-3 text-left hidden md:table-cell">
               <SortButton field="city">City</SortButton>
             </th>
-            <th className="px-3 py-3 text-left hidden sm:table-cell">
+            <th className="px-4 py-3 text-left hidden sm:table-cell">
               <SortButton field="category">Category</SortButton>
             </th>
-            <th className="px-3 py-3 text-left hidden lg:table-cell">
-              <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">Status</span>
+            <th className="px-4 py-3 text-left hidden lg:table-cell">
+              <span className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500 font-medium">Status</span>
             </th>
-            <th className="w-10 px-3 py-3" />
+            <th className="w-10 px-4 py-3" />
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+        <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50 bg-white dark:bg-transparent">
           {destinations.map((dest) => (
             <tr
               key={dest.id}
-              className={`group hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors ${
-                selectedItems.has(dest.id!) ? 'bg-gray-50 dark:bg-gray-900/30' : ''
+              className={`group transition-colors ${
+                selectedItems.has(dest.id!)
+                  ? 'bg-gray-50 dark:bg-gray-900/50'
+                  : 'hover:bg-gray-50/50 dark:hover:bg-gray-900/30'
               }`}
             >
-              <td className="px-3 py-3">
+              <td className="px-4 py-3">
                 <Checkbox
                   checked={selectedItems.has(dest.id!)}
                   onCheckedChange={() => toggleSelect(dest.id!)}
                 />
               </td>
-              <td className="px-3 py-3">
+              <td className="px-4 py-3">
                 <button
                   onClick={() => onEdit?.(dest)}
-                  className="flex items-center gap-3 text-left hover:opacity-70 transition-opacity"
+                  className="flex items-center gap-3 text-left group/cell"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0 ring-1 ring-gray-200/50 dark:ring-gray-700/50">
                     {dest.image ? (
                       <img src={dest.image} alt={dest.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="w-4 h-4 text-gray-400" />
+                        <ImageIcon className="w-4 h-4 text-gray-300 dark:text-gray-600" />
                       </div>
                     )}
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-medium text-black dark:text-white truncate">{dest.name}</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover/cell:text-gray-600 dark:group-hover/cell:text-gray-300 transition-colors">{dest.name}</span>
                       {dest.crown && <Crown className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
                       {dest.michelin_stars && dest.michelin_stars > 0 && (
                         <div className="flex items-center gap-0.5">
@@ -991,32 +1048,32 @@ function TableView({
                         </div>
                       )}
                     </div>
-                    <span className="text-xs text-gray-400 truncate block">{dest.slug}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500 truncate block">{dest.slug}</span>
                   </div>
                 </button>
               </td>
-              <td className="px-3 py-3 hidden md:table-cell">
-                <span className="text-sm text-gray-600 dark:text-gray-400">{dest.city}</span>
+              <td className="px-4 py-3 hidden md:table-cell">
+                <span className="text-sm text-gray-500 dark:text-gray-400">{dest.city}</span>
               </td>
-              <td className="px-3 py-3 hidden sm:table-cell">
-                <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">{dest.category}</span>
+              <td className="px-4 py-3 hidden sm:table-cell">
+                <span className="text-xs text-gray-500 dark:text-gray-400 capitalize px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md">{dest.category}</span>
               </td>
-              <td className="px-3 py-3 hidden lg:table-cell">
+              <td className="px-4 py-3 hidden lg:table-cell">
                 <div className="flex items-center gap-1.5">
                   {dest.last_enriched_at && (
-                    <Badge variant="success" className="gap-1 text-[10px]">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full">
                       <Check className="w-3 h-3" />
                       Enriched
-                    </Badge>
+                    </span>
                   )}
                   {dest.image && (
-                    <Badge variant="secondary" className="text-[10px]">
+                    <span className="inline-flex items-center text-[10px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 p-1 rounded">
                       <ImageIcon className="w-3 h-3" />
-                    </Badge>
+                    </span>
                   )}
                 </div>
               </td>
-              <td className="px-3 py-3">
+              <td className="px-4 py-3">
                 <RowActions
                   destination={dest}
                   isActive={activeDropdown === dest.id}
