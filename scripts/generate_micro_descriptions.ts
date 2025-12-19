@@ -20,49 +20,52 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const genAI = new GoogleGenerativeAI(geminiApiKey);
 
 /**
- * Generate a micro description (50-100 characters) for a destination
- * This is a short, punchy one-liner perfect for card displays
- * Must fit on ONE line and will be truncated with ellipsis if too long
+ * Generate a micro description (max 50 characters) for a destination
+ * This is a short, eye-catching subtitle for card displays
+ * Must fit on ONE line - luxury travel copywriting style
  */
 async function generateMicroDescription(
   name: string,
   city: string,
+  country: string | null,
   category: string,
   description?: string | null,
   michelinStars?: number | null
 ): Promise<string | null> {
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
-  
+
   const context = `
 Destination Name: ${name}
 City: ${city}
+Country: ${country || 'Unknown'}
 Category: ${category}
 ${michelinStars ? `Michelin Stars: ${michelinStars}` : ''}
-${description ? `Description: ${description.substring(0, 300)}` : ''}
+${description ? `Notable features: ${description.substring(0, 300)}` : ''}
 `.trim();
 
-  const prompt = `Generate a concise micro description for this destination.
+  const prompt = `You are a luxury travel copywriter. Generate a single, short, eye-catching subtitle for a travel destination card.
 
 ${context}
 
 Requirements:
-- 50-100 characters maximum (must fit on ONE line)
-- Editorial, story-driven tone
-- Engaging and memorable
-- Captures the essence of what makes this place special
-- No punctuation at the end (unless it's part of the description)
-- Focus on atmosphere, uniqueness, or key appeal
-- Must be a single sentence that fits on one line when displayed
-- Will be truncated with "..." if longer than 100 characters
+- Maximum 50 characters including spaces (STRICT limit)
+- Compelling, specific, and memorable
+- Use style descriptors, designer names, experiences, or unique attributes
+- No ending punctuation
+- Focus on what makes this place truly special
+- Evoke sophistication, discovery, or uniqueness
 
-Examples:
-- "Refined Japanese dining meets tradition in a minimalist setting"
-- "Cozy neighborhood cafe with artisan pastries and excellent coffee"
-- "Modern luxury hotel overlooking the harbor with impeccable service"
-- "Hidden speakeasy bar with craft cocktails and intimate vibes"
-- "Contemporary art gallery showcasing emerging local talent"
+Examples of good outputs:
+- "Bill Bensley's architectural masterpiece"
+- "Michelin-starred minimalist dining"
+- "Portuguese coastal bohemian retreat"
+- "Tokyo's hidden izakaya gem"
+- "Design-forward luxury in historic charm"
+- "Art deco grandeur meets modern luxury"
+- "Chef's table omakase experience"
+- "Brutalist icon with panoramic views"
 
-Micro description:`;
+Generate the subtitle now (just the text, nothing else):`;
 
   try {
     const result = await model.generateContent(prompt);
@@ -75,10 +78,10 @@ Micro description:`;
     // Remove any newlines to ensure single line
     text = text.replace(/\n/g, ' ').trim();
     
-    // Ensure it's within character limit (max 100 chars for single line)
-    // Truncate to 97 chars and add ellipsis if needed
-    if (text.length > 100) {
-      text = text.substring(0, 97).trim() + '...';
+    // Ensure it's within character limit (max 50 chars for single line)
+    // Truncate to 47 chars and add ellipsis if needed
+    if (text.length > 50) {
+      text = text.substring(0, 47).trim() + '...';
     }
     
     return text;
@@ -93,6 +96,7 @@ interface Destination {
   slug: string;
   name: string;
   city: string;
+  country?: string | null;
   category: string;
   description?: string | null;
   content?: string | null;
@@ -106,7 +110,7 @@ async function updateMicroDescriptions() {
   // Fetch all destinations that don't have micro_description or need regeneration
   const { data: destinations, error } = await supabase
     .from('destinations')
-    .select('id, slug, name, city, category, description, content, michelin_stars, micro_description')
+    .select('id, slug, name, city, country, category, description, content, michelin_stars, micro_description')
     .order('id');
 
   if (error) {
@@ -144,6 +148,7 @@ async function updateMicroDescriptions() {
       const microDesc = await generateMicroDescription(
         dest.name,
         dest.city,
+        dest.country || null,
         dest.category,
         dest.description || dest.content,
         dest.michelin_stars
