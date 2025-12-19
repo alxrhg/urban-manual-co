@@ -146,13 +146,13 @@ export function DataManager({ type }: DataManagerProps) {
     setSaveError(null);
     try {
       const slug = formData.slug || toSlug(formData.name || '');
-      const dataToSave = { ...formData, slug };
 
-      // Remove id from dataToSave for insert
-      const { id, ...insertData } = dataToSave;
+      // Build insert data without id
+      const { id: _id, ...restFormData } = formData as Record<string, string | null> & { id?: string };
+      const insertData = { ...restFormData, slug };
 
       if (editingItem) {
-        const { error } = await supabase.from(type).update(dataToSave).eq('id', editingItem.id);
+        const { error } = await supabase.from(type).update(insertData).eq('id', editingItem.id);
         if (error) throw error;
       } else {
         const { error } = await supabase.from(type).insert(insertData);
