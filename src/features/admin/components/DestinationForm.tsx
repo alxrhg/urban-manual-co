@@ -40,22 +40,12 @@ const PRICE_LEVELS = [
   { value: 4, label: '$$$$ - Very Expensive' },
 ];
 
-const BRANDS = [
-  // Luxury Hotel Groups
-  'Aman', 'Four Seasons', 'Ritz-Carlton', 'Mandarin Oriental', 'Peninsula', 'Rosewood',
-  'St. Regis', 'Park Hyatt', 'Waldorf Astoria', 'Belmond', 'One&Only', 'Six Senses',
-  'Raffles', 'Capella', 'Bulgari Hotels', 'Armani Hotels', 'Edition', 'Nobu Hotels',
-  // Upper Upscale
-  'W Hotels', 'JW Marriott', 'Conrad', 'Intercontinental', 'Fairmont', 'Sofitel',
-  'Grand Hyatt', 'Andaz', 'Langham', 'Shangri-La', 'Banyan Tree', 'Como Hotels',
-  // Upscale
-  'Marriott', 'Hilton', 'Hyatt', 'Westin', 'Sheraton', 'Le Méridien', 'Renaissance',
-  'Kimpton', 'Thompson Hotels', 'Ace Hotel', 'Soho House', 'The Standard',
-  // Boutique & Lifestyle
-  'Design Hotels', 'Leading Hotels of the World', 'Relais & Châteaux', 'Small Luxury Hotels',
-  // Restaurant Groups
-  'Nobu', 'Zuma', 'Hakkasan', 'Tao Group', 'Major Food Group', 'Union Square Hospitality',
-];
+interface DropdownOptions {
+  cities: string[];
+  countries: string[];
+  neighborhoods: string[];
+  brands: string[];
+}
 
 export function DestinationForm({
   destination,
@@ -121,8 +111,20 @@ export function DestinationForm({
   const [isDragging, setIsDragging] = useState(false);
   const [fetchingGoogle, setFetchingGoogle] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [showNeighborhoodDropdown, setShowNeighborhoodDropdown] = useState(false);
   const [showBrandDropdown, setShowBrandDropdown] = useState(false);
+  const [customCityInput, setCustomCityInput] = useState('');
+  const [customCountryInput, setCustomCountryInput] = useState('');
+  const [customNeighborhoodInput, setCustomNeighborhoodInput] = useState('');
   const [customBrandInput, setCustomBrandInput] = useState('');
+  const [dropdownOptions, setDropdownOptions] = useState<DropdownOptions>({
+    cities: [],
+    countries: [],
+    neighborhoods: [],
+    brands: [],
+  });
   const [tagInput, setTagInput] = useState('');
   const [isEnriching, setIsEnriching] = useState(false);
 
@@ -206,6 +208,32 @@ export function DestinationForm({
       setSelectedParent(null);
     }
   }, [destination]);
+
+  // Fetch dropdown options from database
+  useEffect(() => {
+    const fetchDropdownOptions = async () => {
+      try {
+        const supabase = createClient({ skipValidation: true });
+        const { data, error } = await supabase
+          .from('destinations')
+          .select('city, country, neighborhood, brand');
+
+        if (error) throw error;
+
+        // Extract unique non-empty values and sort alphabetically
+        const cities = [...new Set(data?.map(d => d.city).filter(Boolean) || [])].sort();
+        const countries = [...new Set(data?.map(d => d.country).filter(Boolean) || [])].sort();
+        const neighborhoods = [...new Set(data?.map(d => d.neighborhood).filter(Boolean) || [])].sort();
+        const brands = [...new Set(data?.map(d => d.brand).filter(Boolean) || [])].sort();
+
+        setDropdownOptions({ cities, countries, neighborhoods, brands });
+      } catch (error) {
+        console.error('Error fetching dropdown options:', error);
+      }
+    };
+
+    fetchDropdownOptions();
+  }, []);
 
   // Search for parent destinations
   useEffect(() => {
@@ -545,15 +573,81 @@ export function DestinationForm({
               </div>
               <div>
                 <label className={labelClasses}>City</label>
-                <input type="text" required value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  placeholder="Tokyo" className={inputClasses} />
+                <div className="relative">
+                  <button type="button" onClick={() => setShowCityDropdown(!showCityDropdown)}
+                    className={cn(inputClasses, "text-left flex items-center justify-between")}>
+                    <span className={formData.city ? "" : "text-gray-400"}>{formData.city || "Select city..."}</span>
+                    <div className="flex items-center gap-1">
+                      {formData.city && (
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setFormData({ ...formData, city: '' }); setCustomCityInput(''); }}
+                          className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded">
+                          <X className="h-3 w-3 text-gray-400" />
+                        </button>
+                      )}
+                      <ChevronDown className={cn("h-4 w-4 text-gray-400 transition-transform", showCityDropdown && "rotate-180")} />
+                    </div>
+                  </button>
+                  {showCityDropdown && (
+                    <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                      <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 p-2">
+                        <input type="text" value={customCityInput} onChange={(e) => setCustomCityInput(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter' && customCityInput.trim()) { e.preventDefault(); setFormData({ ...formData, city: customCityInput.trim() }); setShowCityDropdown(false); setCustomCityInput(''); } }}
+                          placeholder="Type city or search..." className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-white" />
+                        {customCityInput.trim() && (
+                          <button type="button" onClick={() => { setFormData({ ...formData, city: customCityInput.trim() }); setShowCityDropdown(false); setCustomCityInput(''); }}
+                            className="w-full text-left px-2 py-1.5 mt-1 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
+                            Use "{customCityInput.trim()}"
+                          </button>
+                        )}
+                      </div>
+                      {dropdownOptions.cities.filter(city => !customCityInput || city.toLowerCase().includes(customCityInput.toLowerCase())).map((city) => (
+                        <button key={city} type="button" onClick={() => { setFormData({ ...formData, city }); setShowCityDropdown(false); setCustomCityInput(''); }}
+                          className={cn("w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800", formData.city === city && "bg-gray-50 dark:bg-gray-800 font-medium")}>
+                          {city}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label className={labelClasses}>Country</label>
-                <input type="text" value={formData.country}
-                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                  placeholder="Japan" className={inputClasses} />
+                <div className="relative">
+                  <button type="button" onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                    className={cn(inputClasses, "text-left flex items-center justify-between")}>
+                    <span className={formData.country ? "" : "text-gray-400"}>{formData.country || "Select country..."}</span>
+                    <div className="flex items-center gap-1">
+                      {formData.country && (
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setFormData({ ...formData, country: '' }); setCustomCountryInput(''); }}
+                          className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded">
+                          <X className="h-3 w-3 text-gray-400" />
+                        </button>
+                      )}
+                      <ChevronDown className={cn("h-4 w-4 text-gray-400 transition-transform", showCountryDropdown && "rotate-180")} />
+                    </div>
+                  </button>
+                  {showCountryDropdown && (
+                    <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                      <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 p-2">
+                        <input type="text" value={customCountryInput} onChange={(e) => setCustomCountryInput(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter' && customCountryInput.trim()) { e.preventDefault(); setFormData({ ...formData, country: customCountryInput.trim() }); setShowCountryDropdown(false); setCustomCountryInput(''); } }}
+                          placeholder="Type country or search..." className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-white" />
+                        {customCountryInput.trim() && (
+                          <button type="button" onClick={() => { setFormData({ ...formData, country: customCountryInput.trim() }); setShowCountryDropdown(false); setCustomCountryInput(''); }}
+                            className="w-full text-left px-2 py-1.5 mt-1 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
+                            Use "{customCountryInput.trim()}"
+                          </button>
+                        )}
+                      </div>
+                      {dropdownOptions.countries.filter(country => !customCountryInput || country.toLowerCase().includes(customCountryInput.toLowerCase())).map((country) => (
+                        <button key={country} type="button" onClick={() => { setFormData({ ...formData, country }); setShowCountryDropdown(false); setCustomCountryInput(''); }}
+                          className={cn("w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800", formData.country === country && "bg-gray-50 dark:bg-gray-800 font-medium")}>
+                          {country}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -561,9 +655,42 @@ export function DestinationForm({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelClasses}>Neighborhood</label>
-                <input type="text" value={formData.neighborhood}
-                  onChange={(e) => setFormData({ ...formData, neighborhood: e.target.value })}
-                  placeholder="Shibuya" className={inputClasses} />
+                <div className="relative">
+                  <button type="button" onClick={() => setShowNeighborhoodDropdown(!showNeighborhoodDropdown)}
+                    className={cn(inputClasses, "text-left flex items-center justify-between")}>
+                    <span className={formData.neighborhood ? "" : "text-gray-400"}>{formData.neighborhood || "Select neighborhood..."}</span>
+                    <div className="flex items-center gap-1">
+                      {formData.neighborhood && (
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setFormData({ ...formData, neighborhood: '' }); setCustomNeighborhoodInput(''); }}
+                          className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded">
+                          <X className="h-3 w-3 text-gray-400" />
+                        </button>
+                      )}
+                      <ChevronDown className={cn("h-4 w-4 text-gray-400 transition-transform", showNeighborhoodDropdown && "rotate-180")} />
+                    </div>
+                  </button>
+                  {showNeighborhoodDropdown && (
+                    <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                      <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 p-2">
+                        <input type="text" value={customNeighborhoodInput} onChange={(e) => setCustomNeighborhoodInput(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter' && customNeighborhoodInput.trim()) { e.preventDefault(); setFormData({ ...formData, neighborhood: customNeighborhoodInput.trim() }); setShowNeighborhoodDropdown(false); setCustomNeighborhoodInput(''); } }}
+                          placeholder="Type neighborhood or search..." className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-white" />
+                        {customNeighborhoodInput.trim() && (
+                          <button type="button" onClick={() => { setFormData({ ...formData, neighborhood: customNeighborhoodInput.trim() }); setShowNeighborhoodDropdown(false); setCustomNeighborhoodInput(''); }}
+                            className="w-full text-left px-2 py-1.5 mt-1 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
+                            Use "{customNeighborhoodInput.trim()}"
+                          </button>
+                        )}
+                      </div>
+                      {dropdownOptions.neighborhoods.filter(n => !customNeighborhoodInput || n.toLowerCase().includes(customNeighborhoodInput.toLowerCase())).map((neighborhood) => (
+                        <button key={neighborhood} type="button" onClick={() => { setFormData({ ...formData, neighborhood }); setShowNeighborhoodDropdown(false); setCustomNeighborhoodInput(''); }}
+                          className={cn("w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800", formData.neighborhood === neighborhood && "bg-gray-50 dark:bg-gray-800 font-medium")}>
+                          {neighborhood}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label className={labelClasses}>Brand</label>
@@ -608,8 +735,8 @@ export function DestinationForm({
                           </button>
                         )}
                       </div>
-                      {/* Predefined brands */}
-                      {BRANDS.filter(brand => !customBrandInput || brand.toLowerCase().includes(customBrandInput.toLowerCase())).map((brand) => (
+                      {/* Existing brands from database */}
+                      {dropdownOptions.brands.filter(brand => !customBrandInput || brand.toLowerCase().includes(customBrandInput.toLowerCase())).map((brand) => (
                         <button key={brand} type="button"
                           onClick={() => { setFormData({ ...formData, brand }); setShowBrandDropdown(false); setCustomBrandInput(''); }}
                           className={cn("w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800",
