@@ -180,13 +180,18 @@ export function DataManager({ type }: DataManagerProps) {
       await fetchData();
       closeDrawer();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to save';
-      if (message.includes('does not exist')) {
+      const error = err as { message?: string; code?: string; details?: string };
+      const message = error?.message || 'Failed to save';
+      const code = error?.code || '';
+
+      if (message.includes('does not exist') || code === '42P01') {
         setSaveError(`The "${type}" table doesn't exist. Please run the database migration first.`);
-      } else if (message.includes('duplicate key')) {
+      } else if (message.includes('duplicate key') || code === '23505') {
         setSaveError('An item with this name or slug already exists.');
+      } else if (code === '42501' || message.includes('permission denied') || message.includes('403')) {
+        setSaveError('Permission denied. Please check RLS policies allow admin users to write to this table.');
       } else {
-        setSaveError(message);
+        setSaveError(`${message}${code ? ` (${code})` : ''}`);
       }
     } finally {
       setSaving(false);
