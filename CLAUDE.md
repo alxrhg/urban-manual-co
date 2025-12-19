@@ -15,7 +15,7 @@
 | Database | Supabase (PostgreSQL) |
 | Authentication | Supabase Auth (Google OAuth, Apple Sign-In) |
 | AI/ML | Google Gemini, OpenAI, Upstash Vector |
-| CMS | Sanity (optional), Plasmic (visual builder) |
+| CMS | Custom Admin CMS, Plasmic (visual builder) |
 | Monitoring | Sentry |
 | Deployment | Vercel |
 | Analytics | Vercel Analytics, Google Analytics |

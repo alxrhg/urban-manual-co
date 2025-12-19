@@ -7,11 +7,10 @@ import { createServerClient } from '@supabase/ssr'
  * Migrated from middleware.ts to proxy.ts for Next.js 16
  */
 export async function proxy(request: NextRequest) {
-  // Protect /admin routes (custom admin page) and /studio routes (Sanity Studio)
+  // Protect /admin routes
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
-  const isStudioRoute = request.nextUrl.pathname.startsWith('/studio')
 
-  if (isAdminRoute || isStudioRoute) {
+  if (isAdminRoute) {
     // Skip API routes
     if (request.nextUrl.pathname.startsWith('/api')) {
       return NextResponse.next()
@@ -50,8 +49,7 @@ export async function proxy(request: NextRequest) {
 
       if (error || !session) {
         // Redirect to login if not authenticated
-        const redirectPath = isStudioRoute ? '/studio' : '/admin'
-        return NextResponse.redirect(new URL(`/auth/login?redirect=${redirectPath}`, request.url))
+        return NextResponse.redirect(new URL('/auth/login?redirect=/admin', request.url))
       }
 
       // Check if user has admin role
@@ -73,5 +71,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/studio/:path*'],
+  matcher: ['/admin/:path*'],
 }

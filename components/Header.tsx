@@ -100,11 +100,6 @@ export function Header() {
     fetchUserData();
   }, [user, isAdmin]);
 
-  // Hide header on Sanity Studio pages
-  if (pathname?.startsWith('/studio')) {
-    return null;
-  }
-
   const navigate = (path: string) => {
     router.push(path);
   };
