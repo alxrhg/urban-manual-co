@@ -700,44 +700,42 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
               )}
 
               {/* Sort + Show - right aligned */}
-              <div className="flex items-center gap-2 ml-auto">
+              <div className="flex items-center gap-1.5 ml-auto">
                 <span className="text-[10px] text-gray-400 uppercase tracking-wider">Sort</span>
-                <Select
-                  value={`${sortField}-${sortOrder}`}
-                  onValueChange={(value) => {
-                    const [field, order] = value.split('-') as [SortField, SortOrder];
-                    setSortField(field);
-                    setSortOrder(order);
-                  }}
-                >
-                  <SelectTrigger className="px-2.5 py-1 h-auto rounded-md border-0 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 w-auto gap-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    <SelectItem value="name-asc">Name A-Z</SelectItem>
-                    <SelectItem value="name-desc">Name Z-A</SelectItem>
-                    <SelectItem value="city-asc">City A-Z</SelectItem>
-                    <SelectItem value="city-desc">City Z-A</SelectItem>
-                    <SelectItem value="category-asc">Category A-Z</SelectItem>
-                    <SelectItem value="updated_at-desc">Recently Updated</SelectItem>
-                    <SelectItem value="created_at-desc">Recently Added</SelectItem>
-                  </SelectContent>
-                </Select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-150">
+                      <span>{sortField === 'name' ? (sortOrder === 'asc' ? 'Name A-Z' : 'Name Z-A') : sortField === 'city' ? (sortOrder === 'asc' ? 'City A-Z' : 'City Z-A') : sortField === 'category' ? 'Category A-Z' : sortField === 'updated_at' ? 'Recently Updated' : 'Recently Added'}</span>
+                      <ChevronDown className="w-3 h-3 opacity-50" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="rounded-xl">
+                    <DropdownMenuItem onClick={() => { setSortField('name'); setSortOrder('asc'); }}>Name A-Z</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => { setSortField('name'); setSortOrder('desc'); }}>Name Z-A</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => { setSortField('city'); setSortOrder('asc'); }}>City A-Z</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => { setSortField('city'); setSortOrder('desc'); }}>City Z-A</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => { setSortField('category'); setSortOrder('asc'); }}>Category A-Z</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => { setSortField('updated_at'); setSortOrder('desc'); }}>Recently Updated</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => { setSortField('created_at'); setSortOrder('desc'); }}>Recently Added</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 <span className="text-[10px] text-gray-400 uppercase tracking-wider">Show</span>
-                <Select
-                  value={String(itemsPerPage)}
-                  onValueChange={(val) => setItemsPerPage(Number(val))}
-                >
-                  <SelectTrigger className="px-2.5 py-1 h-auto rounded-md border-0 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 w-auto gap-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-150">
+                      <span>{itemsPerPage}</span>
+                      <ChevronDown className="w-3 h-3 opacity-50" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="rounded-xl">
                     {ITEMS_PER_PAGE_OPTIONS.map((n) => (
-                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                      <DropdownMenuItem key={n} onClick={() => setItemsPerPage(n)}>{n}</DropdownMenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </div>
