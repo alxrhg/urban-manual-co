@@ -16,6 +16,23 @@ import {
   DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
 
+// Use API route for admin operations to bypass RLS
+async function apiRequest<T>(method: string, params: Record<string, unknown>): Promise<T> {
+  const url = method === 'GET' || method === 'DELETE'
+    ? `/api/admin/data?${new URLSearchParams(params as Record<string, string>)}`
+    : '/api/admin/data';
+
+  const res = await fetch(url, {
+    method,
+    headers: method !== 'GET' && method !== 'DELETE' ? { 'Content-Type': 'application/json' } : {},
+    body: method !== 'GET' && method !== 'DELETE' ? JSON.stringify(params) : undefined,
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
 interface Brand {
   id: string;
   name: string;
@@ -122,19 +139,15 @@ export function DataManager({ type }: DataManagerProps) {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: fetchError } = await supabase.from(type).select('*').order('name');
-      if (fetchError) {
-        if (fetchError.message.includes('does not exist')) {
-          setError(`The "${type}" table doesn't exist yet. Please run the database migration first.`);
-        } else {
-          setError(fetchError.message);
-        }
-        setItems([]);
+      const result = await apiRequest<{ data: DataItem[] }>('GET', { type });
+      setItems(result.data || []);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch';
+      if (message.includes('does not exist')) {
+        setError(`The "${type}" table doesn't exist yet. Please run the database migration first.`);
       } else {
-        setItems(data || []);
+        setError(message);
       }
-    } catch {
-      setError('Failed to fetch data');
       setItems([]);
     } finally {
       setLoading(false);
@@ -171,27 +184,23 @@ export function DataManager({ type }: DataManagerProps) {
       const insertData = { ...restFormData, slug };
 
       if (editingItem) {
-        const { error } = await supabase.from(type).update(insertData).eq('id', editingItem.id);
-        if (error) throw error;
+        await apiRequest('PUT', { type, id: editingItem.id, data: insertData });
       } else {
-        const { error } = await supabase.from(type).insert(insertData);
-        if (error) throw error;
+        await apiRequest('POST', { type, data: insertData });
       }
       await fetchData();
       closeDrawer();
     } catch (err: unknown) {
-      const error = err as { message?: string; code?: string; details?: string };
-      const message = error?.message || 'Failed to save';
-      const code = error?.code || '';
+      const message = err instanceof Error ? err.message : 'Failed to save';
 
-      if (message.includes('does not exist') || code === '42P01') {
+      if (message.includes('does not exist')) {
         setSaveError(`The "${type}" table doesn't exist. Please run the database migration first.`);
-      } else if (message.includes('duplicate key') || code === '23505') {
+      } else if (message.includes('duplicate key') || message.includes('unique constraint')) {
         setSaveError('An item with this name or slug already exists.');
-      } else if (code === '42501' || message.includes('permission denied') || message.includes('403')) {
-        setSaveError('Permission denied. Please check RLS policies allow admin users to write to this table.');
+      } else if (message.includes('Unauthorized')) {
+        setSaveError('You must be logged in as an admin to perform this action.');
       } else {
-        setSaveError(`${message}${code ? ` (${code})` : ''}`);
+        setSaveError(message);
       }
     } finally {
       setSaving(false);
@@ -201,8 +210,7 @@ export function DataManager({ type }: DataManagerProps) {
   const handleDelete = async (id: string) => {
     if (!confirm(`Are you sure you want to delete this ${config.singular.toLowerCase()}?`)) return;
     try {
-      const { error } = await supabase.from(type).delete().eq('id', id);
-      if (error) throw error;
+      await apiRequest('DELETE', { type, id });
       await fetchData();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to delete';
