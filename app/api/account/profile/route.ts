@@ -52,6 +52,8 @@ export const PUT = withErrorHandling(async (request: NextRequest) => {
     birthday,
     username,
     is_public,
+    phone,
+    address,
   } = body;
 
   // Validate username if provided (alphanumeric, underscore, hyphen only)
@@ -104,6 +106,8 @@ export const PUT = withErrorHandling(async (request: NextRequest) => {
   if (birthday !== undefined) updateData.birthday = birthday;
   if (username !== undefined) updateData.username = username;
   if (is_public !== undefined) updateData.is_public = is_public;
+  if (phone !== undefined) updateData.phone = phone;
+  if (address !== undefined) updateData.address = address;
 
   // Update the profile
   const { data: updatedProfile, error: updateError } = await supabase
