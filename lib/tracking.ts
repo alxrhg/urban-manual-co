@@ -37,33 +37,117 @@ export function initializeSession(): void {
   }
 }
 
-// Legacy tracking functions (for backward compatibility)
-export function trackPageView(data?: { pageType?: string }): void {
-  // Legacy function - can be enhanced to use PersonalizationTracker
-  if (typeof window !== 'undefined') {
-    console.debug('[Tracking] Page view:', data);
+// Send events to behavior tracking API
+async function sendTrackingEvent(events: Array<{
+  event_type: string;
+  destination_slug?: string;
+  destination_id?: number;
+  timestamp: string;
+  context: Record<string, any>;
+}>): Promise<void> {
+  if (typeof window === 'undefined') return;
+
+  try {
+    await fetch('/api/behavior/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ events }),
+    });
+  } catch (error) {
+    console.warn('[Tracking] Failed to send event:', error);
   }
+}
+
+// Legacy tracking functions (now connected to behavior tracking)
+export function trackPageView(data?: { pageType?: string }): void {
+  if (typeof window === 'undefined') return;
+
+  sendTrackingEvent([{
+    event_type: 'page_view',
+    timestamp: new Date().toISOString(),
+    context: {
+      page_path: window.location.pathname,
+      page_type: data?.pageType,
+      session_id: getSessionId(),
+    },
+  }]);
 }
 
 export function trackDestinationClick(data?: { destinationId?: number; destinationSlug?: string; position?: number; source?: string }): void {
-  // Legacy function - can be enhanced to use PersonalizationTracker
-  if (typeof window !== 'undefined') {
-    console.debug('[Tracking] Destination click:', data);
-  }
+  if (typeof window === 'undefined') return;
+
+  sendTrackingEvent([{
+    event_type: 'destination_click',
+    destination_id: data?.destinationId,
+    destination_slug: data?.destinationSlug,
+    timestamp: new Date().toISOString(),
+    context: {
+      page_path: window.location.pathname,
+      search_result_position: data?.position,
+      source: data?.source,
+      session_id: getSessionId(),
+    },
+  }]);
+}
+
+export function trackDestinationView(data: { destinationId?: number; destinationSlug?: string; source?: string }): void {
+  if (typeof window === 'undefined') return;
+
+  sendTrackingEvent([{
+    event_type: 'destination_view',
+    destination_id: data?.destinationId,
+    destination_slug: data?.destinationSlug,
+    timestamp: new Date().toISOString(),
+    context: {
+      page_path: window.location.pathname,
+      source: data?.source,
+      session_id: getSessionId(),
+    },
+  }]);
 }
 
 export function trackSearch(data?: { query?: string }): void {
-  // Legacy function - can be enhanced to use PersonalizationTracker
-  if (typeof window !== 'undefined') {
-    console.debug('[Tracking] Search:', data);
-  }
+  if (typeof window === 'undefined' || !data?.query) return;
+
+  sendTrackingEvent([{
+    event_type: 'search_query',
+    timestamp: new Date().toISOString(),
+    context: {
+      search_query: data.query,
+      page_path: window.location.pathname,
+      session_id: getSessionId(),
+    },
+  }]);
 }
 
 export function trackFilterChange(data?: { filterType?: string; value?: any }): void {
-  // Legacy function - can be enhanced to use PersonalizationTracker
-  if (typeof window !== 'undefined') {
-    console.debug('[Tracking] Filter change:', data);
-  }
+  if (typeof window === 'undefined') return;
+
+  sendTrackingEvent([{
+    event_type: 'filter_apply',
+    timestamp: new Date().toISOString(),
+    context: {
+      filter_type: data?.filterType,
+      filter_value: data?.value,
+      page_path: window.location.pathname,
+      session_id: getSessionId(),
+    },
+  }]);
+}
+
+export function trackSave(data: { destinationId?: number; destinationSlug?: string; isSave?: boolean }): void {
+  if (typeof window === 'undefined') return;
+
+  sendTrackingEvent([{
+    event_type: data?.isSave !== false ? 'destination_save' : 'destination_unsave',
+    destination_id: data?.destinationId,
+    destination_slug: data?.destinationSlug,
+    timestamp: new Date().toISOString(),
+    context: {
+      page_path: window.location.pathname,
+      session_id: getSessionId(),
+    },
+  }]);
 }
 
 export { getSessionId };
