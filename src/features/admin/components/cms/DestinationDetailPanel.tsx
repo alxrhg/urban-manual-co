@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Link2,
-  Calendar,
   Bold,
   Italic,
   Underline,
@@ -13,7 +12,6 @@ import {
   List,
   ListOrdered,
   Image as ImageIcon,
-  ChevronDown,
   Loader2,
   Save,
 } from 'lucide-react';
@@ -58,7 +56,6 @@ export function DestinationDetailPanel({
     description: destination?.description || '',
     content: destination?.content || '',
     image: destination?.image || '',
-    created_at: destination?.created_at || new Date().toISOString(),
   });
 
   const [hasChanges, setHasChanges] = useState(false);
@@ -75,7 +72,6 @@ export function DestinationDetailPanel({
       description: destination?.description || '',
       content: destination?.content || '',
       image: destination?.image || '',
-      created_at: destination?.created_at || new Date().toISOString(),
     });
     setHasChanges(false);
   }, [destination]);
@@ -108,15 +104,6 @@ export function DestinationDetailPanel({
     }
     await onSave(dataToSave);
     setHasChanges(false);
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
   };
 
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://urbanmanual.co';
@@ -192,20 +179,6 @@ export function DestinationDetailPanel({
                 onChange={(e) => updateField('city', e.target.value)}
                 placeholder="e.g. London"
               />
-            </div>
-          </div>
-
-          {/* Date Published */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Date Published
-            </label>
-            <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-900">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-700 dark:text-gray-300">
-                {formatDate(formData.created_at)}
-              </span>
-              <ChevronDown className="w-4 h-4 text-gray-400 ml-auto" />
             </div>
           </div>
 
