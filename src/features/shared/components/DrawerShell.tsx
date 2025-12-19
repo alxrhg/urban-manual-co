@@ -254,45 +254,82 @@ const DrawerShell = memo(function DrawerShell({
           >
             {/* Drag Handle (mobile only) */}
             {position === 'bottom' && (
-              <div className="flex-shrink-0 h-6 flex items-center justify-center cursor-grab active:cursor-grabbing md:hidden">
-                <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+              <div className="flex-shrink-0 h-3 flex items-center justify-center cursor-grab active:cursor-grabbing md:hidden pt-2">
+                <div className="w-9 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
               </div>
             )}
 
-            {/* Header */}
-            <header className="flex-shrink-0 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+            {/* Header - Mobile bottom sheet style */}
+            <header className={`flex-shrink-0 px-5 ${position === 'bottom' ? 'pt-2 pb-4' : 'py-4 border-b border-gray-100 dark:border-gray-800'}`}>
               {headerContent || (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 min-w-0">
-                    {canGoBack && handleBack && (
+                <div className={position === 'bottom' ? 'relative' : 'flex items-center justify-between'}>
+                  {/* Close button - top left for mobile bottom sheet */}
+                  {position === 'bottom' ? (
+                    <>
                       <button
-                        onClick={handleBack}
-                        className="p-2 -ml-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                        aria-label="Go back"
+                        onClick={onClose}
+                        className="absolute left-0 top-0 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                        aria-label="Close"
                       >
-                        <ChevronLeft className="w-5 h-5 text-gray-500" />
+                        <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                       </button>
-                    )}
-                    <div className="min-w-0">
-                      {title && (
-                        <h2 className="text-[17px] font-semibold text-gray-900 dark:text-white truncate">
-                          {title}
-                        </h2>
+                      {canGoBack && handleBack && (
+                        <button
+                          onClick={handleBack}
+                          className="absolute left-8 top-0 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                          aria-label="Go back"
+                        >
+                          <ChevronLeft className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                        </button>
                       )}
-                      {subtitle && (
-                        <p className="text-[13px] text-gray-500 truncate">
-                          {subtitle}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={onClose}
-                    className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                    aria-label="Close"
-                  >
-                    <X className="w-5 h-5 text-gray-500" />
-                  </button>
+                      {/* Centered title and subtitle */}
+                      <div className="text-center pt-6 pb-2">
+                        {title && (
+                          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                            {title}
+                          </h2>
+                        )}
+                        {subtitle && (
+                          <p className="text-[15px] text-gray-500 dark:text-gray-400 mt-2 max-w-[280px] mx-auto">
+                            {subtitle}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-3 min-w-0">
+                        {canGoBack && handleBack && (
+                          <button
+                            onClick={handleBack}
+                            className="p-2 -ml-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                            aria-label="Go back"
+                          >
+                            <ChevronLeft className="w-5 h-5 text-gray-500" />
+                          </button>
+                        )}
+                        <div className="min-w-0">
+                          {title && (
+                            <h2 className="text-[17px] font-semibold text-gray-900 dark:text-white truncate">
+                              {title}
+                            </h2>
+                          )}
+                          {subtitle && (
+                            <p className="text-[13px] text-gray-500 truncate">
+                              {subtitle}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={onClose}
+                        className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                        aria-label="Close"
+                      >
+                        <X className="w-5 h-5 text-gray-500" />
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </header>
