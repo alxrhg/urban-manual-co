@@ -570,59 +570,97 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
               </Popover>
 
               {/* Category Filter */}
-              <Select value={selectedCategory || 'all'} onValueChange={(val) => setSelectedCategory(val === 'all' ? '' : val)}>
-                <SelectTrigger className={`px-3 py-1.5 h-auto rounded-full text-xs font-medium gap-1.5 border-0 ${
-                  selectedCategory
-                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}>
-                  <Tag className="w-3 h-3" />
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  <SelectItem value="all">All Categories</SelectItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
+                      selectedCategory
+                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <Tag className="w-3 h-3" />
+                    <span>{selectedCategory ? selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1) : 'All Categories'}</span>
+                    <ChevronDown className="w-3 h-3 opacity-50" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="rounded-xl">
+                  <DropdownMenuItem onClick={() => setSelectedCategory('')} className={!selectedCategory ? 'font-medium' : ''}>
+                    All Categories
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   {CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat} className="capitalize">
+                    <DropdownMenuItem
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={selectedCategory === cat ? 'font-medium' : ''}
+                    >
                       {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                    </SelectItem>
+                    </DropdownMenuItem>
                   ))}
-                </SelectContent>
-              </Select>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Enrichment Status Filter */}
-              <Select value={enrichedFilter} onValueChange={(val) => setEnrichedFilter(val as EnrichedFilter)}>
-                <SelectTrigger className={`px-3 py-1.5 h-auto rounded-full text-xs font-medium gap-1.5 border-0 ${
-                  enrichedFilter !== 'all'
-                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}>
-                  <Sparkles className="w-3 h-3" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="enriched">Enriched</SelectItem>
-                  <SelectItem value="not_enriched">Not Enriched</SelectItem>
-                </SelectContent>
-              </Select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
+                      enrichedFilter !== 'all'
+                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    <span>{enrichedFilter === 'all' ? 'All Status' : enrichedFilter === 'enriched' ? 'Enriched' : 'Not Enriched'}</span>
+                    <ChevronDown className="w-3 h-3 opacity-50" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="rounded-xl">
+                  <DropdownMenuItem onClick={() => setEnrichedFilter('all')} className={enrichedFilter === 'all' ? 'font-medium' : ''}>
+                    All Status
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setEnrichedFilter('enriched')} className={enrichedFilter === 'enriched' ? 'font-medium' : ''}>
+                    Enriched
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setEnrichedFilter('not_enriched')} className={enrichedFilter === 'not_enriched' ? 'font-medium' : ''}>
+                    Not Enriched
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Missing Data Filter */}
-              <Select value={missingDataFilter} onValueChange={(val) => setMissingDataFilter(val as MissingDataFilter)}>
-                <SelectTrigger className={`px-3 py-1.5 h-auto rounded-full text-xs font-medium gap-1.5 border-0 ${
-                  missingDataFilter !== 'all'
-                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}>
-                  <AlertTriangle className="w-3 h-3" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  <SelectItem value="all">All Data</SelectItem>
-                  <SelectItem value="no_image">Missing Image</SelectItem>
-                  <SelectItem value="no_description">Missing Description</SelectItem>
-                  <SelectItem value="no_content">Missing Content</SelectItem>
-                </SelectContent>
-              </Select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
+                      missingDataFilter !== 'all'
+                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <AlertTriangle className="w-3 h-3" />
+                    <span>{missingDataFilter === 'all' ? 'All Data' : missingDataFilter === 'no_image' ? 'Missing Image' : missingDataFilter === 'no_description' ? 'Missing Description' : 'Missing Content'}</span>
+                    <ChevronDown className="w-3 h-3 opacity-50" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="rounded-xl">
+                  <DropdownMenuItem onClick={() => setMissingDataFilter('all')} className={missingDataFilter === 'all' ? 'font-medium' : ''}>
+                    All Data
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setMissingDataFilter('no_image')} className={missingDataFilter === 'no_image' ? 'font-medium' : ''}>
+                    Missing Image
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setMissingDataFilter('no_description')} className={missingDataFilter === 'no_description' ? 'font-medium' : ''}>
+                    Missing Description
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setMissingDataFilter('no_content')} className={missingDataFilter === 'no_content' ? 'font-medium' : ''}>
+                    Missing Content
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Row 2: Quick Filters + Sort */}
