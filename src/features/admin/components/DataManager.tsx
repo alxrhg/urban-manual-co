@@ -115,7 +115,7 @@ export function DataManager({ type }: DataManagerProps) {
 
   // Sync state
   const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<{ inserted: number; skipped: number } | null>(null);
+  const [syncResult, setSyncResult] = useState<{ found: number; inserted: number; existing: number } | null>(null);
 
   // Form state
   const [formData, setFormData] = useState<Record<string, string | null>>({});
@@ -233,7 +233,7 @@ export function DataManager({ type }: DataManagerProps) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Sync failed');
-      setSyncResult(data.results?.[type] || { inserted: 0, skipped: 0 });
+      setSyncResult(data.results?.[type] || { found: 0, inserted: 0, existing: 0 });
       await fetchData();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Sync failed';
@@ -293,7 +293,7 @@ export function DataManager({ type }: DataManagerProps) {
             {items.length.toLocaleString()} {type}
             {syncResult && (
               <span className="ml-2 text-green-600 dark:text-green-400">
-                (synced: {syncResult.inserted} new)
+                (found {syncResult.found} in destinations: {syncResult.inserted} new, {syncResult.existing} existing)
               </span>
             )}
           </p>

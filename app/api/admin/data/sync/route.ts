@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const results: Record<string, { inserted: number; skipped: number }> = {};
+    const results: Record<string, { found: number; inserted: number; existing: number }> = {};
 
     // Sync brands
     if (type === 'all' || type === 'brands') {
@@ -50,24 +50,31 @@ export async function POST(request: NextRequest) {
       )];
 
       let inserted = 0;
-      let skipped = 0;
+      let existing = 0;
 
       for (const brand of uniqueBrands) {
         const name = toTitleCase(brand);
         const slug = toSlug(brand);
 
-        const { error } = await supabase
+        // Check if already exists
+        const { data: existingBrand } = await supabase
           .from('brands')
-          .upsert({ name, slug }, { onConflict: 'slug', ignoreDuplicates: true });
+          .select('id')
+          .eq('slug', slug)
+          .single();
 
-        if (error) {
-          skipped++;
+        if (existingBrand) {
+          existing++;
         } else {
-          inserted++;
+          const { error } = await supabase
+            .from('brands')
+            .insert({ name, slug });
+
+          if (!error) inserted++;
         }
       }
 
-      results.brands = { inserted, skipped };
+      results.brands = { found: uniqueBrands.length, inserted, existing };
     }
 
     // Sync cities
@@ -92,26 +99,29 @@ export async function POST(request: NextRequest) {
       });
 
       let inserted = 0;
-      let skipped = 0;
+      let existing = 0;
 
       for (const city of cityMap.values()) {
         const slug = toSlug(`${city.name}-${city.country || 'unknown'}`);
 
-        const { error } = await supabase
+        const { data: existingCity } = await supabase
           .from('cities')
-          .upsert(
-            { name: city.name, country: city.country, slug },
-            { onConflict: 'slug', ignoreDuplicates: true }
-          );
+          .select('id')
+          .eq('slug', slug)
+          .single();
 
-        if (error) {
-          skipped++;
+        if (existingCity) {
+          existing++;
         } else {
-          inserted++;
+          const { error } = await supabase
+            .from('cities')
+            .insert({ name: city.name, country: city.country, slug });
+
+          if (!error) inserted++;
         }
       }
 
-      results.cities = { inserted, skipped };
+      results.cities = { found: cityMap.size, inserted, existing };
     }
 
     // Sync countries
@@ -127,24 +137,30 @@ export async function POST(request: NextRequest) {
       )];
 
       let inserted = 0;
-      let skipped = 0;
+      let existing = 0;
 
       for (const country of uniqueCountries) {
         const name = toTitleCase(country);
         const slug = toSlug(country);
 
-        const { error } = await supabase
+        const { data: existingCountry } = await supabase
           .from('countries')
-          .upsert({ name, slug }, { onConflict: 'slug', ignoreDuplicates: true });
+          .select('id')
+          .eq('slug', slug)
+          .single();
 
-        if (error) {
-          skipped++;
+        if (existingCountry) {
+          existing++;
         } else {
-          inserted++;
+          const { error } = await supabase
+            .from('countries')
+            .insert({ name, slug });
+
+          if (!error) inserted++;
         }
       }
 
-      results.countries = { inserted, skipped };
+      results.countries = { found: uniqueCountries.length, inserted, existing };
     }
 
     // Sync neighborhoods
@@ -170,26 +186,29 @@ export async function POST(request: NextRequest) {
       });
 
       let inserted = 0;
-      let skipped = 0;
+      let existing = 0;
 
       for (const neighborhood of neighborhoodMap.values()) {
         const slug = toSlug(`${neighborhood.name}-${neighborhood.city || 'unknown'}-${neighborhood.country || 'unknown'}`);
 
-        const { error } = await supabase
+        const { data: existingNeighborhood } = await supabase
           .from('neighborhoods')
-          .upsert(
-            { name: neighborhood.name, city: neighborhood.city, country: neighborhood.country, slug },
-            { onConflict: 'slug', ignoreDuplicates: true }
-          );
+          .select('id')
+          .eq('slug', slug)
+          .single();
 
-        if (error) {
-          skipped++;
+        if (existingNeighborhood) {
+          existing++;
         } else {
-          inserted++;
+          const { error } = await supabase
+            .from('neighborhoods')
+            .insert({ name: neighborhood.name, city: neighborhood.city, country: neighborhood.country, slug });
+
+          if (!error) inserted++;
         }
       }
 
-      results.neighborhoods = { inserted, skipped };
+      results.neighborhoods = { found: neighborhoodMap.size, inserted, existing };
     }
 
     return NextResponse.json({
