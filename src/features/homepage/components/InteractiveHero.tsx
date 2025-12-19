@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { Sparkles, Send, Loader2, X, MapPin, ArrowRight, RefreshCw, Search, Bookmark, CheckCircle, Map, Brain } from 'lucide-react';
+import { Sparkles, Loader2, X, MapPin, ArrowRight, RefreshCw, Search, Bookmark, CheckCircle, Map } from 'lucide-react';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHomepageData } from './HomepageDataProvider';
@@ -563,17 +563,7 @@ export default function InteractiveHero() {
                 {isSearching || isLoadingInstant ? (
                   <Loader2 className={`w-4 h-4 animate-spin ${isFocused || showChatResults ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`} />
                 ) : (
-                  <div className="relative flex items-center justify-center">
-                    <Brain className={`w-4 h-4 transition-all duration-300 ${isFocused || showChatResults ? 'text-gray-900 dark:text-white' : 'text-gray-400'} ${localSearchTerm.trim() ? 'animate-pulse' : ''}`} />
-                    {/* Thinking dots animation - subtle pulsing when user is typing */}
-                    {localSearchTerm.trim() && (
-                      <div className="absolute -right-1 -top-0.5 flex gap-0.5">
-                        <span className="w-1 h-1 rounded-full bg-current opacity-40 animate-pulse" style={{ animationDelay: '0s', animationDuration: '1.5s' }} />
-                        <span className="w-1 h-1 rounded-full bg-current opacity-40 animate-pulse" style={{ animationDelay: '0.3s', animationDuration: '1.5s' }} />
-                        <span className="w-1 h-1 rounded-full bg-current opacity-40 animate-pulse" style={{ animationDelay: '0.6s', animationDuration: '1.5s' }} />
-                      </div>
-                    )}
-                  </div>
+                  <Search className={`w-4 h-4 transition-colors duration-200 ${isFocused || showChatResults ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`} />
                 )}
               </div>
               <input
@@ -606,7 +596,7 @@ export default function InteractiveHero() {
                 {isSearching ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <Send className="w-4 h-4" />
+                  <ArrowRight className="w-4 h-4" />
                 )}
               </button>
 
