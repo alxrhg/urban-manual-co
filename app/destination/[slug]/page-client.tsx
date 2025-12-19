@@ -444,12 +444,27 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 </h1>
 
                 {/* Location */}
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-4">
-                  <MapPin className="w-4 h-4" />
-                  <span className="text-[14px]">
-                    {destination.neighborhood && `${destination.neighborhood} · `}
-                    {cityName}{destination.country ? `, ${destination.country}` : ''}
-                  </span>
+                <div className="flex items-center gap-2 mb-4">
+                  <MapPin className="w-4 h-4 text-gray-400" />
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {parentDestination && (
+                      <Link
+                        href={`/destination/${parentDestination.slug}`}
+                        className="px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        {parentDestination.name}
+                      </Link>
+                    )}
+                    {parentDestination && (
+                      <span className="text-gray-300 dark:text-gray-600">·</span>
+                    )}
+                    <Link
+                      href={`/city/${destination.city}`}
+                      className="px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      {cityName}{destination.country ? `, ${destination.country}` : ''}
+                    </Link>
+                  </div>
                 </div>
 
                 {/* Tags */}
