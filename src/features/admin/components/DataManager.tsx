@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import {
   Search, Plus, Pencil, Trash2, X, Upload, Loader2, ChevronLeft, MoreVertical,
-  Building2, MapPin, Globe, Map, AlertCircle, ExternalLink
+  Building2, MapPin, Globe, Map, AlertCircle, ExternalLink, RefreshCw
 } from 'lucide-react';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
@@ -113,6 +113,10 @@ export function DataManager({ type }: DataManagerProps) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  // Sync state
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ inserted: number; skipped: number } | null>(null);
+
   // Form state
   const [formData, setFormData] = useState<Record<string, string | null>>({});
 
@@ -218,6 +222,27 @@ export function DataManager({ type }: DataManagerProps) {
     }
   };
 
+  const handleSync = async () => {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await fetch('/api/admin/data/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Sync failed');
+      setSyncResult(data.results?.[type] || { inserted: 0, skipped: 0 });
+      await fetchData();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Sync failed';
+      alert(`Sync error: ${message}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -266,12 +291,29 @@ export function DataManager({ type }: DataManagerProps) {
           <h2 className="text-lg font-medium text-black dark:text-white">{config.plural}</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {items.length.toLocaleString()} {type}
+            {syncResult && (
+              <span className="ml-2 text-green-600 dark:text-green-400">
+                (synced: {syncResult.inserted} new)
+              </span>
+            )}
           </p>
         </div>
-        <Button onClick={openCreateDrawer} className="rounded-full">
-          <Plus className="w-4 h-4 mr-2" />
-          Add New
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={handleSync}
+            disabled={syncing}
+            className="rounded-full"
+            title={`Sync ${type} from existing destinations`}
+          >
+            <RefreshCw className={cn("w-4 h-4 mr-2", syncing && "animate-spin")} />
+            {syncing ? 'Syncing...' : 'Sync from Destinations'}
+          </Button>
+          <Button onClick={openCreateDrawer} className="rounded-full">
+            <Plus className="w-4 h-4 mr-2" />
+            Add New
+          </Button>
+        </div>
       </div>
 
       {/* Error Banner */}
