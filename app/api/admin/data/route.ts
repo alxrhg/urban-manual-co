@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
 
     // Verify admin
     const { data: { user } } = await supabase.auth.getUser();
@@ -94,7 +94,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
 
     // Verify admin
     const { data: { user } } = await supabase.auth.getUser();
