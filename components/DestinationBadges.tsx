@@ -105,8 +105,8 @@ export function DestinationBadges({ destinationId, compact = false, showTiming =
     <div className="space-y-1.5">
       <div className="flex flex-wrap gap-1.5">
         {trendingBadge && (
-          <div className="px-2 py-0.5 rounded-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border border-gray-200 dark:border-gray-800">
-            <span className={`text-xs font-medium ${trendingBadge.color} flex items-center gap-1`}>
+          <div className="px-3 py-1 rounded-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border border-gray-200 dark:border-gray-800">
+            <span className={`text-xs font-medium ${trendingBadge.color} flex items-center gap-1.5`}>
               <span>{trendingBadge.emoji}</span>
               <span>{trendingBadge.text}</span>
             </span>

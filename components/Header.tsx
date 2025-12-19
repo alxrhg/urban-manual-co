@@ -15,6 +15,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/ui/tooltip";
+import { Button } from "@/ui/button";
 import { ChristmasTree } from "@/components/ChristmasTree";
 import { useChristmasTheme } from "@/contexts/ChristmasThemeContext";
 
@@ -124,14 +125,15 @@ export function Header() {
       {/* Trips button - ghost style */}
       <Tooltip>
         <TooltipTrigger asChild>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => navigate('/trips')}
-            className="flex items-center justify-center gap-2 px-4 py-2 h-10 text-gray-600 dark:text-gray-300 text-sm font-medium hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-all duration-200 touch-manipulation focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
             aria-label="View trips"
           >
             <Map className="w-4 h-4" />
             <span className="hidden sm:inline">Trips</span>
-          </button>
+          </Button>
         </TooltipTrigger>
         <TooltipContent>
           <p>{user ? 'View your trips' : 'Plan a trip'}</p>
@@ -141,9 +143,11 @@ export function Header() {
       {user ? (
         <Tooltip>
           <TooltipTrigger asChild>
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => openDrawer('account')}
-              className="flex items-center gap-2.5 pl-1.5 pr-4 py-1.5 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/15 text-gray-900 dark:text-white rounded-full text-sm font-medium transition-all duration-200 touch-manipulation focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+              className="pl-1.5 pr-4"
               aria-label="Open account drawer"
             >
               {avatarUrl ? (
@@ -191,7 +195,7 @@ export function Header() {
                 </span>
               )}
               <span className="hidden sm:inline">Account</span>
-            </button>
+            </Button>
           </TooltipTrigger>
           <TooltipContent>
             <p>Account settings</p>
@@ -200,14 +204,15 @@ export function Header() {
       ) : (
         <Tooltip>
           <TooltipTrigger asChild>
-            <button
+            <Button
+              variant="default"
+              size="sm"
               onClick={() => openDrawer('login')}
-              className="flex items-center gap-2 px-4 py-2 h-10 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition-all duration-200 touch-manipulation focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-300 focus:ring-offset-2"
               aria-label="Sign in"
             >
               <User className="w-4 h-4" />
               <span>Sign In</span>
-            </button>
+            </Button>
           </TooltipTrigger>
           <TooltipContent>
             <p>Sign in to save trips</p>

@@ -44,18 +44,19 @@ export function Toast({ message, type = 'info', duration = 3000, onClose }: Toas
     info: <Info className="h-5 w-5" />,
   };
 
+  // Monochromatic palette with subtle semantic differences
   const colors = {
-    success: 'bg-green-600 dark:bg-green-500',
-    error: 'bg-red-600 dark:bg-red-500',
-    warning: 'bg-yellow-600 dark:bg-yellow-500',
-    info: 'bg-black dark:bg-white',
+    success: 'bg-gray-900 dark:bg-white border border-gray-800 dark:border-gray-200',
+    error: 'bg-gray-900 dark:bg-white border border-gray-800 dark:border-gray-200',
+    warning: 'bg-gray-800 dark:bg-gray-100 border border-gray-700 dark:border-gray-300',
+    info: 'bg-gray-900 dark:bg-white border border-gray-800 dark:border-gray-200',
   };
 
   const textColors = {
-    success: 'text-white',
-    error: 'text-white',
-    warning: 'text-white',
-    info: 'text-white dark:text-black',
+    success: 'text-white dark:text-gray-900',
+    error: 'text-white dark:text-gray-900',
+    warning: 'text-white dark:text-gray-900',
+    info: 'text-white dark:text-gray-900',
   };
 
   return (
