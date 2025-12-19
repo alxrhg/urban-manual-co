@@ -140,6 +140,15 @@ export function DestinationForm({
   const [tagInput, setTagInput] = useState('');
   const [isEnriching, setIsEnriching] = useState(false);
 
+  // Helper to close all dropdowns
+  const closeAllDropdowns = () => {
+    setShowCategoryDropdown(false);
+    setShowCityDropdown(false);
+    setShowCountryDropdown(false);
+    setShowNeighborhoodDropdown(false);
+    setShowBrandDropdown(false);
+  };
+
   // Update form when destination changes
   useEffect(() => {
     if (destination) {
@@ -586,7 +595,7 @@ export function DestinationForm({
               <div>
                 <label className={labelClasses}>City</label>
                 <div className="relative">
-                  <button type="button" onClick={() => setShowCityDropdown(!showCityDropdown)}
+                  <button type="button" onClick={() => { closeAllDropdowns(); setShowCityDropdown(!showCityDropdown); }}
                     className={cn(inputClasses, "text-left flex items-center justify-between")}>
                     <span className={formData.city ? "" : "text-gray-400"}>{formData.city || "Select city..."}</span>
                     <div className="flex items-center gap-1">
@@ -625,7 +634,7 @@ export function DestinationForm({
               <div>
                 <label className={labelClasses}>Country</label>
                 <div className="relative">
-                  <button type="button" onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                  <button type="button" onClick={() => { closeAllDropdowns(); setShowCountryDropdown(!showCountryDropdown); }}
                     className={cn(inputClasses, "text-left flex items-center justify-between")}>
                     <span className={formData.country ? "" : "text-gray-400"}>{formData.country || "Select country..."}</span>
                     <div className="flex items-center gap-1">
@@ -668,7 +677,7 @@ export function DestinationForm({
               <div>
                 <label className={labelClasses}>Neighborhood</label>
                 <div className="relative">
-                  <button type="button" onClick={() => setShowNeighborhoodDropdown(!showNeighborhoodDropdown)}
+                  <button type="button" onClick={() => { closeAllDropdowns(); setShowNeighborhoodDropdown(!showNeighborhoodDropdown); }}
                     className={cn(inputClasses, "text-left flex items-center justify-between")}>
                     <span className={formData.neighborhood ? "" : "text-gray-400"}>{formData.neighborhood || "Select neighborhood..."}</span>
                     <div className="flex items-center gap-1">
@@ -707,7 +716,7 @@ export function DestinationForm({
               <div>
                 <label className={labelClasses}>Brand</label>
                 <div className="relative">
-                  <button type="button" onClick={() => setShowBrandDropdown(!showBrandDropdown)}
+                  <button type="button" onClick={() => { closeAllDropdowns(); setShowBrandDropdown(!showBrandDropdown); }}
                     className={cn(inputClasses, "text-left flex items-center justify-between")}>
                     <span className={formData.brand ? "" : "text-gray-400"}>{formData.brand || "Select brand..."}</span>
                     <div className="flex items-center gap-1">
@@ -766,7 +775,7 @@ export function DestinationForm({
             <div>
               <label className={labelClasses}>Category</label>
               <div className="relative">
-                <button type="button" onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                <button type="button" onClick={() => { closeAllDropdowns(); setShowCategoryDropdown(!showCategoryDropdown); }}
                   className={cn(inputClasses, "text-left flex items-center justify-between")}>
                   <span className={formData.category ? "" : "text-gray-400"}>{formData.category || "Select..."}</span>
                   <ChevronDown className={cn("h-4 w-4 text-gray-400 transition-transform", showCategoryDropdown && "rotate-180")} />
