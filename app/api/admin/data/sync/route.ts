@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server';
 
 type SyncType = 'brands' | 'cities' | 'countries' | 'neighborhoods' | 'all';
 
@@ -27,13 +27,15 @@ export async function POST(request: NextRequest) {
   try {
     const { type = 'all' } = await request.json() as { type?: SyncType };
 
-    const supabase = await createServerClient();
-
-    // Verify admin
-    const { data: { user } } = await supabase.auth.getUser();
+    // Use regular client for auth check
+    const authClient = await createServerClient();
+    const { data: { user } } = await authClient.auth.getUser();
     if (!user || user.app_metadata?.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Use service role client to bypass RLS for data operations
+    const supabase = createServiceRoleClient();
 
     const results: Record<string, { found: number; inserted: number; existing: number }> = {};
 
