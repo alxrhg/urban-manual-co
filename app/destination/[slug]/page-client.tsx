@@ -642,14 +642,35 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 <div className="mb-8 lg:hidden">
                   <div className="flex items-center gap-2 mb-4">
                     <h2 className="text-[12px] font-medium text-gray-400 uppercase tracking-wider">Contact & Hours</h2>
-                    {destination.timezone && (
+                    {(enrichedData?.utc_offset_minutes !== undefined || (destination as any).timezone) && (
                       <span className="text-[12px] text-gray-400">
-                        · {new Date().toLocaleTimeString('en-US', {
-                            timeZone: destination.timezone,
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true
-                          })} local
+                        · {(() => {
+                          try {
+                            const tz = (destination as any).timezone;
+                            if (tz) {
+                              return new Date().toLocaleTimeString('en-US', {
+                                timeZone: tz,
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                              });
+                            }
+                            // Fallback to UTC offset if available
+                            if (enrichedData?.utc_offset_minutes !== undefined) {
+                              const now = new Date();
+                              const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+                              const local = new Date(utc + (enrichedData.utc_offset_minutes * 60000));
+                              return local.toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                              });
+                            }
+                            return null;
+                          } catch {
+                            return null;
+                          }
+                        })()} local
                       </span>
                     )}
                   </div>
