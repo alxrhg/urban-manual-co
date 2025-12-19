@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Download, RefreshCw } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { Download, RefreshCw, TrendingUp, TrendingDown } from 'lucide-react';
 
 interface AnalyticsData {
   totalViews: number;
@@ -12,8 +11,9 @@ interface AnalyticsData {
   viewsTrend: number;
   searchesTrend: number;
   savesTrend: number;
+  usersTrend: number;
   dailyViews: { label: string; value: number }[];
-  topDestinations: { name: string; city: string; views: number; saves: number }[];
+  topDestinations: { name: string; city: string; slug: string; views: number; saves: number }[];
   topSearches: { query: string; count: number }[];
   categoryBreakdown: { category: string; count: number }[];
   topCities: { city: string; count: number }[];
@@ -26,124 +26,41 @@ export function AdvancedAnalyticsDashboard() {
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange>('30d');
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchAnalytics = async () => {
     setRefreshing(true);
+    setError(null);
     try {
-      const daysAgo = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - daysAgo);
+      const response = await fetch(`/api/admin/analytics?range=${dateRange}`);
 
-      // Fetch user interactions
-      const { data: interactions } = await supabase
-        .from('user_interactions')
-        .select('interaction_type, created_at')
-        .gte('created_at', startDate.toISOString());
-
-      // Fetch saved places
-      const { count: totalSaves } = await supabase
-        .from('saved_places')
-        .select('*', { count: 'exact', head: true })
-        .gte('saved_at', startDate.toISOString());
-
-      // Fetch unique users
-      const { data: uniqueUsers } = await supabase
-        .from('saved_places')
-        .select('user_id')
-        .gte('saved_at', startDate.toISOString());
-
-      const uniqueUserIds = new Set(uniqueUsers?.map(u => u.user_id) || []);
-
-      // Calculate daily data for charts
-      const dailyData: Record<string, { views: number }> = {};
-      const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 14;
-
-      for (let i = days - 1; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const key = date.toISOString().split('T')[0];
-        dailyData[key] = { views: 0 };
+      if (!response.ok) {
+        throw new Error('Failed to fetch analytics');
       }
 
-      interactions?.forEach(interaction => {
-        const date = interaction.created_at.split('T')[0];
-        if (dailyData[date] && interaction.interaction_type === 'view') {
-          dailyData[date].views++;
-        }
-      });
-
-      // Fetch top destinations
-      const { data: topDests } = await supabase
-        .from('destinations')
-        .select('name, city, views_count, saves_count')
-        .order('views_count', { ascending: false })
-        .limit(10);
-
-      // Fetch category breakdown
-      const { data: categories } = await supabase
-        .from('destinations')
-        .select('category');
-
-      const categoryCount: Record<string, number> = {};
-      categories?.forEach(d => {
-        if (d.category) {
-          categoryCount[d.category] = (categoryCount[d.category] || 0) + 1;
-        }
-      });
-
-      // Fetch city breakdown
-      const { data: cities } = await supabase
-        .from('destinations')
-        .select('city');
-
-      const cityCount: Record<string, number> = {};
-      cities?.forEach(d => {
-        if (d.city) {
-          cityCount[d.city] = (cityCount[d.city] || 0) + 1;
-        }
-      });
-
-      const topCities = Object.entries(cityCount)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
-        .map(([city, count]) => ({ city, count }));
-
-      const viewCount = interactions?.filter(i => i.interaction_type === 'view').length || 0;
-      const searchCount = interactions?.filter(i => i.interaction_type === 'search').length || 0;
+      const analyticsData = await response.json();
 
       setData({
-        totalViews: viewCount || Math.floor(Math.random() * 50000) + 10000,
-        totalSearches: searchCount || Math.floor(Math.random() * 20000) + 5000,
-        totalSaves: totalSaves || 0,
-        totalUsers: uniqueUserIds.size || Math.floor(Math.random() * 5000) + 1000,
-        viewsTrend: 12.5,
-        searchesTrend: 8.3,
-        savesTrend: 15.2,
-        dailyViews: Object.entries(dailyData).map(([date, val]) => ({
-          label: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          value: val.views || Math.floor(Math.random() * 2000) + 500,
+        totalViews: analyticsData.summary.totalViews,
+        totalSearches: analyticsData.summary.totalSearches,
+        totalSaves: analyticsData.summary.totalSaves,
+        totalUsers: analyticsData.summary.totalUsers,
+        viewsTrend: analyticsData.summary.viewsTrend,
+        searchesTrend: analyticsData.summary.searchesTrend,
+        savesTrend: analyticsData.summary.savesTrend,
+        usersTrend: analyticsData.summary.usersTrend,
+        dailyViews: analyticsData.dailyViews.map((d: { date: string; label: string; views: number }) => ({
+          label: d.label,
+          value: d.views,
         })),
-        topDestinations: topDests?.map(d => ({
-          name: d.name,
-          city: d.city,
-          views: d.views_count || Math.floor(Math.random() * 5000),
-          saves: d.saves_count || Math.floor(Math.random() * 500),
-        })) || [],
-        topSearches: [
-          { query: 'best restaurants paris', count: 1234 },
-          { query: 'tokyo hotels', count: 987 },
-          { query: 'london bars', count: 876 },
-          { query: 'new york cafes', count: 765 },
-          { query: 'barcelona food', count: 654 },
-        ],
-        categoryBreakdown: Object.entries(categoryCount)
-          .map(([category, count]) => ({ category, count }))
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 8),
-        topCities,
+        topDestinations: analyticsData.topDestinations,
+        topSearches: analyticsData.topSearches,
+        categoryBreakdown: analyticsData.categoryBreakdown,
+        topCities: analyticsData.topCities,
       });
-    } catch (error) {
-      console.error('Failed to fetch analytics:', error);
+    } catch (err) {
+      console.error('Failed to fetch analytics:', err);
+      setError('Failed to load analytics data');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -175,6 +92,31 @@ export function AdvancedAnalyticsDashboard() {
   };
 
   const maxViews = Math.max(...(data?.dailyViews.map(d => d.value) || [1]));
+
+  const TrendIndicator = ({ value }: { value: number }) => {
+    if (value === 0) return null;
+    const isPositive = value > 0;
+    return (
+      <span className={`inline-flex items-center gap-0.5 text-[10px] ${isPositive ? 'text-green-600' : 'text-red-500'}`}>
+        {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+        {Math.abs(value)}%
+      </span>
+    );
+  };
+
+  if (error && !loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <p className="text-gray-500 mb-4">{error}</p>
+        <button
+          onClick={fetchAnalytics}
+          className="text-sm text-black dark:text-white hover:underline"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-12 fade-in">
@@ -219,33 +161,45 @@ export function AdvancedAnalyticsDashboard() {
           {loading ? (
             <div className="h-8 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-1" />
           ) : (
-            <div className="text-2xl font-light mb-1">{data?.totalViews.toLocaleString()}</div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-light">{data?.totalViews.toLocaleString()}</span>
+              <TrendIndicator value={data?.viewsTrend || 0} />
+            </div>
           )}
-          <div className="text-xs text-gray-500">Page Views</div>
+          <div className="text-xs text-gray-500 mt-1">Page Views</div>
         </div>
         <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
           {loading ? (
             <div className="h-8 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-1" />
           ) : (
-            <div className="text-2xl font-light mb-1">{data?.totalSearches.toLocaleString()}</div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-light">{data?.totalSearches.toLocaleString()}</span>
+              <TrendIndicator value={data?.searchesTrend || 0} />
+            </div>
           )}
-          <div className="text-xs text-gray-500">Searches</div>
+          <div className="text-xs text-gray-500 mt-1">Searches</div>
         </div>
         <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
           {loading ? (
             <div className="h-8 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-1" />
           ) : (
-            <div className="text-2xl font-light mb-1">{data?.totalSaves.toLocaleString()}</div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-light">{data?.totalSaves.toLocaleString()}</span>
+              <TrendIndicator value={data?.savesTrend || 0} />
+            </div>
           )}
-          <div className="text-xs text-gray-500">Saves</div>
+          <div className="text-xs text-gray-500 mt-1">Saves</div>
         </div>
         <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
           {loading ? (
             <div className="h-8 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-1" />
           ) : (
-            <div className="text-2xl font-light mb-1">{data?.totalUsers.toLocaleString()}</div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-light">{data?.totalUsers.toLocaleString()}</span>
+              <TrendIndicator value={data?.usersTrend || 0} />
+            </div>
           )}
-          <div className="text-xs text-gray-500">Users</div>
+          <div className="text-xs text-gray-500 mt-1">Users</div>
         </div>
       </div>
 
@@ -284,6 +238,8 @@ export function AdvancedAnalyticsDashboard() {
                   <div className="h-4 w-12 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
                 </div>
               ))
+            ) : data?.topDestinations.length === 0 ? (
+              <p className="py-8 text-sm text-gray-400 text-center">No destination views yet</p>
             ) : (
               data?.topDestinations.slice(0, 8).map((dest, i) => (
                 <div key={i} className="py-3 flex items-center justify-between">
@@ -312,6 +268,8 @@ export function AdvancedAnalyticsDashboard() {
                   <div className="h-4 w-12 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
                 </div>
               ))
+            ) : data?.topSearches.length === 0 ? (
+              <p className="py-8 text-sm text-gray-400 text-center">No search queries yet</p>
             ) : (
               data?.topSearches.map((search, i) => (
                 <div key={i} className="py-3 flex items-center justify-between">
