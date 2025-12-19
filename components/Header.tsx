@@ -121,16 +121,16 @@ export function Header() {
         </span>
       )}
 
-      {/* Trips button - always visible */}
+      {/* Trips button - ghost style */}
       <Tooltip>
         <TooltipTrigger asChild>
           <button
             onClick={() => navigate('/trips')}
-            className="flex items-center justify-center gap-1.5 px-2 py-2 h-[34px] w-[34px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-full text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+            className="flex items-center justify-center gap-2 px-4 py-2 h-10 text-gray-600 dark:text-gray-300 text-sm font-medium hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-all duration-200 touch-manipulation focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
             aria-label="View trips"
           >
             <Map className="w-4 h-4" />
-            <span className="hidden sm:inline text-[12px]">Trips</span>
+            <span className="hidden sm:inline">Trips</span>
           </button>
         </TooltipTrigger>
         <TooltipContent>
@@ -143,11 +143,11 @@ export function Header() {
           <TooltipTrigger asChild>
             <button
               onClick={() => openDrawer('account')}
-              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+              className="flex items-center gap-2.5 pl-1.5 pr-4 py-1.5 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/15 text-gray-900 dark:text-white rounded-full text-sm font-medium transition-all duration-200 touch-manipulation focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
               aria-label="Open account drawer"
             >
               {avatarUrl ? (
-                <span className="relative w-6 h-6 rounded-full border border-white/20 dark:border-black/10 bg-gray-100 dark:bg-gray-800 overflow-visible">
+                <span className="relative w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 overflow-visible">
                   <img
                     src={avatarUrl}
                     alt="Profile"
@@ -174,8 +174,8 @@ export function Header() {
                   )}
                 </span>
               ) : (
-                <span className="relative">
-                  <User className="w-4 h-4" />
+                <span className="relative flex items-center justify-center w-7 h-7 rounded-full bg-gray-300 dark:bg-gray-600">
+                  <User className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                   {isChristmasMode && (
                     <svg
                       className="absolute -top-3 -left-2 w-4 h-4 -rotate-12"
@@ -202,11 +202,11 @@ export function Header() {
           <TooltipTrigger asChild>
             <button
               onClick={() => openDrawer('login')}
-              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+              className="flex items-center gap-2 px-4 py-2 h-10 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition-all duration-200 touch-manipulation focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-300 focus:ring-offset-2"
               aria-label="Sign in"
             >
               <User className="w-4 h-4" />
-              <span className="hidden sm:inline">Sign In</span>
+              <span>Sign In</span>
             </button>
           </TooltipTrigger>
           <TooltipContent>
@@ -236,7 +236,7 @@ export function Header() {
             Urban Manual®
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <ChristmasTree />
             <CommandPalette />
             {actionButtons}
