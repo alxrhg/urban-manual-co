@@ -105,16 +105,16 @@ export function CommandPalette() {
 
   return (
     <>
-      {/* Search trigger button - mobile: icon only, desktop: full button */}
+      {/* Search trigger button - modern pill style */}
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center justify-center gap-2 p-2 md:px-3 md:py-1.5 text-sm text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+        className="flex items-center gap-3 h-10 px-4 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/15 rounded-full transition-all duration-200 group"
         aria-label="Search"
       >
-        <Search className="h-4 w-4" />
-        <span className="hidden md:inline">Search...</span>
-        <kbd className="hidden md:inline-flex ml-2 pointer-events-none h-5 select-none items-center gap-1 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-1.5 font-mono text-[10px] font-medium text-gray-400 dark:text-gray-500">
-          <span className="text-xs">⌘</span>K
+        <Search className="h-4 w-4 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
+        <span className="hidden md:inline text-sm text-gray-500 dark:text-gray-400">Search</span>
+        <kbd className="hidden md:inline-flex pointer-events-none h-6 select-none items-center gap-0.5 rounded-md bg-white dark:bg-white/10 border border-gray-200/60 dark:border-white/10 px-2 font-mono text-[11px] font-medium text-gray-400 dark:text-gray-500 shadow-sm">
+          <span>⌘</span>K
         </kbd>
       </button>
 
