@@ -453,58 +453,57 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
       </div>
 
       {/* Toolbar */}
-      <div className="pb-4 space-y-4">
+      <div className="pb-4 space-y-3">
         {/* Search + View Toggle */}
         <div className="flex items-center gap-2">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <Input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search..."
-              className="pl-11 h-10 rounded-full border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
+              className="pl-9 h-8 text-xs rounded-lg border-gray-200 dark:border-gray-800 bg-transparent"
             />
           </div>
 
-          <Button
-            variant="outline"
+          <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`h-10 rounded-full px-4 ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
               showFilters || hasActiveFilters
-                ? 'bg-black text-white dark:bg-white dark:text-black border-transparent hover:bg-gray-800 dark:hover:bg-gray-100'
-                : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
+                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
             }`}
           >
-            <SlidersHorizontal className="w-4 h-4 mr-2" />
+            <SlidersHorizontal className="w-3 h-3" />
             <span>Filters</span>
             {activeFilterCount > 0 && (
-              <span className={`ml-2 text-xs font-medium ${showFilters || hasActiveFilters ? 'text-white/70 dark:text-black/70' : 'text-gray-500'}`}>
-                ({activeFilterCount})
+              <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-full">
+                {activeFilterCount}
               </span>
             )}
-          </Button>
+          </button>
 
-          <div className="hidden sm:flex items-center bg-gray-100 dark:bg-gray-900 rounded-full p-1">
+          <div className="hidden sm:flex items-center gap-0.5">
             <button
               onClick={() => setViewMode('table')}
-              className={`p-2 rounded-full transition-colors ${
+              className={`p-1.5 rounded-md transition-colors ${
                 viewMode === 'table'
-                  ? 'bg-white dark:bg-gray-800 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-100'
+                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
               }`}
             >
-              <LayoutList className="w-4 h-4" />
+              <LayoutList className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-full transition-colors ${
+              className={`p-1.5 rounded-md transition-colors ${
                 viewMode === 'grid'
-                  ? 'bg-white dark:bg-gray-800 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-100'
+                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
               }`}
             >
-              <LayoutGrid className="w-4 h-4" />
+              <LayoutGrid className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -513,23 +512,23 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
         {showFilters && (
           <div className="space-y-3 pt-3 border-t border-gray-100 dark:border-gray-800/50">
             {/* Row 1: City, Category, Status */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
               {/* City Filter */}
               <Popover open={showCityDropdown} onOpenChange={setShowCityDropdown}>
                 <PopoverTrigger asChild>
                   <button
-                    className={`inline-flex items-center gap-2 h-9 px-4 text-sm rounded-full border transition-colors ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
                       selectedCity
-                        ? 'bg-black text-white dark:bg-white dark:text-black border-transparent'
-                        : 'border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900'
+                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                     }`}
                   >
-                    <MapPin className="w-3.5 h-3.5" />
+                    <MapPin className="w-3 h-3" />
                     <span>{selectedCity || 'All Cities'}</span>
-                    <ChevronDown className="w-3.5 h-3.5 opacity-50" />
+                    <ChevronDown className="w-3 h-3 opacity-50" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-64 p-0 rounded-2xl" align="start">
+                <PopoverContent className="w-64 p-0 rounded-xl" align="start">
                   <Command>
                     <CommandInput
                       placeholder="Search cities..."
@@ -572,12 +571,12 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
 
               {/* Category Filter */}
               <Select value={selectedCategory || 'all'} onValueChange={(val) => setSelectedCategory(val === 'all' ? '' : val)}>
-                <SelectTrigger className={`h-9 px-4 rounded-full border text-sm gap-2 ${
+                <SelectTrigger className={`px-3 py-1.5 h-auto rounded-full text-xs font-medium gap-1.5 border-0 ${
                   selectedCategory
-                    ? 'bg-black text-white dark:bg-white dark:text-black border-transparent'
-                    : 'border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400'
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}>
-                  <Tag className="w-3.5 h-3.5" />
+                  <Tag className="w-3 h-3" />
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
@@ -592,12 +591,12 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
 
               {/* Enrichment Status Filter */}
               <Select value={enrichedFilter} onValueChange={(val) => setEnrichedFilter(val as EnrichedFilter)}>
-                <SelectTrigger className={`h-9 px-4 rounded-full border text-sm gap-2 ${
+                <SelectTrigger className={`px-3 py-1.5 h-auto rounded-full text-xs font-medium gap-1.5 border-0 ${
                   enrichedFilter !== 'all'
-                    ? 'bg-black text-white dark:bg-white dark:text-black border-transparent'
-                    : 'border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400'
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}>
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Sparkles className="w-3 h-3" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
@@ -609,12 +608,12 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
 
               {/* Missing Data Filter */}
               <Select value={missingDataFilter} onValueChange={(val) => setMissingDataFilter(val as MissingDataFilter)}>
-                <SelectTrigger className={`h-9 px-4 rounded-full border text-sm gap-2 ${
+                <SelectTrigger className={`px-3 py-1.5 h-auto rounded-full text-xs font-medium gap-1.5 border-0 ${
                   missingDataFilter !== 'all'
-                    ? 'bg-black text-white dark:bg-white dark:text-black border-transparent'
-                    : 'border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400'
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}>
-                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <AlertTriangle className="w-3 h-3" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
@@ -627,84 +626,80 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
             </div>
 
             {/* Row 2: Quick Filters + Sort */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
               {/* Quick Filter Toggles */}
               <button
                 onClick={() => setCrownOnly(!crownOnly)}
-                className={`inline-flex items-center gap-2 h-9 px-4 text-sm rounded-full border transition-colors ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
                   crownOnly
-                    ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400'
-                    : 'border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900'
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
               >
-                <Crown className="w-3.5 h-3.5 text-amber-500" />
+                <Crown className="w-3 h-3 text-amber-500" />
                 <span>Crown Only</span>
               </button>
               <button
                 onClick={() => setMichelinOnly(!michelinOnly)}
-                className={`inline-flex items-center gap-2 h-9 px-4 text-sm rounded-full border transition-colors ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
                   michelinOnly
-                    ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
-                    : 'border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900'
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
               >
-                <img src="/michelin-star.svg" alt="Michelin" className="w-3.5 h-3.5" />
+                <img src="/michelin-star.svg" alt="Michelin" className="w-3 h-3" />
                 <span>Michelin Only</span>
               </button>
 
               {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
-                  className="inline-flex items-center gap-1.5 h-9 px-3 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  className="inline-flex items-center gap-1 px-2 py-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                 >
-                  <X className="w-3.5 h-3.5" />
-                  <span>Clear all</span>
+                  <X className="w-3 h-3" />
+                  <span>Clear</span>
                 </button>
               )}
 
               {/* Sort + Show - right aligned */}
-              <div className="flex items-center gap-3 ml-auto">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Sort</span>
-                  <Select
-                    value={`${sortField}-${sortOrder}`}
-                    onValueChange={(value) => {
-                      const [field, order] = value.split('-') as [SortField, SortOrder];
-                      setSortField(field);
-                      setSortOrder(order);
-                    }}
-                  >
-                    <SelectTrigger className="h-9 px-3 rounded-lg border-gray-200 dark:border-gray-800 text-sm w-[150px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      <SelectItem value="name-asc">Name A-Z</SelectItem>
-                      <SelectItem value="name-desc">Name Z-A</SelectItem>
-                      <SelectItem value="city-asc">City A-Z</SelectItem>
-                      <SelectItem value="city-desc">City Z-A</SelectItem>
-                      <SelectItem value="category-asc">Category A-Z</SelectItem>
-                      <SelectItem value="updated_at-desc">Recently Updated</SelectItem>
-                      <SelectItem value="created_at-desc">Recently Added</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="flex items-center gap-2 ml-auto">
+                <span className="text-[10px] text-gray-400 uppercase tracking-wider">Sort</span>
+                <Select
+                  value={`${sortField}-${sortOrder}`}
+                  onValueChange={(value) => {
+                    const [field, order] = value.split('-') as [SortField, SortOrder];
+                    setSortField(field);
+                    setSortOrder(order);
+                  }}
+                >
+                  <SelectTrigger className="px-2.5 py-1 h-auto rounded-md border-0 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 w-auto gap-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="name-asc">Name A-Z</SelectItem>
+                    <SelectItem value="name-desc">Name Z-A</SelectItem>
+                    <SelectItem value="city-asc">City A-Z</SelectItem>
+                    <SelectItem value="city-desc">City Z-A</SelectItem>
+                    <SelectItem value="category-asc">Category A-Z</SelectItem>
+                    <SelectItem value="updated_at-desc">Recently Updated</SelectItem>
+                    <SelectItem value="created_at-desc">Recently Added</SelectItem>
+                  </SelectContent>
+                </Select>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Show</span>
-                  <Select
-                    value={String(itemsPerPage)}
-                    onValueChange={(val) => setItemsPerPage(Number(val))}
-                  >
-                    <SelectTrigger className="h-9 px-3 rounded-lg border-gray-200 dark:border-gray-800 text-sm w-[70px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      {ITEMS_PER_PAGE_OPTIONS.map((n) => (
-                        <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <span className="text-[10px] text-gray-400 uppercase tracking-wider">Show</span>
+                <Select
+                  value={String(itemsPerPage)}
+                  onValueChange={(val) => setItemsPerPage(Number(val))}
+                >
+                  <SelectTrigger className="px-2.5 py-1 h-auto rounded-md border-0 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 w-auto gap-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {ITEMS_PER_PAGE_OPTIONS.map((n) => (
+                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
