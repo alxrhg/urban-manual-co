@@ -30,12 +30,12 @@ export function AdminNav() {
       const link = NAV_LINKS.find(l => l.value === value);
       if (link) router.push(link.href);
     }}>
-      <TabsList className="h-auto p-1 bg-gray-100 dark:bg-gray-800">
+      <TabsList className="h-auto p-1.5 bg-[#0c1523] dark:bg-[#0c1523] rounded-full">
         {NAV_LINKS.map((link) => (
           <TabsTrigger
             key={link.value}
             value={link.value}
-            className="text-xs px-3 py-1.5"
+            className="text-sm px-4 py-2 text-gray-500 data-[state=active]:bg-[#1e2736] data-[state=active]:text-white data-[state=active]:shadow-none"
           >
             {link.label}
           </TabsTrigger>
