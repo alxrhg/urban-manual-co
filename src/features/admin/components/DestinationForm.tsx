@@ -343,7 +343,7 @@ export function DestinationForm({
     const data: Partial<Destination> = {
       ...formData,
       image: imageUrl,
-      michelin_stars: formData.michelin_stars ? Number(formData.michelin_stars) : null,
+      michelin_stars: formData.michelin_stars ? Number(formData.michelin_stars) : undefined,
       parent_destination_id: selectedParent?.id || null,
     };
     await onSave(data);
