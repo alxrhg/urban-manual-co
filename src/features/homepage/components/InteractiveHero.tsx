@@ -1092,16 +1092,16 @@ export default function InteractiveHero() {
 
             {/* Category Filters with Icons */}
             {categories.length > 0 && (
-              <div className="flex flex-wrap gap-x-1 gap-y-2">
+              <div className="flex flex-wrap gap-x-4 gap-y-2 text-[12px]">
                 <button
                   onClick={() => {
                     setSelectedCategory('');
                     setMichelinOnly(false);
                   }}
-                  className={`px-3 py-1.5 text-[12px] font-medium rounded-full transition-all duration-200 ${
+                  className={`font-medium transition-colors duration-200 ${
                     !selectedCategory && !michelinOnly
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
+                      ? 'text-gray-900 dark:text-white'
+                      : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
                   All Categories
@@ -1109,10 +1109,10 @@ export default function InteractiveHero() {
                 {/* Michelin filter with icon */}
                 <button
                   onClick={() => setMichelinOnly(!michelinOnly)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-full transition-all duration-200 ${
+                  className={`flex items-center gap-1.5 font-medium transition-colors duration-200 ${
                     michelinOnly
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
+                      ? 'text-gray-900 dark:text-white'
+                      : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
                   <img
@@ -1129,10 +1129,10 @@ export default function InteractiveHero() {
                     <button
                       key={category}
                       onClick={() => handleCategoryClick(category)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-full transition-all duration-200 ${
+                      className={`flex items-center gap-1.5 font-medium transition-colors duration-200 ${
                         selectedCategory.toLowerCase() === category.toLowerCase()
-                          ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
+                          ? 'text-gray-900 dark:text-white'
+                          : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
                       }`}
                     >
                       {IconComponent && <IconComponent className="w-4 h-4" />}
