@@ -503,22 +503,25 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
 
         {/* Filters Panel */}
         {showFilters && (
-          <div className="space-y-3 pt-2">
-            {/* Row 1: City, Category, Status */}
-            <div className="flex flex-wrap items-center gap-3">
-              {/* City Filter */}
+          <div className="py-3 space-y-3">
+            {/* Filter Row */}
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+              {/* Dropdown Filters */}
               <Popover open={showCityDropdown} onOpenChange={setShowCityDropdown}>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={selectedCity ? 'border-black dark:border-white' : ''}
+                  <button
+                    className={`inline-flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                      selectedCity
+                        ? 'font-medium text-black dark:text-white'
+                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                    }`}
                   >
-                    <MapPin className="w-4 h-4 mr-2 text-gray-400" />
-                    {selectedCity || 'All Cities'}
-                    <ChevronDown className="w-4 h-4 ml-2 text-gray-400" />
-                  </Button>
+                    <MapPin className="w-3.5 h-3.5" />
+                    <span>{selectedCity || 'City'}</span>
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-64 p-0" align="start">
+                <PopoverContent className="w-64 p-0 rounded-2xl" align="start">
                   <Command>
                     <CommandInput
                       placeholder="Search cities..."
@@ -559,13 +562,18 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
                 </PopoverContent>
               </Popover>
 
-              {/* Category Filter */}
               <Select value={selectedCategory || 'all'} onValueChange={(val) => setSelectedCategory(val === 'all' ? '' : val)}>
-                <SelectTrigger className="w-[160px]">
-                  <Tag className="w-4 h-4 mr-2 text-gray-400" />
-                  <SelectValue placeholder="All Categories" />
+                <SelectTrigger
+                  className={`w-auto border-0 bg-transparent h-auto p-0 shadow-none transition-all duration-200 ease-out [&>svg:last-child]:w-3 [&>svg:last-child]:h-3 [&>svg:last-child]:ml-1 ${
+                    selectedCategory
+                      ? 'font-medium text-black dark:text-white'
+                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                  }`}
+                >
+                  <Tag className="w-3.5 h-3.5 mr-1.5" />
+                  <SelectValue placeholder="Category" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-2xl">
                   <SelectItem value="all">All Categories</SelectItem>
                   {CATEGORIES.map((cat) => (
                     <SelectItem key={cat} value={cat} className="capitalize">
@@ -575,63 +583,82 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
                 </SelectContent>
               </Select>
 
-              {/* Enrichment Status Filter */}
               <Select value={enrichedFilter} onValueChange={(val) => setEnrichedFilter(val as EnrichedFilter)}>
-                <SelectTrigger className="w-[150px]">
-                  <Sparkles className="w-4 h-4 mr-2 text-gray-400" />
+                <SelectTrigger
+                  className={`w-auto border-0 bg-transparent h-auto p-0 shadow-none transition-all duration-200 ease-out [&>svg:last-child]:w-3 [&>svg:last-child]:h-3 [&>svg:last-child]:ml-1 ${
+                    enrichedFilter !== 'all'
+                      ? 'font-medium text-black dark:text-white'
+                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5 mr-1.5" />
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-2xl">
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="enriched">Enriched</SelectItem>
                   <SelectItem value="not_enriched">Not Enriched</SelectItem>
                 </SelectContent>
               </Select>
 
-              {/* Missing Data Filter */}
               <Select value={missingDataFilter} onValueChange={(val) => setMissingDataFilter(val as MissingDataFilter)}>
-                <SelectTrigger className="w-[160px]">
-                  <AlertTriangle className="w-4 h-4 mr-2 text-gray-400" />
+                <SelectTrigger
+                  className={`w-auto border-0 bg-transparent h-auto p-0 shadow-none transition-all duration-200 ease-out [&>svg:last-child]:w-3 [&>svg:last-child]:h-3 [&>svg:last-child]:ml-1 ${
+                    missingDataFilter !== 'all'
+                      ? 'font-medium text-black dark:text-white'
+                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                  }`}
+                >
+                  <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-2xl">
                   <SelectItem value="all">All Data</SelectItem>
                   <SelectItem value="no_image">Missing Image</SelectItem>
                   <SelectItem value="no_description">Missing Description</SelectItem>
                   <SelectItem value="no_content">Missing Content</SelectItem>
                 </SelectContent>
               </Select>
+
+              {/* Quick Filter Toggles - text style like homepage */}
+              <button
+                onClick={() => setCrownOnly(!crownOnly)}
+                className={`inline-flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                  crownOnly
+                    ? 'font-medium text-black dark:text-white'
+                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                }`}
+              >
+                <Crown className={`w-3.5 h-3.5 ${crownOnly ? 'text-amber-500' : ''}`} />
+                Crown
+              </button>
+
+              <button
+                onClick={() => setMichelinOnly(!michelinOnly)}
+                className={`inline-flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                  michelinOnly
+                    ? 'font-medium text-black dark:text-white'
+                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                }`}
+              >
+                <img src="/michelin-star.svg" alt="" className={`w-3.5 h-3.5 ${!michelinOnly ? 'opacity-30' : ''}`} />
+                Michelin
+              </button>
+
+              {/* Clear Filters */}
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-all duration-200 ease-out"
+                >
+                  Clear
+                </button>
+              )}
             </div>
 
-            {/* Row 2: Quick Filters + Sort */}
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Quick Filter Toggles */}
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={crownOnly ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setCrownOnly(!crownOnly)}
-                  className="h-8"
-                >
-                  <Crown className={`w-3.5 h-3.5 mr-1.5 ${crownOnly ? 'text-amber-200' : 'text-amber-500'}`} />
-                  Crown Only
-                </Button>
-                <Button
-                  variant={michelinOnly ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setMichelinOnly(!michelinOnly)}
-                  className="h-8"
-                >
-                  <img src="/michelin-star.svg" alt="Michelin" className="w-3.5 h-3.5 mr-1.5" />
-                  Michelin Only
-                </Button>
-              </div>
-
-              <Separator orientation="vertical" className="h-6" />
-
-              {/* Sort */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Sort:</span>
+            {/* Sort & Display Options Row */}
+            <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+              <div className="flex items-center gap-4">
                 <Select
                   value={`${sortField}-${sortOrder}`}
                   onValueChange={(value) => {
@@ -640,10 +667,11 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
                     setSortOrder(order);
                   }}
                 >
-                  <SelectTrigger className="w-[160px]">
+                  <SelectTrigger className="w-auto border-0 bg-transparent h-auto p-0 shadow-none font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-all duration-200 ease-out [&>svg:last-child]:w-3 [&>svg:last-child]:h-3 [&>svg:last-child]:ml-1">
+                    <ArrowUpDown className="w-3.5 h-3.5 mr-1.5" />
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-2xl">
                     <SelectItem value="name-asc">Name A-Z</SelectItem>
                     <SelectItem value="name-desc">Name Z-A</SelectItem>
                     <SelectItem value="city-asc">City A-Z</SelectItem>
@@ -655,35 +683,20 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
                 </Select>
               </div>
 
-              {/* Items per page */}
-              <div className="flex items-center gap-2 ml-auto">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Show:</span>
-                <Select
-                  value={String(itemsPerPage)}
-                  onValueChange={(val) => setItemsPerPage(Number(val))}
-                >
-                  <SelectTrigger className="w-[80px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ITEMS_PER_PAGE_OPTIONS.map((n) => (
-                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {hasActiveFilters && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="text-xs text-gray-500"
-                >
-                  <X className="w-3 h-3 mr-1" />
-                  Clear all
-                </Button>
-              )}
+              <Select
+                value={String(itemsPerPage)}
+                onValueChange={(val) => setItemsPerPage(Number(val))}
+              >
+                <SelectTrigger className="w-auto border-0 bg-transparent h-auto p-0 shadow-none font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-all duration-200 ease-out [&>svg:last-child]:w-3 [&>svg:last-child]:h-3 [&>svg:last-child]:ml-1">
+                  <span className="mr-1">Show</span>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl">
+                  {ITEMS_PER_PAGE_OPTIONS.map((n) => (
+                    <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         )}
