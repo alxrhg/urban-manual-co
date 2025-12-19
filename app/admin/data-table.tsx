@@ -4,6 +4,7 @@ import * as React from 'react';
 import {
   ColumnDef,
   ColumnFiltersState,
+  RowSelectionState,
   SortingState,
   VisibilityState,
   flexRender,
@@ -14,8 +15,7 @@ import {
   useReactTable,
   FilterFn,
 } from '@tanstack/react-table';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/ui/button';
+import { Search } from 'lucide-react';
 import { Input } from '@/ui/input';
 import { Spinner } from '@/ui/spinner';
 import {
@@ -26,31 +26,36 @@ import {
   TableHeader,
   TableRow,
 } from '@/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@/ui/dropdown-menu';
+import { DataTablePagination } from '@/ui/data-table-pagination';
+import { DataTableViewOptions } from '@/ui/data-table-view-options';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
   isLoading?: boolean;
+  searchPlaceholder?: string;
+  enableRowSelection?: boolean;
+  onRowSelectionChange?: (rows: TData[]) => void;
+  pageSizeOptions?: number[];
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
-  searchQuery,
+  searchQuery = '',
   onSearchChange,
   isLoading = false,
+  searchPlaceholder = 'Search...',
+  enableRowSelection = false,
+  onRowSelectionChange,
+  pageSizeOptions = [10, 20, 30, 40, 50],
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
 
   // Custom filter function for multi-column search
   const globalFilterFn: FilterFn<TData> = React.useCallback((row, columnId, filterValue) => {
@@ -60,7 +65,14 @@ export function DataTable<TData, TValue>({
     const city = String(row.getValue('city') || '').toLowerCase();
     const slug = String(row.getValue('slug') || '').toLowerCase();
     const category = String(row.getValue('category') || '').toLowerCase();
-    return name.includes(search) || city.includes(search) || slug.includes(search) || category.includes(search);
+    const email = String(row.getValue('email') || '').toLowerCase();
+    return (
+      name.includes(search) ||
+      city.includes(search) ||
+      slug.includes(search) ||
+      category.includes(search) ||
+      email.includes(search)
+    );
   }, []);
 
   const table = useReactTable(
@@ -75,11 +87,14 @@ export function DataTable<TData, TValue>({
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
         onColumnVisibilityChange: setColumnVisibility,
+        onRowSelectionChange: setRowSelection,
+        enableRowSelection,
         globalFilterFn: globalFilterFn,
         state: {
           sorting,
           columnFilters,
           columnVisibility,
+          rowSelection,
           globalFilter: searchQuery || undefined,
         },
       }),
@@ -89,55 +104,42 @@ export function DataTable<TData, TValue>({
         sorting,
         columnFilters,
         columnVisibility,
+        rowSelection,
         searchQuery,
         globalFilterFn,
+        enableRowSelection,
       ]
     )
   );
 
+  // Notify parent of row selection changes
+  React.useEffect(() => {
+    if (onRowSelectionChange) {
+      const selectedRows = table.getFilteredSelectedRowModel().rows.map((row) => row.original);
+      onRowSelectionChange(selectedRows);
+    }
+  }, [rowSelection, onRowSelectionChange, table]);
+
   return (
     <div className="space-y-4">
-      {/* Search and Column Visibility */}
+      {/* Toolbar */}
       <div className="flex items-center gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search destinations..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10 max-w-sm"
-          />
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {onSearchChange && (
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder={searchPlaceholder}
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="pl-10 max-w-sm"
+            />
+          </div>
+        )}
+        <DataTableViewOptions table={table} />
       </div>
 
       {/* Table */}
-      <div className="rounded-md border border-gray-200 dark:border-gray-800">
+      <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -201,36 +203,11 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
-          {table.getFilteredRowModel().rows.length} destination(s) found.
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Previous
-          </Button>
-          <div className="text-sm text-gray-500">
-            Page {table.getState().pagination.pageIndex + 1} of{' '}
-            {table.getPageCount()}
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      <DataTablePagination
+        table={table}
+        pageSizeOptions={pageSizeOptions}
+        showSelectedCount={enableRowSelection}
+      />
     </div>
   );
 }
-
