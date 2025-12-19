@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowRight, RefreshCw, Loader2, CheckCircle2, Clock, AlertCircle, Plane } from 'lucide-react';
+import { Clock, Plane } from 'lucide-react';
 import type { ItineraryItemNotes } from '@/types/trip';
 
 interface FlightStatusCardProps {
@@ -24,8 +24,8 @@ interface FlightInfo {
 }
 
 /**
- * FlightStatusCard - Compact flight card with route-focused design
- * Layout: Route header → Schedule row → Flight identity
+ * FlightStatusCard - Clean flight card with route visualization
+ * Matches the new design: horizontal layout with airport codes, times in pills, and flight path
  */
 export default function FlightStatusCard({ flight, departureDate, compact = true }: FlightStatusCardProps) {
   const [flightInfo, setFlightInfo] = useState<FlightInfo | null>(null);
@@ -46,7 +46,7 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
         if (diffDays > 1) {
           setFlightInfo({
             status: 'scheduled',
-            statusText: 'On Time',
+            statusText: 'ON TIME',
             lastUpdated: new Date(),
           });
           setLoading(false);
@@ -68,7 +68,7 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
         const data = await response.json();
         setFlightInfo({
           status: data.status || 'scheduled',
-          statusText: data.statusText || 'On Time',
+          statusText: data.statusText?.toUpperCase() || 'ON TIME',
           actualDeparture: data.actualDeparture,
           actualArrival: data.actualArrival,
           delay: data.delay,
@@ -79,14 +79,14 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
       } else {
         setFlightInfo({
           status: 'scheduled',
-          statusText: 'On Time',
+          statusText: 'ON TIME',
           lastUpdated: new Date(),
         });
       }
     } catch {
       setFlightInfo({
         status: 'scheduled',
-        statusText: 'On Time',
+        statusText: 'ON TIME',
         lastUpdated: new Date(),
       });
     } finally {
@@ -112,159 +112,132 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
   const origin = parseAirport(flight.from);
   const destination = parseAirport(flight.to);
 
-  // Format date for display
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return '';
+  // Format time for display (convert to 12-hour format with AM/PM)
+  const formatTime = (time?: string) => {
+    if (!time) return '--:--';
     try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      const [hours, minutes] = time.split(':').map(Number);
+      const period = hours >= 12 ? 'PM' : 'AM';
+      const hour12 = hours % 12 || 12;
+      return `${hour12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${period}`;
     } catch {
-      return dateStr;
+      return time;
     }
   };
 
-  // Format time for display
-  const formatTime = (time?: string) => {
-    if (!time) return '--:--';
-    return time;
+  // Calculate flight duration
+  const calculateDuration = () => {
+    const depTime = flightInfo?.actualDeparture || flight.departureTime;
+    const arrTime = flightInfo?.actualArrival || flight.arrivalTime;
+
+    if (!depTime || !arrTime) return null;
+
+    try {
+      const [depHours, depMins] = depTime.split(':').map(Number);
+      const [arrHours, arrMins] = arrTime.split(':').map(Number);
+
+      let totalMins = (arrHours * 60 + arrMins) - (depHours * 60 + depMins);
+      if (totalMins < 0) totalMins += 24 * 60; // Handle overnight flights
+
+      const hours = Math.floor(totalMins / 60);
+      const mins = totalMins % 60;
+
+      if (hours === 0) return `${mins}m`;
+      if (mins === 0) return `${hours}h`;
+      return `${hours}h ${mins}m`;
+    } catch {
+      return null;
+    }
   };
+
+  const duration = calculateDuration();
 
   const getStatusColor = (status: FlightStatus) => {
     switch (status) {
       case 'scheduled':
       case 'boarding':
       case 'landed':
-        return 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/30';
+        return 'text-[#E07553]'; // Coral/orange color from design
       case 'departed':
       case 'in_flight':
-        return 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/30';
+        return 'text-blue-500';
       case 'delayed':
-        return 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-900/30';
+        return 'text-amber-500';
       case 'cancelled':
-        return 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/30';
+        return 'text-red-500';
       default:
-        return 'text-stone-600 bg-stone-50 dark:text-gray-400 dark:bg-gray-800';
-    }
-  };
-
-  const getStatusIcon = (status: FlightStatus) => {
-    switch (status) {
-      case 'scheduled':
-      case 'boarding':
-      case 'landed':
-        return <CheckCircle2 className="w-3 h-3" />;
-      case 'departed':
-      case 'in_flight':
-        return <Plane className="w-3 h-3" />;
-      case 'delayed':
-        return <Clock className="w-3 h-3" />;
-      case 'cancelled':
-        return <AlertCircle className="w-3 h-3" />;
-      default:
-        return <Plane className="w-3 h-3" />;
+        return 'text-[#E07553]';
     }
   };
 
   return (
-    <div className="p-4 rounded-2xl bg-stone-100 dark:bg-gray-800/50">
-      {/* REGION 1: Route Header (EWR → MIA) */}
-      <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-4 mb-3">
-        {/* Origin */}
-        <div>
-          <p className="text-xl font-semibold text-stone-900 dark:text-white leading-tight">
+    <div className="p-5 rounded-2xl bg-white dark:bg-gray-800 shadow-sm">
+      {/* Three-column layout: Departure - Flight Path - Arrival */}
+      <div className="flex items-start justify-between">
+        {/* Departure Column */}
+        <div className="flex flex-col items-start">
+          <p className="text-xl font-bold text-stone-900 dark:text-white tracking-tight">
             {origin.code}
           </p>
           {origin.city && (
-            <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
+            <p className="text-xs text-stone-400 dark:text-gray-500 mt-0.5">
               {origin.city}
             </p>
           )}
+          <div className="flex items-center gap-1.5 mt-3 px-2.5 py-1 bg-stone-100 dark:bg-gray-700 rounded-full">
+            <Clock className="w-3 h-3 text-stone-400 dark:text-gray-500" />
+            <span className="text-xs font-medium text-stone-600 dark:text-gray-300 tabular-nums">
+              {formatTime(flightInfo?.actualDeparture || flight.departureTime)}
+            </span>
+          </div>
         </div>
 
-        {/* Arrow */}
-        <div className="pt-1">
-          <ArrowRight className="w-4 h-4 text-stone-400" />
-        </div>
+        {/* Flight Path Column */}
+        <div className="flex flex-col items-center flex-1 px-4 pt-1">
+          {/* Status */}
+          {flightInfo && (
+            <p className={`text-[10px] font-bold tracking-widest ${getStatusColor(flightInfo.status)}`}>
+              {flightInfo.statusText}
+            </p>
+          )}
 
-        {/* Destination */}
-        <div>
-          <p className="text-xl font-semibold text-stone-900 dark:text-white leading-tight">
-            {destination.code}
-          </p>
-          {destination.city && (
-            <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
-              {destination.city}
+          {/* Flight path visualization */}
+          <div className="flex items-center w-full mt-2">
+            <div className="w-2 h-2 rounded-full bg-stone-300 dark:bg-gray-600 flex-shrink-0" />
+            <div className="flex-1 mx-1 border-t-2 border-dashed border-stone-300 dark:border-gray-600 relative">
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 px-1">
+                <Plane className="w-4 h-4 text-[#E07553] rotate-0" />
+              </div>
+            </div>
+            <div className="w-2 h-2 rounded-full bg-stone-300 dark:bg-gray-600 flex-shrink-0" />
+          </div>
+
+          {/* Duration */}
+          {duration && (
+            <p className="text-xs text-stone-500 dark:text-gray-400 mt-2 font-medium">
+              {duration}
             </p>
           )}
         </div>
-      </div>
 
-      {/* REGION 2: Schedule Row */}
-      <div className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-gray-300 mb-3">
-        {(departureDate || flight.departureDate) && (
-          <>
-            <span>{formatDate(departureDate || flight.departureDate)}</span>
-            <span className="text-stone-400">•</span>
-          </>
-        )}
-        <span>{formatTime(flightInfo?.actualDeparture || flight.departureTime)}</span>
-        <span className="text-stone-400 px-0.5">—</span>
-        <span>{formatTime(flightInfo?.actualArrival || flight.arrivalTime)}</span>
-        {flightInfo?.delay && flightInfo.delay > 0 && (
-          <span className="text-orange-500 ml-1">+{flightInfo.delay}m</span>
-        )}
-      </div>
-
-      {/* REGION 3: Flight Identity & Status */}
-      <div className="flex items-center justify-between">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-gray-400">
-          {flight.airline} {flight.flightNumber}
-        </p>
-
-        <div className="flex items-center gap-2">
-          {/* Status Badge */}
-          {flightInfo && (
-            <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusColor(flightInfo.status)}`}>
-              {getStatusIcon(flightInfo.status)}
-              {flightInfo.statusText}
-            </div>
+        {/* Arrival Column */}
+        <div className="flex flex-col items-end">
+          <p className="text-xl font-bold text-stone-900 dark:text-white tracking-tight">
+            {destination.code}
+          </p>
+          {destination.city && (
+            <p className="text-xs text-stone-400 dark:text-gray-500 mt-0.5">
+              {destination.city}
+            </p>
           )}
-
-          {/* Refresh Button */}
-          <button
-            onClick={fetchFlightStatus}
-            disabled={loading}
-            className="p-1 text-stone-400 hover:text-stone-600 dark:hover:text-gray-300 transition-colors"
-            title="Refresh status"
-          >
-            {loading ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : (
-              <RefreshCw className="w-3 h-3" />
-            )}
-          </button>
+          <div className="flex items-center gap-1.5 mt-3 px-2.5 py-1 bg-stone-100 dark:bg-gray-700 rounded-full">
+            <Clock className="w-3 h-3 text-stone-400 dark:text-gray-500" />
+            <span className="text-xs font-medium text-stone-600 dark:text-gray-300 tabular-nums">
+              {formatTime(flightInfo?.actualArrival || flight.arrivalTime)}
+            </span>
+          </div>
         </div>
       </div>
-
-      {/* Gate/Terminal (if available) */}
-      {flightInfo && (flightInfo.gate || flightInfo.terminal) && (
-        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-stone-200 dark:border-gray-700">
-          <p className="text-[10px] text-stone-500">
-            {flightInfo.terminal && `Terminal ${flightInfo.terminal}`}
-            {flightInfo.terminal && flightInfo.gate && ' • '}
-            {flightInfo.gate && `Gate ${flightInfo.gate}`}
-          </p>
-        </div>
-      )}
-
-      {/* Confirmation Number */}
-      {flight.confirmationNumber && (
-        <div className="mt-2 pt-2 border-t border-stone-200 dark:border-gray-700">
-          <p className="text-[10px] text-stone-500">
-            Confirmation: <span className="font-mono font-medium">{flight.confirmationNumber}</span>
-          </p>
-        </div>
-      )}
     </div>
   );
 }
