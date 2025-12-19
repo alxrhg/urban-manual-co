@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { Sparkles, Send, Loader2, X, MapPin, ArrowRight, RefreshCw, Search, Bookmark, CheckCircle, Map, Brain } from 'lucide-react';
+import { Sparkles, Loader2, X, MapPin, ArrowRight, RefreshCw, Search, Bookmark, CheckCircle, Map } from 'lucide-react';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHomepageData } from './HomepageDataProvider';
@@ -563,17 +563,7 @@ export default function InteractiveHero() {
                 {isSearching || isLoadingInstant ? (
                   <Loader2 className={`w-4 h-4 animate-spin ${isFocused || showChatResults ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`} />
                 ) : (
-                  <div className="relative flex items-center justify-center">
-                    <Brain className={`w-4 h-4 transition-all duration-300 ${isFocused || showChatResults ? 'text-gray-900 dark:text-white' : 'text-gray-400'} ${localSearchTerm.trim() ? 'animate-pulse' : ''}`} />
-                    {/* Thinking dots animation - subtle pulsing when user is typing */}
-                    {localSearchTerm.trim() && (
-                      <div className="absolute -right-1 -top-0.5 flex gap-0.5">
-                        <span className="w-1 h-1 rounded-full bg-current opacity-40 animate-pulse" style={{ animationDelay: '0s', animationDuration: '1.5s' }} />
-                        <span className="w-1 h-1 rounded-full bg-current opacity-40 animate-pulse" style={{ animationDelay: '0.3s', animationDuration: '1.5s' }} />
-                        <span className="w-1 h-1 rounded-full bg-current opacity-40 animate-pulse" style={{ animationDelay: '0.6s', animationDuration: '1.5s' }} />
-                      </div>
-                    )}
-                  </div>
+                  <Search className={`w-4 h-4 transition-colors duration-200 ${isFocused || showChatResults ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`} />
                 )}
               </div>
               <input
@@ -585,8 +575,8 @@ export default function InteractiveHero() {
                 onBlur={() => setTimeout(() => setIsFocused(false), 150)}
                 onKeyDown={handleInputKeyDown}
                 placeholder={showChatResults ? 'Ask a follow-up question...' : AI_PLACEHOLDERS[placeholderIndex]}
-                className="w-full h-[52px] sm:h-[56px] pl-11 pr-14 text-[16px] sm:text-[15px] bg-gray-100/80 dark:bg-white/[0.08]
-                           border-0 rounded-[14px] sm:rounded-[16px] text-gray-900 dark:text-white
+                className="w-full h-12 pl-11 pr-14 text-[15px] bg-gray-100 dark:bg-white/[0.08]
+                           border-0 rounded-full text-gray-900 dark:text-white
                            placeholder:text-gray-400 dark:placeholder:text-gray-500
                            focus:outline-none focus:ring-2 focus:ring-gray-900/20 dark:focus:ring-white/20
                            focus:bg-white dark:focus:bg-white/[0.12]
@@ -595,8 +585,8 @@ export default function InteractiveHero() {
               <button
                 type="submit"
                 disabled={isSearching || !localSearchTerm.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-10 sm:h-10 flex items-center justify-center
-                           rounded-[12px] bg-gray-900 dark:bg-white
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center
+                           rounded-full bg-gray-900 dark:bg-white
                            text-white dark:text-gray-900
                            hover:bg-gray-800 dark:hover:bg-gray-100
                            active:bg-gray-700 dark:active:bg-gray-200
@@ -606,7 +596,7 @@ export default function InteractiveHero() {
                 {isSearching ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <Send className="w-4 h-4" />
+                  <ArrowRight className="w-4 h-4" />
                 )}
               </button>
 
@@ -804,8 +794,8 @@ export default function InteractiveHero() {
               )}
             </div>
             {!showChatResults && !showInstantResults && (
-              <p className="mt-2 text-[11px] text-gray-400 dark:text-gray-500">
-                Press <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 font-mono text-[11px]">/</kbd> to focus • Enter to search
+              <p className="mt-2 text-[10px] text-gray-300 dark:text-gray-600">
+                Press <kbd className="px-1 py-0.5 rounded bg-gray-100 dark:bg-white/5 font-mono text-[10px]">/</kbd> to focus • Enter to search
               </p>
             )}
           </form>
@@ -1056,7 +1046,7 @@ export default function InteractiveHero() {
       {!showChatResults && (
         <div className="flex-1 flex items-end">
           <div className="w-full pt-6">
-            <div className="mb-8">
+            <div className="mb-4">
               <div className="flex flex-wrap gap-x-1 gap-y-2">
                 <button
                   onClick={() => setSelectedCity('')}
@@ -1084,7 +1074,7 @@ export default function InteractiveHero() {
                 {cities.length > displayedCities.length && !showAllCities && (
                   <button
                     onClick={() => setShowAllCities(true)}
-                    className="px-3 py-1.5 text-[12px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    className="px-3 py-1.5 text-[12px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-all duration-200"
                   >
                     +{cities.length - displayedCities.length} more
                   </button>
@@ -1092,7 +1082,7 @@ export default function InteractiveHero() {
                 {showAllCities && (
                   <button
                     onClick={() => setShowAllCities(false)}
-                    className="px-3 py-1.5 text-[12px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    className="px-3 py-1.5 text-[12px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-all duration-200"
                   >
                     Show less
                   </button>
@@ -1108,7 +1098,7 @@ export default function InteractiveHero() {
                     setSelectedCategory('');
                     setMichelinOnly(false);
                   }}
-                  className={`transition-colors duration-200 font-medium ${
+                  className={`font-medium transition-colors duration-200 ${
                     !selectedCategory && !michelinOnly
                       ? 'text-gray-900 dark:text-white'
                       : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
@@ -1119,9 +1109,9 @@ export default function InteractiveHero() {
                 {/* Michelin filter with icon */}
                 <button
                   onClick={() => setMichelinOnly(!michelinOnly)}
-                  className={`flex items-center gap-1.5 transition-colors duration-200 ${
+                  className={`flex items-center gap-1.5 font-medium transition-colors duration-200 ${
                     michelinOnly
-                      ? 'text-gray-900 dark:text-white font-medium'
+                      ? 'text-gray-900 dark:text-white'
                       : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
@@ -1139,9 +1129,9 @@ export default function InteractiveHero() {
                     <button
                       key={category}
                       onClick={() => handleCategoryClick(category)}
-                      className={`flex items-center gap-1.5 transition-colors duration-200 ${
+                      className={`flex items-center gap-1.5 font-medium transition-colors duration-200 ${
                         selectedCategory.toLowerCase() === category.toLowerCase()
-                          ? 'text-gray-900 dark:text-white font-medium'
+                          ? 'text-gray-900 dark:text-white'
                           : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
                       }`}
                     >
