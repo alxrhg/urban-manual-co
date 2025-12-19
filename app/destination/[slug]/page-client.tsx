@@ -419,78 +419,92 @@ export default function DestinationPageClient({ initialDestination, parentDestin
             {/* Main content column */}
             <div className="flex-1 min-w-0">
               {/* Header */}
-              <div className="mb-6">
-                {/* Category & Rating */}
-                <div className="flex items-center gap-3 text-[13px] mb-3">
-                  <span className="uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
+              <div className="mb-8">
+                {/* Category badge & Rating row */}
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-md text-[11px] uppercase tracking-wider text-gray-600 dark:text-gray-400 font-semibold">
                     {formatLabel(destination.category)}
                   </span>
                   {(enrichedData?.rating || destination.rating) && (
-                    <span className="flex items-center gap-1.5 text-gray-900 dark:text-white font-medium">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-md">
                       <img src="/google-logo.svg" alt="Google" className="w-3.5 h-3.5" />
-                      {(enrichedData?.rating || destination.rating).toFixed(1)}
-                    </span>
+                      <span className="text-[12px] font-semibold text-gray-900 dark:text-white">
+                        {(enrichedData?.rating || destination.rating).toFixed(1)}
+                      </span>
+                    </div>
                   )}
                   {(enrichedData?.price_level || destination.price_level) && (
-                    <span className="text-gray-500 dark:text-gray-400">
+                    <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-md text-[12px] font-medium text-gray-600 dark:text-gray-400">
                       {PRICE_LEVEL.LABELS[(enrichedData?.price_level || destination.price_level) as keyof typeof PRICE_LEVEL.LABELS]}
                     </span>
                   )}
                 </div>
 
                 {/* Title */}
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white leading-tight mb-3">
+                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white leading-tight tracking-tight mb-4">
                   {destination.name}
                 </h1>
 
-                {/* Location */}
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-4">
-                  <MapPin className="w-4 h-4" />
+                {/* Location - Use parent destination name if available, otherwise use neighborhood */}
+                <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-5">
+                  <MapPin className="w-4 h-4 flex-shrink-0" />
                   <span className="text-[14px]">
-                    {destination.neighborhood && `${destination.neighborhood} · `}
+                    {parentDestination ? (
+                      <>
+                        <Link
+                          href={`/destination/${parentDestination.slug}`}
+                          className="hover:text-gray-900 dark:hover:text-white transition-colors"
+                        >
+                          {parentDestination.name}
+                        </Link>
+                        {' · '}
+                      </>
+                    ) : destination.neighborhood && !destination.neighborhood.includes('-') ? (
+                      `${destination.neighborhood} · `
+                    ) : null}
                     {cityName}{destination.country ? `, ${destination.country}` : ''}
                   </span>
                 </div>
 
                 {/* Tags */}
-                <div className="flex flex-wrap gap-2 mb-4">
+                <div className="flex flex-wrap gap-2 mb-6">
                   {destination.michelin_stars && destination.michelin_stars > 0 && (
-                    <span className="px-3 py-1.5 rounded-full bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-[12px] font-medium text-red-700 dark:text-red-300 flex items-center gap-1.5">
-                      <img src="/michelin-star.svg" alt="Michelin" className="w-3 h-3" />
+                    <span className="px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 text-[12px] font-medium text-red-700 dark:text-red-400 flex items-center gap-1.5">
+                      <img src="/michelin-star.svg" alt="Michelin" className="w-3.5 h-3.5" />
                       {destination.michelin_stars} Michelin {destination.michelin_stars === 1 ? 'Star' : 'Stars'}
                     </span>
                   )}
                   {destination.crown && (
-                    <span className="px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-[12px] font-medium text-amber-700 dark:text-amber-300">
+                    <span className="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-[12px] font-medium text-amber-700 dark:text-amber-400">
                       Crown
                     </span>
                   )}
                   {destination.brand && (
                     <Link
                       href={`/brand/${encodeURIComponent(destination.brand)}`}
-                      className="px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 text-[12px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-[12px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
                     >
-                      <Building2 className="w-3 h-3" />
+                      <Building2 className="w-3.5 h-3.5" />
                       {destination.brand}
                     </Link>
                   )}
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <button
                     onClick={handleShare}
-                    className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-full text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-[13px] font-medium text-gray-700 dark:text-gray-200 transition-colors"
                   >
                     <Share2 className="w-4 h-4" />
                     Share
                   </button>
                   <button
                     onClick={() => user ? (!isSaved && setShowSaveModal(true)) : router.push('/auth/login')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-[13px] font-medium transition-colors ${
                       isSaved
                         ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                        : 'border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                        : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
                     }`}
                   >
                     <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
@@ -505,15 +519,15 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                             user ? handleVisitToggle() : router.push('/auth/login');
                           }
                         }}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium transition-colors ${
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-[13px] font-medium transition-colors ${
                           isVisited
-                            ? 'bg-green-600 text-white'
-                            : 'border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                            : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
                         }`}
                       >
-                        <Check className={`w-4 h-4 ${isVisited ? 'stroke-[3]' : ''}`} />
+                        <Check className={`w-4 h-4 ${isVisited ? 'stroke-[2.5]' : ''}`} />
                         {isVisited ? 'Visited' : 'Mark Visited'}
-                        {isVisited && <ChevronDown className="w-3 h-3" />}
+                        {isVisited && <ChevronDown className="w-3.5 h-3.5 ml-0.5" />}
                       </button>
                     </DropdownMenuTrigger>
                     {isVisited && (
@@ -522,14 +536,14 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                           setShowVisitedModal(true);
                           setShowVisitedDropdown(false);
                         }}>
-                          <Plus className="h-3 w-3 mr-2" />
+                          <Plus className="h-3.5 w-3.5 mr-2" />
                           Add Details
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => {
                           handleVisitToggle();
                           setShowVisitedDropdown(false);
                         }}>
-                          <X className="h-3 w-3 mr-2" />
+                          <X className="h-3.5 w-3.5 mr-2" />
                           Remove Visit
                         </DropdownMenuItem>
                       </DropdownMenuContent>
