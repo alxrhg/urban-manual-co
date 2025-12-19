@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { AlertCircle, CheckCircle2, ArrowLeft, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
+import { AuthInput, AuthButton } from '@/ui/auth';
 
 function ForgotPasswordContent() {
   const router = useRouter();
@@ -66,29 +67,24 @@ function ForgotPasswordContent() {
                 If an account exists with this email, you&apos;ll receive a password reset link shortly.
               </AlertDescription>
             </Alert>
-            <button
+            <AuthButton
               onClick={() => router.push('/auth/login')}
-              className="w-full px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium shadow-sm hover:shadow-md active:shadow-sm transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
+              variant="secondary"
             >
               Back to Sign In
-            </button>
+            </AuthButton>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
-                Email address
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                className="w-full px-4 py-3.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 focus:border-gray-300 dark:focus:border-gray-600 focus:bg-white dark:focus:bg-gray-800 transition-all duration-200 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                placeholder="you@example.com"
-              />
-            </div>
+            <AuthInput
+              label="Email address"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+              placeholder="you@example.com"
+            />
 
             {error && (
               <Alert variant="destructive" className="rounded-xl">
@@ -98,14 +94,14 @@ function ForgotPasswordContent() {
               </Alert>
             )}
 
-            <button
+            <AuthButton
               type="submit"
-              disabled={loading}
-              className="w-full px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium disabled:opacity-50 shadow-sm hover:shadow-md active:shadow-sm transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2"
+              loading={loading}
+              loadingText="Sending..."
+              variant="secondary"
             >
-              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              {loading ? 'Sending...' : 'Send reset link'}
-            </button>
+              Send reset link
+            </AuthButton>
           </form>
         )}
       </div>
