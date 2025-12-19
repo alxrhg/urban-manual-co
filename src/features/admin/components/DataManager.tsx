@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import {
-  Building2, MapPin, Globe, Map, Plus, Pencil, Trash2, X, Upload, Loader2, Search, ChevronDown
+  Building2, MapPin, Globe, Map, Plus, Pencil, Trash2, X, Upload, Loader2, Search, AlertCircle
 } from 'lucide-react';
 
 interface Brand {
@@ -46,7 +46,12 @@ interface Neighborhood {
   image_url: string | null;
 }
 
-type TabId = 'brands' | 'cities' | 'countries' | 'neighborhoods';
+type DataType = 'brands' | 'cities' | 'countries' | 'neighborhoods';
+type DataItem = Brand | City | Country | Neighborhood;
+
+interface DataManagerProps {
+  type: DataType;
+}
 
 const BRAND_CATEGORIES = [
   'Luxury Hotel',
@@ -59,51 +64,57 @@ const BRAND_CATEGORIES = [
   'Other',
 ];
 
+const TYPE_CONFIG = {
+  brands: { singular: 'Brand', icon: Building2, imageField: 'logo_url' },
+  cities: { singular: 'City', icon: MapPin, imageField: 'image_url' },
+  countries: { singular: 'Country', icon: Globe, imageField: 'image_url' },
+  neighborhoods: { singular: 'Neighborhood', icon: Map, imageField: 'image_url' },
+};
+
 const toSlug = (str: string): string => {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 };
 
-export function DataManager() {
-  const [activeTab, setActiveTab] = useState<TabId>('brands');
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [cities, setCities] = useState<City[]>([]);
-  const [countries, setCountries] = useState<Country[]>([]);
-  const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
+export function DataManager({ type }: DataManagerProps) {
+  const [items, setItems] = useState<DataItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
-  const [editingItem, setEditingItem] = useState<Brand | City | Country | Neighborhood | null>(null);
+  const [editingItem, setEditingItem] = useState<DataItem | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState<Record<string, string | null>>({});
 
   const supabase = createClient({ skipValidation: true });
+  const config = TYPE_CONFIG[type];
 
   useEffect(() => {
     fetchData();
-  }, [activeTab]);
+  }, [type]);
 
   const fetchData = async () => {
     setLoading(true);
+    setError(null);
     try {
-      if (activeTab === 'brands') {
-        const { data } = await supabase.from('brands').select('*').order('name');
-        setBrands(data || []);
-      } else if (activeTab === 'cities') {
-        const { data } = await supabase.from('cities').select('*').order('name');
-        setCities(data || []);
-      } else if (activeTab === 'countries') {
-        const { data } = await supabase.from('countries').select('*').order('name');
-        setCountries(data || []);
-      } else if (activeTab === 'neighborhoods') {
-        const { data } = await supabase.from('neighborhoods').select('*').order('name');
-        setNeighborhoods(data || []);
+      const { data, error: fetchError } = await supabase.from(type).select('*').order('name');
+      if (fetchError) {
+        if (fetchError.message.includes('does not exist')) {
+          setError(`The "${type}" table doesn't exist yet. Please run the database migration first.`);
+        } else {
+          setError(fetchError.message);
+        }
+        setItems([]);
+      } else {
+        setItems(data || []);
       }
-    } catch (error) {
-      console.error('Error fetching data:', error);
+    } catch (err) {
+      setError('Failed to fetch data');
+      setItems([]);
     } finally {
       setLoading(false);
     }
@@ -112,12 +123,14 @@ export function DataManager() {
   const openCreateModal = () => {
     setEditingItem(null);
     setFormData({});
+    setSaveError(null);
     setShowModal(true);
   };
 
-  const openEditModal = (item: Brand | City | Country | Neighborhood) => {
+  const openEditModal = (item: DataItem) => {
     setEditingItem(item);
     setFormData({ ...item } as Record<string, string | null>);
+    setSaveError(null);
     setShowModal(true);
   };
 
@@ -125,36 +138,51 @@ export function DataManager() {
     setShowModal(false);
     setEditingItem(null);
     setFormData({});
+    setSaveError(null);
   };
 
   const handleSave = async () => {
     setSaving(true);
+    setSaveError(null);
     try {
-      const table = activeTab;
       const slug = formData.slug || toSlug(formData.name || '');
       const dataToSave = { ...formData, slug };
 
+      // Remove id from dataToSave for insert
+      const { id, ...insertData } = dataToSave;
+
       if (editingItem) {
-        await supabase.from(table).update(dataToSave).eq('id', editingItem.id);
+        const { error } = await supabase.from(type).update(dataToSave).eq('id', editingItem.id);
+        if (error) throw error;
       } else {
-        await supabase.from(table).insert(dataToSave);
+        const { error } = await supabase.from(type).insert(insertData);
+        if (error) throw error;
       }
       await fetchData();
       closeModal();
-    } catch (error) {
-      console.error('Error saving:', error);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to save';
+      if (message.includes('does not exist')) {
+        setSaveError(`The "${type}" table doesn't exist. Please run the database migration first.`);
+      } else if (message.includes('duplicate key')) {
+        setSaveError('An item with this name or slug already exists.');
+      } else {
+        setSaveError(message);
+      }
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this item?')) return;
+    if (!confirm(`Are you sure you want to delete this ${config.singular.toLowerCase()}?`)) return;
     try {
-      await supabase.from(activeTab).delete().eq('id', id);
+      const { error } = await supabase.from(type).delete().eq('id', id);
+      if (error) throw error;
       await fetchData();
-    } catch (error) {
-      console.error('Error deleting:', error);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to delete';
+      alert(`Error: ${message}`);
     }
   };
 
@@ -164,7 +192,7 @@ export function DataManager() {
 
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${activeTab}/${Date.now()}.${fileExt}`;
+      const fileName = `${type}/${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from('images')
         .upload(fileName, file);
@@ -176,42 +204,35 @@ export function DataManager() {
         .getPublicUrl(fileName);
 
       setFormData({ ...formData, [field]: publicUrl });
-    } catch (error) {
-      console.error('Error uploading image:', error);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to upload';
+      alert(`Upload error: ${message}`);
     }
   };
 
   const getFilteredItems = () => {
     const query = searchQuery.toLowerCase();
-    if (activeTab === 'brands') {
-      return brands.filter(b => b.name.toLowerCase().includes(query));
-    } else if (activeTab === 'cities') {
-      return cities.filter(c => c.name.toLowerCase().includes(query) || c.country?.toLowerCase().includes(query));
-    } else if (activeTab === 'countries') {
-      return countries.filter(c => c.name.toLowerCase().includes(query));
-    } else {
-      return neighborhoods.filter(n => n.name.toLowerCase().includes(query) || n.city?.toLowerCase().includes(query));
-    }
+    return items.filter((item) => {
+      if (item.name.toLowerCase().includes(query)) return true;
+      if ('country' in item && item.country?.toLowerCase().includes(query)) return true;
+      if ('city' in item && item.city?.toLowerCase().includes(query)) return true;
+      return false;
+    });
   };
-
-  const tabs = [
-    { id: 'brands' as TabId, label: 'Brands', icon: Building2, count: brands.length },
-    { id: 'cities' as TabId, label: 'Cities', icon: MapPin, count: cities.length },
-    { id: 'countries' as TabId, label: 'Countries', icon: Globe, count: countries.length },
-    { id: 'neighborhoods' as TabId, label: 'Neighborhoods', icon: Map, count: neighborhoods.length },
-  ];
 
   const inputClasses = "w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white";
   const labelClasses = "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1";
+
+  const Icon = config.icon;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Data Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{config.singular} Management</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Manage brands, cities, countries, and neighborhoods
+            Manage {type} for your destinations
           </p>
         </div>
         <button
@@ -219,36 +240,20 @@ export function DataManager() {
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Plus className="h-4 w-4" />
-          Add {activeTab.slice(0, -1)}
+          Add {config.singular}
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => { setActiveTab(tab.id); setSearchQuery(''); }}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-              activeTab === tab.id
-                ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900"
-                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-            )}
-          >
-            <tab.icon className="h-4 w-4" />
-            {tab.label}
-            <span className={cn(
-              "px-2 py-0.5 text-xs rounded-full",
-              activeTab === tab.id
-                ? "bg-white/20 dark:bg-black/20"
-                : "bg-gray-200 dark:bg-gray-700"
-            )}>
-              {tab.count}
-            </span>
-          </button>
-        ))}
-      </div>
+      {/* Error Banner */}
+      {error && (
+        <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
+          <AlertCircle className="h-5 w-5 flex-shrink-0" />
+          <div>
+            <p className="font-medium">Database Error</p>
+            <p className="text-sm">{error}</p>
+          </div>
+        </div>
+      )}
 
       {/* Search */}
       <div className="relative">
@@ -257,7 +262,7 @@ export function DataManager() {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={`Search ${activeTab}...`}
+          placeholder={`Search ${type}...`}
           className={cn(inputClasses, "pl-10")}
         />
       </div>
@@ -269,7 +274,7 @@ export function DataManager() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {getFilteredItems().map((item: Brand | City | Country | Neighborhood) => (
+          {getFilteredItems().map((item) => (
             <div
               key={item.id}
               className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:shadow-md transition-shadow"
@@ -279,22 +284,17 @@ export function DataManager() {
                   {/* Logo/Image Preview */}
                   {('logo_url' in item && item.logo_url) || ('image_url' in item && item.image_url) ? (
                     <img
-                      src={('logo_url' in item ? item.logo_url : item.image_url) || ''}
+                      src={('logo_url' in item ? item.logo_url : (item as City | Country | Neighborhood).image_url) || ''}
                       alt={item.name}
                       className="w-12 h-12 rounded-lg object-cover bg-gray-100 dark:bg-gray-700"
                     />
                   ) : (
                     <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                      {activeTab === 'brands' && <Building2 className="h-6 w-6 text-gray-400" />}
-                      {activeTab === 'cities' && <MapPin className="h-6 w-6 text-gray-400" />}
-                      {activeTab === 'countries' && (
-                        'flag_emoji' in item && item.flag_emoji ? (
-                          <span className="text-2xl">{item.flag_emoji}</span>
-                        ) : (
-                          <Globe className="h-6 w-6 text-gray-400" />
-                        )
+                      {type === 'countries' && 'flag_emoji' in item && item.flag_emoji ? (
+                        <span className="text-2xl">{item.flag_emoji}</span>
+                      ) : (
+                        <Icon className="h-6 w-6 text-gray-400" />
                       )}
-                      {activeTab === 'neighborhoods' && <Map className="h-6 w-6 text-gray-400" />}
                     </div>
                   )}
                   <div>
@@ -302,11 +302,13 @@ export function DataManager() {
                     {'category' in item && item.category && (
                       <span className="text-xs text-gray-500">{item.category}</span>
                     )}
-                    {'country' in item && item.country && (
+                    {'country' in item && item.country && !('city' in item) && (
                       <span className="text-xs text-gray-500">{item.country}</span>
                     )}
                     {'city' in item && item.city && (
-                      <span className="text-xs text-gray-500">{item.city}{item.country ? `, ${item.country}` : ''}</span>
+                      <span className="text-xs text-gray-500">
+                        {item.city}{('country' in item && item.country) ? `, ${item.country}` : ''}
+                      </span>
                     )}
                     {'code' in item && item.code && (
                       <span className="text-xs text-gray-500 ml-1">({item.code})</span>
@@ -328,12 +330,12 @@ export function DataManager() {
                   </button>
                 </div>
               </div>
-              {('description' in item && item.description) && (
+              {'description' in item && item.description && (
                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
                   {item.description}
                 </p>
               )}
-              {('website' in item && item.website) && (
+              {'website' in item && item.website && (
                 <a
                   href={item.website}
                   target="_blank"
@@ -346,9 +348,9 @@ export function DataManager() {
             </div>
           ))}
 
-          {getFilteredItems().length === 0 && (
+          {getFilteredItems().length === 0 && !error && (
             <div className="col-span-full text-center py-12 text-gray-500">
-              No {activeTab} found. {searchQuery ? 'Try a different search.' : `Add your first ${activeTab.slice(0, -1)}!`}
+              No {type} found. {searchQuery ? 'Try a different search.' : `Add your first ${config.singular.toLowerCase()}!`}
             </div>
           )}
         </div>
@@ -360,7 +362,7 @@ export function DataManager() {
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {editingItem ? 'Edit' : 'Add'} {activeTab.slice(0, -1)}
+                {editingItem ? 'Edit' : 'Add'} {config.singular}
               </h2>
               <button onClick={closeModal} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
                 <X className="h-5 w-5 text-gray-500" />
@@ -368,6 +370,14 @@ export function DataManager() {
             </div>
 
             <div className="p-4 space-y-4">
+              {/* Error in modal */}
+              {saveError && (
+                <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  {saveError}
+                </div>
+              )}
+
               {/* Common: Name */}
               <div>
                 <label className={labelClasses}>Name *</label>
@@ -393,7 +403,7 @@ export function DataManager() {
               </div>
 
               {/* Brand-specific fields */}
-              {activeTab === 'brands' && (
+              {type === 'brands' && (
                 <>
                   <div>
                     <label className={labelClasses}>Logo</label>
@@ -444,7 +454,7 @@ export function DataManager() {
               )}
 
               {/* City-specific fields */}
-              {activeTab === 'cities' && (
+              {type === 'cities' && (
                 <>
                   <div>
                     <label className={labelClasses}>Country</label>
@@ -492,7 +502,7 @@ export function DataManager() {
               )}
 
               {/* Country-specific fields */}
-              {activeTab === 'countries' && (
+              {type === 'countries' && (
                 <>
                   <div>
                     <label className={labelClasses}>Country Code (ISO)</label>
@@ -532,7 +542,7 @@ export function DataManager() {
               )}
 
               {/* Neighborhood-specific fields */}
-              {activeTab === 'neighborhoods' && (
+              {type === 'neighborhoods' && (
                 <>
                   <div>
                     <label className={labelClasses}>City</label>

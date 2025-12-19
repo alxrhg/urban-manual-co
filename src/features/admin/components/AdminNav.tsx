@@ -6,11 +6,12 @@ import { Tabs, TabsList, TabsTrigger } from '@/ui/tabs';
 const NAV_LINKS = [
   { href: '/admin', label: 'Overview', value: 'overview' },
   { href: '/admin/destinations', label: 'Destinations', value: 'destinations' },
-  { href: '/admin/data', label: 'Data', value: 'data' },
+  { href: '/admin/brands', label: 'Brands', value: 'brands' },
+  { href: '/admin/cities', label: 'Cities', value: 'cities' },
+  { href: '/admin/countries', label: 'Countries', value: 'countries' },
+  { href: '/admin/neighborhoods', label: 'Neighborhoods', value: 'neighborhoods' },
   { href: '/admin/analytics', label: 'Analytics', value: 'analytics' },
-  { href: '/admin/searches', label: 'Searches', value: 'searches' },
   { href: '/admin/enrich', label: 'Enrich', value: 'enrich' },
-  { href: '/admin/reindex', label: 'Reindex', value: 'reindex' },
 ];
 
 function getActiveValue(pathname: string) {
