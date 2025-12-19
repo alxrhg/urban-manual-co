@@ -3,9 +3,10 @@
 import React, { useState, useEffect, Suspense, useId } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { AlertCircle, CheckCircle2, Eye, EyeOff, X, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, X, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
 import { Drawer } from '@/ui/Drawer';
+import { AuthInput, AuthPasswordInput, AuthButton, AuthDivider } from '@/ui/auth';
 
 interface LoginDrawerProps {
   isOpen: boolean;
@@ -114,96 +115,64 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-5 sm:px-6 pb-safe">
           {/* Apple Sign In */}
-          <button
+          <AuthButton
             onClick={handleAppleSignIn}
             disabled={loading}
-            className="w-full px-6 py-4 sm:py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm sm:text-base font-medium disabled:opacity-50 flex items-center justify-center gap-3 min-h-[56px] sm:min-h-[48px] shadow-sm hover:shadow-md active:shadow-sm transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
+            className="gap-3"
           >
             <svg className="h-5 w-5 sm:h-4.5 sm:w-4.5" viewBox="0 0 24 24" fill="currentColor">
               <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
             </svg>
             Continue with Apple
-          </button>
+          </AuthButton>
 
           {/* Divider */}
-          <div className="relative my-6 sm:my-5">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200/80 dark:border-gray-800/80" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase tracking-wider">
-              <span className="px-4 bg-white dark:bg-gray-900 text-gray-400 dark:text-gray-500 font-medium">
-                or continue with email
-              </span>
-            </div>
-          </div>
+          <AuthDivider>Or continue with email</AuthDivider>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Name Field (Sign Up only) */}
             {isSignUp && (
-              <div>
-                <label htmlFor={`login-name-${uniqueId}`} className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
-                  Name
-                </label>
-                <input
-                  id={`login-name-${uniqueId}`}
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required={isSignUp}
-                  autoComplete="name"
-                  className="w-full px-4 py-4 sm:py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 focus:border-gray-300 dark:focus:border-gray-600 focus:bg-white dark:focus:bg-gray-800 transition-all duration-200 text-base sm:text-sm text-gray-900 dark:text-white min-h-[56px] sm:min-h-[48px] placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                  placeholder="Your name"
-                />
-              </div>
+              <AuthInput
+                id={`login-name-${uniqueId}`}
+                label="Name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required={isSignUp}
+                autoComplete="name"
+                placeholder="Your name"
+              />
             )}
 
             {/* Email Field */}
-            <div>
-              <label htmlFor={`login-email-${uniqueId}`} className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
-                Email
-              </label>
-              <input
-                id={`login-email-${uniqueId}`}
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                className="w-full px-4 py-4 sm:py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 focus:border-gray-300 dark:focus:border-gray-600 focus:bg-white dark:focus:bg-gray-800 transition-all duration-200 text-base sm:text-sm text-gray-900 dark:text-white min-h-[56px] sm:min-h-[48px] placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                placeholder="you@example.com"
-              />
-            </div>
+            <AuthInput
+              id={`login-email-${uniqueId}`}
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+              placeholder="you@example.com"
+            />
 
             {/* Password Field */}
             <div>
-              <label htmlFor={`login-password-${uniqueId}`} className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
-                Password
-              </label>
-              <div className="relative group">
-                <input
-                  id={`login-password-${uniqueId}`}
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  autoComplete={isSignUp ? 'new-password' : 'current-password'}
-                  className="w-full px-4 pr-14 py-4 sm:py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 focus:border-gray-300 dark:focus:border-gray-600 focus:bg-white dark:focus:bg-gray-800 transition-all duration-200 text-base sm:text-sm text-gray-900 dark:text-white min-h-[56px] sm:min-h-[48px] placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 active:text-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5 sm:w-4 sm:h-4" /> : <Eye className="w-5 h-5 sm:w-4 sm:h-4" />}
-                </button>
-              </div>
-              {isSignUp ? (
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Minimum 6 characters</p>
-              ) : (
+              <AuthPasswordInput
+                id={`login-password-${uniqueId}`}
+                label="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                placeholder="••••••••"
+                showPassword={showPassword}
+                onTogglePassword={() => setShowPassword(!showPassword)}
+                hint={isSignUp ? 'Minimum 6 characters' : undefined}
+              />
+              {!isSignUp && (
                 <div className="mt-2 text-right">
                   <a
                     href="/auth/forgot-password"
@@ -239,14 +208,14 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
             )}
 
             {/* Submit Button */}
-            <button
+            <AuthButton
               type="submit"
-              disabled={loading}
-              className="w-full px-6 py-4 sm:py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm sm:text-base font-medium disabled:opacity-50 min-h-[56px] sm:min-h-[48px] mt-6 shadow-sm hover:shadow-md active:shadow-sm transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2"
+              loading={loading}
+              loadingText={isSignUp ? 'Creating account...' : 'Signing in...'}
+              className="mt-6"
             >
-              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              {loading ? (isSignUp ? 'Creating account...' : 'Signing in...') : isSignUp ? 'Create Account' : 'Sign In'}
-            </button>
+              {isSignUp ? 'Create Account' : 'Sign In'}
+            </AuthButton>
           </form>
 
           {/* Toggle Sign In / Sign Up */}
