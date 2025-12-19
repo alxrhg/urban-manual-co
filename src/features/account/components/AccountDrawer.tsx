@@ -7,15 +7,9 @@ import { useDrawer } from '@/contexts/DrawerContext';
 import { createClient } from '@/lib/supabase/client';
 import { useTheme } from 'next-themes';
 import { Drawer } from '@/ui/Drawer';
-import { Switch } from '@/ui/switch';
-import {
-  getTravelBadge,
-  getMilestoneProgress,
-  getMilestoneMessage,
-} from '@/lib/travel-achievements';
+import { getTravelBadge } from '@/lib/travel-achievements';
 import { parseDestinations } from '@/types/trip';
 import type { Trip } from '@/types/trip';
-import type { Destination } from '@/types/destination';
 import {
   Settings,
   MapPin,
@@ -23,14 +17,11 @@ import {
   Bookmark,
   ChevronRight,
   User,
-  Edit3,
-  Compass,
   Moon,
   Sun,
   HelpCircle,
-  Calendar,
   Plane,
-  Sparkles,
+  Compass,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -38,220 +29,91 @@ interface UserStats {
   visited: number;
   saved: number;
   trips: number;
-  countries: number;
 }
 
 interface UpcomingTrip extends Trip {
   days_until: number;
 }
 
-// Avatar with Progress Ring - uses black/gray per design system
-function AvatarWithRing({
+// Compact Avatar Component
+function Avatar({
   avatarUrl,
   displayUsername,
-  progress,
+  size = 'md',
 }: {
   avatarUrl: string | null;
   displayUsername: string;
-  progress: number;
+  size?: 'sm' | 'md' | 'lg';
 }) {
-  const progressDegrees = (progress / 100) * 360;
+  const sizeClasses = {
+    sm: 'w-10 h-10 text-sm',
+    md: 'w-14 h-14 text-lg',
+    lg: 'w-16 h-16 text-xl',
+  };
 
   return (
     <div
-      className="relative w-[72px] h-[72px] rounded-full p-1 flex items-center justify-center"
-      style={{
-        background: `conic-gradient(#000 ${progressDegrees}deg, #e5e7eb ${progressDegrees}deg)`,
-      }}
+      className={`${sizeClasses[size]} rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0`}
     >
-      <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-        {avatarUrl ? (
-          <Image
-            src={avatarUrl}
-            alt="Profile"
-            fill
-            className="object-cover"
-            sizes="64px"
-          />
-        ) : (
-          <span className="text-2xl font-semibold text-gray-500 dark:text-gray-400">
-            {displayUsername.charAt(0).toUpperCase()}
-          </span>
-        )}
-      </div>
+      {avatarUrl ? (
+        <Image
+          src={avatarUrl}
+          alt="Profile"
+          width={size === 'lg' ? 64 : size === 'md' ? 56 : 40}
+          height={size === 'lg' ? 64 : size === 'md' ? 56 : 40}
+          className="object-cover w-full h-full"
+        />
+      ) : (
+        <span className="font-semibold text-gray-500 dark:text-gray-400">
+          {displayUsername.charAt(0).toUpperCase()}
+        </span>
+      )}
     </div>
   );
 }
 
-// Travel Badge Component - neutral gray style per design system
-function TravelBadge({ badge }: { badge: { name: string } }) {
-  return (
-    <span className="mt-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-full text-xs font-medium text-gray-600 dark:text-gray-400">
-      {badge.name}
-    </span>
-  );
-}
-
-// Upcoming Trip Card
-function UpcomingTripCard({
-  trip,
-  onClick,
-}: {
-  trip: UpcomingTrip;
-  onClick: () => void;
-}) {
-  const destinations = parseDestinations(trip.destination);
-  const destination = destinations[0] || 'Trip';
-
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
-  return (
-    <button
-      onClick={onClick}
-      className="w-full p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-left group"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <Plane className="w-4 h-4 text-gray-400" />
-            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-              {trip.days_until === 0
-                ? 'Today'
-                : trip.days_until === 1
-                ? 'Tomorrow'
-                : `In ${trip.days_until} days`}
-            </span>
-          </div>
-          <h4 className="font-semibold text-gray-900 dark:text-white truncate">
-            {trip.title || destination}
-          </h4>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            {destination}
-            {trip.start_date && (
-              <>
-                {' · '}
-                {formatDate(trip.start_date)}
-                {trip.end_date && trip.end_date !== trip.start_date && (
-                  <> - {formatDate(trip.end_date)}</>
-                )}
-              </>
-            )}
-          </p>
-        </div>
-        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform flex-shrink-0 mt-1" />
-      </div>
-    </button>
-  );
-}
-
-// Recommendation Card
-function RecommendationCard({
-  destination,
-  onClick,
-}: {
-  destination: Destination;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-left w-full group"
-    >
-      <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-        {destination.image ? (
-          <Image
-            src={destination.image}
-            alt={destination.name}
-            width={48}
-            height={48}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <MapPin className="w-5 h-5 text-gray-400" />
-          </div>
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <h4 className="font-medium text-sm text-gray-900 dark:text-white truncate">
-          {destination.name}
-        </h4>
-        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-          {destination.city}
-          {destination.category && ` · ${destination.category}`}
-        </p>
-      </div>
-      <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
-    </button>
-  );
-}
-
-// Library Tile Component - minimal card style
-function LibraryTile({
-  icon: Icon,
-  count,
-  label,
-  onClick,
-}: {
-  icon: React.ElementType;
-  count: number;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex flex-col items-center justify-center gap-1 p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 active:scale-[0.98] transition-all"
-    >
-      <Icon className="w-5 h-5 text-gray-600 dark:text-gray-400 mb-1" />
-      <span className="text-xl font-semibold text-gray-900 dark:text-white">
-        {count}
-      </span>
-      <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-500">
-        {label}
-      </span>
-    </button>
-  );
-}
-
-// Settings Row Component
-function SettingsRow({
+// Menu Row Component
+function MenuRow({
   icon: Icon,
   label,
+  value,
   onClick,
-  rightElement,
+  variant = 'default',
 }: {
   icon: React.ElementType;
   label: string;
-  onClick?: () => void;
-  rightElement?: React.ReactNode;
+  value?: string | number;
+  onClick: () => void;
+  variant?: 'default' | 'danger';
 }) {
-  const Component = onClick ? 'button' : 'div';
   return (
-    <Component
+    <button
       onClick={onClick}
-      className={`group w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl transition-colors ${
-        onClick ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900' : ''
+      className={`w-full flex items-center justify-between gap-3 px-5 py-3.5 transition-colors ${
+        variant === 'danger'
+          ? 'text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10'
+          : 'hover:bg-gray-50 dark:hover:bg-gray-900'
       }`}
     >
       <div className="flex items-center gap-3">
-        <Icon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-        <span className="text-sm font-medium text-gray-900 dark:text-white">{label}</span>
+        <Icon className="w-[18px] h-[18px] text-gray-400 dark:text-gray-500" />
+        <span className="text-[15px] text-gray-900 dark:text-white">{label}</span>
       </div>
-      {rightElement || (
-        <ChevronRight className="w-4 h-4 text-gray-400 dark:text-gray-600 transition-transform group-hover:translate-x-0.5" />
-      )}
-    </Component>
+      <div className="flex items-center gap-2">
+        {value !== undefined && (
+          <span className="text-sm text-gray-400 dark:text-gray-500 tabular-nums">
+            {value}
+          </span>
+        )}
+        <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600" />
+      </div>
+    </button>
   );
 }
 
-// Dark Mode Toggle Component
-function DarkModeToggle() {
-  const { theme, setTheme, resolvedTheme } = useTheme();
+// Theme Toggle Component
+function ThemeToggle() {
+  const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -260,25 +122,40 @@ function DarkModeToggle() {
 
   if (!mounted) {
     return (
-      <div className="flex items-center gap-2">
-        <Switch checked={false} disabled className="scale-75" />
+      <div className="flex items-center justify-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-full">
+        <div className="w-20 h-8" />
       </div>
     );
   }
 
-  const currentTheme = resolvedTheme || theme || 'light';
-  const isDark = currentTheme === 'dark';
+  const isDark = resolvedTheme === 'dark';
 
   return (
-    <div className="flex items-center gap-2">
-      <Sun className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-900'}`} />
-      <Switch
-        checked={isDark}
-        onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-        className="scale-75"
-        aria-label="Toggle dark mode"
-      />
-      <Moon className={`w-4 h-4 ${isDark ? 'text-white' : 'text-gray-400'}`} />
+    <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-full">
+      <button
+        onClick={() => setTheme('light')}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+          !isDark
+            ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+        }`}
+        aria-label="Light mode"
+      >
+        <Sun className="w-3.5 h-3.5" />
+        <span>Light</span>
+      </button>
+      <button
+        onClick={() => setTheme('dark')}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+          isDark
+            ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+        }`}
+        aria-label="Dark mode"
+      >
+        <Moon className="w-3.5 h-3.5" />
+        <span>Dark</span>
+      </button>
     </div>
   );
 }
@@ -286,7 +163,11 @@ function DarkModeToggle() {
 export function AccountDrawer() {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const { isDrawerOpen, closeDrawer: closeLegacyDrawer, openDrawer: openLegacyDrawer } = useDrawer();
+  const {
+    isDrawerOpen,
+    closeDrawer: closeLegacyDrawer,
+    openDrawer: openLegacyDrawer,
+  } = useDrawer();
   const isOpen = isDrawerOpen('account');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
@@ -294,19 +175,16 @@ export function AccountDrawer() {
     visited: 0,
     saved: 0,
     trips: 0,
-    countries: 0,
   });
   const [upcomingTrip, setUpcomingTrip] = useState<UpcomingTrip | null>(null);
-  const [recommendations, setRecommendations] = useState<Destination[]>([]);
 
   useEffect(() => {
     async function fetchProfileAndStats() {
       if (!user?.id) {
         setAvatarUrl(null);
         setUsername(null);
-        setStats({ visited: 0, saved: 0, trips: 0, countries: 0 });
+        setStats({ visited: 0, saved: 0, trips: 0 });
         setUpcomingTrip(null);
-        setRecommendations([]);
         return;
       }
 
@@ -325,69 +203,37 @@ export function AccountDrawer() {
           setUsername(profileData.username || null);
         }
 
-        // Fetch all stats, upcoming trip, and recommendations in parallel
+        // Fetch stats and upcoming trip in parallel
         const today = new Date().toISOString().split('T')[0];
 
-        const [
-          visitedResult,
-          savedResult,
-          tripsResult,
-          countriesResult,
-          upcomingTripResult,
-          recentVisitedResult,
-        ] = await Promise.all([
-          supabaseClient
-            .from('visited_places')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id),
-          supabaseClient
-            .from('saved_places')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id),
-          supabaseClient
-            .from('trips')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id),
-          supabaseClient
-            .from('visited_places')
-            .select('destinations!inner(country)')
-            .eq('user_id', user.id),
-          // Get upcoming trip (soonest future trip)
-          supabaseClient
-            .from('trips')
-            .select('*')
-            .eq('user_id', user.id)
-            .gte('start_date', today)
-            .order('start_date', { ascending: true })
-            .limit(1)
-            .maybeSingle(),
-          // Get recent visited places to find cities for recommendations
-          supabaseClient
-            .from('visited_places')
-            .select('destinations!inner(city)')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(10),
-        ]);
-
-        // Calculate unique countries
-        const uniqueCountries = new Set(
-          (countriesResult.data || [])
-            .map((item: Record<string, unknown>) => {
-              const dest = item.destinations;
-              if (Array.isArray(dest)) {
-                return dest[0]?.country;
-              }
-              return (dest as { country?: string | null } | null)?.country;
-            })
-            .filter(Boolean)
-        );
+        const [visitedResult, savedResult, tripsResult, upcomingTripResult] =
+          await Promise.all([
+            supabaseClient
+              .from('visited_places')
+              .select('*', { count: 'exact', head: true })
+              .eq('user_id', user.id),
+            supabaseClient
+              .from('saved_places')
+              .select('*', { count: 'exact', head: true })
+              .eq('user_id', user.id),
+            supabaseClient
+              .from('trips')
+              .select('*', { count: 'exact', head: true })
+              .eq('user_id', user.id),
+            supabaseClient
+              .from('trips')
+              .select('*')
+              .eq('user_id', user.id)
+              .gte('start_date', today)
+              .order('start_date', { ascending: true })
+              .limit(1)
+              .maybeSingle(),
+          ]);
 
         setStats({
           visited: visitedResult.count || 0,
           saved: savedResult.count || 0,
           trips: tripsResult.count || 0,
-          countries: uniqueCountries.size,
         });
 
         // Set upcoming trip with days until
@@ -396,7 +242,9 @@ export function AccountDrawer() {
           const todayDate = new Date();
           todayDate.setHours(0, 0, 0, 0);
           tripDate.setHours(0, 0, 0, 0);
-          const daysUntil = Math.ceil((tripDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
+          const daysUntil = Math.ceil(
+            (tripDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24)
+          );
 
           setUpcomingTrip({
             ...upcomingTripResult.data,
@@ -404,40 +252,6 @@ export function AccountDrawer() {
           });
         } else {
           setUpcomingTrip(null);
-        }
-
-        // Get recommendations based on visited cities
-        const visitedCities = new Set(
-          (recentVisitedResult.data || [])
-            .map((item: Record<string, unknown>) => {
-              const dest = item.destinations;
-              if (Array.isArray(dest)) {
-                return dest[0]?.city;
-              }
-              return (dest as { city?: string | null } | null)?.city;
-            })
-            .filter(Boolean)
-        );
-
-        // Fetch recommendations from cities user has visited
-        if (visitedCities.size > 0) {
-          const cities = Array.from(visitedCities).slice(0, 3);
-          const { data: recData } = await supabaseClient
-            .from('destinations')
-            .select('id, slug, name, city, category, image')
-            .in('city', cities)
-            .not('slug', 'in', `(${(await supabaseClient
-              .from('visited_places')
-              .select('destinations!inner(slug)')
-              .eq('user_id', user.id)
-            ).data?.map((d: Record<string, unknown>) => {
-              const dest = d.destinations;
-              if (Array.isArray(dest)) return `"${dest[0]?.slug}"`;
-              return `"${(dest as { slug?: string })?.slug}"`;
-            }).join(',') || '""'})`)
-            .limit(3);
-
-          setRecommendations((recData as Destination[]) || []);
         }
       } catch (error) {
         console.error('Error fetching profile and stats:', error);
@@ -461,31 +275,13 @@ export function AccountDrawer() {
   };
 
   const displayUsername = username || user?.email?.split('@')[0] || 'User';
-
-  // Calculate badge and progress
   const badge = getTravelBadge(stats.visited);
-  const milestoneProgress = getMilestoneProgress(stats.visited);
-  const milestoneMessage = getMilestoneMessage(milestoneProgress);
 
   // Logged out state
   if (!user) {
     return (
       <Drawer isOpen={isOpen} onClose={closeLegacyDrawer} position="right">
         <div className="h-full flex flex-col bg-white dark:bg-gray-950">
-          {/* Close button */}
-          <div className="flex justify-end p-4">
-            <button
-              onClick={closeLegacyDrawer}
-              className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              <span className="sr-only">Close</span>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Welcome content */}
           <div className="flex-1 flex flex-col items-center justify-center px-8 pb-8 text-center">
             <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-900 flex items-center justify-center mb-6">
               <User className="h-8 w-8 text-gray-400 dark:text-gray-500" />
@@ -494,7 +290,8 @@ export function AccountDrawer() {
               Start Your Journey
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-8 max-w-xs mx-auto">
-              Sign in to track your travels and unlock your personal travel achievements.
+              Sign in to track your travels and unlock your personal travel
+              achievements.
             </p>
 
             <button
@@ -513,171 +310,134 @@ export function AccountDrawer() {
     );
   }
 
+  // Format trip dates
+  const formatTripDates = (trip: UpcomingTrip) => {
+    const destinations = parseDestinations(trip.destination);
+    const destination = destinations[0] || 'Trip';
+
+    const formatDate = (dateStr: string | null) => {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+
+    const dateRange = trip.start_date
+      ? `${formatDate(trip.start_date)}${
+          trip.end_date && trip.end_date !== trip.start_date
+            ? ` - ${formatDate(trip.end_date)}`
+            : ''
+        }`
+      : '';
+
+    return { destination, dateRange };
+  };
+
   // Logged in state
   return (
     <Drawer isOpen={isOpen} onClose={closeLegacyDrawer} position="right">
       <div className="h-full flex flex-col bg-white dark:bg-gray-950">
-        {/* Close button */}
-        <div className="flex justify-end px-4 pt-4">
-          <button
-            onClick={closeLegacyDrawer}
-            className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            <span className="sr-only">Close</span>
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+        {/* Profile Header */}
+        <div className="px-5 pt-2 pb-5">
+          <div className="flex items-start gap-4">
+            <Avatar avatarUrl={avatarUrl} displayUsername={displayUsername} />
+            <div className="flex-1 min-w-0 pt-1">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                {displayUsername}
+              </h2>
+              <span className="inline-block mt-1 px-2 py-0.5 text-[11px] font-medium text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-full">
+                {badge.name}
+              </span>
+              <button
+                onClick={() => handleNavigate('/account')}
+                className="mt-2 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                Edit Profile
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto">
-          {/* Profile Header with Avatar Ring */}
-          <div className="flex flex-col items-center px-5 pb-4">
-            <AvatarWithRing
-              avatarUrl={avatarUrl}
-              displayUsername={displayUsername}
-              progress={milestoneProgress.percentage}
-            />
-            <TravelBadge badge={badge} />
-
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mt-3 text-center">
-              {displayUsername}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 text-center truncate max-w-full">
-              {user.email}
-            </p>
-
+        {/* Upcoming Trip */}
+        {upcomingTrip && (
+          <div className="border-t border-gray-100 dark:border-gray-800">
             <button
-              onClick={() => handleNavigate('/account')}
-              className="mt-3 flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
+              onClick={() => handleNavigate(`/trips/${upcomingTrip.id}`)}
+              className="w-full px-5 py-4 flex items-center justify-between gap-3 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-left"
             >
-              <Edit3 className="w-3.5 h-3.5" />
-              Edit Profile
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                  <Plane className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[15px] font-medium text-gray-900 dark:text-white truncate">
+                    {upcomingTrip.title || formatTripDates(upcomingTrip).destination}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {upcomingTrip.days_until === 0
+                      ? 'Today'
+                      : upcomingTrip.days_until === 1
+                      ? 'Tomorrow'
+                      : `In ${upcomingTrip.days_until} days`}
+                    {formatTripDates(upcomingTrip).dateRange &&
+                      ` · ${formatTripDates(upcomingTrip).dateRange}`}
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
             </button>
           </div>
+        )}
 
-          {/* Upcoming Trip - Priority section */}
-          {upcomingTrip && (
-            <div className="px-5 mb-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Calendar className="w-4 h-4 text-gray-400" />
-                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                  Next Trip
-                </h3>
-              </div>
-              <UpcomingTripCard
-                trip={upcomingTrip}
-                onClick={() => handleNavigate(`/trips/${upcomingTrip.id}`)}
-              />
-            </div>
-          )}
-
-          {/* For You - Recommendations */}
-          {recommendations.length > 0 && (
-            <div className="px-5 mb-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-gray-400" />
-                  <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                    For You
-                  </h3>
-                </div>
-                <button
-                  onClick={() => handleNavigate('/discover')}
-                  className="text-xs font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
-                >
-                  See all
-                </button>
-              </div>
-              <div className="space-y-2">
-                {recommendations.map((dest) => (
-                  <RecommendationCard
-                    key={dest.slug}
-                    destination={dest}
-                    onClick={() => handleNavigate(`/destinations/${dest.slug}`)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Journey Progress - Compact */}
-          <div className="px-5 mb-4">
-            <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                <span className="font-semibold text-gray-900 dark:text-white">{stats.visited}</span> places
-                {stats.countries > 0 && (
-                  <>
-                    {' · '}
-                    <span className="font-semibold text-gray-900 dark:text-white">{stats.countries}</span> {stats.countries === 1 ? 'country' : 'countries'}
-                  </>
-                )}
-              </p>
-              <div className="h-1 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden mb-2">
-                <div
-                  className="h-full rounded-full bg-black dark:bg-white transition-all duration-500"
-                  style={{ width: `${milestoneProgress.percentage}%` }}
-                />
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-500">
-                {milestoneMessage}
-              </p>
-            </div>
+        {/* Navigation Menu */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="border-t border-gray-100 dark:border-gray-800">
+            <MenuRow
+              icon={Bookmark}
+              label="Saved Places"
+              value={stats.saved}
+              onClick={() => openLegacyDrawer('saved-places', 'account')}
+            />
+            <MenuRow
+              icon={MapPin}
+              label="Visited Places"
+              value={stats.visited}
+              onClick={() => openLegacyDrawer('visited-places', 'account')}
+            />
+            <MenuRow
+              icon={Compass}
+              label="My Trips"
+              value={stats.trips}
+              onClick={() => openLegacyDrawer('trips', 'account')}
+            />
           </div>
 
-          {/* Library Grid */}
-          <div className="px-5 mb-4">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
-              Your Library
-            </h3>
-            <div className="grid grid-cols-3 gap-3">
-              <LibraryTile
-                icon={Bookmark}
-                count={stats.saved}
-                label="Saved"
-                onClick={() => openLegacyDrawer('saved-places', 'account')}
-              />
-              <LibraryTile
-                icon={MapPin}
-                count={stats.visited}
-                label="Visited"
-                onClick={() => openLegacyDrawer('visited-places', 'account')}
-              />
-              <LibraryTile
-                icon={Compass}
-                count={stats.trips}
-                label="Trips"
-                onClick={() => openLegacyDrawer('trips', 'account')}
-              />
+          <div className="border-t border-gray-100 dark:border-gray-800">
+            <MenuRow
+              icon={Settings}
+              label="Settings"
+              onClick={() => handleNavigate('/account?tab=settings')}
+            />
+            <MenuRow
+              icon={HelpCircle}
+              label="Help & Support"
+              onClick={() => handleNavigate('/help')}
+            />
+          </div>
+
+          {/* Theme Toggle */}
+          <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-800">
+            <div className="flex items-center justify-between">
+              <span className="text-[15px] text-gray-900 dark:text-white">Appearance</span>
+              <ThemeToggle />
             </div>
           </div>
         </div>
 
-        {/* Quick Settings */}
-        <div className="px-5 py-4 border-t border-gray-200 dark:border-gray-800">
-          <SettingsRow
-            icon={Settings}
-            label="Settings"
-            onClick={() => handleNavigate('/account?tab=settings')}
-          />
-          <SettingsRow
-            icon={Moon}
-            label="Dark Mode"
-            rightElement={<DarkModeToggle />}
-          />
-          <SettingsRow
-            icon={HelpCircle}
-            label="Help & Support"
-            onClick={() => handleNavigate('/help')}
-          />
-        </div>
-
-        {/* Sign Out Footer */}
-        <div className="px-5 pb-5 pt-2 border-t border-gray-200 dark:border-gray-800">
+        {/* Sign Out */}
+        <div className="border-t border-gray-100 dark:border-gray-800">
           <button
             onClick={handleSignOut}
-            className="flex w-full items-center justify-center gap-2 py-3 rounded-full text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-5 py-4 text-[15px] text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
           >
             <LogOut className="w-4 h-4" />
             Sign Out
