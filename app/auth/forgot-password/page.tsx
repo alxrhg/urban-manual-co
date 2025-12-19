@@ -46,15 +46,15 @@ function ForgotPasswordContent() {
       <div className="w-full max-w-sm">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-black dark:hover:text-white mb-8"
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white mb-8 transition-colors group"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
           Back
         </button>
 
-        <h1 className="text-2xl font-light mb-2">Forgot Password</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
-          Enter your email and we&apos;ll send you a link to reset your password
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight mb-1">Forgot password?</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          No worries, we&apos;ll send you a reset link
         </p>
 
         {success ? (
@@ -68,7 +68,7 @@ function ForgotPasswordContent() {
             </Alert>
             <button
               onClick={() => router.push('/auth/login')}
-              className="w-full px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-opacity text-sm font-medium"
+              className="w-full px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium shadow-sm hover:shadow-md active:shadow-sm transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
             >
               Back to Sign In
             </button>
@@ -77,7 +77,7 @@ function ForgotPasswordContent() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
-                Email Address
+                Email address
               </label>
               <input
                 type="email"
@@ -85,7 +85,7 @@ function ForgotPasswordContent() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors text-sm text-gray-900 dark:text-white"
+                className="w-full px-4 py-3.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 focus:border-gray-300 dark:focus:border-gray-600 focus:bg-white dark:focus:bg-gray-800 transition-all duration-200 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 placeholder="you@example.com"
               />
             </div>
@@ -101,9 +101,10 @@ function ForgotPasswordContent() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-opacity text-sm font-medium disabled:opacity-50"
+              className="w-full px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium disabled:opacity-50 shadow-sm hover:shadow-md active:shadow-sm transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2"
             >
-              {loading ? 'Sending...' : 'Send Reset Link'}
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              {loading ? 'Sending...' : 'Send reset link'}
             </button>
           </form>
         )}
