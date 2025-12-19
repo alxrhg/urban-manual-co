@@ -9,7 +9,6 @@ import {
   Trash2,
   Copy,
   Crown,
-  Globe,
   Image as ImageIcon,
   Check,
   X,
@@ -26,9 +25,7 @@ import {
   Download,
   Sparkles,
   AlertTriangle,
-  FileText,
   Tag,
-  Calendar,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { Destination } from '@/types/destination';
@@ -38,7 +35,6 @@ import { Button } from '@/ui/button';
 import { Checkbox } from '@/ui/checkbox';
 import { Badge } from '@/ui/badge';
 import { Skeleton } from '@/ui/skeleton';
-import { Separator } from '@/ui/separator';
 import {
   Select,
   SelectContent,
@@ -66,6 +62,15 @@ import {
   CommandItem,
   CommandList,
 } from '@/ui/command';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/ui/table';
+import { ToggleGroup, ToggleGroupItem } from '@/ui/toggle-group';
 
 interface ContentManagerProps {
   onEditDestination?: (destination: Destination) => void;
@@ -469,40 +474,31 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
 
           <Button
             variant={showFilters ? 'secondary' : 'outline'}
+            size="sm"
             onClick={() => setShowFilters(!showFilters)}
-            className="h-10 px-4"
           >
-            <SlidersHorizontal className="w-4 h-4 mr-2" />
+            <SlidersHorizontal className="w-4 h-4" />
             Filters
             {activeFilterCount > 0 && (
-              <span className="ml-2 inline-flex items-center justify-center w-5 h-5 text-[10px] font-medium bg-black dark:bg-white text-white dark:text-black rounded-full">
+              <Badge variant="default" className="ml-1.5 h-5 min-w-5 px-1.5">
                 {activeFilterCount}
-              </span>
+              </Badge>
             )}
           </Button>
 
-          <div className="hidden sm:flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-            <button
-              onClick={() => setViewMode('table')}
-              className={`p-2 rounded-md transition-colors ${
-                viewMode === 'table'
-                  ? 'bg-white dark:bg-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
+          <ToggleGroup
+            type="single"
+            value={viewMode}
+            onValueChange={(value) => value && setViewMode(value as ViewMode)}
+            className="hidden sm:flex"
+          >
+            <ToggleGroupItem value="table" size="sm">
               <LayoutList className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-md transition-colors ${
-                viewMode === 'grid'
-                  ? 'bg-white dark:bg-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
+            </ToggleGroupItem>
+            <ToggleGroupItem value="grid" size="sm">
               <LayoutGrid className="w-4 h-4" />
-            </button>
-          </div>
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
 
         {/* Filters Panel */}
@@ -609,28 +605,22 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
             {/* Quick Filters + Sort Row */}
             <div className="flex flex-wrap items-center gap-2">
               {/* Quick Filter Toggles */}
-              <button
+              <Button
+                variant={crownOnly ? 'default' : 'pill'}
+                size="xs"
                 onClick={() => setCrownOnly(!crownOnly)}
-                className={`inline-flex items-center h-8 px-3 rounded-full text-xs font-medium transition-colors ${
-                  crownOnly
-                    ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
-                    : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
               >
-                <Crown className={`w-3.5 h-3.5 mr-1.5 ${crownOnly ? 'text-amber-500' : 'text-amber-400'}`} />
+                <Crown className={`w-3.5 h-3.5 ${crownOnly ? 'text-amber-300' : 'text-amber-500'}`} />
                 Crown Only
-              </button>
-              <button
+              </Button>
+              <Button
+                variant={michelinOnly ? 'default' : 'pill'}
+                size="xs"
                 onClick={() => setMichelinOnly(!michelinOnly)}
-                className={`inline-flex items-center h-8 px-3 rounded-full text-xs font-medium transition-colors ${
-                  michelinOnly
-                    ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800'
-                    : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
               >
-                <img src="/michelin-star.svg" alt="Michelin" className="w-3.5 h-3.5 mr-1.5" />
+                <img src="/michelin-star.svg" alt="Michelin" className="w-3.5 h-3.5" />
                 Michelin Only
-              </button>
+              </Button>
 
               <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1" />
 
@@ -679,12 +669,10 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
               </div>
 
               {hasActiveFilters && (
-                <button
-                  onClick={clearFilters}
-                  className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                >
+                <Button variant="ghost" size="xs" onClick={clearFilters}>
+                  <X className="w-3 h-3" />
                   Clear all
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -693,32 +681,31 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
 
       {/* Bulk Actions */}
       {selectedItems.size > 0 && (
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl">
-          <span className="text-sm font-medium text-gray-900 dark:text-gray-100 tabular-nums">{selectedItems.size} selected</span>
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-2xl">
+          <Badge variant="secondary">{selectedItems.size} selected</Badge>
           <div className="w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
 
           {/* Category Change */}
           <Popover open={showBulkCategoryModal} onOpenChange={setShowBulkCategoryModal}>
             <PopoverTrigger asChild>
-              <button
-                disabled={bulkActionLoading}
-                className="inline-flex items-center h-7 px-2.5 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50"
-              >
-                <Tag className="w-3.5 h-3.5 mr-1.5" />
+              <Button variant="ghost" size="xs" disabled={bulkActionLoading}>
+                <Tag className="w-3.5 h-3.5" />
                 Category
-              </button>
+              </Button>
             </PopoverTrigger>
             <PopoverContent className="w-44 p-1.5" align="start">
               <div className="space-y-0.5">
                 {CATEGORIES.map((cat) => (
-                  <button
+                  <Button
                     key={cat}
-                    className="w-full text-left px-2.5 py-1.5 text-sm capitalize hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50"
+                    variant="ghost"
+                    size="xs"
+                    className="w-full justify-start capitalize"
                     onClick={() => handleBulkCategoryChange(cat)}
                     disabled={bulkActionLoading}
                   >
                     {cat}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </PopoverContent>
@@ -727,14 +714,11 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
           {/* Crown Toggle */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button
-                disabled={bulkActionLoading}
-                className="inline-flex items-center h-7 px-2.5 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50"
-              >
-                <Crown className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
+              <Button variant="ghost" size="xs" disabled={bulkActionLoading}>
+                <Crown className="w-3.5 h-3.5 text-amber-500" />
                 Crown
-                <ChevronDown className="w-3 h-3 ml-1 opacity-50" />
-              </button>
+                <ChevronDown className="w-3 h-3 opacity-50" />
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
               <DropdownMenuItem onClick={() => handleBulkToggleCrown(true)}>
@@ -749,47 +733,53 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
           </DropdownMenu>
 
           {/* Enrich */}
-          <button
+          <Button
+            variant="ghost"
+            size="xs"
             onClick={handleBulkEnrich}
             disabled={bulkActionLoading}
-            className="inline-flex items-center h-7 px-2.5 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50"
           >
             {bulkActionLoading ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+              <Sparkles className="w-3.5 h-3.5" />
             )}
             Enrich
-          </button>
+          </Button>
 
           {/* Export */}
-          <button
+          <Button
+            variant="ghost"
+            size="xs"
             onClick={handleExportSelected}
             disabled={bulkActionLoading}
-            className="inline-flex items-center h-7 px-2.5 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50"
           >
-            <Download className="w-3.5 h-3.5 mr-1.5" />
+            <Download className="w-3.5 h-3.5" />
             Export
-          </button>
+          </Button>
 
           <div className="w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
 
           {/* Delete */}
-          <button
+          <Button
+            variant="ghost"
+            size="xs"
             onClick={handleBulkDelete}
             disabled={bulkActionLoading}
-            className="inline-flex items-center h-7 px-2.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors disabled:opacity-50"
+            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
           >
-            {bulkActionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Trash2 className="w-3.5 h-3.5 mr-1.5" />}
+            {bulkActionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
             Delete
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant="subtle"
+            size="xs"
             onClick={() => setSelectedItems(new Set())}
-            className="ml-auto text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            className="ml-auto"
           >
             Clear selection
-          </button>
+          </Button>
         </div>
       )}
 
@@ -833,15 +823,16 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
             {((page - 1) * itemsPerPage) + 1}–{Math.min(page * itemsPerPage, totalCount)} of {totalCount.toLocaleString()}
           </p>
           <div className="flex items-center gap-1">
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page === 1}
-              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
-            </button>
+            </Button>
             {/* Page numbers */}
-            <div className="flex items-center">
+            <div className="flex items-center gap-1">
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNum: number;
                 if (totalPages <= 5) {
@@ -854,27 +845,26 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
                   pageNum = page - 2 + i;
                 }
                 return (
-                  <button
+                  <Button
                     key={pageNum}
+                    variant={page === pageNum ? 'default' : 'ghost'}
+                    size="xs"
                     onClick={() => setPage(pageNum)}
-                    className={`w-8 h-8 text-sm rounded-md transition-colors ${
-                      page === pageNum
-                        ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium'
-                        : 'text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }`}
+                    className="w-9 h-9"
                   >
                     {pageNum}
-                  </button>
+                  </Button>
                 );
               })}
             </div>
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={() => setPage(Math.min(totalPages, page + 1))}
               disabled={page === totalPages}
-              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -911,125 +901,124 @@ function TableView({
   sortOrder: SortOrder;
 }) {
   const SortButton = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
-    <button
+    <Button
+      variant="ghost"
+      size="xs"
       onClick={() => handleSort(field)}
-      className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 font-medium transition-colors"
+      className="h-auto px-0 py-0 text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-transparent"
     >
       {children}
       {sortField === field && (
         <ArrowUpDown className={`w-3 h-3 opacity-60 ${sortOrder === 'desc' ? 'rotate-180' : ''}`} />
       )}
-    </button>
+    </Button>
   );
 
   return (
-    <div className="overflow-x-auto -mx-1">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-gray-100 dark:border-gray-800/50">
-            <th className="w-12 px-4 py-3 text-left">
+    <Table>
+      <TableHeader>
+        <TableRow className="hover:bg-transparent">
+          <TableHead className="w-12">
+            <Checkbox
+              checked={selectedItems.size === destinations.length && destinations.length > 0}
+              onCheckedChange={toggleSelectAll}
+            />
+          </TableHead>
+          <TableHead>
+            <SortButton field="name">Name</SortButton>
+          </TableHead>
+          <TableHead className="hidden md:table-cell">
+            <SortButton field="city">City</SortButton>
+          </TableHead>
+          <TableHead className="hidden sm:table-cell">
+            <SortButton field="category">Category</SortButton>
+          </TableHead>
+          <TableHead className="hidden lg:table-cell">
+            <span className="text-[11px] uppercase tracking-wide font-medium">Status</span>
+          </TableHead>
+          <TableHead className="w-12" />
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {destinations.map((dest) => (
+          <TableRow
+            key={dest.id}
+            data-state={selectedItems.has(dest.id!) ? 'selected' : undefined}
+            className="group"
+          >
+            <TableCell>
               <Checkbox
-                checked={selectedItems.size === destinations.length && destinations.length > 0}
-                onCheckedChange={toggleSelectAll}
+                checked={selectedItems.has(dest.id!)}
+                onCheckedChange={() => toggleSelect(dest.id!)}
               />
-            </th>
-            <th className="px-4 py-3 text-left">
-              <SortButton field="name">Name</SortButton>
-            </th>
-            <th className="px-4 py-3 text-left hidden md:table-cell">
-              <SortButton field="city">City</SortButton>
-            </th>
-            <th className="px-4 py-3 text-left hidden sm:table-cell">
-              <SortButton field="category">Category</SortButton>
-            </th>
-            <th className="px-4 py-3 text-left hidden lg:table-cell">
-              <span className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500 font-medium">Status</span>
-            </th>
-            <th className="w-12 px-4 py-3" />
-          </tr>
-        </thead>
-        <tbody>
-          {destinations.map((dest) => (
-            <tr
-              key={dest.id}
-              className={`group border-b border-gray-50 dark:border-gray-800/30 hover:bg-gray-50/50 dark:hover:bg-gray-900/30 transition-colors ${
-                selectedItems.has(dest.id!) ? 'bg-gray-50 dark:bg-gray-900/40' : ''
-              }`}
-            >
-              <td className="px-4 py-3">
-                <Checkbox
-                  checked={selectedItems.has(dest.id!)}
-                  onCheckedChange={() => toggleSelect(dest.id!)}
-                />
-              </td>
-              <td className="px-4 py-3">
-                <button
-                  onClick={() => onEdit?.(dest)}
-                  className="flex items-center gap-3 text-left group/btn"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0 ring-1 ring-gray-100 dark:ring-gray-700 group-hover/btn:ring-gray-200 dark:group-hover/btn:ring-gray-600 transition-all">
-                    {dest.image ? (
-                      <img src={dest.image} alt={dest.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="w-4 h-4 text-gray-300 dark:text-gray-600" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-hover/btn:text-gray-600 dark:group-hover/btn:text-gray-300 transition-colors">{dest.name}</span>
-                      {dest.crown && <Crown className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
-                      {dest.michelin_stars && dest.michelin_stars > 0 && (
-                        <div className="flex items-center">
-                          {Array.from({ length: dest.michelin_stars }).map((_, i) => (
-                            <img key={i} src="/michelin-star.svg" alt="Michelin" className="w-3.5 h-3.5 -ml-0.5 first:ml-0" />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <span className="text-xs text-gray-400 dark:text-gray-500 truncate block">{dest.slug}</span>
-                  </div>
-                </button>
-              </td>
-              <td className="px-4 py-3 hidden md:table-cell">
-                <span className="text-sm text-gray-500 dark:text-gray-400">{dest.city}</span>
-              </td>
-              <td className="px-4 py-3 hidden sm:table-cell">
-                <span className="text-xs text-gray-400 dark:text-gray-500 capitalize bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded-md">{dest.category}</span>
-              </td>
-              <td className="px-4 py-3 hidden lg:table-cell">
-                <div className="flex items-center gap-2">
-                  {dest.last_enriched_at ? (
-                    <div className="flex items-center gap-1 text-green-600 dark:text-green-500" title="Enriched">
-                      <Check className="w-3.5 h-3.5" />
-                    </div>
+            </TableCell>
+            <TableCell>
+              <button
+                onClick={() => onEdit?.(dest)}
+                className="flex items-center gap-3 text-left group/btn"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0 border border-gray-200 dark:border-gray-700 group-hover/btn:border-gray-300 dark:group-hover/btn:border-gray-600 transition-colors">
+                  {dest.image ? (
+                    <img src={dest.image} alt={dest.name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-3.5 h-3.5 rounded-full border border-gray-200 dark:border-gray-700" title="Not enriched" />
-                  )}
-                  {dest.image && (
-                    <div className="text-gray-400 dark:text-gray-500" title="Has image">
-                      <ImageIcon className="w-3.5 h-3.5" />
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ImageIcon className="w-4 h-4 text-gray-300 dark:text-gray-600" />
                     </div>
                   )}
                 </div>
-              </td>
-              <td className="px-4 py-3">
-                <RowActions
-                  destination={dest}
-                  isActive={activeDropdown === dest.id}
-                  onToggle={() => setActiveDropdown(activeDropdown === dest.id ? null : dest.id!)}
-                  onClose={() => setActiveDropdown(null)}
-                  onEdit={onEdit}
-                  onDelete={handleDelete}
-                  onDuplicate={handleDuplicate}
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-hover/btn:text-gray-600 dark:group-hover/btn:text-gray-300 transition-colors">{dest.name}</span>
+                    {dest.crown && <Crown className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
+                    {dest.michelin_stars && dest.michelin_stars > 0 && (
+                      <div className="flex items-center">
+                        {Array.from({ length: dest.michelin_stars }).map((_, i) => (
+                          <img key={i} src="/michelin-star.svg" alt="Michelin" className="w-3.5 h-3.5 -ml-0.5 first:ml-0" />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 truncate block">{dest.slug}</span>
+                </div>
+              </button>
+            </TableCell>
+            <TableCell className="hidden md:table-cell">
+              <span className="text-sm text-gray-500 dark:text-gray-400">{dest.city}</span>
+            </TableCell>
+            <TableCell className="hidden sm:table-cell">
+              <Badge variant="outline" className="capitalize">
+                {dest.category}
+              </Badge>
+            </TableCell>
+            <TableCell className="hidden lg:table-cell">
+              <div className="flex items-center gap-2">
+                {dest.last_enriched_at ? (
+                  <Badge variant="success" className="gap-1">
+                    <Check className="w-3 h-3" />
+                    Enriched
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-gray-400">
+                    Not enriched
+                  </Badge>
+                )}
+              </div>
+            </TableCell>
+            <TableCell>
+              <RowActions
+                destination={dest}
+                isActive={activeDropdown === dest.id}
+                onToggle={() => setActiveDropdown(activeDropdown === dest.id ? null : dest.id!)}
+                onClose={() => setActiveDropdown(null)}
+                onEdit={onEdit}
+                onDelete={handleDelete}
+                onDuplicate={handleDuplicate}
+              />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
 
@@ -1155,17 +1144,17 @@ function RowActions({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
-          className={`p-1.5 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
-            compact ? 'bg-white/90 dark:bg-gray-900/90 shadow-sm' : 'opacity-0 group-hover:opacity-100'
-          }`}
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className={compact ? 'bg-white/90 dark:bg-gray-900/90 shadow-sm' : 'opacity-0 group-hover:opacity-100'}
         >
           <MoreVertical className="w-4 h-4" />
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-36">
         <DropdownMenuItem onClick={() => onEdit?.(destination)}>
-          <Edit3 className="w-3.5 h-3.5 mr-2" />
+          <Edit3 className="w-4 h-4 mr-2" />
           Edit
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
@@ -1174,12 +1163,12 @@ function RowActions({
             target="_blank"
             rel="noopener noreferrer"
           >
-            <ExternalLink className="w-3.5 h-3.5 mr-2" />
+            <ExternalLink className="w-4 h-4 mr-2" />
             View
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onDuplicate(destination)}>
-          <Copy className="w-3.5 h-3.5 mr-2" />
+          <Copy className="w-4 h-4 mr-2" />
           Duplicate
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -1187,7 +1176,7 @@ function RowActions({
           onClick={() => onDelete(destination.id!)}
           className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
         >
-          <Trash2 className="w-3.5 h-3.5 mr-2" />
+          <Trash2 className="w-4 h-4 mr-2" />
           Delete
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -1195,16 +1184,16 @@ function RowActions({
   );
 }
 
-// Loading State - Matches homepage card skeleton
+// Loading State
 function LoadingState({ viewMode }: { viewMode: ViewMode }) {
   if (viewMode === 'grid') {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
         {Array.from({ length: 14 }).map((_, i) => (
-          <div key={i} className="space-y-2.5 animate-pulse">
-            <div className="aspect-video rounded-xl bg-gray-100 dark:bg-gray-800" />
-            <div className="h-3.5 rounded bg-gray-100 dark:bg-gray-800 w-3/4" />
-            <div className="h-3 rounded bg-gray-100 dark:bg-gray-800 w-1/2" />
+          <div key={i} className="space-y-2.5">
+            <Skeleton className="aspect-video rounded-2xl" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-1/2" />
           </div>
         ))}
       </div>
@@ -1214,15 +1203,15 @@ function LoadingState({ viewMode }: { viewMode: ViewMode }) {
   return (
     <div className="space-y-0">
       {Array.from({ length: 10 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 py-3.5 border-b border-gray-50 dark:border-gray-800/30 animate-pulse">
-          <div className="w-4 h-4 rounded bg-gray-100 dark:bg-gray-800" />
-          <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800" />
+        <div key={i} className="flex items-center gap-4 py-4 border-b border-gray-200 dark:border-gray-800">
+          <Skeleton className="w-5 h-5 rounded" />
+          <Skeleton className="w-10 h-10 rounded-xl" />
           <div className="flex-1 space-y-2">
-            <div className="h-3.5 rounded bg-gray-100 dark:bg-gray-800 w-1/3" />
-            <div className="h-3 rounded bg-gray-100 dark:bg-gray-800 w-1/4" />
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-3 w-1/4" />
           </div>
-          <div className="h-3 rounded bg-gray-100 dark:bg-gray-800 w-16 hidden md:block" />
-          <div className="h-3 rounded bg-gray-100 dark:bg-gray-800 w-14 hidden sm:block" />
+          <Skeleton className="h-4 w-16 hidden md:block" />
+          <Skeleton className="h-6 w-20 rounded-full hidden sm:block" />
         </div>
       ))}
     </div>
@@ -1233,17 +1222,14 @@ function LoadingState({ viewMode }: { viewMode: ViewMode }) {
 function EmptyState({ hasFilters, onClearFilters }: { hasFilters: boolean; onClearFilters: () => void }) {
   return (
     <div className="text-center py-20">
-      <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 flex items-center justify-center">
-        <Search className="w-6 h-6 text-gray-300 dark:text-gray-600" />
+      <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+        <Search className="w-7 h-7 text-gray-400 dark:text-gray-600" />
       </div>
-      <p className="text-gray-500 dark:text-gray-400 mb-1">No destinations found</p>
+      <p className="text-gray-600 dark:text-gray-400 mb-3">No destinations found</p>
       {hasFilters && (
-        <button
-          onClick={onClearFilters}
-          className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-        >
+        <Button variant="outline" size="sm" onClick={onClearFilters}>
           Clear filters
-        </button>
+        </Button>
       )}
     </div>
   );
