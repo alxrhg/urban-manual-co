@@ -47,6 +47,18 @@ interface DropdownOptions {
   brands: string[];
 }
 
+// Helper to normalize text to title case
+const toTitleCase = (str: string): string => {
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+    .split('-')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('-');
+};
+
 export function DestinationForm({
   destination,
   onSave,
@@ -220,11 +232,11 @@ export function DestinationForm({
 
         if (error) throw error;
 
-        // Extract unique non-empty values and sort alphabetically
-        const cities = [...new Set(data?.map(d => d.city).filter(Boolean) || [])].sort();
-        const countries = [...new Set(data?.map(d => d.country).filter(Boolean) || [])].sort();
-        const neighborhoods = [...new Set(data?.map(d => d.neighborhood).filter(Boolean) || [])].sort();
-        const brands = [...new Set(data?.map(d => d.brand).filter(Boolean) || [])].sort();
+        // Extract unique non-empty values, normalize to title case, and sort alphabetically
+        const cities = [...new Set(data?.map(d => d.city).filter(Boolean).map(toTitleCase) || [])].sort();
+        const countries = [...new Set(data?.map(d => d.country).filter(Boolean).map(toTitleCase) || [])].sort();
+        const neighborhoods = [...new Set(data?.map(d => d.neighborhood).filter(Boolean).map(toTitleCase) || [])].sort();
+        const brands = [...new Set(data?.map(d => d.brand).filter(Boolean).map(toTitleCase) || [])].sort();
 
         setDropdownOptions({ cities, countries, neighborhoods, brands });
       } catch (error) {
@@ -591,12 +603,12 @@ export function DestinationForm({
                     <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg max-h-64 overflow-y-auto">
                       <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 p-2">
                         <input type="text" value={customCityInput} onChange={(e) => setCustomCityInput(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter' && customCityInput.trim()) { e.preventDefault(); setFormData({ ...formData, city: customCityInput.trim() }); setShowCityDropdown(false); setCustomCityInput(''); } }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' && customCityInput.trim()) { e.preventDefault(); setFormData({ ...formData, city: toTitleCase(customCityInput.trim()) }); setShowCityDropdown(false); setCustomCityInput(''); } }}
                           placeholder="Type city or search..." className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-white" />
                         {customCityInput.trim() && (
-                          <button type="button" onClick={() => { setFormData({ ...formData, city: customCityInput.trim() }); setShowCityDropdown(false); setCustomCityInput(''); }}
+                          <button type="button" onClick={() => { setFormData({ ...formData, city: toTitleCase(customCityInput.trim()) }); setShowCityDropdown(false); setCustomCityInput(''); }}
                             className="w-full text-left px-2 py-1.5 mt-1 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
-                            Use "{customCityInput.trim()}"
+                            Use "{toTitleCase(customCityInput.trim())}"
                           </button>
                         )}
                       </div>
@@ -630,12 +642,12 @@ export function DestinationForm({
                     <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg max-h-64 overflow-y-auto">
                       <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 p-2">
                         <input type="text" value={customCountryInput} onChange={(e) => setCustomCountryInput(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter' && customCountryInput.trim()) { e.preventDefault(); setFormData({ ...formData, country: customCountryInput.trim() }); setShowCountryDropdown(false); setCustomCountryInput(''); } }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' && customCountryInput.trim()) { e.preventDefault(); setFormData({ ...formData, country: toTitleCase(customCountryInput.trim()) }); setShowCountryDropdown(false); setCustomCountryInput(''); } }}
                           placeholder="Type country or search..." className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-white" />
                         {customCountryInput.trim() && (
-                          <button type="button" onClick={() => { setFormData({ ...formData, country: customCountryInput.trim() }); setShowCountryDropdown(false); setCustomCountryInput(''); }}
+                          <button type="button" onClick={() => { setFormData({ ...formData, country: toTitleCase(customCountryInput.trim()) }); setShowCountryDropdown(false); setCustomCountryInput(''); }}
                             className="w-full text-left px-2 py-1.5 mt-1 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
-                            Use "{customCountryInput.trim()}"
+                            Use "{toTitleCase(customCountryInput.trim())}"
                           </button>
                         )}
                       </div>
@@ -673,12 +685,12 @@ export function DestinationForm({
                     <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg max-h-64 overflow-y-auto">
                       <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 p-2">
                         <input type="text" value={customNeighborhoodInput} onChange={(e) => setCustomNeighborhoodInput(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter' && customNeighborhoodInput.trim()) { e.preventDefault(); setFormData({ ...formData, neighborhood: customNeighborhoodInput.trim() }); setShowNeighborhoodDropdown(false); setCustomNeighborhoodInput(''); } }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' && customNeighborhoodInput.trim()) { e.preventDefault(); setFormData({ ...formData, neighborhood: toTitleCase(customNeighborhoodInput.trim()) }); setShowNeighborhoodDropdown(false); setCustomNeighborhoodInput(''); } }}
                           placeholder="Type neighborhood or search..." className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-white" />
                         {customNeighborhoodInput.trim() && (
-                          <button type="button" onClick={() => { setFormData({ ...formData, neighborhood: customNeighborhoodInput.trim() }); setShowNeighborhoodDropdown(false); setCustomNeighborhoodInput(''); }}
+                          <button type="button" onClick={() => { setFormData({ ...formData, neighborhood: toTitleCase(customNeighborhoodInput.trim()) }); setShowNeighborhoodDropdown(false); setCustomNeighborhoodInput(''); }}
                             className="w-full text-left px-2 py-1.5 mt-1 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
-                            Use "{customNeighborhoodInput.trim()}"
+                            Use "{toTitleCase(customNeighborhoodInput.trim())}"
                           </button>
                         )}
                       </div>
@@ -719,7 +731,7 @@ export function DestinationForm({
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && customBrandInput.trim()) {
                               e.preventDefault();
-                              setFormData({ ...formData, brand: customBrandInput.trim() });
+                              setFormData({ ...formData, brand: toTitleCase(customBrandInput.trim()) });
                               setShowBrandDropdown(false);
                               setCustomBrandInput('');
                             }
@@ -729,9 +741,9 @@ export function DestinationForm({
                         />
                         {customBrandInput.trim() && (
                           <button type="button"
-                            onClick={() => { setFormData({ ...formData, brand: customBrandInput.trim() }); setShowBrandDropdown(false); setCustomBrandInput(''); }}
+                            onClick={() => { setFormData({ ...formData, brand: toTitleCase(customBrandInput.trim()) }); setShowBrandDropdown(false); setCustomBrandInput(''); }}
                             className="w-full text-left px-2 py-1.5 mt-1 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
-                            Use "{customBrandInput.trim()}"
+                            Use "{toTitleCase(customBrandInput.trim())}"
                           </button>
                         )}
                       </div>
