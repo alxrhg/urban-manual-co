@@ -804,8 +804,8 @@ export default function InteractiveHero() {
               )}
             </div>
             {!showChatResults && !showInstantResults && (
-              <p className="mt-2 text-[11px] text-gray-400 dark:text-gray-500">
-                Press <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 font-mono text-[11px]">/</kbd> to focus • Enter to search
+              <p className="mt-2 text-[10px] text-gray-300 dark:text-gray-600">
+                Press <kbd className="px-1 py-0.5 rounded bg-gray-100 dark:bg-white/5 font-mono text-[10px]">/</kbd> to focus • Enter to search
               </p>
             )}
           </form>
@@ -1056,7 +1056,7 @@ export default function InteractiveHero() {
       {!showChatResults && (
         <div className="flex-1 flex items-end">
           <div className="w-full pt-6">
-            <div className="mb-8">
+            <div className="mb-4">
               <div className="flex flex-wrap gap-x-1 gap-y-2">
                 <button
                   onClick={() => setSelectedCity('')}
@@ -1084,7 +1084,7 @@ export default function InteractiveHero() {
                 {cities.length > displayedCities.length && !showAllCities && (
                   <button
                     onClick={() => setShowAllCities(true)}
-                    className="px-3 py-1.5 text-[12px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    className="px-3 py-1.5 text-[12px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-all duration-200"
                   >
                     +{cities.length - displayedCities.length} more
                   </button>
@@ -1092,7 +1092,7 @@ export default function InteractiveHero() {
                 {showAllCities && (
                   <button
                     onClick={() => setShowAllCities(false)}
-                    className="px-3 py-1.5 text-[12px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    className="px-3 py-1.5 text-[12px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-all duration-200"
                   >
                     Show less
                   </button>
@@ -1102,16 +1102,16 @@ export default function InteractiveHero() {
 
             {/* Category Filters with Icons */}
             {categories.length > 0 && (
-              <div className="flex flex-wrap gap-x-4 gap-y-2 text-[12px]">
+              <div className="flex flex-wrap gap-x-1 gap-y-2">
                 <button
                   onClick={() => {
                     setSelectedCategory('');
                     setMichelinOnly(false);
                   }}
-                  className={`transition-colors duration-200 font-medium ${
+                  className={`px-3 py-1.5 text-[12px] font-medium rounded-full transition-all duration-200 ${
                     !selectedCategory && !michelinOnly
-                      ? 'text-gray-900 dark:text-white'
-                      : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
                   }`}
                 >
                   All Categories
@@ -1119,10 +1119,10 @@ export default function InteractiveHero() {
                 {/* Michelin filter with icon */}
                 <button
                   onClick={() => setMichelinOnly(!michelinOnly)}
-                  className={`flex items-center gap-1.5 transition-colors duration-200 ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-full transition-all duration-200 ${
                     michelinOnly
-                      ? 'text-gray-900 dark:text-white font-medium'
-                      : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
                   }`}
                 >
                   <img
@@ -1139,10 +1139,10 @@ export default function InteractiveHero() {
                     <button
                       key={category}
                       onClick={() => handleCategoryClick(category)}
-                      className={`flex items-center gap-1.5 transition-colors duration-200 ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-full transition-all duration-200 ${
                         selectedCategory.toLowerCase() === category.toLowerCase()
-                          ? 'text-gray-900 dark:text-white font-medium'
-                          : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                          ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
                       }`}
                     >
                       {IconComponent && <IconComponent className="w-4 h-4" />}
