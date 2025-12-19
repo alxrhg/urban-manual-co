@@ -40,6 +40,23 @@ const PRICE_LEVELS = [
   { value: 4, label: '$$$$ - Very Expensive' },
 ];
 
+const BRANDS = [
+  // Luxury Hotel Groups
+  'Aman', 'Four Seasons', 'Ritz-Carlton', 'Mandarin Oriental', 'Peninsula', 'Rosewood',
+  'St. Regis', 'Park Hyatt', 'Waldorf Astoria', 'Belmond', 'One&Only', 'Six Senses',
+  'Raffles', 'Capella', 'Bulgari Hotels', 'Armani Hotels', 'Edition', 'Nobu Hotels',
+  // Upper Upscale
+  'W Hotels', 'JW Marriott', 'Conrad', 'Intercontinental', 'Fairmont', 'Sofitel',
+  'Grand Hyatt', 'Andaz', 'Langham', 'Shangri-La', 'Banyan Tree', 'Como Hotels',
+  // Upscale
+  'Marriott', 'Hilton', 'Hyatt', 'Westin', 'Sheraton', 'Le Méridien', 'Renaissance',
+  'Kimpton', 'Thompson Hotels', 'Ace Hotel', 'Soho House', 'The Standard',
+  // Boutique & Lifestyle
+  'Design Hotels', 'Leading Hotels of the World', 'Relais & Châteaux', 'Small Luxury Hotels',
+  // Restaurant Groups
+  'Nobu', 'Zuma', 'Hakkasan', 'Tao Group', 'Major Food Group', 'Union Square Hospitality',
+];
+
 export function DestinationForm({
   destination,
   onSave,
@@ -104,6 +121,8 @@ export function DestinationForm({
   const [isDragging, setIsDragging] = useState(false);
   const [fetchingGoogle, setFetchingGoogle] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [showBrandDropdown, setShowBrandDropdown] = useState(false);
+  const [customBrandInput, setCustomBrandInput] = useState('');
   const [tagInput, setTagInput] = useState('');
   const [isEnriching, setIsEnriching] = useState(false);
 
@@ -548,9 +567,59 @@ export function DestinationForm({
               </div>
               <div>
                 <label className={labelClasses}>Brand</label>
-                <input type="text" value={formData.brand}
-                  onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                  placeholder="Four Seasons" className={inputClasses} />
+                <div className="relative">
+                  <button type="button" onClick={() => setShowBrandDropdown(!showBrandDropdown)}
+                    className={cn(inputClasses, "text-left flex items-center justify-between")}>
+                    <span className={formData.brand ? "" : "text-gray-400"}>{formData.brand || "Select brand..."}</span>
+                    <div className="flex items-center gap-1">
+                      {formData.brand && (
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setFormData({ ...formData, brand: '' }); setCustomBrandInput(''); }}
+                          className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded">
+                          <X className="h-3 w-3 text-gray-400" />
+                        </button>
+                      )}
+                      <ChevronDown className={cn("h-4 w-4 text-gray-400 transition-transform", showBrandDropdown && "rotate-180")} />
+                    </div>
+                  </button>
+                  {showBrandDropdown && (
+                    <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                      {/* Custom brand input */}
+                      <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 p-2">
+                        <input
+                          type="text"
+                          value={customBrandInput}
+                          onChange={(e) => setCustomBrandInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && customBrandInput.trim()) {
+                              e.preventDefault();
+                              setFormData({ ...formData, brand: customBrandInput.trim() });
+                              setShowBrandDropdown(false);
+                              setCustomBrandInput('');
+                            }
+                          }}
+                          placeholder="Type custom brand or search..."
+                          className="w-full px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                        />
+                        {customBrandInput.trim() && (
+                          <button type="button"
+                            onClick={() => { setFormData({ ...formData, brand: customBrandInput.trim() }); setShowBrandDropdown(false); setCustomBrandInput(''); }}
+                            className="w-full text-left px-2 py-1.5 mt-1 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
+                            Use "{customBrandInput.trim()}"
+                          </button>
+                        )}
+                      </div>
+                      {/* Predefined brands */}
+                      {BRANDS.filter(brand => !customBrandInput || brand.toLowerCase().includes(customBrandInput.toLowerCase())).map((brand) => (
+                        <button key={brand} type="button"
+                          onClick={() => { setFormData({ ...formData, brand }); setShowBrandDropdown(false); setCustomBrandInput(''); }}
+                          className={cn("w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800",
+                            formData.brand === brand && "bg-gray-50 dark:bg-gray-800 font-medium")}>
+                          {brand}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
