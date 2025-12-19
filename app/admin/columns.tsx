@@ -33,164 +33,113 @@ export type Destination = {
 
 export const createColumns = (
   onEdit: (destination: Destination) => void,
-  onDelete: (slug: string, name: string) => void,
-  enableRowSelection = false
-): ColumnDef<Destination>[] => {
-  const columns: ColumnDef<Destination>[] = [];
+  onDelete: (slug: string, name: string) => void
+): ColumnDef<Destination>[] => [
+  {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && 'indeterminate')
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: 'category',
+    header: 'Status',
+    cell: ({ row }) => {
+      const category = row.getValue('category') as string;
+      return <div className="capitalize">{category}</div>;
+    },
+  },
+  {
+    accessorKey: 'name',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Name" />
+    ),
+    cell: ({ row }) => {
+      const destination = row.original;
+      return (
+        <div className="flex items-center gap-2">
+          <span>{destination.name}</span>
+          {destination.crown && (
+            <Badge variant="default" className="text-xs">Crown</Badge>
+          )}
+          {destination.michelin_stars && destination.michelin_stars > 0 && (
+            <Badge variant="outline" className="text-xs">
+              {destination.michelin_stars} star{destination.michelin_stars > 1 ? 's' : ''}
+            </Badge>
+          )}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: 'city',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="City" />
+    ),
+  },
+  {
+    accessorKey: 'rating',
+    header: () => <div className="text-right">Rating</div>,
+    cell: ({ row }) => {
+      const rating = row.original.rating;
+      if (!rating) return <div className="text-right">-</div>;
 
-  // Add select column if row selection is enabled
-  if (enableRowSelection) {
-    columns.push({
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    });
-  }
+      const formatted = rating.toFixed(1);
+      return <div className="text-right font-medium">{formatted}</div>;
+    },
+  },
+  {
+    id: 'actions',
+    enableHiding: false,
+    cell: ({ row }) => {
+      const destination = row.original;
 
-  // Add remaining columns
-  columns.push(
-    {
-      accessorKey: 'name',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Name" />
-      ),
-      cell: ({ row }) => {
-        const destination = row.original;
-        return (
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-sm">{destination.name}</span>
-            {destination.crown && (
-              <Badge variant="default" className="text-xs">Crown</Badge>
-            )}
-            {destination.michelin_stars && destination.michelin_stars > 0 && (
-              <Badge variant="outline" className="text-xs">
-                {destination.michelin_stars} star{destination.michelin_stars > 1 ? 's' : ''}
-              </Badge>
-            )}
-          </div>
-        );
-      },
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem
+              onClick={() => navigator.clipboard.writeText(destination.slug)}
+            >
+              Copy slug
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onEdit(destination)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onDelete(destination.slug, destination.name)}
+              className="text-red-600 dark:text-red-400"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
     },
-    {
-      accessorKey: 'city',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="City" />
-      ),
-      cell: ({ row }) => (
-        <div className="text-sm text-gray-500 dark:text-gray-400">{row.getValue('city')}</div>
-      ),
-    },
-    {
-      accessorKey: 'category',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Category" />
-      ),
-      cell: ({ row }) => (
-        <div className="text-sm capitalize">{row.getValue('category')}</div>
-      ),
-    },
-    {
-      accessorKey: 'google_place_id',
-      header: 'Status',
-      cell: ({ row }) => {
-        const isEnriched = !!row.original.google_place_id;
-        return (
-          <Badge variant={isEnriched ? 'default' : 'secondary'} className="text-xs">
-            {isEnriched ? 'Enriched' : 'Not Enriched'}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: 'formatted_address',
-      header: 'Address',
-      cell: ({ row }) => {
-        const hasAddress = !!row.original.formatted_address;
-        return hasAddress ? (
-          <span className="text-sm text-green-600 dark:text-green-400">Yes</span>
-        ) : (
-          <span className="text-sm text-gray-400">-</span>
-        );
-      },
-    },
-    {
-      accessorKey: 'rating',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Rating" className="justify-end" />
-      ),
-      cell: ({ row }) => {
-        const rating = row.original.rating;
-        return rating ? (
-          <div className="text-right text-sm text-green-600 dark:text-green-400 flex items-center justify-end gap-1">
-            <img src="/google-logo.svg" alt="Google" className="h-3 w-3" />
-            {rating.toFixed(1)}
-          </div>
-        ) : (
-          <div className="text-right text-sm text-gray-400">-</div>
-        );
-      },
-    },
-    {
-      accessorKey: 'slug',
-      header: 'Slug',
-      cell: ({ row }) => (
-        <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
-          {row.getValue('slug')}
-        </code>
-      ),
-    },
-    {
-      id: 'actions',
-      cell: ({ row }) => {
-        const destination = row.original;
-
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => onEdit(destination)}
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => onDelete(destination.slug, destination.name)}
-                className="text-red-600 dark:text-red-400"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
-    }
-  );
-
-  return columns;
-};
+  },
+];

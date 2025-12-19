@@ -1,15 +1,13 @@
 "use client"
 
 import { Table } from "@tanstack/react-table"
-import { Settings2 } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 
 import { Button } from "@/ui/button"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/ui/dropdown-menu"
 
@@ -23,24 +21,15 @@ export function DataTableViewOptions<TData>({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="ml-auto hidden h-8 lg:flex"
-        >
-          <Settings2 className="mr-2 h-4 w-4" />
-          View
+        <Button variant="outline" size="sm" className="ml-auto h-8">
+          Columns
+          <ChevronDown className="ml-2 h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[150px]">
-        <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-        <DropdownMenuSeparator />
+      <DropdownMenuContent align="end">
         {table
           .getAllColumns()
-          .filter(
-            (column) =>
-              typeof column.accessorFn !== "undefined" && column.getCanHide()
-          )
+          .filter((column) => column.getCanHide())
           .map((column) => {
             return (
               <DropdownMenuCheckboxItem
