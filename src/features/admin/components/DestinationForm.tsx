@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, X, Upload, Link2, Search, MapPin, Star, Crown, ChevronDown, ImageIcon } from 'lucide-react';
 import { htmlToPlainText } from '@/lib/sanitize';
 import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
 import type { Destination } from '@/types/destination';
+import { cn } from '@/lib/utils';
 
 interface Toast {
   success: (message: string) => void;
@@ -23,6 +24,21 @@ interface DestinationFormProps {
   toast: Toast;
 }
 
+type TabId = 'details' | 'media' | 'content';
+
+const CATEGORIES = [
+  'Restaurant',
+  'Hotel',
+  'Bar',
+  'Cafe',
+  'Shopping',
+  'Museum',
+  'Gallery',
+  'Architecture',
+  'Park',
+  'Others',
+];
+
 export function DestinationForm({
   destination,
   onSave,
@@ -30,6 +46,7 @@ export function DestinationForm({
   isSaving,
   toast,
 }: DestinationFormProps) {
+  const [activeTab, setActiveTab] = useState<TabId>('details');
   const [formData, setFormData] = useState({
     slug: destination?.slug || '',
     name: destination?.name || '',
@@ -51,6 +68,7 @@ export function DestinationForm({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [fetchingGoogle, setFetchingGoogle] = useState(false);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   // Update form when destination changes
   useEffect(() => {
@@ -307,9 +325,11 @@ export function DestinationForm({
     }
   };
 
+  const [isEnriching, setIsEnriching] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     let imageUrl = formData.image;
     if (imageFile) {
       const uploadedUrl = await uploadImage();
@@ -320,7 +340,7 @@ export function DestinationForm({
       }
     }
 
-    const data: any = {
+    const data: Partial<Destination> = {
       ...formData,
       image: imageUrl,
       michelin_stars: formData.michelin_stars ? Number(formData.michelin_stars) : null,
@@ -329,404 +349,617 @@ export function DestinationForm({
     await onSave(data);
   };
 
+  const handleEnrich = async () => {
+    if (!formData.slug || !formData.name || !formData.city) {
+      toast.warning('Please fill in name, slug, and city before enriching');
+      return;
+    }
+
+    setIsEnriching(true);
+    try {
+      const supabase = createClient({ skipValidation: true });
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch('/api/enrich', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          slug: formData.slug,
+          name: formData.name,
+          city: formData.city,
+          category: formData.category,
+          content: formData.content,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Enrichment failed' }));
+        throw new Error(error.error || 'Enrichment failed');
+      }
+
+      const result = await response.json();
+      toast.success('Destination enriched with Google Places and AI data');
+
+      // Update form with enriched data if available
+      if (result.data?.category) {
+        setFormData(prev => ({
+          ...prev,
+          category: result.data.category || prev.category,
+        }));
+      }
+    } catch (error: unknown) {
+      console.error('Enrich error:', error);
+      if (toast.safeError) {
+        toast.safeError(error, 'Unable to enrich destination. Please try again.');
+      } else {
+        toast.error('Unable to enrich destination. Please try again.');
+      }
+    } finally {
+      setIsEnriching(false);
+    }
+  };
+
+  const handlePlaceSelect = async (placeDetails: { placeId?: string }) => {
+    if (placeDetails.placeId) {
+      setFetchingGoogle(true);
+      try {
+        const supabase = createClient({ skipValidation: true });
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) {
+          throw new Error('Not authenticated');
+        }
+        const response = await fetch('/api/fetch-google-place', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ placeId: placeDetails.placeId }),
+        });
+        let data;
+        try {
+          data = await response.json();
+        } catch {
+          const text = await response.text();
+          console.error('Error parsing response:', text);
+          toast.error('Invalid response format from Google Places API');
+          return;
+        }
+        if (data.error) {
+          console.error('Error fetching place:', data.error);
+          return;
+        }
+        setFormData(prev => ({
+          ...prev,
+          name: data.name || prev.name,
+          city: data.city || prev.city,
+          category: data.category || prev.category,
+          description: htmlToPlainText(data.description || ''),
+          content: htmlToPlainText(data.content || ''),
+          image: data.image || prev.image,
+        }));
+        if (data.image) {
+          setImagePreview(data.image);
+        }
+        toast.success('Auto-filled from Google Places');
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setFetchingGoogle(false);
+      }
+    }
+  };
+
+  const tabs: { id: TabId; label: string }[] = [
+    { id: 'details', label: 'Details' },
+    { id: 'media', label: 'Media' },
+    { id: 'content', label: 'Content' },
+  ];
+
+  const inputClasses = "w-full px-3 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-shadow";
+  const labelClasses = "block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Basic Information Section */}
-      <div className="border-b border-gray-200 dark:border-gray-800 pb-4">
-        <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Name *</label>
-            <div className="flex gap-2">
-              <GooglePlacesAutocomplete
-                value={formData.name}
-                onChange={(value) => setFormData({ ...formData, name: value })}
-                onPlaceSelect={async (placeDetails: any) => {
-                  if (placeDetails.placeId) {
-                    setFetchingGoogle(true);
-                    try {
-                      const supabase = createClient({ skipValidation: true });
-                      const { data: { session } } = await supabase.auth.getSession();
-                      const token = session?.access_token;
-                      if (!token) {
-                        throw new Error('Not authenticated');
-                      }
-                      const response = await fetch('/api/fetch-google-place', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${token}`,
-                        },
-                        body: JSON.stringify({ placeId: placeDetails.placeId }),
-                      });
-                      let data;
-                      try {
-                        data = await response.json();
-                      } catch {
-                        const text = await response.text();
-                        console.error('Error parsing response:', text);
-                        toast.error('Invalid response format from Google Places API');
-                        return;
-                      }
-                      if (data.error) {
-                        console.error('Error fetching place:', data.error);
-                        return;
-                      }
-                      setFormData(prev => ({
-                        ...prev,
-                        name: data.name || prev.name,
-                        city: data.city || prev.city,
-                        category: data.category || prev.category,
-                        description: htmlToPlainText(data.description || ''),
-                        content: htmlToPlainText(data.content || ''),
-                        image: data.image || prev.image,
-                      }));
-                      if (data.image) {
-                        setImagePreview(data.image);
-                      }
-                    } catch (error) {
-                      console.error('Error:', error);
-                    } finally {
-                      setFetchingGoogle(false);
-                    }
-                  }
-                }}
-                placeholder="Start typing a place name... (autocomplete enabled)"
-                className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
-                types="establishment"
-              />
-              <button
-                type="button"
-                onClick={fetchFromGoogle}
-                disabled={fetchingGoogle || !formData.name.trim()}
-                className="px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-              >
-                {fetchingGoogle ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-1 inline" />
-                    Fetching...
-                  </>
-                ) : (
-                  '🔍 Fetch Details'
-                )}
-              </button>
-            </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              💡 Type to see Google Places suggestions, or click "Fetch Details" to auto-fill all fields
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Slug *</label>
-              <input
-                type="text"
-                required
-                value={formData.slug}
-                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                placeholder="auto-generated if empty"
-                className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1.5">City *</label>
-              <input
-                type="text"
-                required
-                value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., Tokyo"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Category *</label>
-            <input
-              type="text"
-              required
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g., restaurant, hotel, cafe"
-            />
-          </div>
-          
-          {/* Parent Destination Selector */}
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Parent Destination (Optional)</label>
-            <div className="relative">
-              {selectedParent ? (
-                <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800">
-                  <div>
-                    <span className="text-sm font-medium">{selectedParent.name}</span>
-                    <span className="text-xs text-gray-500 ml-2">{selectedParent.city}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedParent(null);
-                      setFormData({ ...formData, parent_destination_id: null });
-                    }}
-                    className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <input
-                    type="text"
-                    value={parentSearchQuery}
-                    onChange={(e) => setParentSearchQuery(e.target.value)}
-                    placeholder="Search for parent destination (e.g., hotel name)..."
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  {isSearchingParent && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                    </div>
-                  )}
-                  {parentSearchResults.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                      {parentSearchResults.map((parent) => (
-                        <button
-                          key={parent.id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedParent(parent);
-                            setFormData({ ...formData, parent_destination_id: parent.id ?? null });
-                            setParentSearchQuery('');
-                            setParentSearchResults([]);
-                          }}
-                          className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                        >
-                          <div className="font-medium text-sm">{parent.name}</div>
-                          <div className="text-xs text-gray-500">{parent.city} • {parent.category}</div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </>
+    <form onSubmit={handleSubmit} className="flex flex-col h-full">
+      {/* Tab Navigation */}
+      <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800">
+        <nav className="flex gap-1 px-1" aria-label="Tabs">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "px-4 py-2.5 text-sm font-medium transition-colors relative",
+                activeTab === tab.id
+                  ? "text-black dark:text-white"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               )}
-            </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Select a parent destination if this venue is located within another (e.g., a bar within a hotel)
-            </div>
-          </div>
-        </div>
+            >
+              {tab.label}
+              {activeTab === tab.id && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-black dark:bg-white" />
+              )}
+            </button>
+          ))}
+        </nav>
       </div>
 
-      {/* Image Section */}
-      <div className="border-b border-gray-200 dark:border-gray-800 pb-4">
-        <h3 className="text-lg font-semibold mb-4">Image</h3>
-        <div className="space-y-3">
-          <div
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            className={`relative border-2 border-dashed rounded-2xl p-6 transition-colors ${
-              isDragging
-                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                : 'border-gray-300 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50'
-            }`}
-          >
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
-              id="image-upload-input"
-            />
-            <label
-              htmlFor="image-upload-input"
-              className="flex flex-col items-center justify-center cursor-pointer"
-            >
-              {imagePreview ? (
-                <div className="relative w-full">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-full h-48 object-cover rounded-2xl mb-3"
+      {/* Tab Content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Details Tab */}
+        {activeTab === 'details' && (
+          <div className="p-5 space-y-5">
+            {/* Name with Google Places */}
+            <div>
+              <label className={labelClasses}>Name</label>
+              <div className="flex gap-2">
+                <GooglePlacesAutocomplete
+                  value={formData.name}
+                  onChange={(value) => setFormData({ ...formData, name: value })}
+                  onPlaceSelect={handlePlaceSelect}
+                  placeholder="Search for a place..."
+                  className={cn(inputClasses, "flex-1")}
+                  types="establishment"
+                />
+                <button
+                  type="button"
+                  onClick={fetchFromGoogle}
+                  disabled={fetchingGoogle || !formData.name.trim()}
+                  className="px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                  title="Fetch details from Google"
+                >
+                  {fetchingGoogle ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+              <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                Type to search Google Places or click the search icon to auto-fill
+              </p>
+            </div>
+
+            {/* Slug and City Row */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelClasses}>Slug</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.slug}
+                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  placeholder="url-friendly-name"
+                  className={inputClasses}
+                />
+              </div>
+              <div>
+                <label className={labelClasses}>City</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    required
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    className={cn(inputClasses, "pl-9")}
+                    placeholder="e.g., Tokyo"
                   />
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setImageFile(null);
-                      setImagePreview(null);
-                      const input = document.getElementById('image-upload-input') as HTMLInputElement;
-                      if (input) input.value = '';
-                    }}
-                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors"
-                    title="Remove image"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
                 </div>
-              ) : (
-                <>
-                  <div className="text-4xl mb-2">📷</div>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Drag & drop an image here
+              </div>
+            </div>
+
+            {/* Category Dropdown */}
+            <div>
+              <label className={labelClasses}>Category</label>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                  className={cn(inputClasses, "text-left flex items-center justify-between")}
+                >
+                  <span className={formData.category ? "text-gray-900 dark:text-white" : "text-gray-400"}>
+                    {formData.category || "Select a category..."}
                   </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    or click to browse
-                  </span>
-                </>
-              )}
-            </label>
+                  <ChevronDown className={cn("h-4 w-4 text-gray-400 transition-transform", showCategoryDropdown && "rotate-180")} />
+                </button>
+                {showCategoryDropdown && (
+                  <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    {CATEGORIES.map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => {
+                          setFormData({ ...formData, category: cat });
+                          setShowCategoryDropdown(false);
+                        }}
+                        className={cn(
+                          "w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors",
+                          formData.category === cat && "bg-gray-50 dark:bg-gray-800 font-medium"
+                        )}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                    <div className="border-t border-gray-100 dark:border-gray-800">
+                      <input
+                        type="text"
+                        placeholder="Or type custom..."
+                        value={formData.category && !CATEGORIES.includes(formData.category) ? formData.category : ''}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        onFocus={() => setShowCategoryDropdown(true)}
+                        className="w-full px-3 py-2 text-sm bg-transparent outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Parent Destination */}
+            <div>
+              <label className={labelClasses}>Parent Destination</label>
+              <div className="relative">
+                {selectedParent ? (
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-gray-200 dark:bg-gray-800 rounded-md flex items-center justify-center">
+                        <MapPin className="h-4 w-4 text-gray-500" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium">{selectedParent.name}</div>
+                        <div className="text-xs text-gray-500">{selectedParent.city}</div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedParent(null);
+                        setFormData({ ...formData, parent_destination_id: null });
+                      }}
+                      className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors"
+                    >
+                      <X className="h-4 w-4 text-gray-500" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={parentSearchQuery}
+                      onChange={(e) => setParentSearchQuery(e.target.value)}
+                      placeholder="Search for parent venue..."
+                      className={cn(inputClasses, "pl-9")}
+                    />
+                    {isSearchingParent && (
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-gray-400" />
+                    )}
+                    {parentSearchResults.length > 0 && (
+                      <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                        {parentSearchResults.map((parent) => (
+                          <button
+                            key={parent.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedParent(parent);
+                              setFormData({ ...formData, parent_destination_id: parent.id ?? null });
+                              setParentSearchQuery('');
+                              setParentSearchResults([]);
+                            }}
+                            className="w-full text-left px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2"
+                          >
+                            <div className="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-md flex items-center justify-center flex-shrink-0">
+                              <MapPin className="h-4 w-4 text-gray-400" />
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium">{parent.name}</div>
+                              <div className="text-xs text-gray-500">{parent.city} · {parent.category}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+              <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                Link this venue to a parent location (e.g., bar within a hotel)
+              </p>
+            </div>
+
+            {/* Badges Section */}
+            <div className="pt-2">
+              <label className={labelClasses}>Badges & Features</label>
+              <div className="space-y-3">
+                {/* Michelin Stars */}
+                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm">Michelin Stars</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {[0, 1, 2, 3].map((stars) => (
+                      <button
+                        key={stars}
+                        type="button"
+                        onClick={() => {
+                          const michelinStars = stars || null;
+                          const updatedFormData = { ...formData, michelin_stars: michelinStars };
+                          if (michelinStars && michelinStars > 0) {
+                            updatedFormData.category = 'Restaurant';
+                          }
+                          setFormData(updatedFormData);
+                        }}
+                        className={cn(
+                          "w-8 h-8 rounded-md text-sm font-medium transition-colors",
+                          (formData.michelin_stars || 0) === stars
+                            ? "bg-black dark:bg-white text-white dark:text-black"
+                            : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        )}
+                      >
+                        {stars}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Crown Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, crown: !formData.crown })}
+                  className={cn(
+                    "w-full flex items-center justify-between p-3 rounded-lg border transition-colors",
+                    formData.crown
+                      ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
+                      : "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <Crown className={cn("h-4 w-4", formData.crown ? "text-amber-500" : "text-gray-500")} />
+                    <span className="text-sm">Featured (Crown)</span>
+                  </div>
+                  <div className={cn(
+                    "w-10 h-6 rounded-full relative transition-colors",
+                    formData.crown ? "bg-amber-500" : "bg-gray-300 dark:bg-gray-600"
+                  )}>
+                    <div className={cn(
+                      "absolute top-1 w-4 h-4 bg-white rounded-full transition-transform shadow-sm",
+                      formData.crown ? "translate-x-5" : "translate-x-1"
+                    )} />
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Enrichment Section (only for existing destinations) */}
+            {destination && (
+              <div className="pt-2">
+                <label className={labelClasses}>AI Enrichment</label>
+                <button
+                  type="button"
+                  onClick={handleEnrich}
+                  disabled={isEnriching || !formData.slug || !formData.name || !formData.city}
+                  className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gradient-to-br from-gray-600 to-gray-800 rounded-md flex items-center justify-center">
+                      <Star className="h-4 w-4 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-sm font-medium">Enrich with AI</div>
+                      <div className="text-xs text-gray-500">Fetch Google Places data & generate tags</div>
+                    </div>
+                  </div>
+                  {isEnriching ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-gray-400 -rotate-90" />
+                  )}
+                </button>
+              </div>
+            )}
           </div>
-          
-          <div className="flex items-center gap-2">
-            <label className="flex-1 cursor-pointer">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-                id="image-upload-button"
-              />
-              <span className="inline-flex items-center justify-center w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-medium">
-                📁 {imageFile ? 'Change Image' : 'Choose File'}
-              </span>
-            </label>
-            {imageFile && (
+        )}
+
+        {/* Media Tab */}
+        {activeTab === 'media' && (
+          <div className="p-5 space-y-5">
+            {/* Image Upload Area */}
+            <div>
+              <label className={labelClasses}>Image</label>
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={cn(
+                  "relative border-2 border-dashed rounded-xl transition-all cursor-pointer overflow-hidden",
+                  isDragging
+                    ? "border-black dark:border-white bg-gray-50 dark:bg-gray-900"
+                    : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700"
+                )}
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                  id="image-upload-input"
+                />
+                <label
+                  htmlFor="image-upload-input"
+                  className="block cursor-pointer"
+                >
+                  {imagePreview ? (
+                    <div className="relative aspect-video">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="text-white text-sm font-medium">Click to change</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setImageFile(null);
+                          setImagePreview(null);
+                          setFormData({ ...formData, image: '' });
+                          const input = document.getElementById('image-upload-input') as HTMLInputElement;
+                          if (input) input.value = '';
+                        }}
+                        className="absolute top-3 right-3 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="py-12 px-6 flex flex-col items-center justify-center text-center">
+                      <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center mb-3">
+                        <ImageIcon className="h-6 w-6 text-gray-400" />
+                      </div>
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Drop an image here
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        or click to browse
+                      </p>
+                    </div>
+                  )}
+                </label>
+              </div>
+              {uploadingImage && (
+                <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Uploading...</span>
+                </div>
+              )}
+            </div>
+
+            {/* Image URL Input */}
+            <div>
+              <label className={labelClasses}>Or paste image URL</label>
+              <div className="relative">
+                <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="url"
+                  value={formData.image}
+                  onChange={(e) => {
+                    setFormData({ ...formData, image: e.target.value });
+                    if (!imageFile) {
+                      setImagePreview(e.target.value || null);
+                    }
+                  }}
+                  placeholder="https://..."
+                  className={cn(inputClasses, "pl-9")}
+                />
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => {
                   setImageFile(null);
-                  setImagePreview(formData.image || null);
+                  setImagePreview(null);
+                  setFormData({ ...formData, image: '' });
                 }}
-                className="px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                disabled={!imagePreview && !formData.image}
+                className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Clear
+                Clear Image
               </button>
-            )}
+              <label className="flex-1">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+                <span className="flex items-center justify-center gap-2 px-3 py-2 text-sm border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+                  <Upload className="h-4 w-4" />
+                  Upload New
+                </span>
+              </label>
+            </div>
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">or</div>
-          <input
-            type="url"
-            value={formData.image}
-            onChange={(e) => {
-              setFormData({ ...formData, image: e.target.value });
-              if (!imageFile) {
-                setImagePreview(e.target.value || null);
-              }
-            }}
-            placeholder="Enter image URL"
-            className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {imagePreview && (
-            <div className="mt-3">
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="w-full h-64 object-cover rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm"
-                onError={() => setImagePreview(null)}
+        )}
+
+        {/* Content Tab */}
+        {activeTab === 'content' && (
+          <div className="p-5 space-y-5">
+            <div>
+              <label className={labelClasses}>Short Description</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={3}
+                className={cn(inputClasses, "resize-none")}
+                placeholder="A brief, punchy description (1-2 sentences)"
               />
+              <div className="mt-1.5 flex justify-end">
+                <span className="text-xs text-gray-400">{formData.description.length} chars</span>
+              </div>
             </div>
-          )}
-          {uploadingImage && (
-            <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Uploading image...
+
+            <div>
+              <label className={labelClasses}>Full Content</label>
+              <textarea
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                rows={12}
+                className={cn(inputClasses, "resize-y min-h-[200px]")}
+                placeholder="A detailed description of the destination, what makes it special, atmosphere, best time to visit, etc."
+              />
+              <div className="mt-1.5 flex justify-end">
+                <span className="text-xs text-gray-400">{formData.content.length} chars</span>
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Content Section */}
-      <div className="border-b border-gray-200 dark:border-gray-800 pb-4">
-        <h3 className="text-lg font-semibold mb-4">Content</h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Short Description</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={3}
-              className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800 outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              placeholder="A brief, punchy description (1-2 sentences)"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Full Content</label>
-            <textarea
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              rows={8}
-              className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800 outline-none focus:ring-2 focus:ring-blue-500 resize-y"
-              placeholder="A detailed description of the destination, what makes it special, atmosphere, best time to visit, etc."
-            />
-          </div>
+      {/* Sticky Action Bar */}
+      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-5 py-4">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isSaving}
+            className="px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Saving...</span>
+              </>
+            ) : destination ? (
+              'Save Changes'
+            ) : (
+              'Create Destination'
+            )}
+          </button>
         </div>
-      </div>
-
-      {/* Additional Details */}
-      <div className="border-b border-gray-200 dark:border-gray-800 pb-4">
-        <h3 className="text-lg font-semibold mb-4">Additional Details</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Michelin Stars</label>
-            <input
-              type="number"
-              min="0"
-              max="3"
-              value={formData.michelin_stars || ''}
-              onChange={(e) => {
-                const michelinStars = e.target.value ? Number(e.target.value) : null;
-                const updatedFormData = { ...formData, michelin_stars: michelinStars };
-                if (michelinStars && michelinStars > 0) {
-                  updatedFormData.category = 'Restaurant';
-                }
-                setFormData(updatedFormData);
-              }}
-              className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="0-3"
-            />
-          </div>
-          <div className="flex items-center gap-3 pt-6">
-            <input
-              type="checkbox"
-              id="crown-checkbox"
-              checked={formData.crown}
-              onChange={(e) => setFormData({ ...formData, crown: e.target.checked })}
-              className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500"
-            />
-            <label htmlFor="crown-checkbox" className="text-sm font-medium cursor-pointer">
-              Crown (Featured)
-            </label>
-          </div>
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex justify-end gap-3 pt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={isSaving}
-          className="px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={isSaving}
-          className="min-w-[100px] px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin mr-2 inline" />
-              Saving...
-            </>
-          ) : destination ? (
-            'Update Place'
-          ) : (
-            'Create Place'
-          )}
-        </button>
       </div>
     </form>
   );

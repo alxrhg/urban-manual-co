@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { X } from "lucide-react";
+import { X, ChevronLeft } from "lucide-react";
 import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { useToast } from "@/hooks/useToast";
 import { ContentManager } from '@/features/admin/components/cms';
@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 export default function AdminDestinationsPage() {
   const toast = useToast();
   const searchParams = useSearchParams();
-  const { confirm, Dialog: ConfirmDialogComponent } = useConfirmDialog();
+  const { Dialog: ConfirmDialogComponent } = useConfirmDialog();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -123,36 +123,51 @@ export default function AdminDestinationsPage() {
         onCreateNew={handleCreateNew}
       />
 
-      {/* Create/Edit Modal */}
+      {/* Create/Edit Drawer */}
       {showCreateModal && (
         <>
+          {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/50 z-40 transition-opacity"
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity duration-300"
             onClick={() => {
               setShowCreateModal(false);
               setEditingDestination(null);
             }}
           />
+          {/* Drawer Panel */}
           <div
-            className={`fixed right-0 top-0 h-full w-full sm:w-[600px] lg:w-[700px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+            className={`fixed right-0 top-0 h-full w-full sm:w-[520px] lg:w-[560px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${
               showCreateModal ? 'translate-x-0' : 'translate-x-full'
-            } overflow-y-auto`}
+            }`}
           >
-            <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                {editingDestination ? 'Edit Destination' : 'Create New Destination'}
-              </h2>
+            {/* Header */}
+            <div className="flex-shrink-0 h-14 px-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-800">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setEditingDestination(null);
+                  }}
+                  className="p-1.5 -ml-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-500 dark:text-gray-400"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                  {editingDestination ? editingDestination.name || 'Edit Destination' : 'New Destination'}
+                </h2>
+              </div>
               <button
                 onClick={() => {
                   setShowCreateModal(false);
                   setEditingDestination(null);
                 }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-500 dark:text-gray-400"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="p-6">
+            {/* Form (fills remaining space) */}
+            <div className="flex-1 overflow-hidden">
               <DestinationForm
                 destination={editingDestination ?? undefined}
                 toast={toast}
