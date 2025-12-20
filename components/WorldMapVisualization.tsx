@@ -76,7 +76,12 @@ export function WorldMapVisualization({
       >
         <Geographies geography={geoUrl}>
           {({ geographies }) =>
-            geographies.map((geo) => {
+            geographies
+              .filter((geo) => {
+                const name = (geo.properties?.ADMIN || geo.properties?.name || geo.properties?.NAME) as string | undefined;
+                return name?.toLowerCase() !== 'antarctica';
+              })
+              .map((geo) => {
               // Try different property names used by various GeoJSON sources
               const name = (geo.properties?.ADMIN || geo.properties?.name || geo.properties?.NAME) as string | undefined;
               const isVisited = isCountryVisited(name);
