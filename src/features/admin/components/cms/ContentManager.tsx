@@ -97,6 +97,17 @@ const CATEGORIES = [
 const ITEMS_PER_PAGE_OPTIONS = [12, 24, 48, 96];
 const DEFAULT_ITEMS_PER_PAGE = 24;
 
+const getSortLabel = (field: SortField, order: SortOrder): string => {
+  const labels: Record<SortField, Partial<Record<SortOrder, string>>> = {
+    name: { asc: 'Name A-Z', desc: 'Name Z-A' },
+    city: { asc: 'City A-Z', desc: 'City Z-A' },
+    category: { asc: 'Category A-Z', desc: 'Category Z-A' },
+    updated_at: { desc: 'Recently Updated' },
+    created_at: { desc: 'Recently Added' },
+  };
+  return labels[field]?.[order] || 'Sort';
+};
+
 export function ContentManager({ onEditDestination, onCreateNew }: ContentManagerProps) {
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
@@ -487,7 +498,9 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
           <div className="hidden sm:flex items-center gap-0.5">
             <button
               onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-md transition-colors ${
+              aria-label="Switch to table view"
+              aria-pressed={viewMode === 'table'}
+              className={`p-1.5 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-black dark:focus-visible:ring-white focus-visible:outline-none ${
                 viewMode === 'table'
                   ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
                   : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
@@ -497,7 +510,9 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-md transition-colors ${
+              aria-label="Switch to grid view"
+              aria-pressed={viewMode === 'grid'}
+              className={`p-1.5 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-black dark:focus-visible:ring-white focus-visible:outline-none ${
                 viewMode === 'grid'
                   ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
                   : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
@@ -705,7 +720,7 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-150">
-                      <span>{sortField === 'name' ? (sortOrder === 'asc' ? 'Name A-Z' : 'Name Z-A') : sortField === 'city' ? (sortOrder === 'asc' ? 'City A-Z' : 'City Z-A') : sortField === 'category' ? 'Category A-Z' : sortField === 'updated_at' ? 'Recently Updated' : 'Recently Added'}</span>
+                      <span>{getSortLabel(sortField, sortOrder)}</span>
                       <ChevronDown className="w-3 h-3 opacity-50" />
                     </button>
                   </DropdownMenuTrigger>
@@ -899,7 +914,8 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
             <button
               onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page === 1}
-              className="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              aria-label="Go to previous page"
+              className="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 disabled:pointer-events-none transition-colors focus-visible:ring-2 focus-visible:ring-black dark:focus-visible:ring-white focus-visible:outline-none"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -921,7 +937,9 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
                   <button
                     key={pageNum}
                     onClick={() => setPage(pageNum)}
-                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                    aria-label={`Go to page ${pageNum}`}
+                    aria-current={page === pageNum ? 'page' : undefined}
+                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-black dark:focus-visible:ring-white focus-visible:outline-none ${
                       page === pageNum
                         ? 'bg-black text-white dark:bg-white dark:text-black'
                         : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -935,7 +953,8 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
             <button
               onClick={() => setPage(Math.min(totalPages, page + 1))}
               disabled={page === totalPages}
-              className="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              aria-label="Go to next page"
+              className="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 disabled:pointer-events-none transition-colors focus-visible:ring-2 focus-visible:ring-black dark:focus-visible:ring-white focus-visible:outline-none"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

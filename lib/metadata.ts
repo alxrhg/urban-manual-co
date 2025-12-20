@@ -307,7 +307,7 @@ export function generateOrganizationSchema() {
         latitude: 0,
         longitude: 0,
       },
-      geoRadius: '40075000', // Entire globe in meters
+      geoRadius: 40075000, // Entire globe in meters
     },
     knowsAbout: [
       'Luxury Hotels',
