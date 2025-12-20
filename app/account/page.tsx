@@ -4,13 +4,12 @@ import React from "react";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { MapPin, Plus, Calendar, Trash2, Edit2, Pencil, ChevronDown, ChevronRight } from "lucide-react";
+import { MapPin, Plus, Calendar, Trash2, Edit2, Pencil, ChevronDown, ChevronRight, Globe, Building2, Utensils, Award, Star, Compass, Map, Trophy } from "lucide-react";
 import { cityCountryMap } from "@/data/cityCountryMap";
 import Image from "next/image";
 import { EnhancedVisitedTab } from "@/components/EnhancedVisitedTab";
 import { EnhancedSavedTab } from "@/components/EnhancedSavedTab";
 import { WorldMapVisualization } from "@/components/WorldMapVisualization";
-import { AchievementsDisplay } from "@/components/AchievementsDisplay";
 import { PageLoader } from "@/components/LoadingStates";
 import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
@@ -412,74 +411,158 @@ export default function Account() {
           </div>
         </div>
 
-        {/* Profile Tab - Stats & Dashboard */}
+        {/* Profile Tab - Dashboard */}
         {activeTab === 'profile' && (
-          <div className="fade-in space-y-6">
-            {/* Progress */}
-            <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-2xl font-light">{stats.curationCompletionPercentage}%</span>
-                <span className="text-xs text-gray-400">{stats.visitedCount} / {totalDestinations} places</span>
-              </div>
-              <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-                <div className="h-full bg-black dark:bg-white transition-all duration-500 ease-out" style={{ width: `${Math.min(stats.curationCompletionPercentage, 100)}%` }} />
-              </div>
-            </div>
+          <div className="fade-in">
+            {/* Two Column Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column - Stats */}
+              <div className="lg:col-span-1 space-y-4">
+                {/* Hero Stat */}
+                <div className="p-6 bg-black dark:bg-white text-white dark:text-black rounded-2xl">
+                  <div className="text-4xl font-light mb-1">{stats.curationCompletionPercentage}%</div>
+                  <div className="text-xs opacity-70">Curation Progress</div>
+                  <div className="mt-4 w-full h-1 bg-white/20 dark:bg-black/20 rounded-full overflow-hidden">
+                    <div className="h-full bg-white dark:bg-black transition-all duration-500" style={{ width: `${Math.min(stats.curationCompletionPercentage, 100)}%` }} />
+                  </div>
+                  <div className="mt-2 text-xs opacity-50">{stats.visitedCount} of {totalDestinations} places</div>
+                </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-4 gap-3">
-              <div className="text-center p-3 bg-gray-50 dark:bg-gray-900 rounded-xl">
-                <div className="text-lg font-light">{stats.visitedCount}</div>
-                <div className="text-xs text-gray-500">Visited</div>
-              </div>
-              <div className="text-center p-3 bg-gray-50 dark:bg-gray-900 rounded-xl">
-                <div className="text-lg font-light">{stats.savedCount}</div>
-                <div className="text-xs text-gray-500">Saved</div>
-              </div>
-              <div className="text-center p-3 bg-gray-50 dark:bg-gray-900 rounded-xl">
-                <div className="text-lg font-light">{stats.uniqueCities.size}</div>
-                <div className="text-xs text-gray-500">Cities</div>
-              </div>
-              <div className="text-center p-3 bg-gray-50 dark:bg-gray-900 rounded-xl">
-                <div className="text-lg font-light">{stats.uniqueCountries.size}</div>
-                <div className="text-xs text-gray-500">Countries</div>
-              </div>
-            </div>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-xl">
+                    <div className="flex items-center gap-2 mb-1">
+                      <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                      <span className="text-xs text-gray-500">Visited</span>
+                    </div>
+                    <div className="text-xl font-light">{stats.visitedCount}</div>
+                  </div>
+                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-xl">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Star className="w-3.5 h-3.5 text-gray-400" />
+                      <span className="text-xs text-gray-500">Saved</span>
+                    </div>
+                    <div className="text-xl font-light">{stats.savedCount}</div>
+                  </div>
+                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-xl">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Building2 className="w-3.5 h-3.5 text-gray-400" />
+                      <span className="text-xs text-gray-500">Cities</span>
+                    </div>
+                    <div className="text-xl font-light">{stats.uniqueCities.size}</div>
+                  </div>
+                  <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-xl">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Globe className="w-3.5 h-3.5 text-gray-400" />
+                      <span className="text-xs text-gray-500">Countries</span>
+                    </div>
+                    <div className="text-xl font-light">{stats.uniqueCountries.size}</div>
+                  </div>
+                </div>
 
-            {/* World Map */}
-            {(stats.uniqueCountries.size > 0 || stats.visitedDestinationsWithCoords.length > 0) && (
-              <WorldMapVisualization visitedCountries={stats.uniqueCountries} visitedDestinations={stats.visitedDestinationsWithCoords} />
-            )}
-
-            {/* Achievements */}
-            <AchievementsDisplay visitedPlaces={visitedPlaces} savedPlaces={savedPlaces} uniqueCities={stats.uniqueCities} uniqueCountries={stats.uniqueCountries} />
-
-            {/* Recent Activity */}
-            {visitedPlaces.length > 0 && (
-              <div>
-                <h3 className="text-sm font-medium mb-3">Recent Visits</h3>
-                <div className="space-y-2">
-                  {visitedPlaces.slice(0, 5).map((place) => (
-                    <button
-                      key={place.destination_slug}
-                      onClick={() => router.push(`/destinations/${place.destination_slug}`)}
-                      className="w-full flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
-                    >
-                      {place.destination?.image && (
-                        <Image src={place.destination.image} alt={place.destination.name} width={40} height={40} className="w-10 h-10 rounded-lg object-cover" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{place.destination?.name}</p>
-                        <p className="text-xs text-gray-500">{place.destination?.city && capitalizeCity(place.destination.city)}</p>
+                {/* Milestones */}
+                <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-xl">
+                  <div className="text-xs font-medium text-gray-500 mb-3">Milestones</div>
+                  <div className="flex flex-wrap gap-2">
+                    {stats.visitedCount >= 1 && (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-full" title="First Steps">
+                        <Compass className="w-3 h-3" />
+                        <span className="text-xs">Explorer</span>
                       </div>
-                      {place.visited_at && (
-                        <span className="text-xs text-gray-400">{new Date(place.visited_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                      )}
-                    </button>
-                  ))}
+                    )}
+                    {stats.visitedCount >= 10 && (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-full" title="10+ Places">
+                        <Map className="w-3 h-3" />
+                        <span className="text-xs">Voyager</span>
+                      </div>
+                    )}
+                    {stats.uniqueCities.size >= 5 && (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-full" title="5+ Cities">
+                        <Building2 className="w-3 h-3" />
+                        <span className="text-xs">City Hopper</span>
+                      </div>
+                    )}
+                    {stats.uniqueCountries.size >= 3 && (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-full" title="3+ Countries">
+                        <Globe className="w-3 h-3" />
+                        <span className="text-xs">Globetrotter</span>
+                      </div>
+                    )}
+                    {stats.collectionsCount >= 1 && (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-full" title="Created Collection">
+                        <Award className="w-3 h-3" />
+                        <span className="text-xs">Curator</span>
+                      </div>
+                    )}
+                    {stats.visitedCount >= 50 && (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full" title="50+ Places">
+                        <Trophy className="w-3 h-3" />
+                        <span className="text-xs">Master</span>
+                      </div>
+                    )}
+                    {stats.visitedCount === 0 && stats.savedCount === 0 && (
+                      <span className="text-xs text-gray-400">Start exploring to unlock</span>
+                    )}
+                  </div>
                 </div>
               </div>
-            )}
+
+              {/* Right Column - Map & Activity */}
+              <div className="lg:col-span-2 space-y-4">
+                {/* World Map */}
+                {(stats.uniqueCountries.size > 0 || stats.visitedDestinationsWithCoords.length > 0) && (
+                  <div className="border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+                    <WorldMapVisualization visitedCountries={stats.uniqueCountries} visitedDestinations={stats.visitedDestinationsWithCoords} />
+                  </div>
+                )}
+
+                {/* Recent Activity */}
+                {visitedPlaces.length > 0 && (
+                  <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-sm font-medium">Recent Activity</span>
+                      <button onClick={() => setActiveTab('places')} className="text-xs text-gray-500 hover:text-black dark:hover:text-white">View all</button>
+                    </div>
+                    <div className="space-y-3">
+                      {visitedPlaces.slice(0, 4).map((place) => (
+                        <button
+                          key={place.destination_slug}
+                          onClick={() => router.push(`/destinations/${place.destination_slug}`)}
+                          className="w-full flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl p-2 -mx-2 transition-colors text-left"
+                        >
+                          {place.destination?.image ? (
+                            <Image src={place.destination.image} alt={place.destination.name} width={36} height={36} className="w-9 h-9 rounded-lg object-cover" />
+                          ) : (
+                            <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                              <MapPin className="w-4 h-4 text-gray-400" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{place.destination?.name}</p>
+                            <p className="text-xs text-gray-500">{place.destination?.city && capitalizeCity(place.destination.city)}</p>
+                          </div>
+                          {place.visited_at && (
+                            <span className="text-xs text-gray-400 shrink-0">{new Date(place.visited_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty State */}
+                {visitedPlaces.length === 0 && stats.uniqueCountries.size === 0 && (
+                  <div className="border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl p-8 text-center">
+                    <Globe className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
+                    <h3 className="text-sm font-medium mb-2">Start Your Journey</h3>
+                    <p className="text-xs text-gray-500 mb-4">Visit and save places to see your travel stats here</p>
+                    <button onClick={() => router.push('/')} className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-full hover:opacity-80 transition-opacity">
+                      Explore Destinations
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
