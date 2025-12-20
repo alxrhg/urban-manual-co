@@ -265,7 +265,8 @@ export function generateCityBreadcrumb(city: string) {
 }
 
 /**
- * Generate Organization schema for homepage
+ * Generate Organization schema for site-wide SEO credibility
+ * Includes founding date, description, and social profiles
  */
 export function generateOrganizationSchema() {
   return {
@@ -273,17 +274,54 @@ export function generateOrganizationSchema() {
     '@type': 'Organization',
     '@id': 'https://www.urbanmanual.co/#organization',
     name: 'The Urban Manual',
+    alternateName: 'Urban Manual',
     url: 'https://www.urbanmanual.co',
     logo: {
       '@type': 'ImageObject',
+      '@id': 'https://www.urbanmanual.co/#logo',
       url: 'https://www.urbanmanual.co/logo.png',
+      contentUrl: 'https://www.urbanmanual.co/logo.png',
       width: 512,
       height: 512,
+      caption: 'The Urban Manual Logo',
     },
-    description: 'Curated guide to the world\'s best hotels, restaurants & travel destinations',
+    image: {
+      '@type': 'ImageObject',
+      url: 'https://www.urbanmanual.co/og-image.jpg',
+      width: 1200,
+      height: 630,
+    },
+    description: 'The Urban Manual is a curated travel guide featuring 897+ handpicked luxury hotels, Michelin-starred restaurants, and hidden gems across 50+ cities worldwide. AI-powered recommendations and editorial content for the discerning modern traveler.',
+    slogan: 'Your curated guide to exceptional travel experiences',
+    foundingDate: '2023',
+    founders: [
+      {
+        '@type': 'Person',
+        name: 'Urban Manual Team',
+      },
+    ],
+    areaServed: {
+      '@type': 'GeoCircle',
+      geoMidpoint: {
+        '@type': 'GeoCoordinates',
+        latitude: 0,
+        longitude: 0,
+      },
+      geoRadius: '40075000', // Entire globe in meters
+    },
+    knowsAbout: [
+      'Luxury Hotels',
+      'Michelin Star Restaurants',
+      'Travel Destinations',
+      'Boutique Hotels',
+      'Fine Dining',
+      'City Guides',
+      'Travel Recommendations',
+    ],
     sameAs: [
       'https://www.instagram.com/urbanmanual',
       'https://twitter.com/urbanmanual',
+      'https://x.com/urbanmanual',
     ],
   };
 }
@@ -302,6 +340,8 @@ export function generateWebSiteSchema() {
     publisher: {
       '@id': 'https://www.urbanmanual.co/#organization',
     },
+    inLanguage: 'en-US',
+    copyrightYear: new Date().getFullYear(),
     potentialAction: {
       '@type': 'SearchAction',
       target: {
@@ -310,6 +350,25 @@ export function generateWebSiteSchema() {
       },
       'query-input': 'required name=search_term_string',
     },
+  };
+}
+
+/**
+ * Generate Homepage Breadcrumb Schema
+ * Simple single-item breadcrumb for the homepage
+ */
+export function generateHomeBreadcrumb() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://www.urbanmanual.co',
+      },
+    ],
   };
 }
 

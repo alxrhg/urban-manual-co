@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { prefetchHomepageData } from '@/lib/data/fetch-destinations';
-import { generateOrganizationSchema, generateWebSiteSchema } from '@/lib/metadata';
+import { generateHomeBreadcrumb } from '@/lib/metadata';
 import { HomepageDataProvider } from '@/features/homepage/components/HomepageDataProvider';
 import { HomepageContent } from '@/features/homepage/components/HomepageContent';
 import { AISearchChatWrapper } from '@/features/homepage/components/AISearchChatWrapper';
@@ -51,23 +51,17 @@ export default async function HomePage() {
   // If fetch fails or returns empty, client-side fallback will handle it
   const { destinations, cities, categories } = await prefetchHomepageData();
 
-  // Generate structured data for SEO
-  const organizationSchema = generateOrganizationSchema();
-  const webSiteSchema = generateWebSiteSchema();
+  // Generate homepage breadcrumb schema for SEO
+  // Note: Organization and WebSite schemas are now in layout.tsx for site-wide presence
+  const breadcrumbSchema = generateHomeBreadcrumb();
 
   return (
     <>
-      {/* SEO Schema */}
+      {/* Homepage Breadcrumb Schema for SEO */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(organizationSchema),
-        }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(webSiteSchema),
+          __html: JSON.stringify(breadcrumbSchema),
         }}
       />
 

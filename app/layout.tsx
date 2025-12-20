@@ -26,6 +26,7 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { CookieConsent } from "@/components/CookieConsent";
 import { NotificationPrompt } from "@/components/NotificationPrompt";
 import { NativeExperienceProvider } from "@/components/NativeExperienceProvider";
+import { generateOrganizationSchema, generateWebSiteSchema } from "@/lib/metadata";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -195,7 +196,7 @@ export default function RootLayout({
             __html: `
               (function() {
                 if (typeof window === 'undefined') return;
-                
+
                 // Handle chunk loading errors
                 window.addEventListener('error', function(e) {
                   if (e.target && e.target.tagName === 'SCRIPT' && e.target.src) {
@@ -211,7 +212,7 @@ export default function RootLayout({
                     }
                   }
                 }, true);
-                
+
                 // Handle unhandled promise rejections from chunk loading
                 window.addEventListener('unhandledrejection', function(e) {
                   if (e.reason && typeof e.reason === 'object' && e.reason.message) {
@@ -225,6 +226,20 @@ export default function RootLayout({
                 });
               })();
             `,
+          }}
+        />
+
+        {/* Schema.org Structured Data for SEO - Site-wide Organization and WebSite schemas */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(generateOrganizationSchema()),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(generateWebSiteSchema()),
           }}
         />
       </head>
