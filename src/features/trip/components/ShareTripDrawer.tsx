@@ -65,6 +65,7 @@ export default function ShareTripDrawer({ trip, onUpdate }: ShareTripDrawerProps
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [generatingLink, setGeneratingLink] = useState(false);
   const [revokingLink, setRevokingLink] = useState(false);
+  const [migrationRequired, setMigrationRequired] = useState(false);
 
   // Fetch collaborators
   const fetchCollaborators = useCallback(async () => {
@@ -78,6 +79,9 @@ export default function ShareTripDrawer({ trip, onUpdate }: ShareTripDrawerProps
       if (data.success) {
         setCollaborators(data.data.collaborators || []);
         setIsOwner(data.data.isOwner);
+        if (data.data.migrationRequired) {
+          setMigrationRequired(true);
+        }
       }
 
       // Fetch share status
@@ -89,6 +93,9 @@ export default function ShareTripDrawer({ trip, onUpdate }: ShareTripDrawerProps
         setShareSlug(shareData.data.shareSlug);
         if (shareData.data.shareSlug) {
           setShareUrl(`${window.location.origin}/trips/shared/${shareData.data.shareSlug}`);
+        }
+        if (shareData.data.migrationRequired) {
+          setMigrationRequired(true);
         }
       }
     } catch (error) {
@@ -287,6 +294,50 @@ export default function ShareTripDrawer({ trip, onUpdate }: ShareTripDrawerProps
       <div className="px-6 py-12 flex flex-col items-center justify-center space-y-3">
         <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
         <p className="text-xs text-gray-500">Loading sharing settings...</p>
+      </div>
+    );
+  }
+
+  // Show migration required notice
+  if (migrationRequired) {
+    return (
+      <div className="px-5 py-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Share2 className="w-5 h-5 text-gray-400" />
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Share Trip</h2>
+          </div>
+          <button
+            onClick={closeDrawer}
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Migration notice */}
+        <div className="flex flex-col items-center justify-center py-8 space-y-4">
+          <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+            <AlertCircle className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div className="text-center space-y-2">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+              Database Setup Required
+            </h3>
+            <p className="text-xs text-gray-500 max-w-xs">
+              The trip sharing feature requires a database migration. Please run the migration in your Supabase dashboard to enable sharing.
+            </p>
+          </div>
+          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 w-full">
+            <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Migration file:
+            </p>
+            <code className="text-xs text-gray-500 dark:text-gray-400 break-all">
+              supabase/migrations/440_trip_collaborators.sql
+            </code>
+          </div>
+        </div>
       </div>
     );
   }

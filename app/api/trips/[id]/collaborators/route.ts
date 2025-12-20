@@ -13,6 +13,27 @@ interface RouteContext {
 }
 
 /**
+ * Check if the trip_collaborators table exists
+ */
+async function checkCollaboratorsTableExists(supabase: any): Promise<boolean> {
+  try {
+    // Try a simple query - if table doesn't exist, it will throw
+    const { error } = await supabase
+      .from('trip_collaborators')
+      .select('id')
+      .limit(1);
+
+    // Check for table not found error
+    if (error && (error.code === '42P01' || error.message?.includes('does not exist'))) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * GET /api/trips/[id]/collaborators
  * List all collaborators for a trip
  */
@@ -33,7 +54,7 @@ export const GET = withErrorHandling(async (request: NextRequest, context: Route
   // Check if user has access to this trip
   const { data: trip, error: tripError } = await supabase
     .from('trips')
-    .select('id, user_id, visibility')
+    .select('id, user_id')
     .eq('id', tripId)
     .single();
 
@@ -45,17 +66,20 @@ export const GET = withErrorHandling(async (request: NextRequest, context: Route
   const isOwner = trip.user_id === user.id;
 
   if (!isOwner) {
-    const { data: collaboration } = await supabase
-      .from('trip_collaborators')
-      .select('id')
-      .eq('trip_id', tripId)
-      .eq('user_id', user.id)
-      .eq('status', 'accepted')
-      .single();
+    throw createNotFoundError('Trip');
+  }
 
-    if (!collaboration) {
-      throw createNotFoundError('Trip');
-    }
+  // Check if collaborators table exists
+  const tableExists = await checkCollaboratorsTableExists(supabase);
+
+  if (!tableExists) {
+    // Return empty collaborators if table doesn't exist yet
+    return createSuccessResponse({
+      collaborators: [],
+      isOwner,
+      tripId,
+      migrationRequired: true,
+    });
   }
 
   // Fetch collaborators with user profile info
@@ -74,7 +98,18 @@ export const GET = withErrorHandling(async (request: NextRequest, context: Route
     .eq('trip_id', tripId)
     .order('invited_at', { ascending: true });
 
-  if (collabError) throw collabError;
+  if (collabError) {
+    // If error is about missing table/column, return empty
+    if (collabError.code === '42P01' || collabError.message?.includes('does not exist')) {
+      return createSuccessResponse({
+        collaborators: [],
+        isOwner,
+        tripId,
+        migrationRequired: true,
+      });
+    }
+    throw collabError;
+  }
 
   // Get user profiles for accepted collaborators
   const userIds = (collaborators || [])
@@ -178,22 +213,19 @@ export const POST = withErrorHandling(async (request: NextRequest, context: Rout
     );
   }
 
-  // Look up the user by email to get their user_id
-  const { data: invitedUser } = await supabase
-    .from('auth.users')
-    .select('id')
-    .eq('email', email.toLowerCase())
-    .single();
-
-  // Also try user_profiles table
-  let invitedUserId = invitedUser?.id;
-  if (!invitedUserId) {
-    // Try to find via user_profiles if auth.users isn't accessible
+  // Try to find the user by email in user_profiles
+  // If we can't find them, we'll still create the invitation with just the email
+  let invitedUserId: string | null = null;
+  try {
     const { data: profile } = await supabase
-      .rpc('get_user_id_by_email', { p_email: email.toLowerCase() })
+      .from('user_profiles')
+      .select('user_id')
+      .ilike('email', email.toLowerCase())
       .single();
 
-    invitedUserId = profile;
+    invitedUserId = profile?.user_id || null;
+  } catch {
+    // User not found by email, that's okay - they can accept when they sign up
   }
 
   // Create the collaboration invitation

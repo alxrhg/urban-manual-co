@@ -75,10 +75,10 @@ CREATE POLICY "Collaborators can view other collaborators"
     )
   );
 
--- Users can view their own invitations
+-- Users can view their own invitations (by user_id when they're logged in)
 CREATE POLICY "Users can view own invitations"
   ON trip_collaborators FOR SELECT
-  USING (user_id = auth.uid() OR email = (SELECT email FROM auth.users WHERE id = auth.uid()));
+  USING (user_id = auth.uid());
 
 -- Trip owners can add collaborators
 CREATE POLICY "Trip owners can add collaborators"
@@ -284,6 +284,28 @@ BEGIN
     result := result || substr(chars, floor(random() * length(chars) + 1)::integer, 1);
   END LOOP;
   RETURN result;
+END;
+$$;
+
+-- ============================================================================
+-- HELPER FUNCTION: Get user ID by email (for invitations)
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION get_user_id_by_email(p_email TEXT)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_user_id UUID;
+BEGIN
+  -- Look up user_id from user_profiles table by email
+  SELECT user_id INTO v_user_id
+  FROM user_profiles
+  WHERE LOWER(email) = LOWER(p_email)
+  LIMIT 1;
+
+  RETURN v_user_id;
 END;
 $$;
 

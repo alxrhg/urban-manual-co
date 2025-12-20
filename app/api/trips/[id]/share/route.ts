@@ -25,6 +25,25 @@ function generateShareSlug(): string {
 }
 
 /**
+ * Check if sharing columns exist in trips table
+ */
+async function checkSharingColumnsExist(supabase: any): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('trips')
+      .select('visibility')
+      .limit(1);
+
+    if (error && error.message?.includes('does not exist')) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * GET /api/trips/[id]/share
  * Get current sharing status for a trip
  */
@@ -42,47 +61,90 @@ export const GET = withErrorHandling(async (request: NextRequest, context: Route
     throw createUnauthorizedError();
   }
 
+  // Check if sharing columns exist
+  const columnsExist = await checkSharingColumnsExist(supabase);
+
+  // Build select query based on what columns exist
+  const selectColumns = columnsExist
+    ? 'id, user_id, visibility, share_slug, shared_at'
+    : 'id, user_id';
+
   // Check if user owns the trip or is a collaborator
   const { data: trip, error: tripError } = await supabase
     .from('trips')
-    .select('id, user_id, visibility, share_slug, shared_at')
+    .select(selectColumns)
     .eq('id', tripId)
     .single();
 
   if (tripError || !trip) {
+    // If error is about missing column, try without those columns
+    if (tripError?.message?.includes('does not exist')) {
+      const { data: basicTrip, error: basicError } = await supabase
+        .from('trips')
+        .select('id, user_id')
+        .eq('id', tripId)
+        .single();
+
+      if (basicError || !basicTrip) {
+        throw createNotFoundError('Trip');
+      }
+
+      const isOwner = basicTrip.user_id === user.id;
+      if (!isOwner) {
+        throw createNotFoundError('Trip');
+      }
+
+      return createSuccessResponse({
+        tripId,
+        visibility: 'private',
+        shareSlug: null,
+        sharedAt: null,
+        collaboratorCount: 0,
+        isOwner,
+        migrationRequired: true,
+      });
+    }
     throw createNotFoundError('Trip');
   }
 
   const isOwner = trip.user_id === user.id;
 
   if (!isOwner) {
-    // Check if user is a collaborator
-    const { data: collab } = await supabase
-      .from('trip_collaborators')
-      .select('id')
-      .eq('trip_id', tripId)
-      .eq('user_id', user.id)
-      .eq('status', 'accepted')
-      .single();
-
-    if (!collab) {
-      throw createNotFoundError('Trip');
-    }
+    throw createNotFoundError('Trip');
   }
 
-  // Count collaborators
-  const { count: collaboratorCount } = await supabase
-    .from('trip_collaborators')
-    .select('id', { count: 'exact', head: true })
-    .eq('trip_id', tripId)
-    .eq('status', 'accepted');
+  // Return defaults if columns don't exist
+  if (!columnsExist) {
+    return createSuccessResponse({
+      tripId,
+      visibility: 'private',
+      shareSlug: null,
+      sharedAt: null,
+      collaboratorCount: 0,
+      isOwner,
+      migrationRequired: true,
+    });
+  }
+
+  // Count collaborators (only if table exists)
+  let collaboratorCount = 0;
+  try {
+    const { count } = await supabase
+      .from('trip_collaborators')
+      .select('id', { count: 'exact', head: true })
+      .eq('trip_id', tripId)
+      .eq('status', 'accepted');
+    collaboratorCount = count || 0;
+  } catch {
+    // Table doesn't exist, that's okay
+  }
 
   return createSuccessResponse({
     tripId,
-    visibility: trip.visibility,
-    shareSlug: trip.share_slug,
-    sharedAt: trip.shared_at,
-    collaboratorCount: collaboratorCount || 0,
+    visibility: trip.visibility || 'private',
+    shareSlug: trip.share_slug || null,
+    sharedAt: trip.shared_at || null,
+    collaboratorCount,
     isOwner,
   });
 });
