@@ -62,12 +62,11 @@ export function WorldMapVisualization({
   };
 
   return (
-    <div className="relative w-full aspect-[2/1] bg-gray-50 dark:bg-gray-900 rounded-xl overflow-hidden">
+    <div className="relative w-full aspect-[2/1]">
       <ComposableMap
-        projection="geoMercator"
+        projection="geoEqualEarth"
         projectionConfig={{
-          scale: 140,
-          center: [0, 30],
+          scale: 160,
         }}
       >
         <Geographies geography={geoUrl}>
