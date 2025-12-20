@@ -5,6 +5,17 @@ type DataType = 'brands' | 'cities' | 'countries' | 'neighborhoods';
 
 const VALID_TYPES: DataType[] = ['brands', 'cities', 'countries', 'neighborhoods'];
 
+// Helper to extract error message from various error types
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return String(error);
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const type = searchParams.get('type') as DataType;
@@ -28,8 +39,8 @@ export async function GET(request: NextRequest) {
     if (error) throw error;
     return NextResponse.json({ data });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to fetch';
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error('[Admin Data API] GET error:', error);
+    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -55,8 +66,8 @@ export async function POST(request: NextRequest) {
     if (error) throw error;
     return NextResponse.json({ data });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to create';
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error('[Admin Data API] POST error:', error);
+    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -82,8 +93,8 @@ export async function PUT(request: NextRequest) {
     if (error) throw error;
     return NextResponse.json({ data });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to update';
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error('[Admin Data API] PUT error:', error);
+    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -111,7 +122,7 @@ export async function DELETE(request: NextRequest) {
     if (error) throw error;
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to delete';
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error('[Admin Data API] DELETE error:', error);
+    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }

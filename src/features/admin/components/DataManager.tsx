@@ -185,7 +185,13 @@ export function DataManager({ type }: DataManagerProps) {
     try {
       const slug = formData.slug || toSlug(formData.name || '');
       const { id: _id, ...restFormData } = formData as Record<string, string | null> & { id?: string };
-      const insertData = { ...restFormData, slug };
+
+      // Clean up empty strings to null for database compatibility
+      const cleanedData: Record<string, string | null> = {};
+      for (const [key, value] of Object.entries(restFormData)) {
+        cleanedData[key] = value === '' ? null : value;
+      }
+      const insertData = { ...cleanedData, slug };
 
       if (editingItem) {
         await apiRequest('PUT', { type, id: editingItem.id, data: insertData });
