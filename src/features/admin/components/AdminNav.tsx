@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, LayoutDashboard, MapPin, Building2, Globe, Map, BarChart3, Sparkles } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger } from '@/ui/tabs';
 
 const NAV_LINKS = [
   { href: '/admin', label: 'Overview', value: 'overview', icon: LayoutDashboard },
@@ -77,24 +76,26 @@ export function AdminNav() {
         )}
       </div>
 
-      {/* Desktop Navigation - Horizontal scrollable tabs */}
-      <div className="hidden sm:block overflow-x-auto scrollbar-hide">
-        <Tabs value={activeValue} onValueChange={(value) => {
-          const link = NAV_LINKS.find(l => l.value === value);
-          if (link) router.push(link.href);
-        }}>
-          <TabsList className="h-auto p-1 bg-gray-100 dark:bg-gray-800 inline-flex w-auto min-w-full">
-            {NAV_LINKS.map((link) => (
-              <TabsTrigger
+      {/* Desktop Navigation - Minimal text tabs matching account page */}
+      <div className="hidden sm:block">
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+          {NAV_LINKS.map((link) => {
+            const isActive = activeValue === link.value;
+            return (
+              <button
                 key={link.value}
-                value={link.value}
-                className="text-xs px-3 py-1.5 whitespace-nowrap"
+                onClick={() => handleNavigation(link.href)}
+                className={`transition-all ${
+                  isActive
+                    ? 'font-medium text-black dark:text-white'
+                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                }`}
               >
                 {link.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </>
   );
