@@ -5,27 +5,25 @@ import * as SwitchPrimitive from "@radix-ui/react-switch"
 
 import { cn } from "@/lib/utils"
 
-function Switch({
-  className,
-  ...props
-}: React.ComponentProps<typeof SwitchPrimitive.Root>) {
-  return (
-    <SwitchPrimitive.Root
-      data-slot="switch"
+const Switch = React.forwardRef<
+  React.ComponentRef<typeof SwitchPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof SwitchPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <SwitchPrimitive.Root
+    className={cn(
+      "peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input",
+      className
+    )}
+    {...props}
+    ref={ref}
+  >
+    <SwitchPrimitive.Thumb
       className={cn(
-        "peer data-[state=checked]:bg-black dark:data-[state=checked]:bg-white data-[state=unchecked]:bg-gray-200 dark:data-[state=unchecked]:bg-gray-800 focus-visible:border-black dark:focus-visible:border-white focus-visible:ring-black/20 dark:focus-visible:ring-white/20 inline-flex h-8 w-14 shrink-0 items-center rounded-full border border-gray-300 dark:border-gray-800 shadow-sm transition-all outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer text-[rgba(227,230,237,1)]",
-        className
+        "pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0"
       )}
-      {...props}
-    >
-      <SwitchPrimitive.Thumb
-        data-slot="switch-thumb"
-        className={cn(
-          "bg-white dark:bg-gray-900 pointer-events-none block size-6 rounded-full ring-0 transition-transform data-[state=checked]:translate-x-7 data-[state=unchecked]:translate-x-0.5 shadow-sm"
-        )}
-      />
-    </SwitchPrimitive.Root>
-  )
-}
+    />
+  </SwitchPrimitive.Root>
+))
+Switch.displayName = SwitchPrimitive.Root.displayName
 
 export { Switch }
