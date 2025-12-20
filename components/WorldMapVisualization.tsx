@@ -26,8 +26,8 @@ const COUNTRY_NAME_MAP: Record<string, string[]> = {
   'Russia': ['Russia', 'Russian Federation'],
 };
 
-// Natural Earth GeoJSON with country names
-const geoUrl = "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson";
+// World atlas TopoJSON from jsdelivr (already allowed in CSP)
+const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
 export function WorldMapVisualization({
   visitedCountries,

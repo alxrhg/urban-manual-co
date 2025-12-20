@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { cityCountryMap } from "@/data/cityCountryMap";
 import { EnhancedVisitedTab } from "@/components/EnhancedVisitedTab";
 import { EnhancedSavedTab } from "@/components/EnhancedSavedTab";
+import { WorldMapVisualization } from "@/components/WorldMapVisualization";
 import { PageLoader } from "@/components/LoadingStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { AccountPrivacyManager } from "@/components/AccountPrivacyManager";
@@ -421,11 +422,14 @@ export default function Account() {
               {stats.uniqueCountries.size > 0 && <> in <span className="text-black dark:text-white font-medium">{stats.uniqueCountries.size}</span> {stats.uniqueCountries.size === 1 ? 'country' : 'countries'}</>}.
             </p>
 
-            {/* Countries Visited */}
+            {/* World Map */}
             {stats.uniqueCountries.size > 0 && (
               <div className="mt-12">
-                <h2 className="text-xs text-gray-500 mb-4">Countries</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <WorldMapVisualization
+                  visitedCountries={stats.uniqueCountries}
+                  visitedDestinations={stats.visitedDestinationsWithCoords}
+                />
+                <p className="mt-4 text-sm text-gray-500">
                   {Array.from(stats.uniqueCountries).sort().join(' · ')}
                 </p>
               </div>
