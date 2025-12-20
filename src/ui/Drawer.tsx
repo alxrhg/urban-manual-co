@@ -253,9 +253,6 @@ export function Drawer({
   // Radius
   const radiusClass = mobileBorderRadius ?? 'rounded-t-[28px]';
 
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/82b45f6a-fbfe-48b1-8584-ea1380f88caa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Drawer.tsx:256',message:'Drawer render check',data:{isOpen,keepStateOnClose,willRender:isOpen || keepStateOnClose},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
   if (!isOpen && !keepStateOnClose) return null;
 
   const renderHeader = () => {
