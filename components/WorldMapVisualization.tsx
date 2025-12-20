@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 
 interface WorldMapVisualizationProps {
@@ -11,6 +11,8 @@ interface WorldMapVisualizationProps {
     longitude?: number | null;
   }>;
 }
+
+type GeoLoadingState = 'loading' | 'loaded' | 'error';
 
 // Map our country names to the names used in Natural Earth / world-atlas TopoJSON
 const COUNTRY_NAME_MAP: Record<string, string[]> = {
@@ -34,6 +36,34 @@ export function WorldMapVisualization({
   visitedDestinations = []
 }: WorldMapVisualizationProps) {
   const [tooltip, setTooltip] = useState<{ name: string; x: number; y: number } | null>(null);
+  const [geoState, setGeoState] = useState<GeoLoadingState>('loading');
+
+  // Prefetch geography data to detect load errors
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch(geoUrl)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(() => {
+        if (!cancelled) {
+          setGeoState('loaded');
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setGeoState('error');
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Normalize country names for matching
   const normalizedVisitedCountries = useMemo(() => {
@@ -61,6 +91,24 @@ export function WorldMapVisualization({
     const nameLower = geoName.toLowerCase().trim();
     return normalizedVisitedCountries.has(nameLower);
   };
+
+  // Show error state if geo data failed to load
+  if (geoState === 'error') {
+    return (
+      <div className="relative w-full aspect-[2/1] flex items-center justify-center bg-gray-50 text-gray-500 text-sm">
+        Unable to load map data
+      </div>
+    );
+  }
+
+  // Show loading state while fetching
+  if (geoState === 'loading') {
+    return (
+      <div className="relative w-full aspect-[2/1] flex items-center justify-center bg-gray-50 text-gray-400 text-sm">
+        Loading map...
+      </div>
+    );
+  }
 
   return (
     <div
