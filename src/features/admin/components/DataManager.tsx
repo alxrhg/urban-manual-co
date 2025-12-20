@@ -15,6 +15,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
+import {
+  CMSFormField,
+  CMSInput,
+  CMSTextarea,
+  CMSSlugField,
+  CMSSelect,
+} from '@/ui/cms-form-field';
 
 // Use API route for admin operations to bypass RLS
 async function apiRequest<T>(method: string, params: Record<string, unknown>): Promise<T> {
@@ -280,9 +287,6 @@ export function DataManager({ type }: DataManagerProps) {
   const filteredItems = getFilteredItems();
   const Icon = config.icon;
 
-  const inputClasses = "w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white";
-  const labelClasses = "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1";
-
   return (
     <div className="space-y-6">
       {/* Header Bar */}
@@ -515,7 +519,7 @@ export function DataManager({ type }: DataManagerProps) {
             </div>
 
             {/* Form */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {/* Error in drawer */}
               {saveError && (
                 <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
@@ -525,213 +529,166 @@ export function DataManager({ type }: DataManagerProps) {
               )}
 
               {/* Name */}
-              <div>
-                <label className={labelClasses}>Name *</label>
-                <input
-                  type="text"
-                  value={formData.name || ''}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value, slug: toSlug(e.target.value) })}
-                  className={inputClasses}
-                  placeholder="Enter name"
-                />
-              </div>
+              <CMSInput
+                label="Name"
+                required
+                value={formData.name || ''}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value, slug: toSlug(e.target.value) })}
+                placeholder="Enter name"
+              />
 
               {/* Slug */}
-              <div>
-                <label className={labelClasses}>Slug</label>
-                <input
-                  type="text"
-                  value={formData.slug || ''}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  className={inputClasses}
-                  placeholder="auto-generated-slug"
-                />
-              </div>
+              <CMSSlugField
+                label="Slug"
+                required
+                value={formData.slug || ''}
+                onChange={(slug) => setFormData({ ...formData, slug })}
+                sourceValue={formData.name || ''}
+                baseUrl={`urbanmanual.co/${type}`}
+                autoGenerate={false}
+              />
 
               {/* Brand-specific fields */}
               {type === 'brands' && (
                 <>
-                  <div>
-                    <label className={labelClasses}>Logo</label>
+                  <CMSFormField label="Logo">
                     <div className="flex items-center gap-3">
                       {formData.logo_url && (
                         <img src={formData.logo_url} alt="Logo" className="w-16 h-16 rounded-lg object-cover" />
                       )}
-                      <label className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <Upload className="h-4 w-4" />
-                        <span className="text-sm">Upload Logo</span>
+                      <label className="flex items-center gap-2 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+                        <Upload className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Upload Logo</span>
                         <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'logo_url')} className="hidden" />
                       </label>
                     </div>
-                  </div>
-                  <div>
-                    <label className={labelClasses}>Category</label>
-                    <select
-                      value={formData.category || ''}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className={inputClasses}
-                    >
-                      <option value="">Select category...</option>
-                      {BRAND_CATEGORIES.map((cat) => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className={labelClasses}>Website</label>
-                    <input
-                      type="url"
-                      value={formData.website || ''}
-                      onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                      className={inputClasses}
-                      placeholder="https://..."
-                    />
-                  </div>
-                  <div>
-                    <label className={labelClasses}>Description</label>
-                    <textarea
-                      value={formData.description || ''}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className={cn(inputClasses, "h-24 resize-none")}
-                      placeholder="Brief description..."
-                    />
-                  </div>
+                  </CMSFormField>
+                  <CMSSelect
+                    label="Category"
+                    value={formData.category || ''}
+                    onChange={(value) => setFormData({ ...formData, category: value })}
+                    options={BRAND_CATEGORIES.map(cat => ({ value: cat, label: cat }))}
+                    placeholder="Select category..."
+                  />
+                  <CMSInput
+                    label="Website"
+                    type="url"
+                    value={formData.website || ''}
+                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                    placeholder="https://..."
+                  />
+                  <CMSTextarea
+                    label="Description"
+                    value={formData.description || ''}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Brief description..."
+                    rows={3}
+                  />
                 </>
               )}
 
               {/* City-specific fields */}
               {type === 'cities' && (
                 <>
-                  <div>
-                    <label className={labelClasses}>Country</label>
-                    <input
-                      type="text"
-                      value={formData.country || ''}
-                      onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                      className={inputClasses}
-                      placeholder="Country name"
-                    />
-                  </div>
-                  <div>
-                    <label className={labelClasses}>Region</label>
-                    <input
-                      type="text"
-                      value={formData.region || ''}
-                      onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                      className={inputClasses}
-                      placeholder="State/Province/Region"
-                    />
-                  </div>
-                  <div>
-                    <label className={labelClasses}>Image</label>
+                  <CMSInput
+                    label="Country"
+                    value={formData.country || ''}
+                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                    placeholder="Country name"
+                  />
+                  <CMSInput
+                    label="Region"
+                    value={formData.region || ''}
+                    onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                    placeholder="State/Province/Region"
+                  />
+                  <CMSFormField label="Image">
                     <div className="flex items-center gap-3">
                       {formData.image_url && (
                         <img src={formData.image_url} alt="City" className="w-16 h-16 rounded-lg object-cover" />
                       )}
-                      <label className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <Upload className="h-4 w-4" />
-                        <span className="text-sm">Upload Image</span>
+                      <label className="flex items-center gap-2 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+                        <Upload className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Upload Image</span>
                         <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'image_url')} className="hidden" />
                       </label>
                     </div>
-                  </div>
-                  <div>
-                    <label className={labelClasses}>Description</label>
-                    <textarea
-                      value={formData.description || ''}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className={cn(inputClasses, "h-24 resize-none")}
-                      placeholder="Brief description..."
-                    />
-                  </div>
+                  </CMSFormField>
+                  <CMSTextarea
+                    label="Description"
+                    value={formData.description || ''}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Brief description..."
+                    rows={3}
+                  />
                 </>
               )}
 
               {/* Country-specific fields */}
               {type === 'countries' && (
                 <>
-                  <div>
-                    <label className={labelClasses}>Country Code (ISO)</label>
-                    <input
-                      type="text"
-                      value={formData.code || ''}
-                      onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                      className={inputClasses}
-                      placeholder="US, GB, JP..."
-                      maxLength={2}
-                    />
-                  </div>
-                  <div>
-                    <label className={labelClasses}>Flag Emoji</label>
-                    <input
-                      type="text"
-                      value={formData.flag_emoji || ''}
-                      onChange={(e) => setFormData({ ...formData, flag_emoji: e.target.value })}
-                      className={inputClasses}
-                      placeholder="🇺🇸"
-                    />
-                  </div>
-                  <div>
-                    <label className={labelClasses}>Image</label>
+                  <CMSInput
+                    label="Country Code (ISO)"
+                    value={formData.code || ''}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                    placeholder="US, GB, JP..."
+                    maxLength={2}
+                  />
+                  <CMSInput
+                    label="Flag Emoji"
+                    value={formData.flag_emoji || ''}
+                    onChange={(e) => setFormData({ ...formData, flag_emoji: e.target.value })}
+                    placeholder="🇺🇸"
+                  />
+                  <CMSFormField label="Image">
                     <div className="flex items-center gap-3">
                       {formData.image_url && (
                         <img src={formData.image_url} alt="Country" className="w-16 h-16 rounded-lg object-cover" />
                       )}
-                      <label className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <Upload className="h-4 w-4" />
-                        <span className="text-sm">Upload Image</span>
+                      <label className="flex items-center gap-2 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+                        <Upload className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Upload Image</span>
                         <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'image_url')} className="hidden" />
                       </label>
                     </div>
-                  </div>
+                  </CMSFormField>
                 </>
               )}
 
               {/* Neighborhood-specific fields */}
               {type === 'neighborhoods' && (
                 <>
-                  <div>
-                    <label className={labelClasses}>City</label>
-                    <input
-                      type="text"
-                      value={formData.city || ''}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className={inputClasses}
-                      placeholder="City name"
-                    />
-                  </div>
-                  <div>
-                    <label className={labelClasses}>Country</label>
-                    <input
-                      type="text"
-                      value={formData.country || ''}
-                      onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                      className={inputClasses}
-                      placeholder="Country name"
-                    />
-                  </div>
-                  <div>
-                    <label className={labelClasses}>Image</label>
+                  <CMSInput
+                    label="City"
+                    value={formData.city || ''}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    placeholder="City name"
+                  />
+                  <CMSInput
+                    label="Country"
+                    value={formData.country || ''}
+                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                    placeholder="Country name"
+                  />
+                  <CMSFormField label="Image">
                     <div className="flex items-center gap-3">
                       {formData.image_url && (
                         <img src={formData.image_url} alt="Neighborhood" className="w-16 h-16 rounded-lg object-cover" />
                       )}
-                      <label className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <Upload className="h-4 w-4" />
-                        <span className="text-sm">Upload Image</span>
+                      <label className="flex items-center gap-2 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+                        <Upload className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Upload Image</span>
                         <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'image_url')} className="hidden" />
                       </label>
                     </div>
-                  </div>
-                  <div>
-                    <label className={labelClasses}>Description</label>
-                    <textarea
-                      value={formData.description || ''}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className={cn(inputClasses, "h-24 resize-none")}
-                      placeholder="Brief description..."
-                    />
-                  </div>
+                  </CMSFormField>
+                  <CMSTextarea
+                    label="Description"
+                    value={formData.description || ''}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Brief description..."
+                    rows={3}
+                  />
                 </>
               )}
             </div>
