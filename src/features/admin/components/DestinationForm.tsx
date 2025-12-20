@@ -10,6 +10,7 @@ import { htmlToPlainText } from '@/lib/sanitize';
 import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
 import type { Destination } from '@/types/destination';
 import { cn } from '@/lib/utils';
+import { RichTextEditor } from './RichTextEditor';
 
 interface Toast {
   success: (message: string) => void;
@@ -89,7 +90,7 @@ export function DestinationForm({
     image: destination?.image || '',
     // Content
     description: htmlToPlainText(destination?.description || ''),
-    content: htmlToPlainText(destination?.content || ''),
+    content: destination?.content || '',
     editorial_summary: destination?.editorial_summary || '',
     // Architecture
     architect: destination?.architect || '',
@@ -170,7 +171,7 @@ export function DestinationForm({
         formatted_address: destination.formatted_address || '',
         image: destination.image || '',
         description: htmlToPlainText(destination.description || ''),
-        content: htmlToPlainText(destination.content || ''),
+        content: destination.content || '',
         editorial_summary: destination.editorial_summary || '',
         architect: destination.architect || '',
         interior_designer: destination.interior_designer || '',
@@ -383,7 +384,7 @@ export function DestinationForm({
         city: data.city || prev.city,
         category: data.category || prev.category,
         description: htmlToPlainText(data.description || prev.description),
-        content: htmlToPlainText(data.content || prev.content),
+        content: data.content || prev.content,
         image: data.image || prev.image,
         formatted_address: data.formatted_address || prev.formatted_address,
         phone_number: data.phone_number || prev.phone_number,
@@ -487,7 +488,7 @@ export function DestinationForm({
         city: data.city || prev.city,
         category: data.category || prev.category,
         description: htmlToPlainText(data.description || ''),
-        content: htmlToPlainText(data.content || ''),
+        content: data.content || prev.content,
         image: data.image || prev.image,
         formatted_address: data.formatted_address || prev.formatted_address,
         phone_number: data.phone_number || prev.phone_number,
@@ -526,8 +527,16 @@ export function DestinationForm({
     { id: 'data', label: 'Data' },
   ];
 
-  const inputClasses = "w-full px-3 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-shadow";
+  const inputClasses = "w-full px-3 py-2.5 bg-gray-100 dark:bg-gray-800 border-0 rounded-lg text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-shadow";
   const labelClasses = "block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5";
+
+  // Label with optional Required indicator
+  const FieldLabel = ({ children, required = false }: { children: React.ReactNode; required?: boolean }) => (
+    <div className="flex items-center justify-between mb-1.5">
+      <span className={labelClasses.replace(' mb-1.5', '')}>{children}</span>
+      {required && <span className="text-xs text-gray-400">Required</span>}
+    </div>
+  );
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col h-full">
@@ -562,7 +571,7 @@ export function DestinationForm({
           <div className="p-5 space-y-5">
             {/* Name with Google Places */}
             <div>
-              <label className={labelClasses}>Name</label>
+              <FieldLabel required>Name</FieldLabel>
               <div className="flex gap-2">
                 <GooglePlacesAutocomplete
                   value={formData.name}
@@ -587,10 +596,16 @@ export function DestinationForm({
             {/* Slug, City, Country */}
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className={labelClasses}>Slug</label>
+                <FieldLabel required>Slug</FieldLabel>
                 <input type="text" required value={formData.slug}
                   onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                   placeholder="url-slug" className={inputClasses} />
+                {formData.slug && (
+                  <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-400">
+                    <Link2 className="h-3 w-3" />
+                    <span>urbanmanual.co/destination/{formData.slug}</span>
+                  </div>
+                )}
               </div>
               <div>
                 <label className={labelClasses}>City</label>
@@ -1048,11 +1063,12 @@ export function DestinationForm({
               <div className="mt-1 text-right text-xs text-gray-400">{formData.description.length} chars</div>
             </div>
             <div>
-              <label className={labelClasses}>Full Content</label>
-              <textarea value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                rows={10} className={cn(inputClasses, "resize-y min-h-[200px]")}
-                placeholder="Detailed description, what makes it special, atmosphere, best time to visit..." />
-              <div className="mt-1 text-right text-xs text-gray-400">{formData.content.length} chars</div>
+              <label className={labelClasses}>Content</label>
+              <RichTextEditor
+                value={formData.content}
+                onChange={(value) => setFormData({ ...formData, content: value })}
+                placeholder="Detailed description, what makes it special, atmosphere, best time to visit..."
+              />
             </div>
             <div>
               <label className={labelClasses}>Editorial Summary</label>
