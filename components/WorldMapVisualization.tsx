@@ -70,7 +70,8 @@ export function WorldMapVisualization({
           scale: 140,
           center: [0, 30],
         }}
-        style={{ width: '100%', height: '100%' }}
+        width={800}
+        height={400}
       >
         <Geographies geography={geoUrl}>
           {({ geographies }) =>
