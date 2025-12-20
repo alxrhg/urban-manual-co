@@ -45,7 +45,7 @@ interface ProfileData {
 
 type MainTab = 'profile' | 'places' | 'collections' | 'trips' | 'settings';
 type PlacesSubTab = 'visited' | 'saved';
-type SettingsSection = 'stats' | 'preferences' | 'integrations' | 'security' | 'privacy' | 'advanced';
+type SettingsSection = 'personal' | 'preferences' | 'integrations' | 'security' | 'privacy' | 'advanced';
 
 export default function Account() {
   const router = useRouter();
@@ -72,7 +72,7 @@ export default function Account() {
   // Navigation state
   const [activeTab, setActiveTab] = useState<MainTab>('profile');
   const [placesSubTab, setPlacesSubTab] = useState<PlacesSubTab>('visited');
-  const [expandedSettings, setExpandedSettings] = useState<Set<SettingsSection>>(new Set(['stats']));
+  const [expandedSettings, setExpandedSettings] = useState<Set<SettingsSection>>(new Set(['personal']));
 
   // Update tab from URL params after mount
   useEffect(() => {
@@ -412,45 +412,74 @@ export default function Account() {
           </div>
         </div>
 
-        {/* Profile Tab */}
+        {/* Profile Tab - Stats & Dashboard */}
         {activeTab === 'profile' && (
-          <div className="fade-in space-y-6 max-w-xl">
-            <div>
-              <label className="block text-sm font-medium text-black dark:text-white mb-1">Full Name</label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">This name will be shown to your contacts.</p>
-              <input type="text" value={profile.display_name} onChange={(e) => setProfile({ ...profile, display_name: e.target.value })} className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-black dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent" placeholder="Enter your full name" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-black dark:text-white mb-1">Email Address</label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Make sure to use an active email address you check regularly</p>
-              <input type="email" value={profile.email} disabled className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-gray-500 dark:text-gray-400 cursor-not-allowed" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-black dark:text-white mb-1">Phone Number</label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Your phone number will be visible to your contacts</p>
-              <div className="flex gap-2">
-                <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl">
-                  <span className="text-base">🇺🇸</span>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">+1</span>
-                  <ChevronDown className="w-3 h-3 text-gray-400" />
-                </div>
-                <input type="tel" value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-black dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent" placeholder="(555) 456-7894" />
+          <div className="fade-in space-y-6">
+            {/* Progress */}
+            <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-2xl font-light">{stats.curationCompletionPercentage}%</span>
+                <span className="text-xs text-gray-400">{stats.visitedCount} / {totalDestinations} places</span>
+              </div>
+              <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div className="h-full bg-black dark:bg-white transition-all duration-500 ease-out" style={{ width: `${Math.min(stats.curationCompletionPercentage, 100)}%` }} />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-black dark:text-white mb-1">Full Address</label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Provide your current residential address.</p>
-              <textarea value={profile.address} onChange={(e) => setProfile({ ...profile, address: e.target.value })} rows={3} className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-black dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent resize-none" placeholder="742 Maple Ridge Lane&#10;Fairfield, OH 45014" />
+            {/* Stats Grid */}
+            <div className="grid grid-cols-4 gap-3">
+              <div className="text-center p-3 bg-gray-50 dark:bg-gray-900 rounded-xl">
+                <div className="text-lg font-light">{stats.visitedCount}</div>
+                <div className="text-xs text-gray-500">Visited</div>
+              </div>
+              <div className="text-center p-3 bg-gray-50 dark:bg-gray-900 rounded-xl">
+                <div className="text-lg font-light">{stats.savedCount}</div>
+                <div className="text-xs text-gray-500">Saved</div>
+              </div>
+              <div className="text-center p-3 bg-gray-50 dark:bg-gray-900 rounded-xl">
+                <div className="text-lg font-light">{stats.uniqueCities.size}</div>
+                <div className="text-xs text-gray-500">Cities</div>
+              </div>
+              <div className="text-center p-3 bg-gray-50 dark:bg-gray-900 rounded-xl">
+                <div className="text-lg font-light">{stats.uniqueCountries.size}</div>
+                <div className="text-xs text-gray-500">Countries</div>
+              </div>
             </div>
 
-            <div className="pt-2">
-              <button onClick={handleSaveProfile} disabled={saving} className="px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-full hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
-                {saving ? 'Saving...' : 'Save Changes'}
-              </button>
-            </div>
+            {/* World Map */}
+            {(stats.uniqueCountries.size > 0 || stats.visitedDestinationsWithCoords.length > 0) && (
+              <WorldMapVisualization visitedCountries={stats.uniqueCountries} visitedDestinations={stats.visitedDestinationsWithCoords} />
+            )}
+
+            {/* Achievements */}
+            <AchievementsDisplay visitedPlaces={visitedPlaces} savedPlaces={savedPlaces} uniqueCities={stats.uniqueCities} uniqueCountries={stats.uniqueCountries} />
+
+            {/* Recent Activity */}
+            {visitedPlaces.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium mb-3">Recent Visits</h3>
+                <div className="space-y-2">
+                  {visitedPlaces.slice(0, 5).map((place) => (
+                    <button
+                      key={place.destination_slug}
+                      onClick={() => router.push(`/destinations/${place.destination_slug}`)}
+                      className="w-full flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
+                    >
+                      {place.destination?.image && (
+                        <Image src={place.destination.image} alt={place.destination.name} width={40} height={40} className="w-10 h-10 rounded-lg object-cover" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{place.destination?.name}</p>
+                        <p className="text-xs text-gray-500">{place.destination?.city && capitalizeCity(place.destination.city)}</p>
+                      </div>
+                      {place.visited_at && (
+                        <span className="text-xs text-gray-400">{new Date(place.visited_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -550,52 +579,50 @@ export default function Account() {
         {/* Settings Tab - Consolidated with expandable sections */}
         {activeTab === 'settings' && user && (
           <div className="fade-in space-y-4">
-            {/* Stats & Achievements Section */}
+            {/* Personal Information Section */}
             <div className="border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
-              <button onClick={() => toggleSettingsSection('stats')} className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                <span className="text-sm font-medium">Stats & Achievements</span>
-                {expandedSettings.has('stats') ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
+              <button onClick={() => toggleSettingsSection('personal')} className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                <span className="text-sm font-medium">Personal Information</span>
+                {expandedSettings.has('personal') ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
               </button>
-              {expandedSettings.has('stats') && (
-                <div className="p-4 pt-0 space-y-6">
-                  {/* Progress */}
-                  <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-2xl font-light">{stats.curationCompletionPercentage}%</span>
-                      <span className="text-xs text-gray-400">{stats.visitedCount} / {totalDestinations} places</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-black dark:bg-white transition-all duration-500 ease-out" style={{ width: `${Math.min(stats.curationCompletionPercentage, 100)}%` }} />
+              {expandedSettings.has('personal') && (
+                <div className="p-4 pt-0 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-black dark:text-white mb-1">Full Name</label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">This name will be shown to your contacts.</p>
+                    <input type="text" value={profile.display_name} onChange={(e) => setProfile({ ...profile, display_name: e.target.value })} className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-black dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent" placeholder="Enter your full name" />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-black dark:text-white mb-1">Email Address</label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Make sure to use an active email address you check regularly</p>
+                    <input type="email" value={profile.email} disabled className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-gray-500 dark:text-gray-400 cursor-not-allowed" />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-black dark:text-white mb-1">Phone Number</label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Your phone number will be visible to your contacts</p>
+                    <div className="flex gap-2">
+                      <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl">
+                        <span className="text-base">🇺🇸</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">+1</span>
+                        <ChevronDown className="w-3 h-3 text-gray-400" />
+                      </div>
+                      <input type="tel" value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-black dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent" placeholder="(555) 456-7894" />
                     </div>
                   </div>
 
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-4 gap-3">
-                    <div className="text-center p-3 bg-gray-50 dark:bg-gray-900 rounded-xl">
-                      <div className="text-lg font-light">{stats.visitedCount}</div>
-                      <div className="text-xs text-gray-500">Visited</div>
-                    </div>
-                    <div className="text-center p-3 bg-gray-50 dark:bg-gray-900 rounded-xl">
-                      <div className="text-lg font-light">{stats.savedCount}</div>
-                      <div className="text-xs text-gray-500">Saved</div>
-                    </div>
-                    <div className="text-center p-3 bg-gray-50 dark:bg-gray-900 rounded-xl">
-                      <div className="text-lg font-light">{stats.uniqueCities.size}</div>
-                      <div className="text-xs text-gray-500">Cities</div>
-                    </div>
-                    <div className="text-center p-3 bg-gray-50 dark:bg-gray-900 rounded-xl">
-                      <div className="text-lg font-light">{stats.uniqueCountries.size}</div>
-                      <div className="text-xs text-gray-500">Countries</div>
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-black dark:text-white mb-1">Full Address</label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Provide your current residential address.</p>
+                    <textarea value={profile.address} onChange={(e) => setProfile({ ...profile, address: e.target.value })} rows={3} className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-black dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent resize-none" placeholder="742 Maple Ridge Lane&#10;Fairfield, OH 45014" />
                   </div>
 
-                  {/* World Map */}
-                  {(stats.uniqueCountries.size > 0 || stats.visitedDestinationsWithCoords.length > 0) && (
-                    <WorldMapVisualization visitedCountries={stats.uniqueCountries} visitedDestinations={stats.visitedDestinationsWithCoords} />
-                  )}
-
-                  {/* Achievements */}
-                  <AchievementsDisplay visitedPlaces={visitedPlaces} savedPlaces={savedPlaces} uniqueCities={stats.uniqueCities} uniqueCountries={stats.uniqueCountries} />
+                  <div className="pt-2">
+                    <button onClick={handleSaveProfile} disabled={saving} className="px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-full hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
+                      {saving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
