@@ -11,6 +11,7 @@ interface RouteContext {
 /**
  * GET /api/trips/[id]
  * Fetch a single trip by ID with its itinerary items
+ * Supports access for trip owners and collaborators
  */
 export const GET = withErrorHandling(async (request: NextRequest, context: RouteContext) => {
   const { id } = await context.params;
@@ -26,16 +27,53 @@ export const GET = withErrorHandling(async (request: NextRequest, context: Route
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Fetch trip
-  const { data: trip, error } = await supabase
+  // Fetch trip - first try as owner
+  let trip;
+  let error;
+  let isOwner = false;
+  let collaboratorRole: string | null = null;
+
+  const { data: ownedTrip, error: ownedError } = await supabase
     .from('trips')
     .select('*')
     .eq('id', id)
     .eq('user_id', user.id)
     .single();
 
-  if (error) {
-    if (error.code === 'PGRST116') {
+  if (ownedTrip) {
+    trip = ownedTrip;
+    isOwner = true;
+  } else {
+    // Check if user is a collaborator
+    const { data: collab, error: collabError } = await supabase
+      .from('trip_collaborators')
+      .select('role, status')
+      .eq('trip_id', id)
+      .eq('user_id', user.id)
+      .eq('status', 'accepted')
+      .single();
+
+    if (collab) {
+      // Fetch trip as collaborator
+      const { data: sharedTrip, error: sharedError } = await supabase
+        .from('trips')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (sharedTrip) {
+        trip = sharedTrip;
+        collaboratorRole = collab.role;
+      } else {
+        error = sharedError;
+      }
+    } else {
+      error = ownedError;
+    }
+  }
+
+  if (error || !trip) {
+    if (error?.code === 'PGRST116' || !trip) {
       return NextResponse.json({ error: 'Trip not found' }, { status: 404 });
     }
     throw error;
@@ -88,12 +126,19 @@ export const GET = withErrorHandling(async (request: NextRequest, context: Route
     end_date: trip.end_date,
     items: enrichedItems,
     updated_at: trip.updated_at,
+    // Access info for UI
+    access: {
+      isOwner,
+      role: isOwner ? 'owner' : collaboratorRole,
+      canEdit: isOwner || collaboratorRole === 'editor',
+    },
   });
 });
 
 /**
  * PATCH /api/trips/[id]
  * Update a trip and revalidate cache
+ * Supports updates by trip owners and editors
  */
 export const PATCH = withErrorHandling(async (request: NextRequest, context: RouteContext) => {
   const { id } = await context.params;
@@ -107,6 +152,32 @@ export const PATCH = withErrorHandling(async (request: NextRequest, context: Rou
 
   if (authError || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Check if user is owner or editor
+  const { data: ownedTrip } = await supabase
+    .from('trips')
+    .select('id')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single();
+
+  const isOwner = !!ownedTrip;
+
+  if (!isOwner) {
+    // Check if user is an editor
+    const { data: collab } = await supabase
+      .from('trip_collaborators')
+      .select('role')
+      .eq('trip_id', id)
+      .eq('user_id', user.id)
+      .eq('status', 'accepted')
+      .in('role', ['owner', 'editor'])
+      .single();
+
+    if (!collab) {
+      return NextResponse.json({ error: 'Trip not found or no edit access' }, { status: 404 });
+    }
   }
 
   // Parse and validate request body
@@ -128,12 +199,11 @@ export const PATCH = withErrorHandling(async (request: NextRequest, context: Rou
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
   }
 
-  // Update trip in database
+  // Update trip in database (owner check removed since we verified access above)
   const { data: trip, error } = await supabase
     .from('trips')
     .update(updates)
     .eq('id', id)
-    .eq('user_id', user.id)
     .select()
     .single();
 

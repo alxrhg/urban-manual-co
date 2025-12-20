@@ -18,12 +18,13 @@ import TripOverviewDrawer from '@/features/trip/components/TripOverviewDrawer';
 import TripOverviewQuickDrawer from '@/features/trip/components/TripOverviewQuickDrawer';
 import PlaceSelectorDrawer from '@/features/trip/components/PlaceSelectorDrawer';
 import TripSettingsDrawer from '@/features/trip/components/TripSettingsDrawer';
+import ShareTripDrawer from '@/features/trip/components/ShareTripDrawer';
 import { AccountDrawer as AccountDrawerNew } from '@/features/account/components/AccountDrawer';
 import { Drawer } from '@/ui/Drawer';
 import { useDrawerStyle } from '@/ui/UseDrawerStyle';
 
 // Types that are handled by inline PanelLayout on desktop
-const INLINE_TYPES = ['account-new', 'trip-list', 'trip-settings', 'place-selector', 'trip-add-hotel', 'add-flight', 'trip-ai'];
+const INLINE_TYPES = ['account-new', 'trip-list', 'trip-settings', 'place-selector', 'trip-add-hotel', 'add-flight', 'trip-ai', 'share-trip'];
 
 export default function DrawerMount() {
   const { open, type, props, closeDrawer, displayMode } = useDrawerStore();
@@ -200,6 +201,23 @@ export default function DrawerMount() {
         destinationName={props?.destinationName || ''}
         destinationCity={props?.destinationCity}
       />
+
+      {/* Share Trip Drawer */}
+      {open && type === 'share-trip' && props?.trip && !shouldSkipOverlay('share-trip') && (
+        <Drawer
+          isOpen={open}
+          onClose={closeDrawer}
+          title="Share Trip"
+          style={drawerStyle}
+          position="right"
+          desktopWidth="420px"
+        >
+          <ShareTripDrawer
+            trip={props.trip}
+            onUpdate={props?.onUpdate}
+          />
+        </Drawer>
+      )}
     </>
   );
 }

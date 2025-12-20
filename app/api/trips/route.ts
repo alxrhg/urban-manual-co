@@ -4,7 +4,7 @@ import { withErrorHandling } from '@/lib/errors';
 
 /**
  * GET /api/trips
- * Fetch all trips for the authenticated user
+ * Fetch all trips for the authenticated user (owned and shared)
  */
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const supabase = await createServerClient();
@@ -16,37 +16,95 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 
   const searchParams = request.nextUrl.searchParams;
   const status = searchParams.get('status'); // 'planning', 'upcoming', 'completed'
-  const limit = parseInt(searchParams.get('limit') || '10');
+  const filter = searchParams.get('filter'); // 'owned', 'shared', 'all' (default)
+  const limit = parseInt(searchParams.get('limit') || '50');
 
-  let query = supabase
-    .from('trips')
-    .select(`
-      id,
-      title,
-      destination,
-      start_date,
-      end_date,
-      status,
-      cover_image,
-      created_at,
-      updated_at
-    `)
-    .eq('user_id', user.id)
-    .order('updated_at', { ascending: false })
-    .limit(limit);
+  // Fetch owned trips
+  let ownedTrips: any[] = [];
+  if (filter !== 'shared') {
+    let query = supabase
+      .from('trips')
+      .select(`
+        id,
+        title,
+        destination,
+        start_date,
+        end_date,
+        status,
+        cover_image,
+        visibility,
+        created_at,
+        updated_at,
+        user_id
+      `)
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false });
 
-  if (status) {
-    query = query.eq('status', status);
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    ownedTrips = (data || []).map(t => ({ ...t, access: { isOwner: true, role: 'owner', canEdit: true } }));
   }
 
-  const { data: trips, error } = await query;
+  // Fetch shared trips (where user is a collaborator)
+  let sharedTrips: any[] = [];
+  if (filter !== 'owned') {
+    // First get the collaboration entries
+    const { data: collabs } = await supabase
+      .from('trip_collaborators')
+      .select('trip_id, role')
+      .eq('user_id', user.id)
+      .eq('status', 'accepted');
 
-  if (error) {
-    throw error;
+    if (collabs && collabs.length > 0) {
+      const sharedTripIds = collabs.map(c => c.trip_id);
+      const roleMap = new Map(collabs.map(c => [c.trip_id, c.role]));
+
+      let query = supabase
+        .from('trips')
+        .select(`
+          id,
+          title,
+          destination,
+          start_date,
+          end_date,
+          status,
+          cover_image,
+          visibility,
+          created_at,
+          updated_at,
+          user_id
+        `)
+        .in('id', sharedTripIds)
+        .order('updated_at', { ascending: false });
+
+      if (status) {
+        query = query.eq('status', status);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      sharedTrips = (data || []).map(t => ({
+        ...t,
+        access: {
+          isOwner: false,
+          role: roleMap.get(t.id),
+          canEdit: roleMap.get(t.id) === 'editor',
+        },
+      }));
+    }
   }
+
+  // Merge and sort by updated_at
+  const allTrips = [...ownedTrips, ...sharedTrips]
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+    .slice(0, limit);
 
   // Also fetch itinerary item counts for each trip
-  const tripIds = trips?.map(t => t.id) || [];
+  const tripIds = allTrips.map(t => t.id);
   const { data: itemCounts } = await supabase
     .from('itinerary_items')
     .select('trip_id')
@@ -57,10 +115,23 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     countMap.set(item.trip_id, (countMap.get(item.trip_id) || 0) + 1);
   });
 
-  const tripsWithCounts = trips?.map(trip => ({
+  // Fetch collaborator counts for each trip
+  const { data: collabCounts } = await supabase
+    .from('trip_collaborators')
+    .select('trip_id')
+    .in('trip_id', tripIds)
+    .eq('status', 'accepted');
+
+  const collabCountMap = new Map<string, number>();
+  collabCounts?.forEach(collab => {
+    collabCountMap.set(collab.trip_id, (collabCountMap.get(collab.trip_id) || 0) + 1);
+  });
+
+  const tripsWithCounts = allTrips.map(trip => ({
     ...trip,
     itemCount: countMap.get(trip.id) || 0,
-  })) || [];
+    collaboratorCount: collabCountMap.get(trip.id) || 0,
+  }));
 
   return NextResponse.json({ trips: tripsWithCounts });
 });
