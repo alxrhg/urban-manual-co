@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 
 interface WorldMapVisualizationProps {
@@ -38,13 +38,32 @@ export function WorldMapVisualization({
   const [tooltip, setTooltip] = useState<{ name: string; x: number; y: number } | null>(null);
   const [geoState, setGeoState] = useState<GeoLoadingState>('loading');
 
-  const handleGeoError = () => {
-    setGeoState('error');
-  };
+  // Prefetch geography data to detect load errors
+  useEffect(() => {
+    let cancelled = false;
 
-  const handleGeoLoad = () => {
-    setGeoState('loaded');
-  };
+    fetch(geoUrl)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(() => {
+        if (!cancelled) {
+          setGeoState('loaded');
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setGeoState('error');
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Normalize country names for matching
   const normalizedVisitedCountries = useMemo(() => {
@@ -82,16 +101,20 @@ export function WorldMapVisualization({
     );
   }
 
+  // Show loading state while fetching
+  if (geoState === 'loading') {
+    return (
+      <div className="relative w-full aspect-[2/1] flex items-center justify-center bg-gray-50 text-gray-400 text-sm">
+        Loading map...
+      </div>
+    );
+  }
+
   return (
     <div
       className="relative w-full aspect-[2/1]"
       onMouseLeave={() => setTooltip(null)}
     >
-      {geoState === 'loading' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-50 text-gray-400 text-sm">
-          Loading map...
-        </div>
-      )}
       <ComposableMap
         projection="geoMercator"
         projectionConfig={{
@@ -99,16 +122,7 @@ export function WorldMapVisualization({
           center: [0, 20],
         }}
       >
-        <Geographies
-          geography={geoUrl}
-          onError={handleGeoError}
-          parseGeographies={(geos) => {
-            if (geos && geos.length > 0) {
-              handleGeoLoad();
-            }
-            return geos;
-          }}
-        >
+        <Geographies geography={geoUrl}>
           {({ geographies }) =>
             geographies
               .filter((geo) => {
