@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal, Trash2 } from 'lucide-react';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal, Trash2, Share2 } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import {
   DndContext,
@@ -22,6 +22,7 @@ import {
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import { useHotelLogic } from '@/lib/hooks/useHotelLogic';
 import { parseDestinations, stringifyDestinations, parseTripNotes, stringifyTripNotes, type TripNoteItem, type ActivityData, type ActivityType } from '@/types/trip';
@@ -58,6 +59,7 @@ export default function TripPage() {
   const router = useRouter();
   const tripId = params?.id as string;
   const { user, loading: authLoading } = useAuth();
+  const openDrawer = useDrawerStore((s) => s.openDrawer);
 
   // Redirect to sign in if not authenticated
   useEffect(() => {
@@ -342,28 +344,39 @@ export default function TripPage() {
               onDelete={handleDelete}
             />
 
-            {/* Action bar: Edit toggle + Settings */}
+            {/* Action bar: Edit toggle + Share + Settings */}
             <div className="flex items-center justify-between mt-4 mb-2">
-              <button
-                onClick={() => setIsEditMode(!isEditMode)}
-                className={`flex items-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 text-[12px] sm:text-[11px] font-medium rounded-full transition-colors ${
-                  isEditMode
-                    ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border border-gray-200 dark:border-gray-700'
-                }`}
-              >
-                {isEditMode ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                    Done
-                  </>
-                ) : (
-                  <>
-                    <Pencil className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                    Edit
-                  </>
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsEditMode(!isEditMode)}
+                  className={`flex items-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 text-[12px] sm:text-[11px] font-medium rounded-full transition-colors ${
+                    isEditMode
+                      ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border border-gray-200 dark:border-gray-700'
+                  }`}
+                >
+                  {isEditMode ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
+                      Done
+                    </>
+                  ) : (
+                    <>
+                      <Pencil className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
+                      Edit
+                    </>
+                  )}
+                </button>
+
+                {/* Share button */}
+                <button
+                  onClick={() => trip && openDrawer('share-trip', { trip, onUpdate: refresh })}
+                  className="flex items-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 text-[12px] sm:text-[11px] font-medium rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border border-gray-200 dark:border-gray-700 transition-colors"
+                >
+                  <Share2 className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
+                  Share
+                </button>
+              </div>
 
               <button
                 onClick={() => { setShowTripSettings(true); setSelectedItem(null); }}
