@@ -411,10 +411,10 @@ export default function TripPage() {
           />
         </div>
 
-        {/* Day Tabs */}
+        {/* Day Tabs - Account page style */}
         {days.length > 0 && (
-          <div className="sticky top-16 z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 py-3 bg-white dark:bg-gray-950 mt-6">
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+          <div className="mt-8 mb-8">
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
               {days.map((day) => {
                 const isSelected = day.dayNumber === selectedDayNumber;
                 const dayDate = day.date
@@ -424,10 +424,10 @@ export default function TripPage() {
                   <button
                     key={day.dayNumber}
                     onClick={() => setSelectedDayNumber(day.dayNumber)}
-                    className={`flex-shrink-0 px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-all ${
+                    className={`transition-all ${
                       isSelected
-                        ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                        ? 'font-medium text-black dark:text-white'
+                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
                     }`}
                   >
                     {dayDate || `Day ${day.dayNumber}`}

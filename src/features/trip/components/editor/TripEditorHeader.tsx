@@ -288,42 +288,13 @@ export function TripEditorHeader({
 
   return (
     <div className="group">
-      {/* Static map cover */}
-      <div className="relative aspect-[3/1] rounded-xl overflow-hidden mb-4">
-        {staticMapUrl && !mapError ? (
-          <>
-            <Image
-              src={staticMapUrl}
-              alt={`Map of ${primaryCity}`}
-              fill
-              className="object-cover"
-              unoptimized
-              onError={() => setMapError(true)}
-            />
-            {/* City overlay */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-900 rounded-full px-3 py-1.5 shadow-lg flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-red-500" />
-              <span className="text-xs font-medium text-gray-900 dark:text-white">{primaryCity}</span>
-              <span className="text-xs text-gray-400">{totalItems} pinned</span>
-            </div>
-          </>
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 flex items-center justify-center">
-            <div className="text-center">
-              <MapPin className="w-8 h-8 text-blue-400 mx-auto mb-1" />
-              <span className="text-xs text-blue-500 dark:text-blue-400">{primaryCity || 'Add places to see map'}</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Title and info - click to edit */}
+      {/* Header - Account page style */}
       <div onClick={() => setIsEditing(true)} className="cursor-pointer">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:opacity-70 transition-opacity">
+        <h1 className="text-2xl font-light text-gray-900 dark:text-white group-hover:opacity-70 transition-opacity">
           {trip.title}
         </h1>
-        <p className="text-sm text-gray-400 group-hover:opacity-70 transition-opacity">
-          {[primaryCity, dateDisplay, `${totalItems} ${totalItems === 1 ? 'place' : 'places'}`].filter(Boolean).join(' · ')}
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 group-hover:opacity-70 transition-opacity">
+          {[primaryCity, dateDisplay].filter(Boolean).join(' · ')}
         </p>
       </div>
     </div>
