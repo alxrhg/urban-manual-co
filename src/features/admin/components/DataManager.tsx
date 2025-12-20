@@ -286,14 +286,14 @@ export function DataManager({ type }: DataManagerProps) {
   return (
     <div className="space-y-6">
       {/* Header Bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-medium text-black dark:text-white">{config.plural}</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {items.length.toLocaleString()} {type}
             {syncResult && (
-              <span className="ml-2 text-green-600 dark:text-green-400">
-                (found {syncResult.found} in destinations: {syncResult.inserted} new, {syncResult.existing} existing)
+              <span className="block sm:inline sm:ml-2 text-green-600 dark:text-green-400 text-xs mt-1 sm:mt-0">
+                (+{syncResult.inserted} new, {syncResult.existing} existing)
               </span>
             )}
           </p>
@@ -303,15 +303,15 @@ export function DataManager({ type }: DataManagerProps) {
             variant="outline"
             onClick={handleSync}
             disabled={syncing}
-            className="rounded-full"
+            className="rounded-full flex-1 sm:flex-none"
             title={`Sync ${type} from existing destinations`}
           >
-            <RefreshCw className={cn("w-4 h-4 mr-2", syncing && "animate-spin")} />
-            {syncing ? 'Syncing...' : 'Sync from Destinations'}
+            <RefreshCw className={cn("w-4 h-4 sm:mr-2", syncing && "animate-spin")} />
+            <span className="hidden sm:inline">{syncing ? 'Syncing...' : 'Sync'}</span>
           </Button>
-          <Button onClick={openCreateDrawer} className="rounded-full">
-            <Plus className="w-4 h-4 mr-2" />
-            Add New
+          <Button onClick={openCreateDrawer} className="rounded-full flex-1 sm:flex-none">
+            <Plus className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Add New</span>
           </Button>
         </div>
       </div>
@@ -347,8 +347,8 @@ export function DataManager({ type }: DataManagerProps) {
           <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
         </div>
       ) : (
-        <div className="border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
-          <table className="w-full">
+        <div className="border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden overflow-x-auto">
+          <table className="w-full min-w-[400px]">
             <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
               <tr>
                 <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3">
