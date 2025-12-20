@@ -47,6 +47,7 @@ const sitemapSections = [
     title: 'Information',
     links: [
       { label: 'About', href: '/about' },
+      { label: 'Press', href: '/press' },
       { label: 'Contact', href: '/contact' },
       { label: 'Newsletter', href: '/newsletter' },
       { label: 'Privacy Policy', href: '/privacy' },
