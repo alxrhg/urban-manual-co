@@ -588,8 +588,7 @@ export default function Account() {
 
         {/* Profile Tab */}
         {activeTab === 'profile' && (
-          <div className="space-y-8 fade-in">
-            {/* Personal Information Form */}
+          <div className="fade-in">
             <div className="max-w-2xl space-y-6">
               {/* Full Name */}
               <div>
@@ -679,127 +678,6 @@ export default function Account() {
                   {saving ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
-            </div>
-
-            {/* Divider */}
-            <div className="border-b border-gray-200 dark:border-gray-800" />
-
-            {/* Stats Section */}
-            <div>
-              <h3 className="text-sm font-medium text-black dark:text-white mb-4">Your Stats</h3>
-
-              {/* Curation Completion */}
-              <div className="p-6 border border-gray-200 dark:border-gray-800 rounded-2xl bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <div className="text-4xl font-light mb-1">{stats.curationCompletionPercentage}%</div>
-                    <div className="text-xs text-gray-500">of curation explored</div>
-                  </div>
-                  <div className="text-right text-xs text-gray-400">
-                    {stats.visitedCount} / {totalDestinations} places
-                  </div>
-                </div>
-                {/* Progress bar */}
-                <div className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-black dark:bg-white transition-all duration-500 ease-out"
-                    style={{ width: `${Math.min(stats.curationCompletionPercentage, 100)}%` }}
-                  />
-                </div>
-                {stats.curationCompletionPercentage < 100 && (
-                  <p className="text-xs text-gray-400 mt-3">
-                    {stats.curationCompletionPercentage < 10
-                      ? "Just getting started! Keep exploring."
-                      : stats.curationCompletionPercentage < 25
-                      ? "Great start! Many more places to discover."
-                      : stats.curationCompletionPercentage < 50
-                      ? "Halfway there! You're doing amazing."
-                      : stats.curationCompletionPercentage < 75
-                      ? "Impressive! You're a seasoned explorer."
-                      : "Almost there! You've explored most of our curation."}
-                  </p>
-                )}
-                {stats.curationCompletionPercentage === 100 && (
-                  <p className="text-xs text-gray-400 mt-3">
-                    Incredible! You've visited every place in our curation!
-                  </p>
-                )}
-              </div>
-
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                  <div className="text-2xl font-light mb-1">{stats.visitedCount}</div>
-                  <div className="text-xs text-gray-500">Visited</div>
-                </div>
-                <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                  <div className="text-2xl font-light mb-1">{stats.savedCount}</div>
-                  <div className="text-xs text-gray-500">Saved</div>
-                </div>
-                <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                  <div className="text-2xl font-light mb-1">{stats.uniqueCities.size}</div>
-                  <div className="text-xs text-gray-500">Cities</div>
-                </div>
-                <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                  <div className="text-2xl font-light mb-1">{stats.uniqueCountries.size}</div>
-                  <div className="text-xs text-gray-500">Countries</div>
-                </div>
-              </div>
-
-              {/* World Map */}
-              {(stats.uniqueCountries.size > 0 || stats.visitedDestinationsWithCoords.length > 0) && (
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400">Travel Map</h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {stats.uniqueCountries.size > 0 && `${stats.uniqueCountries.size} ${stats.uniqueCountries.size === 1 ? 'country' : 'countries'}`}
-                      {stats.uniqueCountries.size > 0 && stats.uniqueCities.size > 0 && ' • '}
-                      {stats.uniqueCities.size > 0 && `${stats.uniqueCities.size} ${stats.uniqueCities.size === 1 ? 'city' : 'cities'}`}
-                    </p>
-                  </div>
-                  <WorldMapVisualization
-                    visitedCountries={stats.uniqueCountries}
-                    visitedDestinations={stats.visitedDestinationsWithCoords}
-                  />
-                </div>
-              )}
-
-              {/* Recent Visits */}
-              {visitedPlaces.length > 0 && (
-                <div className="mt-6">
-                  <h4 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Recent Visits</h4>
-                  <div className="space-y-2">
-                    {visitedPlaces.slice(0, 5).map((place) => (
-                      <button
-                        key={place.destination_slug}
-                        onClick={() => router.push(`/destination/${place.destination_slug}`)}
-                        className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
-                      >
-                        {place.destination?.image && (
-                          <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-                            <Image
-                              src={place.destination.image}
-                              alt={place.destination.name}
-                              fill
-                              className="object-cover"
-                              sizes="64px"
-                            />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">{place.destination?.name}</div>
-                          <div className="text-xs text-gray-500 mt-0.5">
-                            {place.destination && capitalizeCity(place.destination.city)} • {place.destination?.category}
-                          </div>
-                          <div className="text-xs text-gray-400 mt-0.5">
-                            {place.visited_at && new Date(place.visited_at).toLocaleDateString()}
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -993,13 +871,130 @@ export default function Account() {
 
         {/* Achievements Tab */}
         {activeTab === 'achievements' && (
-          <div className="fade-in">
-            <AchievementsDisplay
-              visitedPlaces={visitedPlaces}
-              savedPlaces={savedPlaces}
-              uniqueCities={stats.uniqueCities}
-              uniqueCountries={stats.uniqueCountries}
-            />
+          <div className="fade-in space-y-8">
+            {/* Curation Completion */}
+            <div className="p-6 border border-gray-200 dark:border-gray-800 rounded-2xl bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <div className="text-4xl font-light mb-1">{stats.curationCompletionPercentage}%</div>
+                  <div className="text-xs text-gray-500">of curation explored</div>
+                </div>
+                <div className="text-right text-xs text-gray-400">
+                  {stats.visitedCount} / {totalDestinations} places
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-black dark:bg-white transition-all duration-500 ease-out"
+                  style={{ width: `${Math.min(stats.curationCompletionPercentage, 100)}%` }}
+                />
+              </div>
+              {stats.curationCompletionPercentage < 100 && (
+                <p className="text-xs text-gray-400 mt-3">
+                  {stats.curationCompletionPercentage < 10
+                    ? "Just getting started! Keep exploring."
+                    : stats.curationCompletionPercentage < 25
+                    ? "Great start! Many more places to discover."
+                    : stats.curationCompletionPercentage < 50
+                    ? "Halfway there! You're doing amazing."
+                    : stats.curationCompletionPercentage < 75
+                    ? "Impressive! You're a seasoned explorer."
+                    : "Almost there! You've explored most of our curation."}
+                </p>
+              )}
+              {stats.curationCompletionPercentage === 100 && (
+                <p className="text-xs text-gray-400 mt-3">
+                  Incredible! You've visited every place in our curation!
+                </p>
+              )}
+            </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                <div className="text-2xl font-light mb-1">{stats.visitedCount}</div>
+                <div className="text-xs text-gray-500">Visited</div>
+              </div>
+              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                <div className="text-2xl font-light mb-1">{stats.savedCount}</div>
+                <div className="text-xs text-gray-500">Saved</div>
+              </div>
+              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                <div className="text-2xl font-light mb-1">{stats.uniqueCities.size}</div>
+                <div className="text-xs text-gray-500">Cities</div>
+              </div>
+              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                <div className="text-2xl font-light mb-1">{stats.uniqueCountries.size}</div>
+                <div className="text-xs text-gray-500">Countries</div>
+              </div>
+            </div>
+
+            {/* World Map */}
+            {(stats.uniqueCountries.size > 0 || stats.visitedDestinationsWithCoords.length > 0) && (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium text-black dark:text-white">Travel Map</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {stats.uniqueCountries.size > 0 && `${stats.uniqueCountries.size} ${stats.uniqueCountries.size === 1 ? 'country' : 'countries'}`}
+                    {stats.uniqueCountries.size > 0 && stats.uniqueCities.size > 0 && ' • '}
+                    {stats.uniqueCities.size > 0 && `${stats.uniqueCities.size} ${stats.uniqueCities.size === 1 ? 'city' : 'cities'}`}
+                  </p>
+                </div>
+                <WorldMapVisualization
+                  visitedCountries={stats.uniqueCountries}
+                  visitedDestinations={stats.visitedDestinationsWithCoords}
+                />
+              </div>
+            )}
+
+            {/* Achievements */}
+            <div>
+              <h3 className="text-sm font-medium text-black dark:text-white mb-4">Achievements</h3>
+              <AchievementsDisplay
+                visitedPlaces={visitedPlaces}
+                savedPlaces={savedPlaces}
+                uniqueCities={stats.uniqueCities}
+                uniqueCountries={stats.uniqueCountries}
+              />
+            </div>
+
+            {/* Recent Visits */}
+            {visitedPlaces.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-black dark:text-white mb-4">Recent Visits</h3>
+                <div className="space-y-2">
+                  {visitedPlaces.slice(0, 5).map((place) => (
+                    <button
+                      key={place.destination_slug}
+                      onClick={() => router.push(`/destination/${place.destination_slug}`)}
+                      className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
+                    >
+                      {place.destination?.image && (
+                        <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                          <Image
+                            src={place.destination.image}
+                            alt={place.destination.name}
+                            fill
+                            className="object-cover"
+                            sizes="64px"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">{place.destination?.name}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {place.destination && capitalizeCity(place.destination.city)} • {place.destination?.category}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-0.5">
+                          {place.visited_at && new Date(place.visited_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
