@@ -145,6 +145,18 @@ const nextConfig: NextConfig = {
         destination: '/trips',
         permanent: true,
       },
+      // Legacy Notion route redirect (migrated to /destination)
+      {
+        source: '/notion/:slug',
+        destination: '/destination/:slug',
+        permanent: true,
+      },
+      // iOS legacy icon request
+      {
+        source: '/apple-touch-icon-precomposed.png',
+        destination: '/apple-touch-icon.png',
+        permanent: true,
+      },
     ];
   },
 
