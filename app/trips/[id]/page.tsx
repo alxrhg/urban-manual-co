@@ -40,6 +40,7 @@ import { UndoProvider } from '@/features/trip/components/UndoToast';
 import { SavingFeedback } from '@/features/trip/components/SavingFeedback';
 import { TripEditorHeader } from '@/features/trip/components/editor/TripEditorHeader';
 import { TripChecklist } from '@/features/trip/components/editor/TripChecklist';
+import TripMapView from '@/features/trip/components/TripMapView';
 import { useWeather, type DayWeather } from '@/lib/hooks/useWeather';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { Settings, Moon } from 'lucide-react';
@@ -159,35 +160,26 @@ export default function TripPage() {
     return days.reduce((sum, day) => sum + day.items.length, 0);
   }, [days]);
 
-  // Calculate map center from all items with coordinates
-  const mapCenter = useMemo(() => {
-    const allItems = days.flatMap(d => d.items);
-    const coords = allItems
-      .map(item => ({
-        lat: item.destination?.latitude || item.parsedNotes?.latitude,
-        lng: item.destination?.longitude || item.parsedNotes?.longitude,
-      }))
-      .filter(c => c.lat && c.lng) as { lat: number; lng: number }[];
-
-    if (coords.length === 0) return null;
-
-    const sumLat = coords.reduce((sum, c) => sum + c.lat, 0);
-    const sumLng = coords.reduce((sum, c) => sum + c.lng, 0);
-    return {
-      lat: sumLat / coords.length,
-      lng: sumLng / coords.length,
-    };
+  // Map places for TripMapView
+  const mapPlaces = useMemo(() => {
+    let orderIndex = 0;
+    return days.flatMap(day =>
+      day.items
+        .filter(item => {
+          const lat = item.destination?.latitude || item.parsedNotes?.latitude;
+          const lng = item.destination?.longitude || item.parsedNotes?.longitude;
+          return lat && lng;
+        })
+        .map(item => ({
+          id: item.id,
+          name: item.destination?.name || item.parsedNotes?.name || 'Unknown',
+          latitude: item.destination?.latitude || item.parsedNotes?.latitude,
+          longitude: item.destination?.longitude || item.parsedNotes?.longitude,
+          category: item.destination?.category || item.type,
+          order: ++orderIndex,
+        }))
+    );
   }, [days]);
-
-  // Generate static map URL
-  const staticMapUrl = useMemo(() => {
-    if (!mapCenter) return null;
-    const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
-    if (!token) return null;
-
-    const pin = `pin-s+ef4444(${mapCenter.lng},${mapCenter.lat})`;
-    return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${pin}/${mapCenter.lng},${mapCenter.lat},11,0/400x200@2x?access_token=${token}`;
-  }, [mapCenter]);
 
   // Use optimized hotel logic hook - prevents cascading recalculations
   // when non-hotel items are added/removed/reordered
@@ -663,31 +655,10 @@ export default function TripPage() {
 
               {/* Trip Map */}
               {!sidebarAddDay && (
-                <div className="relative aspect-[2/1] rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-                  {staticMapUrl ? (
-                    <>
-                      <Image
-                        src={staticMapUrl}
-                        alt={`Map of ${primaryCity}`}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
-                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-900 rounded-full px-2.5 py-1 shadow-lg flex items-center gap-1.5">
-                        <MapPin className="w-3 h-3 text-red-500" />
-                        <span className="text-[11px] font-medium text-gray-900 dark:text-white">{primaryCity}</span>
-                        <span className="text-[11px] text-gray-400">{totalItems} pinned</span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="text-center">
-                        <MapPin className="w-6 h-6 text-gray-400 mx-auto mb-1" />
-                        <span className="text-[11px] text-gray-500">{primaryCity || 'Add places to see map'}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <TripMapView
+                  places={mapPlaces}
+                  className="h-48"
+                />
               )}
 
               {/* Trip Intelligence */}
