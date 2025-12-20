@@ -2068,7 +2068,7 @@ function HotelActivityRow({
       <div
         onClick={onSelect}
         className={`
-          relative overflow-hidden rounded-2xl cursor-pointer transition-all
+          relative rounded-2xl cursor-pointer transition-all
           bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800
           ${isDragging ? 'shadow-xl ring-2 ring-stone-400 dark:ring-gray-500' : 'hover:shadow-md'}
         `}
@@ -2383,7 +2383,7 @@ function ItemRow({
       >
         <div
           className={`
-            relative rounded-2xl overflow-hidden transition-all cursor-pointer
+            relative rounded-2xl transition-all cursor-pointer
             bg-stone-50 dark:bg-gray-800/60
             ring-1 ring-stone-200/60 dark:ring-gray-700/50
             hover:ring-stone-300 dark:hover:ring-gray-600
@@ -2526,7 +2526,7 @@ function ItemRow({
     >
       <div
         className={`
-          relative rounded-2xl overflow-hidden transition-all cursor-pointer
+          relative rounded-2xl transition-all cursor-pointer
           bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800
           ${isDragging ? 'shadow-xl ring-2 ring-stone-400 dark:ring-gray-500' : 'hover:shadow-md'}
         `}
