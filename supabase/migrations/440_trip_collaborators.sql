@@ -288,28 +288,6 @@ END;
 $$;
 
 -- ============================================================================
--- HELPER FUNCTION: Get user ID by email (for invitations)
--- ============================================================================
-
-CREATE OR REPLACE FUNCTION get_user_id_by_email(p_email TEXT)
-RETURNS UUID
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  v_user_id UUID;
-BEGIN
-  -- Look up user_id from user_profiles table by email
-  SELECT user_id INTO v_user_id
-  FROM user_profiles
-  WHERE LOWER(email) = LOWER(p_email)
-  LIMIT 1;
-
-  RETURN v_user_id;
-END;
-$$;
-
--- ============================================================================
 -- HELPER FUNCTION: Check if user can access trip
 -- ============================================================================
 

@@ -61,59 +61,25 @@ export const GET = withErrorHandling(async (request: NextRequest, context: Route
     throw createUnauthorizedError();
   }
 
-  // Check if sharing columns exist
-  const columnsExist = await checkSharingColumnsExist(supabase);
-
-  // Build select query based on what columns exist
-  const selectColumns = columnsExist
-    ? 'id, user_id, visibility, share_slug, shared_at'
-    : 'id, user_id';
-
-  // Check if user owns the trip or is a collaborator
-  const { data: trip, error: tripError } = await supabase
+  // First, get basic trip info to check ownership
+  const { data: basicTrip, error: basicError } = await supabase
     .from('trips')
-    .select(selectColumns)
+    .select('id, user_id')
     .eq('id', tripId)
     .single();
 
-  if (tripError || !trip) {
-    // If error is about missing column, try without those columns
-    if (tripError?.message?.includes('does not exist')) {
-      const { data: basicTrip, error: basicError } = await supabase
-        .from('trips')
-        .select('id, user_id')
-        .eq('id', tripId)
-        .single();
-
-      if (basicError || !basicTrip) {
-        throw createNotFoundError('Trip');
-      }
-
-      const isOwner = basicTrip.user_id === user.id;
-      if (!isOwner) {
-        throw createNotFoundError('Trip');
-      }
-
-      return createSuccessResponse({
-        tripId,
-        visibility: 'private',
-        shareSlug: null,
-        sharedAt: null,
-        collaboratorCount: 0,
-        isOwner,
-        migrationRequired: true,
-      });
-    }
+  if (basicError || !basicTrip) {
     throw createNotFoundError('Trip');
   }
 
-  const isOwner = trip.user_id === user.id;
-
+  const isOwner = basicTrip.user_id === user.id;
   if (!isOwner) {
     throw createNotFoundError('Trip');
   }
 
-  // Return defaults if columns don't exist
+  // Check if sharing columns exist
+  const columnsExist = await checkSharingColumnsExist(supabase);
+
   if (!columnsExist) {
     return createSuccessResponse({
       tripId,
@@ -124,6 +90,29 @@ export const GET = withErrorHandling(async (request: NextRequest, context: Route
       isOwner,
       migrationRequired: true,
     });
+  }
+
+  // Fetch trip with sharing columns
+  const { data: tripWithSharing, error: sharingError } = await supabase
+    .from('trips')
+    .select('visibility, share_slug, shared_at')
+    .eq('id', tripId)
+    .single();
+
+  if (sharingError) {
+    // If columns don't exist, return defaults
+    if (sharingError.message?.includes('does not exist')) {
+      return createSuccessResponse({
+        tripId,
+        visibility: 'private',
+        shareSlug: null,
+        sharedAt: null,
+        collaboratorCount: 0,
+        isOwner,
+        migrationRequired: true,
+      });
+    }
+    throw sharingError;
   }
 
   // Count collaborators (only if table exists)
@@ -141,9 +130,9 @@ export const GET = withErrorHandling(async (request: NextRequest, context: Route
 
   return createSuccessResponse({
     tripId,
-    visibility: trip.visibility || 'private',
-    shareSlug: trip.share_slug || null,
-    sharedAt: trip.shared_at || null,
+    visibility: tripWithSharing?.visibility || 'private',
+    shareSlug: tripWithSharing?.share_slug || null,
+    sharedAt: tripWithSharing?.shared_at || null,
     collaboratorCount,
     isOwner,
   });

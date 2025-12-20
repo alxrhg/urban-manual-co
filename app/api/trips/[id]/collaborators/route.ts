@@ -213,20 +213,9 @@ export const POST = withErrorHandling(async (request: NextRequest, context: Rout
     );
   }
 
-  // Try to find the user by email in user_profiles
-  // If we can't find them, we'll still create the invitation with just the email
-  let invitedUserId: string | null = null;
-  try {
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('user_id')
-      .ilike('email', email.toLowerCase())
-      .single();
-
-    invitedUserId = profile?.user_id || null;
-  } catch {
-    // User not found by email, that's okay - they can accept when they sign up
-  }
+  // Note: We don't look up the user by email here since user_profiles may not have email
+  // The invitation is created with just the email, and the user_id is set when they accept
+  const invitedUserId: string | null = null;
 
   // Create the collaboration invitation
   const { data: collaborator, error: insertError } = await supabase
