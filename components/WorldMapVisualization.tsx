@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 
 interface WorldMapVisualizationProps {
@@ -33,6 +33,7 @@ export function WorldMapVisualization({
   visitedCountries,
   visitedDestinations = []
 }: WorldMapVisualizationProps) {
+  const [tooltip, setTooltip] = useState<{ name: string; x: number; y: number } | null>(null);
 
   // Normalize country names for matching
   const normalizedVisitedCountries = useMemo(() => {
@@ -62,7 +63,10 @@ export function WorldMapVisualization({
   };
 
   return (
-    <div className="relative w-full aspect-[2/1]">
+    <div
+      className="relative w-full aspect-[2/1]"
+      onMouseLeave={() => setTooltip(null)}
+    >
       <ComposableMap
         projection="geoMercator"
         projectionConfig={{
@@ -85,16 +89,37 @@ export function WorldMapVisualization({
                   stroke="#fff"
                   strokeWidth={0.5}
                   style={{
-                    default: { outline: 'none' },
+                    default: { outline: 'none', cursor: 'pointer' },
                     hover: { outline: 'none', fill: isVisited ? '#333' : '#ccc' },
                     pressed: { outline: 'none' },
                   }}
+                  onMouseEnter={(evt: React.MouseEvent) => {
+                    if (name) {
+                      const { clientX, clientY } = evt;
+                      setTooltip({ name, x: clientX, y: clientY });
+                    }
+                  }}
+                  onMouseMove={(evt: React.MouseEvent) => {
+                    if (name) {
+                      const { clientX, clientY } = evt;
+                      setTooltip({ name, x: clientX, y: clientY });
+                    }
+                  }}
+                  onMouseLeave={() => setTooltip(null)}
                 />
               );
             })
           }
         </Geographies>
       </ComposableMap>
+      {tooltip && (
+        <div
+          className="fixed z-50 px-2 py-1 text-xs bg-black text-white rounded pointer-events-none"
+          style={{ left: tooltip.x + 10, top: tooltip.y - 25 }}
+        >
+          {tooltip.name}
+        </div>
+      )}
     </div>
   );
 }
