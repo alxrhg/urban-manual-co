@@ -1,27 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server';
+import { toSlug, toTitleCase } from '@/lib/utils';
 
 type SyncType = 'brands' | 'cities' | 'countries' | 'neighborhoods' | 'all';
-
-function toSlug(str: string): string {
-  return str
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
-}
-
-function toTitleCase(str: string): string {
-  return str
-    .toLowerCase()
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
-    .split('-')
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-    .join('-');
-}
 
 export async function POST(request: NextRequest) {
   try {

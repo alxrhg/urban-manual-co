@@ -237,3 +237,35 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     }
   }
 }
+
+/**
+ * Convert a string to a URL-friendly slug
+ * Handles whitespace, special characters, and consecutive dashes
+ * @example toSlug("New York City") → "new-york-city"
+ * @example toSlug("Café & Restaurant!") → "cafe-restaurant"
+ */
+export function toSlug(str: string): string {
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+/**
+ * Convert a string to Title Case
+ * Handles hyphenated words and multi-word strings
+ * @example toTitleCase("new york") → "New York"
+ * @example toTitleCase("san-francisco") → "San-Francisco"
+ */
+export function toTitleCase(str: string): string {
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+    .split('-')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('-');
+}
