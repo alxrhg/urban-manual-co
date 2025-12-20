@@ -417,7 +417,7 @@ export default function ShareTripDrawer({ trip, onUpdate }: ShareTripDrawerProps
                 </div>
 
                 {/* Actions (owner only, can't remove self) */}
-                {isOwner && collab.user_id !== user?.id && (
+                {isOwner && collab.userId !== user?.id && (
                   <div className="flex items-center gap-2">
                     {collab.status === 'accepted' && (
                       <select
