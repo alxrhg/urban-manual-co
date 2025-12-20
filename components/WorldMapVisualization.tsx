@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 
 interface WorldMapVisualizationProps {
@@ -33,7 +33,6 @@ export function WorldMapVisualization({
   visitedCountries,
   visitedDestinations = []
 }: WorldMapVisualizationProps) {
-  const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
 
   // Normalize country names for matching
   const normalizedVisitedCountries = useMemo(() => {
@@ -89,19 +88,12 @@ export function WorldMapVisualization({
                     hover: { outline: 'none', fill: isVisited ? '#333' : '#ccc' },
                     pressed: { outline: 'none' },
                   }}
-                  onMouseEnter={() => setHoveredCountry(name ?? null)}
-                  onMouseLeave={() => setHoveredCountry(null)}
                 />
               );
             })
           }
         </Geographies>
       </ComposableMap>
-      {hoveredCountry && (
-        <div className="absolute bottom-2 left-2 text-xs text-gray-500 bg-white/80 dark:bg-black/80 px-2 py-1 rounded">
-          {hoveredCountry}
-        </div>
-      )}
     </div>
   );
 }
