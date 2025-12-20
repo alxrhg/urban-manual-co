@@ -12,6 +12,8 @@ interface WorldMapVisualizationProps {
   }>;
 }
 
+type GeoLoadingState = 'loading' | 'loaded' | 'error';
+
 // Map our country names to the names used in Natural Earth / world-atlas TopoJSON
 const COUNTRY_NAME_MAP: Record<string, string[]> = {
   'USA': ['United States of America', 'United States', 'USA'],
@@ -34,6 +36,15 @@ export function WorldMapVisualization({
   visitedDestinations = []
 }: WorldMapVisualizationProps) {
   const [tooltip, setTooltip] = useState<{ name: string; x: number; y: number } | null>(null);
+  const [geoState, setGeoState] = useState<GeoLoadingState>('loading');
+
+  const handleGeoError = () => {
+    setGeoState('error');
+  };
+
+  const handleGeoLoad = () => {
+    setGeoState('loaded');
+  };
 
   // Normalize country names for matching
   const normalizedVisitedCountries = useMemo(() => {
@@ -62,11 +73,25 @@ export function WorldMapVisualization({
     return normalizedVisitedCountries.has(nameLower);
   };
 
+  // Show error state if geo data failed to load
+  if (geoState === 'error') {
+    return (
+      <div className="relative w-full aspect-[2/1] flex items-center justify-center bg-gray-50 text-gray-500 text-sm">
+        Unable to load map data
+      </div>
+    );
+  }
+
   return (
     <div
       className="relative w-full aspect-[2/1]"
       onMouseLeave={() => setTooltip(null)}
     >
+      {geoState === 'loading' && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-50 text-gray-400 text-sm">
+          Loading map...
+        </div>
+      )}
       <ComposableMap
         projection="geoMercator"
         projectionConfig={{
@@ -74,7 +99,16 @@ export function WorldMapVisualization({
           center: [0, 20],
         }}
       >
-        <Geographies geography={geoUrl}>
+        <Geographies
+          geography={geoUrl}
+          onError={handleGeoError}
+          parseGeographies={(geos) => {
+            if (geos && geos.length > 0) {
+              handleGeoLoad();
+            }
+            return geos;
+          }}
+        >
           {({ geographies }) =>
             geographies
               .filter((geo) => {
