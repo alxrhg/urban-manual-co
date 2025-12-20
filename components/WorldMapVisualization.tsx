@@ -82,31 +82,29 @@ export function WorldMapVisualization({
               const isVisited = isCountryVisited(name);
 
               return (
-                <Geography
+                <g
                   key={geo.rsmKey}
-                  geography={geo}
-                  fill={isVisited ? '#000' : '#ddd'}
-                  stroke="#fff"
-                  strokeWidth={0.5}
-                  style={{
-                    default: { outline: 'none', cursor: 'pointer' },
-                    hover: { outline: 'none', fill: isVisited ? '#333' : '#ccc' },
-                    pressed: { outline: 'none' },
+                  onMouseEnter={(evt) => {
+                    if (name) setTooltip({ name, x: evt.clientX, y: evt.clientY });
                   }}
-                  onMouseEnter={(evt: React.MouseEvent) => {
-                    if (name) {
-                      const { clientX, clientY } = evt;
-                      setTooltip({ name, x: clientX, y: clientY });
-                    }
-                  }}
-                  onMouseMove={(evt: React.MouseEvent) => {
-                    if (name) {
-                      const { clientX, clientY } = evt;
-                      setTooltip({ name, x: clientX, y: clientY });
-                    }
+                  onMouseMove={(evt) => {
+                    if (name) setTooltip({ name, x: evt.clientX, y: evt.clientY });
                   }}
                   onMouseLeave={() => setTooltip(null)}
-                />
+                  style={{ cursor: 'pointer' }}
+                >
+                  <Geography
+                    geography={geo}
+                    fill={isVisited ? '#000' : '#ddd'}
+                    stroke="#fff"
+                    strokeWidth={0.5}
+                    style={{
+                      default: { outline: 'none' },
+                      hover: { outline: 'none', fill: isVisited ? '#333' : '#ccc' },
+                      pressed: { outline: 'none' },
+                    }}
+                  />
+                </g>
               );
             })
           }
