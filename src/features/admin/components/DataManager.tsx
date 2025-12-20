@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
+import { toSlug } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -97,9 +98,6 @@ const TYPE_CONFIG = {
   neighborhoods: { singular: 'Neighborhood', plural: 'Neighborhoods', icon: Map },
 };
 
-const toSlug = (str: string): string => {
-  return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-};
 
 export function DataManager({ type }: DataManagerProps) {
   const [items, setItems] = useState<DataItem[]>([]);
