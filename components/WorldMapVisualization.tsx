@@ -26,8 +26,8 @@ const COUNTRY_NAME_MAP: Record<string, string[]> = {
   'Russia': ['Russia', 'Russian Federation'],
 };
 
-// Natural Earth TopoJSON with country names included
-const geoUrl = "https://raw.githubusercontent.com/deldersveld/topojson/master/world-countries.json";
+// Natural Earth GeoJSON with country names
+const geoUrl = "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson";
 
 export function WorldMapVisualization({
   visitedCountries,
@@ -73,7 +73,8 @@ export function WorldMapVisualization({
         <Geographies geography={geoUrl}>
           {({ geographies }) =>
             geographies.map((geo) => {
-              const name = geo.properties?.name as string | undefined;
+              // Try different property names used by various GeoJSON sources
+              const name = (geo.properties?.ADMIN || geo.properties?.name || geo.properties?.NAME) as string | undefined;
               const isVisited = isCountryVisited(name);
 
               return (
