@@ -71,22 +71,22 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sidebar Navigation */}
+        {/* Sidebar Navigation - Horizontal scroll on mobile */}
         <div className="lg:col-span-1">
-          <nav className="space-y-1">
+          <nav className="flex lg:flex-col gap-2 lg:gap-1 overflow-x-auto lg:overflow-visible scrollbar-hide pb-2 lg:pb-0 -mx-1 px-1 lg:mx-0 lg:px-0">
             {sections.map((section) => (
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
                 className={`
-                  w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all
+                  flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-sm font-medium transition-all whitespace-nowrap shrink-0 lg:w-full
                   ${activeSection === section.id
                     ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50'}
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50 border border-transparent'}
                 `}
               >
                 {section.icon}
-                {section.title}
+                <span className="hidden sm:inline lg:inline">{section.title}</span>
               </button>
             ))}
           </nav>
@@ -190,9 +190,9 @@ export default function SettingsPage() {
 
           {activeSection === 'database' && (
             <div className="space-y-6">
-              <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
+              <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-4 sm:p-6">
                 <h2 className="text-lg font-semibold text-white mb-4">Database Status</h2>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                   <div className="p-4 bg-gray-800/50 rounded-lg">
                     <p className="text-xs text-gray-500">Status</p>
                     <p className="text-sm font-medium text-emerald-400 flex items-center gap-1.5 mt-1">

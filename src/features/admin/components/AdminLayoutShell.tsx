@@ -34,24 +34,24 @@ export default function AdminLayoutShell({ children }: { children: ReactNode }) 
   }
 
   return (
-    <main className="w-full px-6 md:px-10 py-20 min-h-screen">
-      <div className="w-full">
+    <main className="w-full px-4 sm:px-6 md:px-10 py-16 sm:py-20 min-h-screen">
+      <div className="w-full max-w-7xl mx-auto">
         {/* Header - Matches account page */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-light">Admin</h1>
+        <div className="mb-8 sm:mb-12">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <h1 className="text-xl sm:text-2xl font-light">Admin</h1>
             <Link
               href="/"
-              className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+              className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors px-3 py-1.5 -mr-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               Exit
             </Link>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
         </div>
 
         {/* Tab Navigation - Matches account page */}
-        <div className="mb-12">
+        <div className="mb-8 sm:mb-12">
           <AdminNav />
         </div>
 

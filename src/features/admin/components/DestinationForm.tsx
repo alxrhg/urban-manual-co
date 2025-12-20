@@ -585,7 +585,7 @@ export function DestinationForm({
             </div>
 
             {/* Slug, City, Country */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className={labelClasses}>Slug</label>
                 <input type="text" required value={formData.slug}
@@ -673,7 +673,7 @@ export function DestinationForm({
             </div>
 
             {/* Neighborhood, Brand */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className={labelClasses}>Neighborhood</label>
                 <div className="relative">
@@ -945,7 +945,7 @@ export function DestinationForm({
                   placeholder="123 Main St, City, Country" className={cn(inputClasses, "pl-9")} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className={labelClasses}>Latitude</label>
                 <div className="relative">
@@ -1065,7 +1065,7 @@ export function DestinationForm({
         {/* Architecture Tab */}
         {activeTab === 'architecture' && (
           <div className="p-5 space-y-5">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className={labelClasses}>Architect</label>
                 <div className="relative">
@@ -1080,7 +1080,7 @@ export function DestinationForm({
                   placeholder="Kelly Wearstler" className={inputClasses} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className={labelClasses}>Design Firm</label>
                 <input type="text" value={formData.design_firm} onChange={(e) => setFormData({ ...formData, design_firm: e.target.value })}
@@ -1096,7 +1096,7 @@ export function DestinationForm({
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className={labelClasses}>Architectural Style</label>
                 <input type="text" value={formData.architectural_style} onChange={(e) => setFormData({ ...formData, architectural_style: e.target.value })}
@@ -1132,7 +1132,7 @@ export function DestinationForm({
                   placeholder="https://example.com" className={cn(inputClasses, "pl-9")} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className={labelClasses}>Phone Number</label>
                 <div className="relative">
@@ -1186,7 +1186,7 @@ export function DestinationForm({
           <div className="p-5 space-y-5">
             <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-800">
               <p className="text-xs text-gray-500 mb-3">This data is typically populated from Google Places API enrichment.</p>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelClasses}>Rating</label>
                   <div className="flex items-center gap-2">

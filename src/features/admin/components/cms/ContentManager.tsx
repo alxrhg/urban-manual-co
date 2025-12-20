@@ -439,14 +439,14 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
   return (
     <div className="space-y-6">
       {/* Header Bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-medium text-black dark:text-white">Content</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {totalCount.toLocaleString()} destinations
           </p>
         </div>
-        <Button onClick={onCreateNew} className="rounded-full">
+        <Button onClick={onCreateNew} className="rounded-full w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />
           Add New
         </Button>
@@ -744,99 +744,106 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
 
       {/* Bulk Actions */}
       {selectedItems.size > 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800/50 rounded-xl">
-          <Badge variant="secondary" className="font-medium">{selectedItems.size} selected</Badge>
-          <Separator orientation="vertical" className="h-5" />
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-3 sm:px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800/50 rounded-xl">
+          <div className="flex items-center gap-3">
+            <Badge variant="secondary" className="font-medium whitespace-nowrap">{selectedItems.size} selected</Badge>
+            <Separator orientation="vertical" className="h-5 hidden sm:block" />
+          </div>
 
-          {/* Category Change */}
-          <Popover open={showBulkCategoryModal} onOpenChange={setShowBulkCategoryModal}>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" disabled={bulkActionLoading}>
-                <Tag className="w-3.5 h-3.5 mr-1.5" />
-                Category
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-48 p-2" align="start">
-              <div className="space-y-2">
-                <p className="text-xs text-gray-500 dark:text-gray-400 px-2">Change category to:</p>
-                {CATEGORIES.map((cat) => (
-                  <Button
-                    key={cat}
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start capitalize"
-                    onClick={() => handleBulkCategoryChange(cat)}
-                    disabled={bulkActionLoading}
-                  >
-                    {cat}
-                  </Button>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
+          {/* Scrollable actions on mobile */}
+          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
+            {/* Category Change */}
+            <Popover open={showBulkCategoryModal} onOpenChange={setShowBulkCategoryModal}>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="sm" disabled={bulkActionLoading} className="shrink-0">
+                  <Tag className="w-3.5 h-3.5 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Category</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-48 p-2" align="start">
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 px-2">Change category to:</p>
+                  {CATEGORIES.map((cat) => (
+                    <Button
+                      key={cat}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start capitalize"
+                      onClick={() => handleBulkCategoryChange(cat)}
+                      disabled={bulkActionLoading}
+                    >
+                      {cat}
+                    </Button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
 
-          {/* Crown Toggle */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" disabled={bulkActionLoading}>
-                <Crown className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
-                Crown
-                <ChevronDown className="w-3 h-3 ml-1" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem onClick={() => handleBulkToggleCrown(true)}>
-                <Crown className="w-4 h-4 mr-2 text-amber-500" />
-                Add Crown
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleBulkToggleCrown(false)}>
-                <X className="w-4 h-4 mr-2" />
-                Remove Crown
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            {/* Crown Toggle */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" disabled={bulkActionLoading} className="shrink-0">
+                  <Crown className="w-3.5 h-3.5 sm:mr-1.5 text-amber-500" />
+                  <span className="hidden sm:inline">Crown</span>
+                  <ChevronDown className="w-3 h-3 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => handleBulkToggleCrown(true)}>
+                  <Crown className="w-4 h-4 mr-2 text-amber-500" />
+                  Add Crown
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleBulkToggleCrown(false)}>
+                  <X className="w-4 h-4 mr-2" />
+                  Remove Crown
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-          {/* Enrich */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBulkEnrich}
-            disabled={bulkActionLoading}
-          >
-            {bulkActionLoading ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-            ) : (
-              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-            )}
-            Enrich
-          </Button>
+            {/* Enrich */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBulkEnrich}
+              disabled={bulkActionLoading}
+              className="shrink-0"
+            >
+              {bulkActionLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin sm:mr-1.5" />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5 sm:mr-1.5" />
+              )}
+              <span className="hidden sm:inline">Enrich</span>
+            </Button>
 
-          {/* Export */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleExportSelected}
-            disabled={bulkActionLoading}
-          >
-            <Download className="w-3.5 h-3.5 mr-1.5" />
-            Export CSV
-          </Button>
+            {/* Export */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleExportSelected}
+              disabled={bulkActionLoading}
+              className="shrink-0"
+            >
+              <Download className="w-3.5 h-3.5 sm:mr-1.5" />
+              <span className="hidden sm:inline">Export</span>
+            </Button>
 
-          <Separator orientation="vertical" className="h-5" />
+            <Separator orientation="vertical" className="h-5 hidden sm:block shrink-0" />
 
-          {/* Delete */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBulkDelete}
-            disabled={bulkActionLoading}
-            className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
-          >
-            {bulkActionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Trash2 className="w-3.5 h-3.5 mr-1.5" />}
-            Delete
-          </Button>
+            {/* Delete */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBulkDelete}
+              disabled={bulkActionLoading}
+              className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 shrink-0"
+            >
+              {bulkActionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin sm:mr-1.5" /> : <Trash2 className="w-3.5 h-3.5 sm:mr-1.5" />}
+              <span className="hidden sm:inline">Delete</span>
+            </Button>
+          </div>
 
-          <div className="ml-auto">
+          <div className="hidden sm:block sm:ml-auto">
             <Button
               variant="ghost"
               size="sm"
@@ -884,11 +891,11 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-4">
-          <p className="text-sm text-gray-400 dark:text-gray-500">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4">
+          <p className="text-xs sm:text-sm text-gray-400 dark:text-gray-500 order-2 sm:order-1">
             {((page - 1) * itemsPerPage) + 1}–{Math.min(page * itemsPerPage, totalCount)} of {totalCount.toLocaleString()}
           </p>
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-0.5 order-1 sm:order-2">
             <button
               onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page === 1}
@@ -896,16 +903,17 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            {/* Page numbers */}
+            {/* Page numbers - show fewer on mobile */}
             <div className="flex items-center">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              {Array.from({ length: Math.min(typeof window !== 'undefined' && window.innerWidth < 640 ? 3 : 5, totalPages) }, (_, i) => {
+                const maxPages = 5;
                 let pageNum: number;
-                if (totalPages <= 5) {
+                if (totalPages <= maxPages) {
                   pageNum = i + 1;
                 } else if (page <= 3) {
                   pageNum = i + 1;
                 } else if (page >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
+                  pageNum = totalPages - maxPages + 1 + i;
                 } else {
                   pageNum = page - 2 + i;
                 }
