@@ -662,20 +662,31 @@ export default function TripPage() {
               )}
 
               {/* Trip Map */}
-              {!sidebarAddDay && staticMapUrl && (
-                <div className="relative aspect-[2/1] rounded-xl overflow-hidden">
-                  <Image
-                    src={staticMapUrl}
-                    alt={`Map of ${primaryCity}`}
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-900 rounded-full px-2.5 py-1 shadow-lg flex items-center gap-1.5">
-                    <MapPin className="w-3 h-3 text-red-500" />
-                    <span className="text-[11px] font-medium text-gray-900 dark:text-white">{primaryCity}</span>
-                    <span className="text-[11px] text-gray-400">{totalItems} pinned</span>
-                  </div>
+              {!sidebarAddDay && (
+                <div className="relative aspect-[2/1] rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                  {staticMapUrl ? (
+                    <>
+                      <Image
+                        src={staticMapUrl}
+                        alt={`Map of ${primaryCity}`}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-900 rounded-full px-2.5 py-1 shadow-lg flex items-center gap-1.5">
+                        <MapPin className="w-3 h-3 text-red-500" />
+                        <span className="text-[11px] font-medium text-gray-900 dark:text-white">{primaryCity}</span>
+                        <span className="text-[11px] text-gray-400">{totalItems} pinned</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="text-center">
+                        <MapPin className="w-6 h-6 text-gray-400 mx-auto mb-1" />
+                        <span className="text-[11px] text-gray-500">{primaryCity || 'Add places to see map'}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
