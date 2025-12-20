@@ -1460,7 +1460,7 @@ function DaySection({
 
       {/* Items (including hotel activities which are now always part of orderedItems) */}
       {orderedItems.length > 0 ? (
-        <Reorder.Group axis="y" values={orderedItems} onReorder={(newOrder) => {
+        <Reorder.Group as="div" axis="y" values={orderedItems} onReorder={(newOrder) => {
           latestReorderRef.current = newOrder;
           setOrderedItems(newOrder);
         }} className="space-y-0">
@@ -2012,6 +2012,7 @@ function HotelActivityRow({
 
   return (
     <Reorder.Item
+      as="div"
       value={item}
       id={item.id}
       onDragStart={() => setIsDragging(true)}
@@ -2329,6 +2330,7 @@ function ItemRow({
 
     return (
       <Reorder.Item
+        as="div"
         value={item}
         onDragStart={() => setIsDragging(true)}
         onDragEnd={() => { setIsDragging(false); onDragEnd(); }}
@@ -2472,6 +2474,7 @@ function ItemRow({
 
   return (
     <Reorder.Item
+      as="div"
       value={item}
       onDragStart={() => setIsDragging(true)}
       onDragEnd={() => { setIsDragging(false); onDragEnd(); }}
