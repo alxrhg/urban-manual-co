@@ -263,21 +263,31 @@ export function CookieConsent() {
 
   return (
     <>
-      {/* Minimal bottom-left cookie banner - shown when no consent */}
+      {/* Floating toast-style cookie banner - top right */}
       {showMinimalBanner && (
-        <div className="fixed bottom-4 left-4 z-50 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 max-w-[calc(100vw-2rem)]">
-          <button
-            onClick={acceptAll}
-            className="px-4 py-2 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-full text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors shadow-lg whitespace-nowrap"
-          >
-            🍪 Accept cookies
-          </button>
-          <button
-            onClick={openSettings}
-            className="px-4 py-2 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-full text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors shadow-lg whitespace-nowrap"
-          >
-            Settings
-          </button>
+        <div className="fixed top-4 right-4 z-50 max-w-sm w-full animate-in slide-in-from-top-2 fade-in duration-300">
+          <div className="bg-gray-900 dark:bg-gray-950 rounded-2xl p-5 shadow-2xl">
+            <p className="text-sm text-gray-100 leading-relaxed mb-4">
+              Urban Manual uses cookies to enhance the quality of our website. To learn more about which cookies we use and how to edit your preferences, read our{' '}
+              <a href="/privacy" className="underline hover:text-white transition-colors">
+                Cookie Policy
+              </a>.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={acceptAll}
+                className="flex-1 px-4 py-2.5 bg-white text-gray-900 text-sm font-medium rounded-full hover:bg-gray-100 transition-colors"
+              >
+                Accept
+              </button>
+              <button
+                onClick={openSettings}
+                className="flex-1 px-4 py-2.5 border border-gray-600 text-gray-300 text-sm font-medium rounded-full hover:bg-gray-800 hover:text-white transition-colors"
+              >
+                Preferences
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
