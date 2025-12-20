@@ -159,6 +159,36 @@ export default function TripPage() {
     return days.reduce((sum, day) => sum + day.items.length, 0);
   }, [days]);
 
+  // Calculate map center from all items with coordinates
+  const mapCenter = useMemo(() => {
+    const allItems = days.flatMap(d => d.items);
+    const coords = allItems
+      .map(item => ({
+        lat: item.destination?.latitude || item.parsedNotes?.latitude,
+        lng: item.destination?.longitude || item.parsedNotes?.longitude,
+      }))
+      .filter(c => c.lat && c.lng) as { lat: number; lng: number }[];
+
+    if (coords.length === 0) return null;
+
+    const sumLat = coords.reduce((sum, c) => sum + c.lat, 0);
+    const sumLng = coords.reduce((sum, c) => sum + c.lng, 0);
+    return {
+      lat: sumLat / coords.length,
+      lng: sumLng / coords.length,
+    };
+  }, [days]);
+
+  // Generate static map URL
+  const staticMapUrl = useMemo(() => {
+    if (!mapCenter) return null;
+    const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+    if (!token) return null;
+
+    const pin = `pin-s+ef4444(${mapCenter.lng},${mapCenter.lat})`;
+    return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${pin}/${mapCenter.lng},${mapCenter.lat},11,0/400x200@2x?access_token=${token}`;
+  }, [mapCenter]);
+
   // Use optimized hotel logic hook - prevents cascading recalculations
   // when non-hotel items are added/removed/reordered
   const {
@@ -631,17 +661,33 @@ export default function TripPage() {
                 />
               )}
 
+              {/* Trip Map */}
+              {!sidebarAddDay && staticMapUrl && (
+                <div className="relative aspect-[2/1] rounded-xl overflow-hidden">
+                  <Image
+                    src={staticMapUrl}
+                    alt={`Map of ${primaryCity}`}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-900 rounded-full px-2.5 py-1 shadow-lg flex items-center gap-1.5">
+                    <MapPin className="w-3 h-3 text-red-500" />
+                    <span className="text-[11px] font-medium text-gray-900 dark:text-white">{primaryCity}</span>
+                    <span className="text-[11px] text-gray-400">{totalItems} pinned</span>
+                  </div>
+                </div>
+              )}
+
               {/* Trip Intelligence */}
               {!sidebarAddDay && (
-                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-                  <TripIntelligence
-                    days={days}
-                    city={primaryCity}
-                    weatherByDate={weatherByDate}
-                    onOptimizeRoute={(dayNumber, optimizedItems) => reorderItems(dayNumber, optimizedItems)}
-                    compact
-                  />
-                </div>
+                <TripIntelligence
+                  days={days}
+                  city={primaryCity}
+                  weatherByDate={weatherByDate}
+                  onOptimizeRoute={(dayNumber, optimizedItems) => reorderItems(dayNumber, optimizedItems)}
+                  compact
+                />
               )}
 
               {/* Drag & Drop Palette */}
