@@ -175,7 +175,7 @@ export default function TripPage() {
           name: item.destination?.name || item.parsedNotes?.name || 'Unknown',
           latitude: item.destination?.latitude || item.parsedNotes?.latitude,
           longitude: item.destination?.longitude || item.parsedNotes?.longitude,
-          category: item.destination?.category || item.type,
+          category: item.destination?.category,
           order: ++orderIndex,
         }))
     );
@@ -350,9 +350,9 @@ export default function TripPage() {
         </Link>
 
         {/* Desktop flex layout with sidebar */}
-        <div className="md:flex md:gap-8">
+        <div className="min-[700px]:flex min-[700px]:gap-8">
           {/* Main content column */}
-          <div className="flex-1 min-w-0 max-w-xl md:max-w-none">
+          <div className="flex-1 min-w-0 max-w-xl min-[700px]:max-w-none">
             {/* Header - tap to edit */}
             <TripEditorHeader
               trip={trip}
@@ -389,7 +389,7 @@ export default function TripPage() {
 
               <button
                 onClick={() => { setShowTripSettings(true); setSelectedItem(null); }}
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                className="hidden min-[700px]:flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
               >
                 <Settings className="w-3.5 h-3.5" />
                 Settings
@@ -397,7 +397,7 @@ export default function TripPage() {
             </div>
 
         {/* Trip Notes - expandable (mobile only, desktop uses sidebar) */}
-        <div className="mt-4 md:hidden">
+        <div className="mt-4 min-[700px]:hidden">
           <button
             onClick={() => setShowTripNotes(!showTripNotes)}
             className="text-[12px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
@@ -424,7 +424,7 @@ export default function TripPage() {
         </div>
 
         {/* Trip Intelligence - Smart Warnings & Suggestions (mobile only) */}
-        <div className="md:hidden">
+        <div className="min-[700px]:hidden">
           <TripIntelligence
             days={days}
             city={primaryCity}
@@ -562,7 +562,7 @@ export default function TripPage() {
           {/* End main content column */}
 
           {/* Desktop Sidebar */}
-          <div className="hidden md:block md:w-80 md:flex-shrink-0">
+          <div className="hidden min-[700px]:block min-[700px]:w-80 min-[700px]:flex-shrink-0">
             <div className="sticky top-24 space-y-4 max-h-[calc(100vh-8rem)] overflow-y-auto pb-8">
               {/* Add Place Panel */}
               {sidebarAddDay !== null && (
@@ -1245,7 +1245,7 @@ function DaySection({
                   initial={{ opacity: 0, scale: 0.95, y: -4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  className="absolute right-0 top-full mt-1 w-44 sm:w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl sm:rounded-lg shadow-lg overflow-hidden z-20 md:hidden"
+                  className="absolute right-0 top-full mt-1 w-44 sm:w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl sm:rounded-lg shadow-lg overflow-hidden z-20 min-[700px]:hidden"
                 >
                   <button
                     onClick={() => { setShowSearch(true); setSearchSource('curated'); }}
@@ -1305,13 +1305,13 @@ function DaySection({
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={closeAllMenus}
-                    className="fixed inset-0 bg-black/40 z-40 md:hidden"
+                    className="fixed inset-0 bg-black/40 z-40 min-[700px]:hidden"
                   />
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 20 }}
-                    className="fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 rounded-t-2xl shadow-2xl p-4 pb-8 md:hidden"
+                    className="fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 rounded-t-2xl shadow-2xl p-4 pb-8 min-[700px]:hidden"
                     style={{ maxHeight: '70vh' }}
                   >
                   {/* Source toggle */}
@@ -1420,7 +1420,7 @@ function DaySection({
                   initial={{ opacity: 0, scale: 0.95, y: -4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  className="absolute right-0 top-full mt-1 w-72 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20 p-3 md:hidden"
+                  className="absolute right-0 top-full mt-1 w-72 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20 p-3 min-[700px]:hidden"
                 >
                   <TransportForm
                     type={showTransportForm}
@@ -1440,7 +1440,7 @@ function DaySection({
                   initial={{ opacity: 0, scale: 0.95, y: -4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  className="absolute right-0 top-full mt-1 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20 p-3 md:hidden"
+                  className="absolute right-0 top-full mt-1 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20 p-3 min-[700px]:hidden"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-[12px] font-medium text-gray-900 dark:text-white">Add activity</span>
@@ -2482,7 +2482,7 @@ function ItemRow({
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden md:hidden"
+              className="overflow-hidden min-[700px]:hidden"
             >
               <ItemDetails
                 item={item}
@@ -2658,7 +2658,7 @@ function ItemRow({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden md:hidden"
+            className="overflow-hidden min-[700px]:hidden"
           >
             <ItemDetails
               item={item}
