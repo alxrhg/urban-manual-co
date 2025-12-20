@@ -5,13 +5,10 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { cityCountryMap } from "@/data/cityCountryMap";
-import Image from "next/image";
 import { EnhancedVisitedTab } from "@/components/EnhancedVisitedTab";
 import { EnhancedSavedTab } from "@/components/EnhancedSavedTab";
 import { WorldMapVisualization } from "@/components/WorldMapVisualization";
-import { AchievementsDisplay } from "@/components/AchievementsDisplay";
 import { PageLoader } from "@/components/LoadingStates";
-import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { AccountPrivacyManager } from "@/components/AccountPrivacyManager";
 import { SecuritySettings } from "@/components/SecuritySettings";
@@ -46,20 +43,20 @@ export default function Account() {
   const [authChecked, setAuthChecked] = useState(false);
   
   // Get initial tab from URL query param - use useEffect to avoid SSR issues
-  const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings' | 'trips' | 'preferences' | 'integrations'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings' | 'trips'>('profile');
+  const [settingsSubtab, setSettingsSubtab] = useState<'profile' | 'preferences' | 'integrations' | 'security' | 'privacy'>('profile');
 
   // Update tab from URL params after mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
-      const validTabs = ['profile', 'visited', 'saved', 'collections', 'achievements', 'settings', 'trips', 'preferences', 'integrations'] as const;
+      const validTabs = ['profile', 'visited', 'saved', 'collections', 'achievements', 'settings', 'trips'] as const;
       if (tab && validTabs.includes(tab as typeof validTabs[number])) {
         setActiveTab(tab as typeof activeTab);
       }
     }
   }, []);
-  const [totalDestinations, setTotalDestinations] = useState(0);
 
   // Collection creation state
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -88,21 +85,6 @@ export default function Account() {
     }
 
     checkAuth();
-  }, []);
-
-  // Fetch total destinations count
-  useEffect(() => {
-    async function fetchTotalDestinations() {
-      try {
-        const { count } = await supabase
-          .from('destinations')
-          .select('*', { count: 'exact', head: true });
-        setTotalDestinations(count || 0);
-      } catch (error) {
-        console.error('Error fetching total destinations:', error);
-      }
-    }
-    fetchTotalDestinations();
   }, []);
 
   // Load user data - extracted as a function to be callable
@@ -310,19 +292,7 @@ export default function Account() {
   };
 
   // Calculate stats
-  const stats = useMemo((): {
-    uniqueCities: Set<string>;
-    uniqueCountries: Set<string>;
-    visitedCount: number;
-    savedCount: number;
-    collectionsCount: number;
-    curationCompletionPercentage: number;
-    visitedDestinationsWithCoords: Array<{
-      city: string;
-      latitude?: number | null;
-      longitude?: number | null;
-    }>;
-  } => {
+  const stats = useMemo(() => {
     const uniqueCities = new Set([
       ...savedPlaces.map(p => p.destination?.city).filter((city): city is string => typeof city === 'string'),
       ...visitedPlaces.filter(p => p.destination).map(p => p.destination!.city)
@@ -333,40 +303,29 @@ export default function Account() {
       ...savedPlaces.map(p => p.destination?.country).filter((country): country is string => typeof country === 'string' && country.trim().length > 0),
       ...visitedPlaces.filter(p => p.destination?.country).map(p => p.destination!.country!).filter((country): country is string => typeof country === 'string' && country.trim().length > 0)
     ]);
-    
-    // Also get countries from city mapping for destinations without country field
-    // Normalize city names to match cityCountryMap format (lowercase, hyphenated)
+
     const countriesFromCities = Array.from(uniqueCities)
       .map(city => {
         if (!city) return null;
-        // Try exact match first
         let country = cityCountryMap[city];
         if (country) return country;
-        
-        // Try lowercase match
         const cityLower = city.toLowerCase();
         country = cityCountryMap[cityLower];
         if (country) return country;
-        
-        // Try hyphenated version (e.g., "New York" -> "new-york")
         const cityHyphenated = cityLower.replace(/\s+/g, '-');
         country = cityCountryMap[cityHyphenated];
         if (country) return country;
-        
-        // Try without hyphens (e.g., "new-york" -> "newyork" - less common but possible)
         const cityNoHyphens = cityLower.replace(/-/g, '');
         country = cityCountryMap[cityNoHyphens];
-        
         return country || null;
       })
       .filter((country): country is string => country !== null && country !== undefined);
-    
+
     const uniqueCountries = new Set([
       ...Array.from(countriesFromDestinations),
       ...countriesFromCities
     ]);
-    
-    // Extract visited destinations with coordinates for map
+
     const visitedDestinationsWithCoords = visitedPlaces
       .filter(p => p.destination)
       .map(p => ({
@@ -376,20 +335,14 @@ export default function Account() {
       }))
       .filter(d => d.latitude && d.longitude);
 
-    const curationCompletionPercentage = totalDestinations > 0
-      ? Math.round((visitedPlaces.length / totalDestinations) * 100)
-      : 0;
-
     return {
       uniqueCities,
       uniqueCountries,
       visitedCount: visitedPlaces.length,
       savedCount: savedPlaces.length,
-      collectionsCount: collections.length,
-      curationCompletionPercentage,
       visitedDestinationsWithCoords
     };
-  }, [savedPlaces, visitedPlaces, collections, totalDestinations]);
+  }, [savedPlaces, visitedPlaces]);
 
   // Show loading
   if (!authChecked || isLoadingData) {
@@ -442,7 +395,7 @@ export default function Account() {
         {/* Tab Navigation - Minimal, matches homepage city/category style */}
         <div className="mb-12">
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-            {(['profile', 'visited', 'saved', 'collections', 'trips', 'achievements', 'preferences', 'integrations', 'settings'] as const).map((tab) => (
+            {(['profile', 'visited', 'saved', 'collections', 'trips', 'achievements', 'settings'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -460,47 +413,18 @@ export default function Account() {
 
         {/* Profile Tab */}
         {activeTab === 'profile' && (
-          <div className="fade-in">
-            {/* Stats Row - Inline definition list style */}
-            <div className="flex flex-wrap items-baseline gap-x-8 gap-y-4 pb-8 border-b border-gray-200 dark:border-gray-800">
-              <div>
-                <span className="text-3xl md:text-4xl font-light">{stats.visitedCount}</span>
-                <span className="text-xs text-gray-500 ml-2">visited</span>
-              </div>
-              <div>
-                <span className="text-3xl md:text-4xl font-light">{stats.savedCount}</span>
-                <span className="text-xs text-gray-500 ml-2">saved</span>
-              </div>
-              <div>
-                <span className="text-3xl md:text-4xl font-light">{stats.uniqueCities.size}</span>
-                <span className="text-xs text-gray-500 ml-2">{stats.uniqueCities.size === 1 ? 'city' : 'cities'}</span>
-              </div>
-              <div>
-                <span className="text-3xl md:text-4xl font-light">{stats.uniqueCountries.size}</span>
-                <span className="text-xs text-gray-500 ml-2">{stats.uniqueCountries.size === 1 ? 'country' : 'countries'}</span>
-              </div>
-            </div>
-
-            {/* Progress - Simple text-based */}
-            <div className="py-8 border-b border-gray-200 dark:border-gray-800">
-              <div className="flex items-baseline justify-between mb-3">
-                <span className="text-xs text-gray-500">Curation explored</span>
-                <span className="text-xs text-gray-400">{stats.visitedCount} / {totalDestinations}</span>
-              </div>
-              <div className="w-full h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-black dark:bg-white transition-all duration-500 ease-out"
-                  style={{ width: `${Math.min(stats.curationCompletionPercentage, 100)}%` }}
-                />
-              </div>
-              <div className="mt-2 text-xs text-gray-400">
-                {stats.curationCompletionPercentage}% complete
-              </div>
-            </div>
+          <div className="fade-in max-w-2xl">
+            {/* Stats as simple text */}
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              You&apos;ve visited <span className="text-black dark:text-white font-medium">{stats.visitedCount}</span> places
+              {stats.savedCount > 0 && <> and saved <span className="text-black dark:text-white font-medium">{stats.savedCount}</span> for later</>}
+              {stats.uniqueCities.size > 0 && <>, across <span className="text-black dark:text-white font-medium">{stats.uniqueCities.size}</span> {stats.uniqueCities.size === 1 ? 'city' : 'cities'}</>}
+              {stats.uniqueCountries.size > 0 && <> in <span className="text-black dark:text-white font-medium">{stats.uniqueCountries.size}</span> {stats.uniqueCountries.size === 1 ? 'country' : 'countries'}</>}.
+            </p>
 
             {/* World Map */}
-            {(stats.uniqueCountries.size > 0 || stats.visitedDestinationsWithCoords.length > 0) && (
-              <div className="py-8 border-b border-gray-200 dark:border-gray-800">
+            {stats.visitedDestinationsWithCoords.length > 0 && (
+              <div className="mt-12">
                 <WorldMapVisualization
                   visitedCountries={stats.uniqueCountries}
                   visitedDestinations={stats.visitedDestinationsWithCoords}
@@ -508,37 +432,19 @@ export default function Account() {
               </div>
             )}
 
-            {/* Recent Visits - Simpler table-like layout */}
+            {/* Recent Visits */}
             {visitedPlaces.length > 0 && (
-              <div className="pt-8">
-                <h2 className="text-xs text-gray-500 mb-6">Recent</h2>
-                <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {visitedPlaces.slice(0, 6).map((place) => (
+              <div className="mt-12">
+                <h2 className="text-xs text-gray-500 mb-4">Recent</h2>
+                <div className="space-y-3">
+                  {visitedPlaces.slice(0, 5).map((place) => (
                     <button
                       key={place.destination_slug}
                       onClick={() => router.push(`/destination/${place.destination_slug}`)}
-                      className="w-full flex items-center gap-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors text-left -mx-2 px-2 rounded-lg"
+                      className="block text-left text-sm hover:opacity-60 transition-opacity"
                     >
-                      {place.destination?.image && (
-                        <div className="relative w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
-                          <Image
-                            src={place.destination.image}
-                            alt={place.destination.name}
-                            fill
-                            className="object-cover"
-                            sizes="48px"
-                          />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">{place.destination?.name}</div>
-                        <div className="text-xs text-gray-500 mt-0.5">
-                          {place.destination && capitalizeCity(place.destination.city)}
-                        </div>
-                      </div>
-                      <div className="text-xs text-gray-400 flex-shrink-0">
-                        {place.visited_at && new Date(place.visited_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </div>
+                      <span className="font-medium">{place.destination?.name}</span>
+                      <span className="text-gray-500"> · {place.destination && capitalizeCity(place.destination.city)}</span>
                     </button>
                   ))}
                 </div>
@@ -566,37 +472,37 @@ export default function Account() {
 
         {/* Collections Tab */}
         {activeTab === 'collections' && (
-          <div className="fade-in">
+          <div className="fade-in max-w-2xl">
             {collections.length === 0 ? (
-              <NoCollectionsEmptyState onCreateCollection={() => setShowCreateModal(true)} />
+              <div>
+                <p className="text-sm text-gray-500 mb-4">No collections yet.</p>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="text-sm hover:opacity-60 transition-opacity"
+                >
+                  Create one →
+                </button>
+              </div>
             ) : (
               <>
-                <div className="flex items-center justify-between pb-6 border-b border-gray-200 dark:border-gray-800 mb-6">
-                  <span className="text-xs text-gray-500">{collections.length} {collections.length === 1 ? 'collection' : 'collections'}</span>
+                <div className="flex items-baseline justify-between mb-6">
+                  <p className="text-sm text-gray-500">{collections.length} {collections.length === 1 ? 'collection' : 'collections'}</p>
                   <button
                     onClick={() => setShowCreateModal(true)}
-                    className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+                    className="text-sm text-gray-500 hover:text-black dark:hover:text-white transition-colors"
                   >
                     + New
                   </button>
                 </div>
-                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                <div className="space-y-3">
                   {collections.map((collection) => (
                     <button
                       key={collection.id}
                       onClick={() => router.push(`/collection/${collection.id}`)}
-                      className="w-full text-left py-5 flex items-start gap-4 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors -mx-2 px-2 rounded-lg"
+                      className="block text-left text-sm hover:opacity-60 transition-opacity"
                     >
-                      <span className="text-2xl flex-shrink-0">{collection.emoji || '📚'}</span>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-sm">{collection.name}</h3>
-                        {collection.description && (
-                          <p className="text-xs text-gray-500 mt-1 line-clamp-1">{collection.description}</p>
-                        )}
-                      </div>
-                      <div className="text-xs text-gray-400 flex-shrink-0">
-                        {collection.destination_count || 0}
-                      </div>
+                      <span className="font-medium">{collection.name}</span>
+                      <span className="text-gray-500"> · {collection.destination_count || 0} places</span>
                     </button>
                   ))}
                 </div>
@@ -607,78 +513,60 @@ export default function Account() {
 
         {/* Trips Tab */}
         {activeTab === 'trips' && (
-          <div className="fade-in">
+          <div className="fade-in max-w-2xl">
             {trips.length === 0 ? (
-              <div className="py-16 text-center">
-                <p className="text-sm text-gray-500 mb-4">No trips planned yet</p>
+              <div>
+                <p className="text-sm text-gray-500 mb-4">No trips planned yet.</p>
                 <button
                   onClick={() => {
-                    if (!user) {
-                      router.push('/auth/login');
-                    } else {
-                      setEditingTripId(null);
-                      setShowTripDialog(true);
-                    }
+                    setEditingTripId(null);
+                    setShowTripDialog(true);
                   }}
-                  className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+                  className="text-sm hover:opacity-60 transition-opacity"
                 >
-                  + Create your first trip
+                  Plan one →
                 </button>
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between pb-6 border-b border-gray-200 dark:border-gray-800 mb-6">
-                  <span className="text-xs text-gray-500">{trips.length} {trips.length === 1 ? 'trip' : 'trips'}</span>
+                <div className="flex items-baseline justify-between mb-6">
+                  <p className="text-sm text-gray-500">{trips.length} {trips.length === 1 ? 'trip' : 'trips'}</p>
                   <button
                     onClick={() => {
                       setEditingTripId(null);
                       setShowTripDialog(true);
                     }}
-                    className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+                    className="text-sm text-gray-500 hover:text-black dark:hover:text-white transition-colors"
                   >
                     + New
                   </button>
                 </div>
-                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                <div className="space-y-4">
                   {trips.map((trip) => (
-                    <div
-                      key={trip.id}
-                      className="py-5 -mx-2 px-2"
-                    >
+                    <div key={trip.id}>
                       <button
                         onClick={() => router.push(`/trips/${trip.id}`)}
-                        className="w-full text-left hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors rounded-lg p-2 -m-2"
+                        className="block text-left text-sm hover:opacity-60 transition-opacity"
                       >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-sm">{trip.title}</h3>
-                            {trip.destination && (
-                              <p className="text-xs text-gray-500 mt-1">
-                                {formatDestinationsFromField(trip.destination)}
-                              </p>
-                            )}
-                          </div>
-                          <div className="text-xs text-gray-400 text-right flex-shrink-0">
-                            {trip.start_date && (
-                              <span>
-                                {new Date(trip.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                {trip.end_date && ` – ${new Date(trip.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
-                              </span>
-                            )}
-                            {trip.status && !trip.start_date && (
-                              <span className="capitalize">{trip.status}</span>
-                            )}
-                          </div>
-                        </div>
+                        <span className="font-medium">{trip.title}</span>
+                        {trip.destination && (
+                          <span className="text-gray-500"> · {formatDestinationsFromField(trip.destination)}</span>
+                        )}
                       </button>
-                      <div className="flex items-center gap-4 mt-3 pl-2">
+                      <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
+                        {trip.start_date && (
+                          <span>
+                            {new Date(trip.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            {trip.end_date && `–${new Date(trip.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                          </span>
+                        )}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setEditingTripId(trip.id);
                             setShowTripDialog(true);
                           }}
-                          className="text-xs text-gray-400 hover:text-black dark:hover:text-white transition-colors"
+                          className="hover:text-black dark:hover:text-white transition-colors"
                         >
                           Edit
                         </button>
@@ -687,10 +575,7 @@ export default function Account() {
                             e.stopPropagation();
                             if (confirm(`Delete "${trip.title}"?`)) {
                               try {
-                                const { error } = await supabase
-                                  .from('trips')
-                                  .delete()
-                                  .eq('id', trip.id);
+                                const { error } = await supabase.from('trips').delete().eq('id', trip.id);
                                 if (error) throw error;
                                 await loadUserData();
                               } catch (error) {
@@ -699,7 +584,7 @@ export default function Account() {
                               }
                             }
                           }}
-                          className="text-xs text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                          className="hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         >
                           Delete
                         </button>
@@ -714,71 +599,107 @@ export default function Account() {
 
         {/* Achievements Tab */}
         {activeTab === 'achievements' && (
-          <div className="fade-in">
-            <AchievementsDisplay
-              visitedPlaces={visitedPlaces}
-              savedPlaces={savedPlaces}
-              uniqueCities={stats.uniqueCities}
-              uniqueCountries={stats.uniqueCountries}
-            />
-          </div>
-        )}
+          <div className="fade-in max-w-2xl">
+            {(() => {
+              const milestones = [
+                { label: 'First save', done: savedPlaces.length >= 1 },
+                { label: 'First visit', done: visitedPlaces.length >= 1 },
+                { label: '10 places visited', done: visitedPlaces.length >= 10 },
+                { label: '25 places visited', done: visitedPlaces.length >= 25 },
+                { label: '50 places visited', done: visitedPlaces.length >= 50 },
+                { label: '5 cities explored', done: stats.uniqueCities.size >= 5 },
+                { label: '10 cities explored', done: stats.uniqueCities.size >= 10 },
+                { label: '5 countries visited', done: stats.uniqueCountries.size >= 5 },
+              ];
+              const completed = milestones.filter(m => m.done).length;
 
-        {/* Preferences Tab */}
-        {activeTab === 'preferences' && user && (
-          <div className="fade-in">
-            <PreferencesTab userId={user.id} />
-          </div>
-        )}
-
-        {/* Integrations Tab */}
-        {activeTab === 'integrations' && user && (
-          <div className="fade-in">
-            <MCPIntegration />
+              return (
+                <>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-8">
+                    {completed} of {milestones.length} milestones reached.
+                  </p>
+                  <div className="space-y-3">
+                    {milestones.map((m, i) => (
+                      <div key={i} className="flex items-center gap-3 text-sm">
+                        <span className={m.done ? 'text-black dark:text-white' : 'text-gray-300 dark:text-gray-700'}>
+                          {m.done ? '✓' : '○'}
+                        </span>
+                        <span className={m.done ? 'text-black dark:text-white' : 'text-gray-400 dark:text-gray-600'}>
+                          {m.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
 
         {/* Settings Tab */}
         {activeTab === 'settings' && user && (
           <div className="fade-in">
-            {/* Profile Section */}
-            <section className="pb-8 border-b border-gray-200 dark:border-gray-800">
-              <h2 className="text-xs text-gray-500 mb-6">Profile</h2>
-              <ProfileEditor
-                userId={user.id}
-                onSaveComplete={() => {
-                  toast.success('Profile updated');
-                }}
-              />
-            </section>
+            {/* Settings Subtabs */}
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs mb-8">
+              {(['profile', 'preferences', 'integrations', 'security', 'privacy'] as const).map((subtab) => (
+                <button
+                  key={subtab}
+                  onClick={() => setSettingsSubtab(subtab)}
+                  className={`transition-all ${
+                    settingsSubtab === subtab
+                      ? "font-medium text-black dark:text-white"
+                      : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                  }`}
+                >
+                  {subtab.charAt(0).toUpperCase() + subtab.slice(1)}
+                </button>
+              ))}
+            </div>
 
-            {/* Security Section */}
-            <section className="py-8 border-b border-gray-200 dark:border-gray-800">
-              <h2 className="text-xs text-gray-500 mb-6">Security</h2>
-              <SecuritySettings />
-            </section>
+            {/* Profile Subtab */}
+            {settingsSubtab === 'profile' && (
+              <div className="max-w-md">
+                <ProfileEditor
+                  userId={user.id}
+                  onSaveComplete={() => {
+                    toast.success('Profile updated');
+                  }}
+                />
+              </div>
+            )}
 
-            {/* Privacy & Data Section */}
-            <section className="pt-8">
-              <h2 className="text-xs text-gray-500 mb-6">Privacy & Data</h2>
-              <AccountPrivacyManager />
+            {/* Preferences Subtab */}
+            {settingsSubtab === 'preferences' && (
+              <PreferencesTab userId={user.id} />
+            )}
 
-              {/* Cookie Settings */}
-              <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">Cookie Preferences</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Control how we use cookies</p>
-                  </div>
+            {/* Integrations Subtab */}
+            {settingsSubtab === 'integrations' && (
+              <MCPIntegration />
+            )}
+
+            {/* Security Subtab */}
+            {settingsSubtab === 'security' && (
+              <div className="max-w-md">
+                <SecuritySettings />
+              </div>
+            )}
+
+            {/* Privacy Subtab */}
+            {settingsSubtab === 'privacy' && (
+              <div className="max-w-md">
+                <AccountPrivacyManager />
+                <div className="mt-8 flex items-center justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">Cookie preferences</span>
                   <button
                     onClick={openCookieSettings}
-                    className="text-xs text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+                    className="text-gray-500 hover:text-black dark:hover:text-white transition-colors"
                   >
-                    Manage
+                    Manage →
                   </button>
                 </div>
               </div>
-            </section>
+            )}
           </div>
         )}
       </div>

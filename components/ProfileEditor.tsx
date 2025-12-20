@@ -308,22 +308,14 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
 
         {/* Privacy Setting */}
         <div className="pt-6 border-t border-gray-200 dark:border-gray-800">
-          <div className="flex items-start gap-4 p-4 border border-gray-200 dark:border-gray-800 rounded-2xl bg-gray-50/50 dark:bg-gray-900/50">
+          <label className="flex items-center gap-3 cursor-pointer">
             <Switch
               id="is_public"
               checked={profile.is_public}
               onCheckedChange={(checked) => setProfile({ ...profile, is_public: checked })}
-              className="mt-0.5"
             />
-            <div className="flex-1 space-y-1">
-              <Label htmlFor="is_public" className="text-sm font-medium text-black dark:text-white cursor-pointer">
-                Make my profile public
-              </Label>
-              <p className="text-xs text-gray-500 dark:text-gray-500">
-                Allow others to view your profile and saved destinations
-              </p>
-            </div>
-          </div>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Public profile</span>
+          </label>
         </div>
 
         {/* Action Buttons */}
