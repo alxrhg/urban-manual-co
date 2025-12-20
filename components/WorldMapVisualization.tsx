@@ -74,7 +74,7 @@ export function WorldMapVisualization({
         <Geographies geography={geoUrl}>
           {({ geographies }) =>
             geographies.map((geo) => {
-              const name = geo.properties?.name;
+              const name = geo.properties?.name as string | undefined;
               const isVisited = isCountryVisited(name);
 
               return (
@@ -89,7 +89,7 @@ export function WorldMapVisualization({
                     hover: { outline: 'none', fill: isVisited ? '#333' : '#ccc' },
                     pressed: { outline: 'none' },
                   }}
-                  onMouseEnter={() => setHoveredCountry(name)}
+                  onMouseEnter={() => setHoveredCountry(name ?? null)}
                   onMouseLeave={() => setHoveredCountry(null)}
                 />
               );
