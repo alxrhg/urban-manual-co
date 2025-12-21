@@ -1181,7 +1181,7 @@ function TableView({
       case 'address':
         return (
           <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px] block">
-            {dest.address || '—'}
+            {dest.formatted_address || '—'}
           </span>
         );
       case 'created_at':
