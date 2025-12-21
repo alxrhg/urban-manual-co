@@ -15,11 +15,15 @@ const FIELD_MAPPING: Record<DataType, string> = {
 
 export async function POST(request: NextRequest) {
   try {
-    const { type, sourceId, targetId, deleteSource } = await request.json();
+    const body = await request.json();
+    const { sourceId, targetId, deleteSource } = body;
+    const type = body.type as string;
 
-    if (!type || !VALID_TYPES.includes(type)) {
+    if (!type || !VALID_TYPES.includes(type as DataType)) {
       return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
     }
+
+    const validatedType = type as DataType;
 
     if (!sourceId || !targetId) {
       return NextResponse.json({ error: 'Source and target IDs are required' }, { status: 400 });
@@ -39,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     // Get source and target items
     const { data: sourceItem, error: sourceError } = await supabase
-      .from(type)
+      .from(validatedType)
       .select('*')
       .eq('id', sourceId)
       .single();
@@ -49,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: targetItem, error: targetError } = await supabase
-      .from(type)
+      .from(validatedType)
       .select('*')
       .eq('id', targetId)
       .single();
@@ -58,7 +62,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Target item not found' }, { status: 404 });
     }
 
-    const field = FIELD_MAPPING[type];
+    const field = FIELD_MAPPING[validatedType];
     const sourceName = sourceItem.name;
     const targetName = targetItem.name;
 
@@ -78,7 +82,7 @@ export async function POST(request: NextRequest) {
     // Optionally delete the source item
     if (deleteSource) {
       const { error: deleteError } = await supabase
-        .from(type)
+        .from(validatedType)
         .delete()
         .eq('id', sourceId);
 
@@ -104,12 +108,14 @@ export async function POST(request: NextRequest) {
 // GET endpoint to preview merge (count affected destinations)
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const type = searchParams.get('type') as DataType;
+  const type = searchParams.get('type');
   const sourceId = searchParams.get('sourceId');
 
-  if (!type || !VALID_TYPES.includes(type)) {
+  if (!type || !VALID_TYPES.includes(type as DataType)) {
     return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
   }
+
+  const validatedType = type as DataType;
 
   if (!sourceId) {
     return NextResponse.json({ error: 'Source ID is required' }, { status: 400 });
@@ -126,7 +132,7 @@ export async function GET(request: NextRequest) {
 
     // Get source item
     const { data: sourceItem, error: sourceError } = await supabase
-      .from(type)
+      .from(validatedType)
       .select('*')
       .eq('id', sourceId)
       .single();
@@ -135,7 +141,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Source item not found' }, { status: 404 });
     }
 
-    const field = FIELD_MAPPING[type];
+    const field = FIELD_MAPPING[validatedType];
     const sourceName = sourceItem.name;
 
     // Count affected destinations
