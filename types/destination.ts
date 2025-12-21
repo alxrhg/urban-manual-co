@@ -82,4 +82,7 @@ export interface Destination {
   resy_url?: string | null;
   booking_url?: string | null;
   reservation_phone?: string | null;
+  // Timestamps
+  created_at?: string | null;
+  updated_at?: string | null;
 }

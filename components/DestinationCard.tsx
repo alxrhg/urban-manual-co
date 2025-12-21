@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, memo } from 'react';
 import Image from 'next/image';
-import { MapPin, Check } from 'lucide-react';
+import { MapPin, Check, Bookmark, TrendingUp, Sparkles } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
 import { DestinationCardSkeleton } from '@/ui/DestinationCardSkeleton';
@@ -16,6 +16,8 @@ interface DestinationCardProps {
   isVisited?: boolean;
   showBadges?: boolean;
   showQuickActions?: boolean;
+  showSocialProof?: boolean;
+  showHoverDetails?: boolean;
   className?: string;
   onAddToTrip?: () => void;
 }
@@ -31,12 +33,15 @@ export const DestinationCard = memo(function DestinationCard({
   isVisited = false,
   showBadges = true,
   showQuickActions = true,
+  showSocialProof = true,
+  showHoverDetails = true,
   className = '',
   onAddToTrip,
 }: DestinationCardProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const cardRef = useRef<HTMLButtonElement>(null);
 
   // Intersection Observer for progressive loading
@@ -76,6 +81,8 @@ export const DestinationCard = memo(function DestinationCard({
     <button
       ref={cardRef}
       onClick={handleClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       type="button"
       className={`
         group relative w-full flex flex-col transition-all duration-300 ease-out
@@ -134,12 +141,49 @@ export const DestinationCard = memo(function DestinationCard({
         <div
           className={`
             absolute inset-0
-            bg-gradient-to-t from-black/60 via-transparent to-transparent
+            bg-gradient-to-t from-black/70 via-black/20 to-transparent
             opacity-0 group-hover:opacity-100
             transition-opacity duration-300
             pointer-events-none
           `}
         />
+
+        {/* Hover Details - Bottom of image */}
+        {showHoverDetails && destination.micro_description && (
+          <div
+            className={`
+              absolute bottom-0 left-0 right-0 z-10
+              px-3 pb-3 pt-8
+              bg-gradient-to-t from-black/80 to-transparent
+              opacity-0 group-hover:opacity-100
+              translate-y-2 group-hover:translate-y-0
+              transition-all duration-300
+              pointer-events-none
+            `}
+          >
+            <p className="text-xs text-white/90 line-clamp-2">
+              {destination.micro_description}
+            </p>
+          </div>
+        )}
+
+        {/* Crown Badge - Top Left */}
+        {destination.crown && (
+          <div
+            className={`
+              absolute top-2 left-2 z-10
+              px-2 py-1
+              rounded-full text-xs
+              bg-amber-500/90 text-white
+              backdrop-blur-sm
+              flex items-center gap-1
+              shadow-sm
+            `}
+          >
+            <span>👑</span>
+            <span className="hidden sm:inline">Editor's Pick</span>
+          </div>
+        )}
 
         {/* Quick Actions - Top Right on Hover */}
         {showQuickActions && destination.slug && (
@@ -227,33 +271,59 @@ export const DestinationCard = memo(function DestinationCard({
       {/* Info Section */}
       <div className="flex-1 flex flex-col">
         <div>
-        <h3
-          className={`
-            text-sm font-medium text-gray-900 dark:text-white
+          <h3
+            className={`
+              text-sm font-medium text-gray-900 dark:text-white
               line-clamp-2
-            transition-colors duration-200
-            group-hover:text-gray-700 dark:group-hover:text-gray-200
-          `}
-        >
-          {destination.name}
-        </h3>
+              transition-colors duration-200
+              group-hover:text-gray-700 dark:group-hover:text-gray-200
+            `}
+          >
+            {destination.name}
+          </h3>
 
-        {/* Micro Description - Always show with fallback, stuck to title */}
-        <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
-          {destination.micro_description ||
-           (destination.category && destination.city
-             ? `${destination.category} in ${capitalizeCity(destination.city)}`
-             : destination.city
-               ? `Located in ${capitalizeCity(destination.city)}`
-               : destination.category || '')}
-        </div>
-
-        {/* ML Forecasting Badges */}
-        {showBadges && destination.id && (
-          <div className="mt-2">
-            <DestinationBadges destinationId={destination.id} compact={true} showTiming={false} />
+          {/* Category & Location - Always show with fallback */}
+          <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1 mt-0.5">
+            {destination.category && destination.city
+              ? `${destination.category} in ${capitalizeCity(destination.city)}`
+              : destination.city
+                ? `Located in ${capitalizeCity(destination.city)}`
+                : destination.category || ''}
           </div>
-        )}
+
+          {/* Social Proof Row */}
+          {showSocialProof && (
+            <div className="flex items-center gap-3 mt-1.5">
+              {/* Saves Count */}
+              {destination.saves_count && destination.saves_count > 0 && (
+                <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                  <Bookmark className="w-3 h-3" />
+                  <span>{destination.saves_count.toLocaleString()}</span>
+                </div>
+              )}
+
+              {/* Price Level */}
+              {destination.price_level && destination.price_level > 0 && (
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  {'$'.repeat(destination.price_level)}
+                </div>
+              )}
+
+              {/* Review Count */}
+              {destination.user_ratings_total && destination.user_ratings_total > 0 && (
+                <div className="text-xs text-gray-400 dark:text-gray-500">
+                  {destination.user_ratings_total.toLocaleString()} reviews
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ML Forecasting Badges */}
+          {showBadges && destination.id && (
+            <div className="mt-2">
+              <DestinationBadges destinationId={destination.id} compact={true} showTiming={false} />
+            </div>
+          )}
         </div>
       </div>
 

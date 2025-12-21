@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, SlidersHorizontal, X } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
 import { createClient } from '@/lib/supabase/client';
@@ -18,6 +18,16 @@ import { MultiplexAd } from '@/components/GoogleAd';
 import { CityClock } from '@/components/CityClock';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
+import {
+  BrowseToolbar,
+  type SortOption,
+  type ViewMode,
+  BrowseFilterSidebar,
+  type BrowseFilters,
+  DestinationListItem,
+  CuratedCollections,
+  SearchWithinResults,
+} from '@/components/browse';
 
 /**
  * Props for the CityPageClient component
@@ -87,6 +97,19 @@ export default function CityPageClient({
   const [currentPage, setCurrentPage] = useState(1);
   const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
 
+  // New browse features state
+  const [sortBy, setSortBy] = useState<SortOption>('popularity');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [searchWithin, setSearchWithin] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [browseFilters, setBrowseFilters] = useState<BrowseFilters>({
+    categories: [],
+    minRating: null,
+    priceLevel: null,
+    special: [],
+    styles: [],
+  });
+
   const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
 
   const { openDrawer, isDrawerOpen: isDrawerTypeOpen, closeDrawer } = useDrawer();
@@ -139,7 +162,7 @@ export default function CityPageClient({
       const { data, error } = await supabase
         .from('destinations')
         .select(
-          'slug, name, city, neighborhood, category, micro_description, description, content, image, image_thumbnail, michelin_stars, crown, opening_hours_json, rating, tags'
+          'id, slug, name, city, neighborhood, category, micro_description, description, content, image, image_thumbnail, michelin_stars, crown, opening_hours_json, rating, tags, price_level, saves_count, views_count, user_ratings_total, created_at'
         )
         .eq('city', citySlug)
         .order('name');
@@ -268,13 +291,117 @@ export default function CityPageClient({
     setAdvancedFilters(prev => ({ ...prev, category: nextCategory || undefined }));
   };
 
-  const paginatedDestinations = (() => {
+  // Apply sorting and search within results
+  const sortedAndSearchedDestinations = useMemo(() => {
+    let result = [...filteredDestinations];
+
+    // Apply search within results
+    if (searchWithin.trim()) {
+      const searchLower = searchWithin.toLowerCase().trim();
+      result = result.filter(d =>
+        d.name.toLowerCase().includes(searchLower) ||
+        (d.micro_description && d.micro_description.toLowerCase().includes(searchLower)) ||
+        (d.category && d.category.toLowerCase().includes(searchLower)) ||
+        (d.neighborhood && d.neighborhood.toLowerCase().includes(searchLower))
+      );
+    }
+
+    // Apply browse filters
+    if (browseFilters.categories.length > 0) {
+      result = result.filter(d =>
+        d.category && browseFilters.categories.some(
+          cat => cat.toLowerCase() === d.category?.toLowerCase()
+        )
+      );
+    }
+
+    if (browseFilters.minRating !== null) {
+      result = result.filter(d => d.rating && d.rating >= browseFilters.minRating!);
+    }
+
+    if (browseFilters.priceLevel && browseFilters.priceLevel.length > 0) {
+      result = result.filter(d =>
+        d.price_level && browseFilters.priceLevel!.includes(d.price_level)
+      );
+    }
+
+    if (browseFilters.special.length > 0) {
+      result = result.filter(d => {
+        return browseFilters.special.some(special => {
+          if (special === 'michelin') return d.michelin_stars && d.michelin_stars > 0;
+          if (special === 'crown') return d.crown;
+          if (special === 'trending') return (d.saves_count || 0) > 10;
+          if (special === 'new') {
+            // Consider "new" as added in the last 30 days
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            return d.created_at && new Date(d.created_at) > thirtyDaysAgo;
+          }
+          return false;
+        });
+      });
+    }
+
+    // Apply sorting
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case 'popularity':
+          return (b.saves_count || 0) - (a.saves_count || 0);
+        case 'rating':
+          return (b.rating || 0) - (a.rating || 0);
+        case 'newest':
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return dateB - dateA;
+        case 'price_asc':
+          return (a.price_level || 0) - (b.price_level || 0);
+        case 'price_desc':
+          return (b.price_level || 0) - (a.price_level || 0);
+        case 'name':
+          return a.name.localeCompare(b.name);
+        default:
+          return 0;
+      }
+    });
+
+    return result;
+  }, [filteredDestinations, searchWithin, sortBy, browseFilters]);
+
+  // Category counts for filter sidebar
+  const categoryCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    destinations.forEach(d => {
+      if (d.category) {
+        const cat = d.category.charAt(0).toUpperCase() + d.category.slice(1).toLowerCase();
+        counts.set(cat, (counts.get(cat) || 0) + 1);
+      }
+    });
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [destinations]);
+
+  // Handle collection click - filter to show only collection items
+  const handleCollectionClick = useCallback((collectionId: string, collectionDestinations: Destination[]) => {
+    if (collectionId === 'michelin') {
+      setAdvancedFilters(prev => ({ ...prev, michelin: true, crown: false }));
+    } else if (collectionId === 'crown') {
+      setAdvancedFilters(prev => ({ ...prev, crown: true, michelin: false }));
+    } else if (collectionId === 'top-rated') {
+      setBrowseFilters(prev => ({ ...prev, minRating: 4.5 }));
+    } else if (collectionId === 'popular') {
+      setSortBy('popularity');
+    }
+    setCurrentPage(1);
+  }, []);
+
+  const paginatedDestinations = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
     const end = start + itemsPerPage;
-    return filteredDestinations.slice(start, end);
-  })();
+    return sortedAndSearchedDestinations.slice(start, end);
+  }, [sortedAndSearchedDestinations, currentPage, itemsPerPage]);
 
-  const totalPages = Math.ceil(filteredDestinations.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedAndSearchedDestinations.length / itemsPerPage);
 
   return (
     <>
@@ -421,109 +548,246 @@ export default function CityPageClient({
             </div>
           </div>
 
-          {/* Destinations Grid - Using UniversalGrid */}
-          {filteredDestinations.length === 0 ? (
-            <div className="text-center py-20">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                No destinations found in {cityDisplayName}
-              </p>
+          {/* Curated Collections */}
+          {destinations.length > 0 && (
+            <CuratedCollections
+              destinations={destinations}
+              onCollectionClick={handleCollectionClick}
+              onDestinationClick={(dest) => {
+                openIntelligentDrawer(dest);
+                openDrawer('destination');
+              }}
+              className="mb-10"
+            />
+          )}
+
+          {/* Browse Toolbar - Sort, View Toggle, Search */}
+          <div className="mb-6 space-y-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              {/* Search Within Results */}
+              <div className="w-full lg:w-80">
+                <SearchWithinResults
+                  value={searchWithin}
+                  onChange={(value) => {
+                    setSearchWithin(value);
+                    setCurrentPage(1);
+                  }}
+                  placeholder={`Search within ${sortedAndSearchedDestinations.length} results...`}
+                  resultCount={searchWithin ? sortedAndSearchedDestinations.length : undefined}
+                />
+              </div>
+
+              {/* Toolbar with Sort and View Toggle */}
+              <div className="flex items-center gap-4">
+                {/* Filter Toggle Button */}
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-full border transition-all ${
+                    showFilters
+                      ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
+                      : 'bg-transparent text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500'
+                  }`}
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  <span className="hidden sm:inline">More Filters</span>
+                </button>
+
+                <BrowseToolbar
+                  sortBy={sortBy}
+                  onSortChange={(sort) => {
+                    setSortBy(sort);
+                    setCurrentPage(1);
+                  }}
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                  resultCount={sortedAndSearchedDestinations.length}
+                />
+              </div>
             </div>
-          ) : (
-            <div className="space-y-8">
-              <UniversalGrid
-                items={paginatedDestinations}
-                renderItem={(destination, index) => {
-                  const isVisited = !!(user && visitedSlugs.has(destination.slug));
-                  const globalIndex = (currentPage - 1) * itemsPerPage + index;
+          </div>
 
-                    return (
-                      <DestinationCard
-                        key={destination.slug}
-                        destination={destination}
-                        onClick={() => {
-                          openIntelligentDrawer(destination);
-                          openDrawer('destination');
-                        }}
-                        index={globalIndex}
-                        isVisited={isVisited}
-                        showBadges={true}
-                      />
-                    );
-                }}
-                emptyState={
-                  <div className="text-center py-20">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      No destinations found
-                    </p>
+          {/* Main Content Area with Optional Sidebar */}
+          <div className={`flex gap-8 ${showFilters ? '' : ''}`}>
+            {/* Filter Sidebar - Collapsible */}
+            {showFilters && (
+              <div className="hidden lg:block w-56 flex-shrink-0">
+                <div className="sticky top-24">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-medium text-gray-900 dark:text-white">Filters</h3>
+                    <button
+                      onClick={() => setShowFilters(false)}
+                      className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <X className="w-4 h-4 text-gray-500" />
+                    </button>
                   </div>
-                }
-              />
+                  <BrowseFilterSidebar
+                    filters={browseFilters}
+                    onFiltersChange={(filters) => {
+                      setBrowseFilters(filters);
+                      setCurrentPage(1);
+                    }}
+                    availableCategories={categoryCounts}
+                    totalCount={destinations.length}
+                    filteredCount={sortedAndSearchedDestinations.length}
+                  />
+                </div>
+              </div>
+            )}
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="w-full flex flex-wrap items-center justify-center gap-2 pt-8">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                    className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                    aria-label="Previous page"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
+            {/* Destinations Grid/List */}
+            <div className="flex-1 min-w-0">
+              {sortedAndSearchedDestinations.length === 0 ? (
+                <div className="text-center py-20">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {searchWithin
+                      ? `No destinations found matching "${searchWithin}"`
+                      : `No destinations found in ${cityDisplayName}`}
+                  </p>
+                  {(searchWithin || browseFilters.categories.length > 0 || browseFilters.minRating || browseFilters.special.length > 0) && (
+                    <button
+                      onClick={() => {
+                        setSearchWithin('');
+                        setBrowseFilters({
+                          categories: [],
+                          minRating: null,
+                          priceLevel: null,
+                          special: [],
+                          styles: [],
+                        });
+                        setAdvancedFilters({});
+                        setSelectedCategory('');
+                      }}
+                      className="mt-4 text-xs text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white underline"
+                    >
+                      Clear all filters
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {/* Grid View */}
+                  {viewMode === 'grid' && (
+                    <UniversalGrid
+                      items={paginatedDestinations}
+                      renderItem={(destination, index) => {
+                        const isVisited = !!(user && visitedSlugs.has(destination.slug));
+                        const globalIndex = (currentPage - 1) * itemsPerPage + index;
 
-                  <div className="flex items-center gap-2">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, index) => {
-                      let pageNumber: number;
-
-                      if (totalPages <= 5) {
-                        pageNumber = index + 1;
-                      } else if (currentPage <= 3) {
-                        pageNumber = index + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNumber = totalPages - 4 + index;
-                      } else {
-                        pageNumber = currentPage - 2 + index;
+                        return (
+                          <DestinationCard
+                            key={destination.slug}
+                            destination={destination}
+                            onClick={() => {
+                              openIntelligentDrawer(destination);
+                              openDrawer('destination');
+                            }}
+                            index={globalIndex}
+                            isVisited={isVisited}
+                            showBadges={true}
+                            showSocialProof={true}
+                            showHoverDetails={true}
+                          />
+                        );
+                      }}
+                      emptyState={
+                        <div className="text-center py-20">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            No destinations found
+                          </p>
+                        </div>
                       }
+                    />
+                  )}
 
-                      const isActive = currentPage === pageNumber;
+                  {/* List View */}
+                  {viewMode === 'list' && (
+                    <div className="space-y-4">
+                      {paginatedDestinations.map((destination, index) => {
+                        const isVisited = !!(user && visitedSlugs.has(destination.slug));
+                        return (
+                          <DestinationListItem
+                            key={destination.slug}
+                            destination={destination}
+                            onClick={() => {
+                              openIntelligentDrawer(destination);
+                              openDrawer('destination');
+                            }}
+                            index={index}
+                            isVisited={isVisited}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
 
-                      return (
-                        <button
-                          key={pageNumber}
-                          onClick={() => setCurrentPage(pageNumber)}
-                          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${
-                            isActive
-                              ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium'
-                              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-                          }`}
-                          aria-label={`Page ${pageNumber}`}
-                          aria-current={isActive ? 'page' : undefined}
-                        >
-                          {pageNumber}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="w-full flex flex-wrap items-center justify-center gap-2 pt-8">
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        aria-label="Previous page"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
 
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
-                    className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                    aria-label="Next page"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
+                      <div className="flex items-center gap-2">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, index) => {
+                          let pageNumber: number;
+
+                          if (totalPages <= 5) {
+                            pageNumber = index + 1;
+                          } else if (currentPage <= 3) {
+                            pageNumber = index + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNumber = totalPages - 4 + index;
+                          } else {
+                            pageNumber = currentPage - 2 + index;
+                          }
+
+                          const isActive = currentPage === pageNumber;
+
+                          return (
+                            <button
+                              key={pageNumber}
+                              onClick={() => setCurrentPage(pageNumber)}
+                              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${
+                                isActive
+                                  ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium'
+                                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+                              }`}
+                              aria-label={`Page ${pageNumber}`}
+                              aria-current={isActive ? 'page' : undefined}
+                            >
+                              {pageNumber}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                        className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        aria-label="Next page"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Ad after grid */}
+                  <MultiplexAd slot="3271683710" />
                 </div>
               )}
-
-              {/* Ad after grid */}
-              <MultiplexAd slot="3271683710" />
             </div>
-          )}
+          </div>
         </div>
       </main>
 
