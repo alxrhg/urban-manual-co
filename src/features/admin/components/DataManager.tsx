@@ -5,16 +5,22 @@ import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import {
   Search, Plus, Pencil, Trash2, X, Upload, Loader2, ChevronLeft, MoreVertical,
-  Building2, MapPin, Globe, Map, AlertCircle, ExternalLink, RefreshCw
+  Building2, MapPin, Globe, Map, AlertCircle, ExternalLink, RefreshCw, Merge, Settings2, Check
 } from 'lucide-react';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
+import { Checkbox } from '@/ui/checkbox';
+import { Badge } from '@/ui/badge';
+import { Separator } from '@/ui/separator';
 import { toSlug } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from '@/ui/dropdown-menu';
 
 // Use API route for admin operations to bypass RLS
@@ -117,6 +123,28 @@ export function DataManager({ type }: DataManagerProps) {
 
   // Form state
   const [formData, setFormData] = useState<Record<string, string | null>>({});
+
+  // Merge modal state
+  const [showMergeModal, setShowMergeModal] = useState(false);
+  const [mergeSource, setMergeSource] = useState<DataItem | null>(null);
+  const [mergeTarget, setMergeTarget] = useState<DataItem | null>(null);
+  const [mergeSearch, setMergeSearch] = useState('');
+  const [mergePreview, setMergePreview] = useState<{ affectedCount: number } | null>(null);
+  const [merging, setMerging] = useState(false);
+  const [deleteAfterMerge, setDeleteAfterMerge] = useState(true);
+
+  // Column visibility state
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
+    name: true,
+    category: true,
+    location: true,
+    code: true,
+    slug: true,
+  });
+
+  // Bulk selection state
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
 
   const supabase = createClient({ skipValidation: true });
   const config = TYPE_CONFIG[type];
@@ -265,6 +293,115 @@ export function DataManager({ type }: DataManagerProps) {
     }
   };
 
+  const openMergeModal = async (item: DataItem) => {
+    setMergeSource(item);
+    setMergeTarget(null);
+    setMergeSearch('');
+    setMergePreview(null);
+    setDeleteAfterMerge(true);
+    setShowMergeModal(true);
+
+    // Fetch preview of affected destinations
+    try {
+      const res = await fetch(`/api/admin/data/merge?type=${type}&sourceId=${item.id}`);
+      const data = await res.json();
+      if (res.ok) {
+        setMergePreview({ affectedCount: data.affectedCount });
+      }
+    } catch {
+      // Ignore preview errors
+    }
+  };
+
+  const closeMergeModal = () => {
+    setShowMergeModal(false);
+    setMergeSource(null);
+    setMergeTarget(null);
+    setMergeSearch('');
+    setMergePreview(null);
+  };
+
+  const handleMerge = async () => {
+    if (!mergeSource || !mergeTarget) return;
+
+    setMerging(true);
+    try {
+      const res = await fetch('/api/admin/data/merge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type,
+          sourceId: mergeSource.id,
+          targetId: mergeTarget.id,
+          deleteSource: deleteAfterMerge,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Merge failed');
+
+      alert(`Successfully merged "${mergeSource.name}" into "${mergeTarget.name}". ${data.affectedCount} destinations updated.`);
+      closeMergeModal();
+      await fetchData();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Merge failed';
+      alert(`Error: ${message}`);
+    } finally {
+      setMerging(false);
+    }
+  };
+
+  const getMergeTargetOptions = () => {
+    const query = mergeSearch.toLowerCase();
+    return items
+      .filter((item) => item.id !== mergeSource?.id)
+      .filter((item) => {
+        if (!query) return true;
+        if (item.name.toLowerCase().includes(query)) return true;
+        if ('country' in item && item.country?.toLowerCase().includes(query)) return true;
+        if ('city' in item && item.city?.toLowerCase().includes(query)) return true;
+        return false;
+      })
+      .slice(0, 10);
+  };
+
+  const toggleSelectAll = () => {
+    const currentFiltered = getFilteredItems();
+    if (selectedItems.size === currentFiltered.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(currentFiltered.map(d => d.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    const newSelected = new Set(selectedItems);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedItems(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Delete ${selectedItems.size} ${type}? This cannot be undone.`)) return;
+
+    setBulkActionLoading(true);
+    try {
+      for (const id of selectedItems) {
+        await apiRequest('DELETE', { type, id });
+      }
+      setSelectedItems(new Set());
+      await fetchData();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Bulk delete failed';
+      alert(`Error: ${message}`);
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
   const getFilteredItems = () => {
     const query = searchQuery.toLowerCase();
     return items.filter((item) => {
@@ -297,6 +434,55 @@ export function DataManager({ type }: DataManagerProps) {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Column Toggle */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="rounded-full flex-1 sm:flex-none">
+                <Settings2 className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Columns</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[150px]">
+              <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem
+                checked={visibleColumns.name}
+                onCheckedChange={(checked) => setVisibleColumns({ ...visibleColumns, name: !!checked })}
+              >
+                Name
+              </DropdownMenuCheckboxItem>
+              {type === 'brands' && (
+                <DropdownMenuCheckboxItem
+                  checked={visibleColumns.category}
+                  onCheckedChange={(checked) => setVisibleColumns({ ...visibleColumns, category: !!checked })}
+                >
+                  Category
+                </DropdownMenuCheckboxItem>
+              )}
+              {(type === 'cities' || type === 'neighborhoods') && (
+                <DropdownMenuCheckboxItem
+                  checked={visibleColumns.location}
+                  onCheckedChange={(checked) => setVisibleColumns({ ...visibleColumns, location: !!checked })}
+                >
+                  Location
+                </DropdownMenuCheckboxItem>
+              )}
+              {type === 'countries' && (
+                <DropdownMenuCheckboxItem
+                  checked={visibleColumns.code}
+                  onCheckedChange={(checked) => setVisibleColumns({ ...visibleColumns, code: !!checked })}
+                >
+                  Code
+                </DropdownMenuCheckboxItem>
+              )}
+              <DropdownMenuCheckboxItem
+                checked={visibleColumns.slug}
+                onCheckedChange={(checked) => setVisibleColumns({ ...visibleColumns, slug: !!checked })}
+              >
+                Slug
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             variant="outline"
             onClick={handleSync}
@@ -339,6 +525,47 @@ export function DataManager({ type }: DataManagerProps) {
         </div>
       </div>
 
+      {/* Bulk Actions */}
+      {selectedItems.size > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-3 sm:px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800/50 rounded-xl">
+          <div className="flex items-center gap-3">
+            <Badge variant="secondary" className="font-medium whitespace-nowrap">
+              {selectedItems.size} selected
+            </Badge>
+            <Separator orientation="vertical" className="h-5 hidden sm:block" />
+          </div>
+
+          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto -mx-1 px-1">
+            {/* Delete */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBulkDelete}
+              disabled={bulkActionLoading}
+              className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 shrink-0"
+            >
+              {bulkActionLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin sm:mr-1.5" />
+              ) : (
+                <Trash2 className="w-3.5 h-3.5 sm:mr-1.5" />
+              )}
+              <span className="hidden sm:inline">Delete</span>
+            </Button>
+          </div>
+
+          <div className="hidden sm:block sm:ml-auto">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedItems(new Set())}
+            >
+              <X className="w-3.5 h-3.5 mr-1.5" />
+              Clear
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
@@ -349,27 +576,38 @@ export function DataManager({ type }: DataManagerProps) {
           <table className="w-full min-w-[400px]">
             <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
               <tr>
-                <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3">
-                  {config.singular}
+                <th className="w-12 px-4 py-3">
+                  <Checkbox
+                    checked={filteredItems.length > 0 && selectedItems.size === filteredItems.length}
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Select all"
+                  />
                 </th>
-                {type === 'brands' && (
+                {visibleColumns.name && (
+                  <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3">
+                    {config.singular}
+                  </th>
+                )}
+                {type === 'brands' && visibleColumns.category && (
                   <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3 hidden sm:table-cell">
                     Category
                   </th>
                 )}
-                {(type === 'cities' || type === 'neighborhoods') && (
+                {(type === 'cities' || type === 'neighborhoods') && visibleColumns.location && (
                   <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3 hidden sm:table-cell">
                     Location
                   </th>
                 )}
-                {type === 'countries' && (
+                {type === 'countries' && visibleColumns.code && (
                   <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3 hidden sm:table-cell">
                     Code
                   </th>
                 )}
-                <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3 hidden md:table-cell">
-                  Slug
-                </th>
+                {visibleColumns.slug && (
+                  <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3 hidden md:table-cell">
+                    Slug
+                  </th>
+                )}
                 <th className="w-10"></th>
               </tr>
             </thead>
@@ -377,50 +615,62 @@ export function DataManager({ type }: DataManagerProps) {
               {filteredItems.map((item) => (
                 <tr
                   key={item.id}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-900/50 cursor-pointer"
+                  className={cn(
+                    "hover:bg-gray-50 dark:hover:bg-gray-900/50 cursor-pointer",
+                    selectedItems.has(item.id) && "bg-blue-50 dark:bg-blue-900/20"
+                  )}
                   onClick={() => openEditDrawer(item)}
                 >
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      {('logo_url' in item && item.logo_url) || ('image_url' in item && item.image_url) ? (
-                        <img
-                          src={('logo_url' in item ? item.logo_url : (item as City | Country | Neighborhood).image_url) || ''}
-                          alt={item.name}
-                          className="w-10 h-10 rounded-lg object-cover bg-gray-100 dark:bg-gray-800"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                          {type === 'countries' && 'flag_emoji' in item && item.flag_emoji ? (
-                            <span className="text-xl">{item.flag_emoji}</span>
-                          ) : (
-                            <Icon className="h-5 w-5 text-gray-400" />
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={selectedItems.has(item.id)}
+                      onCheckedChange={() => toggleSelect(item.id)}
+                      aria-label={`Select ${item.name}`}
+                    />
+                  </td>
+                  {visibleColumns.name && (
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        {('logo_url' in item && item.logo_url) || ('image_url' in item && item.image_url) ? (
+                          <img
+                            src={('logo_url' in item ? item.logo_url : (item as City | Country | Neighborhood).image_url) || ''}
+                            alt={item.name}
+                            className="w-10 h-10 rounded-lg object-cover bg-gray-100 dark:bg-gray-800"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                            {type === 'countries' && 'flag_emoji' in item && item.flag_emoji ? (
+                              <span className="text-xl">{item.flag_emoji}</span>
+                            ) : (
+                              <Icon className="h-5 w-5 text-gray-400" />
+                            )}
+                          </div>
+                        )}
+                        <div>
+                          <div className="font-medium text-gray-900 dark:text-white">{item.name}</div>
+                          {'website' in item && item.website && (
+                            <a
+                              href={item.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                            >
+                              Website <ExternalLink className="h-3 w-3" />
+                            </a>
                           )}
                         </div>
-                      )}
-                      <div>
-                        <div className="font-medium text-gray-900 dark:text-white">{item.name}</div>
-                        {'website' in item && item.website && (
-                          <a
-                            href={item.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-xs text-blue-600 hover:underline flex items-center gap-1"
-                          >
-                            Website <ExternalLink className="h-3 w-3" />
-                          </a>
-                        )}
                       </div>
-                    </div>
-                  </td>
-                  {type === 'brands' && (
+                    </td>
+                  )}
+                  {type === 'brands' && visibleColumns.category && (
                     <td className="px-4 py-3 hidden sm:table-cell">
                       <span className="text-sm text-gray-600 dark:text-gray-400">
                         {'category' in item ? item.category || '—' : '—'}
                       </span>
                     </td>
                   )}
-                  {(type === 'cities' || type === 'neighborhoods') && (
+                  {(type === 'cities' || type === 'neighborhoods') && visibleColumns.location && (
                     <td className="px-4 py-3 hidden sm:table-cell">
                       <span className="text-sm text-gray-600 dark:text-gray-400">
                         {'city' in item && item.city ? `${item.city}, ` : ''}
@@ -428,18 +678,20 @@ export function DataManager({ type }: DataManagerProps) {
                       </span>
                     </td>
                   )}
-                  {type === 'countries' && (
+                  {type === 'countries' && visibleColumns.code && (
                     <td className="px-4 py-3 hidden sm:table-cell">
                       <span className="text-sm text-gray-600 dark:text-gray-400">
                         {'code' in item ? item.code || '—' : '—'}
                       </span>
                     </td>
                   )}
-                  <td className="px-4 py-3 hidden md:table-cell">
-                    <code className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-                      {item.slug}
-                    </code>
-                  </td>
+                  {visibleColumns.slug && (
+                    <td className="px-4 py-3 hidden md:table-cell">
+                      <code className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                        {item.slug}
+                      </code>
+                    </td>
+                  )}
                   <td className="px-2 py-3">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -451,6 +703,10 @@ export function DataManager({ type }: DataManagerProps) {
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openEditDrawer(item); }}>
                           <Pencil className="h-4 w-4 mr-2" />
                           Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openMergeModal(item); }}>
+                          <Merge className="h-4 w-4 mr-2" />
+                          Merge Into...
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
@@ -746,6 +1002,155 @@ export function DataManager({ type }: DataManagerProps) {
                 {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 {editingItem ? 'Save Changes' : 'Create'}
               </Button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Merge Modal */}
+      {showMergeModal && mergeSource && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity duration-300"
+            onClick={closeMergeModal}
+          />
+          {/* Modal */}
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-950 rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col">
+              {/* Header */}
+              <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Merge className="h-5 w-5 text-gray-500" />
+                  <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                    Merge {config.singular}
+                  </h2>
+                </div>
+                <button
+                  onClick={closeMergeModal}
+                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-500"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {/* Source info */}
+                <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Merging:</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{mergeSource.name}</p>
+                  {mergePreview && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {mergePreview.affectedCount} destination{mergePreview.affectedCount !== 1 ? 's' : ''} will be updated
+                    </p>
+                  )}
+                </div>
+
+                {/* Arrow */}
+                <div className="flex justify-center">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                    <Merge className="h-4 w-4 text-blue-600 dark:text-blue-400 rotate-90" />
+                  </div>
+                </div>
+
+                {/* Target selection */}
+                <div>
+                  <label className={labelClasses}>Merge into:</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={mergeSearch}
+                      onChange={(e) => {
+                        setMergeSearch(e.target.value);
+                        setMergeTarget(null);
+                      }}
+                      placeholder={`Search ${type}...`}
+                      className={cn(inputClasses, "pl-10")}
+                    />
+                  </div>
+
+                  {/* Target options */}
+                  <div className="mt-2 border border-gray-200 dark:border-gray-700 rounded-lg max-h-48 overflow-y-auto">
+                    {getMergeTargetOptions().length === 0 ? (
+                      <div className="p-3 text-sm text-gray-500 text-center">
+                        No matching {type} found
+                      </div>
+                    ) : (
+                      getMergeTargetOptions().map((item) => (
+                        <button
+                          key={item.id}
+                          onClick={() => setMergeTarget(item)}
+                          className={cn(
+                            "w-full px-3 py-2 text-left flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors",
+                            mergeTarget?.id === item.id && "bg-blue-50 dark:bg-blue-900/30"
+                          )}
+                        >
+                          {('logo_url' in item && item.logo_url) || ('image_url' in item && item.image_url) ? (
+                            <img
+                              src={('logo_url' in item ? item.logo_url : (item as City | Country | Neighborhood).image_url) || ''}
+                              alt={item.name}
+                              className="w-8 h-8 rounded-lg object-cover bg-gray-100 dark:bg-gray-800"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                              {type === 'countries' && 'flag_emoji' in item && item.flag_emoji ? (
+                                <span className="text-lg">{item.flag_emoji}</span>
+                              ) : (
+                                <Icon className="h-4 w-4 text-gray-400" />
+                              )}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-gray-900 dark:text-white truncate">{item.name}</div>
+                            {(type === 'cities' || type === 'neighborhoods') && 'country' in item && item.country && (
+                              <div className="text-xs text-gray-500 truncate">
+                                {'city' in item && item.city ? `${item.city}, ` : ''}{item.country}
+                              </div>
+                            )}
+                          </div>
+                          {mergeTarget?.id === item.id && (
+                            <Check className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                          )}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Delete source checkbox */}
+                <label className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={deleteAfterMerge}
+                    onChange={(e) => setDeleteAfterMerge(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      Delete "{mergeSource.name}" after merge
+                    </span>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Remove the source {config.singular.toLowerCase()} from the database
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              {/* Footer */}
+              <div className="flex-shrink-0 px-4 py-3 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-3">
+                <Button variant="ghost" onClick={closeMergeModal}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleMerge}
+                  disabled={merging || !mergeTarget}
+                >
+                  {merging && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Merge
+                </Button>
+              </div>
             </div>
           </div>
         </>
