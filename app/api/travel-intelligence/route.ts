@@ -25,6 +25,11 @@ import { generateText, generateJSON } from '@/lib/llm';
 import { tasteProfileEvolutionService } from '@/services/intelligence/taste-profile-evolution';
 import { searchRatelimit, memorySearchRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';
 import { unifiedIntelligenceCore, UnifiedContext, AutonomousAction } from '@/services/intelligence/unified-intelligence-core';
+import {
+  parseQueryWithKeywords,
+  analyzeMatchedFilters,
+  type EnhancedParsedQuery,
+} from '@/lib/ai';
 
 // Types
 interface ConversationMessage {
@@ -48,6 +53,17 @@ interface SearchFilters {
   occasion?: string | null;
   vibe?: string[];
   openNow?: boolean;
+  // Enhanced filters for AI response improvements
+  cuisines?: string[];
+  dietary?: string[];
+  seatingTypes?: string[];
+  amenities?: string[];
+  groupSize?: number | null;
+  kidFriendly?: boolean;
+  petFriendly?: boolean;
+  cuisine?: string | null;
+  ratingMin?: number | null;
+  timeContext?: 'breakfast' | 'lunch' | 'dinner' | 'late_night' | null;
 }
 
 interface TravelIntelligenceRequest {
@@ -103,6 +119,15 @@ interface ParsedIntent {
   clarificationType?: 'city' | 'category' | 'occasion' | 'price';
   // Collaborative trip planning
   groupPreferences?: GroupPreference[];
+  // Enhanced attributes for AI response improvements
+  enhancedQuery?: EnhancedParsedQuery;
+  cuisines?: string[];
+  dietary?: string[];
+  seatingTypes?: string[];
+  amenities?: string[];
+  groupSize?: number | null;
+  kidFriendly?: boolean;
+  petFriendly?: boolean;
 }
 
 interface GroupPreference {
@@ -455,6 +480,44 @@ function parseQueryIntent(
     } else if (/\b(compare|vs|versus|better|difference)\b/i.test(lowerQuery)) {
       result.intent = 'comparison';
     }
+  }
+
+  // Enhanced query parsing for additional attributes
+  const enhancedQuery = parseQueryWithKeywords(query, {
+    currentCity: result.filters.city || undefined,
+  });
+
+  // Merge enhanced attributes into result
+  result.enhancedQuery = enhancedQuery;
+  result.cuisines = enhancedQuery.cuisines;
+  result.dietary = enhancedQuery.dietary;
+  result.seatingTypes = enhancedQuery.seatingTypes;
+  result.amenities = enhancedQuery.amenities;
+  result.groupSize = enhancedQuery.groupSize;
+  result.kidFriendly = enhancedQuery.withKids;
+  result.petFriendly = enhancedQuery.petFriendly;
+
+  // Add enhanced filters to the filters object
+  if (enhancedQuery.cuisines?.length) {
+    result.filters.cuisines = enhancedQuery.cuisines;
+  }
+  if (enhancedQuery.dietary?.length) {
+    result.filters.dietary = enhancedQuery.dietary;
+  }
+  if (enhancedQuery.seatingTypes?.length) {
+    result.filters.seatingTypes = enhancedQuery.seatingTypes;
+  }
+  if (enhancedQuery.amenities?.length) {
+    result.filters.amenities = enhancedQuery.amenities;
+  }
+  if (enhancedQuery.groupSize) {
+    result.filters.groupSize = enhancedQuery.groupSize;
+  }
+  if (enhancedQuery.withKids) {
+    result.filters.kidFriendly = true;
+  }
+  if (enhancedQuery.petFriendly) {
+    result.filters.petFriendly = true;
   }
 
   return result;
@@ -1701,6 +1764,40 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
             dbQuery = dbQuery.ilike('neighborhood', `%${intent.filters.neighborhood}%`);
           }
 
+          // Enhanced filters for AI response improvements
+          // Filter by cuisines (any overlap)
+          if (intent.filters.cuisines?.length) {
+            dbQuery = dbQuery.overlaps('cuisines', intent.filters.cuisines);
+          }
+          // Filter by dietary options (any overlap)
+          if (intent.filters.dietary?.length) {
+            dbQuery = dbQuery.overlaps('dietary_options', intent.filters.dietary);
+          }
+          // Filter by seating types (any overlap)
+          if (intent.filters.seatingTypes?.length) {
+            dbQuery = dbQuery.overlaps('seating_types', intent.filters.seatingTypes);
+          }
+          // Filter by amenities (any overlap)
+          if (intent.filters.amenities?.length) {
+            dbQuery = dbQuery.overlaps('amenities', intent.filters.amenities);
+          }
+          // Filter by vibes (any overlap)
+          if (intent.vibes?.length) {
+            dbQuery = dbQuery.overlaps('vibe_tags', intent.vibes);
+          }
+          // Filter by group size
+          if (intent.filters.groupSize) {
+            dbQuery = dbQuery.gte('max_group_size', intent.filters.groupSize);
+          }
+          // Filter by kid-friendly
+          if (intent.filters.kidFriendly) {
+            dbQuery = dbQuery.eq('kid_friendly', true);
+          }
+          // Filter by pet-friendly
+          if (intent.filters.petFriendly) {
+            dbQuery = dbQuery.eq('pet_friendly', true);
+          }
+
           dbQuery = dbQuery.limit(100);
 
           const { data, error } = await dbQuery;
@@ -1852,6 +1949,12 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     // 13. Build deterministic UI (no LLM calls)
     const ui = buildDeterministicUI(intent, finalResults, conversationHistory);
 
+    // 13.5 Analyze matched/unmatched filters for AI response improvements
+    let filterAnalysis: { matched: any[]; unmatched: any[] } = { matched: [], unmatched: [] };
+    if (intent.enhancedQuery) {
+      filterAnalysis = analyzeMatchedFilters(intent.enhancedQuery, finalResults);
+    }
+
     // 14. Update taste profile
     if (userId) {
       await updateTasteProfile(userId, intent, finalResults, supabase);
@@ -1897,6 +2000,25 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         ranked: true,
         personalized: !!tasteProfile,
         hasUnifiedContext: !!unifiedContext,
+        // Enhanced filter analysis for AI response improvements
+        filterAnalysis: {
+          matched: filterAnalysis.matched,
+          unmatched: filterAnalysis.unmatched,
+        },
+        // Enhanced query attributes extracted
+        enhancedQuery: intent.enhancedQuery ? {
+          cuisines: intent.enhancedQuery.cuisines,
+          dietary: intent.enhancedQuery.dietary,
+          seatingTypes: intent.enhancedQuery.seatingTypes,
+          amenities: intent.enhancedQuery.amenities,
+          vibes: intent.enhancedQuery.vibes,
+          groupSize: intent.enhancedQuery.groupSize,
+          priceRange: intent.enhancedQuery.priceRange,
+          timeOfDay: intent.enhancedQuery.timeOfDay,
+          socialContext: intent.enhancedQuery.socialContext,
+          occasion: intent.enhancedQuery.occasion,
+          confidence: intent.enhancedQuery.confidence,
+        } : null,
       },
     });
   } catch (error: any) {

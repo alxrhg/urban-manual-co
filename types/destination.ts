@@ -79,4 +79,33 @@ export interface Destination {
   resy_url?: string | null;
   booking_url?: string | null;
   reservation_phone?: string | null;
+  // Enhanced attributes for AI response improvements
+  // Cuisine types (e.g., ['Japanese', 'Italian', 'Mediterranean'])
+  cuisines?: string[] | null;
+  // Dining style (e.g., ['casual', 'fine-dining', 'fast-casual'])
+  dining_style?: string[] | null;
+  // Meal types served (e.g., ['breakfast', 'lunch', 'dinner', 'brunch'])
+  meal_types?: string[] | null;
+  // Dietary options (e.g., ['vegetarian', 'vegan', 'gluten-free', 'halal'])
+  dietary_options?: string[] | null;
+  // Seating types (e.g., ['indoor', 'outdoor', 'rooftop', 'garden', 'terrace'])
+  seating_types?: string[] | null;
+  // Amenities and features (e.g., ['wifi', 'parking', 'wheelchair-accessible'])
+  amenities?: string[] | null;
+  // Vibe/atmosphere tags (e.g., ['romantic', 'trendy', 'hidden-gem', 'upscale'])
+  vibe_tags?: string[] | null;
+  // Group size capacity
+  min_group_size?: number | null;
+  max_group_size?: number | null;
+  has_private_dining?: boolean | null;
+  // Reservation requirements
+  accepts_reservations?: boolean | null;
+  reservation_required?: boolean | null;
+  walk_ins_allowed?: boolean | null;
+  // Suitability flags
+  kid_friendly?: boolean | null;
+  pet_friendly?: boolean | null;
+  suitable_for_business?: boolean | null;
+  suitable_for_date?: boolean | null;
+  suitable_for_groups?: boolean | null;
 }
