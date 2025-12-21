@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft, Star, Bookmark, Check, Share2, ExternalLink, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { useTrip } from '@/contexts/TripContext';
+import { useTrip } from '@/features/trips';
 
 interface StickyHeaderProps {
   destinationName: string;
