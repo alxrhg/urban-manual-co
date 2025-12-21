@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
-import { User, Map } from "lucide-react";
+import { User, Map, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import { useDrawer } from "@/contexts/DrawerContext";
@@ -117,23 +117,42 @@ export function Header() {
         </span>
       )}
 
-      {/* Trips button - ghost style */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/trips')}
-            aria-label="View trips"
-          >
-            <Map className="w-4 h-4" />
-            <span className="hidden sm:inline">Trips</span>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{user ? 'View your trips' : 'Plan a trip'}</p>
-        </TooltipContent>
-      </Tooltip>
+      {/* Admin button for admins, Trips button for others */}
+      {isAdmin ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/admin')}
+              aria-label="Admin dashboard"
+            >
+              <Shield className="w-4 h-4" />
+              <span className="hidden sm:inline">Admin</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Admin dashboard</p>
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/trips')}
+              aria-label="View trips"
+            >
+              <Map className="w-4 h-4" />
+              <span className="hidden sm:inline">Trips</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{user ? 'View your trips' : 'Plan a trip'}</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
 
       {user ? (
         <Tooltip>
