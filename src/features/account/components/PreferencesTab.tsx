@@ -18,6 +18,8 @@ const INTERESTS = [
   'Michelin Stars', 'Rooftop Bars', 'Boutique Hotels', 'Street Food', 'Fine Dining',
   'Architecture', 'Art Galleries', 'Shopping', 'Nightlife', 'Spas', 'Beaches', 'Mountains'
 ];
+const DEFAULT_VIEW_OPTIONS = ['Grid', 'List', 'Map'];
+const SORT_OPTIONS = ['Popularity', 'Rating', 'Distance', 'Price', 'Newest'];
 
 interface PreferencesTabProps {
   userId: string;
@@ -28,6 +30,38 @@ interface LocationSuggestion {
   latitude: number;
   longitude: number;
 }
+
+// Extended preferences that may not be in UserProfile type yet
+interface ExtendedPreferences {
+  // Notification preferences
+  notify_new_destinations: boolean;
+  notify_trip_reminders: boolean;
+  notify_weekly_digest: boolean;
+  notify_price_changes: boolean;
+  // Display preferences
+  default_view: string;
+  default_sort: string;
+  show_user_reviews: boolean;
+  show_user_photos: boolean;
+  // Language preferences
+  preferred_language: string;
+  preferred_currency: string;
+  distance_unit: string;
+}
+
+const defaultExtendedPrefs: ExtendedPreferences = {
+  notify_new_destinations: true,
+  notify_trip_reminders: true,
+  notify_weekly_digest: false,
+  notify_price_changes: false,
+  default_view: 'Grid',
+  default_sort: 'Popularity',
+  show_user_reviews: true,
+  show_user_photos: true,
+  preferred_language: 'English',
+  preferred_currency: 'USD',
+  distance_unit: 'Miles',
+};
 
 export function PreferencesTab({ userId }: PreferencesTabProps) {
   const [loading, setLoading] = useState(true);
@@ -44,6 +78,7 @@ export function PreferencesTab({ userId }: PreferencesTabProps) {
     allow_tracking: true,
     email_notifications: true,
   });
+  const [extendedPrefs, setExtendedPrefs] = useState<ExtendedPreferences>(defaultExtendedPrefs);
 
   // Home base search state
   const [homeBaseSearch, setHomeBaseSearch] = useState('');
@@ -243,7 +278,7 @@ export function PreferencesTab({ userId }: PreferencesTabProps) {
           {TRAVEL_STYLES.map(style => (
             <button
               key={style}
-              onClick={() => setProfile({ ...profile, travel_style: style as any })}
+              onClick={() => setProfile({ ...profile, travel_style: style as UserProfile['travel_style'] })}
               className={`px-4 py-2 rounded-2xl border transition-all text-sm ${
                 profile.travel_style === style
                   ? 'border-black dark:border-white bg-gray-50 dark:bg-gray-800 text-black dark:text-white font-medium'
@@ -365,6 +400,182 @@ export function PreferencesTab({ userId }: PreferencesTabProps) {
               {interest}
             </button>
           ))}
+        </div>
+      </section>
+
+      {/* Notification Preferences */}
+      <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+        <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Notifications</h2>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
+          Control how we keep you updated about travel opportunities
+        </p>
+        <div className="space-y-4">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={extendedPrefs.notify_new_destinations}
+              onChange={(e) => setExtendedPrefs({ ...extendedPrefs, notify_new_destinations: e.target.checked })}
+              className="mt-0.5 h-4 w-4 accent-black dark:accent-white"
+            />
+            <div>
+              <p className="text-sm">New destinations matching my interests</p>
+              <p className="text-xs text-gray-500">Get notified when we add places you might like</p>
+            </div>
+          </label>
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={extendedPrefs.notify_trip_reminders}
+              onChange={(e) => setExtendedPrefs({ ...extendedPrefs, notify_trip_reminders: e.target.checked })}
+              className="mt-0.5 h-4 w-4 accent-black dark:accent-white"
+            />
+            <div>
+              <p className="text-sm">Trip reminders</p>
+              <p className="text-xs text-gray-500">Reminders before your upcoming trips</p>
+            </div>
+          </label>
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={extendedPrefs.notify_weekly_digest}
+              onChange={(e) => setExtendedPrefs({ ...extendedPrefs, notify_weekly_digest: e.target.checked })}
+              className="mt-0.5 h-4 w-4 accent-black dark:accent-white"
+            />
+            <div>
+              <p className="text-sm">Weekly recommendations</p>
+              <p className="text-xs text-gray-500">Curated picks based on your preferences</p>
+            </div>
+          </label>
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={extendedPrefs.notify_price_changes}
+              onChange={(e) => setExtendedPrefs({ ...extendedPrefs, notify_price_changes: e.target.checked })}
+              className="mt-0.5 h-4 w-4 accent-black dark:accent-white"
+            />
+            <div>
+              <p className="text-sm">Price changes on saved places</p>
+              <p className="text-xs text-gray-500">Alert me when prices drop at saved destinations</p>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      {/* Display Preferences */}
+      <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+        <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Search & Display</h2>
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm mb-2">Default view</label>
+            <div className="flex gap-2">
+              {DEFAULT_VIEW_OPTIONS.map(view => (
+                <button
+                  key={view}
+                  onClick={() => setExtendedPrefs({ ...extendedPrefs, default_view: view })}
+                  className={`px-4 py-2 rounded-xl border text-sm transition-all ${
+                    extendedPrefs.default_view === view
+                      ? 'border-black dark:border-white bg-gray-50 dark:bg-gray-800 font-medium'
+                      : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
+                  }`}
+                >
+                  {view}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm mb-2">Sort destinations by</label>
+            <div className="flex flex-wrap gap-2">
+              {SORT_OPTIONS.map(sort => (
+                <button
+                  key={sort}
+                  onClick={() => setExtendedPrefs({ ...extendedPrefs, default_sort: sort })}
+                  className={`px-3 py-1.5 rounded-xl border text-xs transition-all ${
+                    extendedPrefs.default_sort === sort
+                      ? 'border-black dark:border-white bg-gray-50 dark:bg-gray-800 font-medium'
+                      : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
+                  }`}
+                >
+                  {sort}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-3 pt-2">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={extendedPrefs.show_user_reviews}
+                onChange={(e) => setExtendedPrefs({ ...extendedPrefs, show_user_reviews: e.target.checked })}
+                className="h-4 w-4 accent-black dark:accent-white"
+              />
+              <span className="text-sm">Show user reviews</span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={extendedPrefs.show_user_photos}
+                onChange={(e) => setExtendedPrefs({ ...extendedPrefs, show_user_photos: e.target.checked })}
+                className="h-4 w-4 accent-black dark:accent-white"
+              />
+              <span className="text-sm">Show user photos</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      {/* Language & Region */}
+      <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+        <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Language & Region</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm mb-2">Language</label>
+            <select
+              value={extendedPrefs.preferred_language}
+              onChange={(e) => setExtendedPrefs({ ...extendedPrefs, preferred_language: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:border-black dark:focus:border-white"
+            >
+              <option value="English">English</option>
+              <option value="Spanish">Spanish</option>
+              <option value="French">French</option>
+              <option value="German">German</option>
+              <option value="Japanese">Japanese</option>
+              <option value="Chinese">Chinese</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm mb-2">Currency</label>
+            <select
+              value={extendedPrefs.preferred_currency}
+              onChange={(e) => setExtendedPrefs({ ...extendedPrefs, preferred_currency: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:border-black dark:focus:border-white"
+            >
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+              <option value="JPY">JPY</option>
+              <option value="CHF">CHF</option>
+              <option value="AUD">AUD</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm mb-2">Distance unit</label>
+            <div className="flex gap-2">
+              {['Miles', 'Kilometers'].map(unit => (
+                <button
+                  key={unit}
+                  onClick={() => setExtendedPrefs({ ...extendedPrefs, distance_unit: unit })}
+                  className={`px-4 py-2 rounded-xl border text-sm transition-all ${
+                    extendedPrefs.distance_unit === unit
+                      ? 'border-black dark:border-white bg-gray-50 dark:bg-gray-800 font-medium'
+                      : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
+                  }`}
+                >
+                  {unit}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 

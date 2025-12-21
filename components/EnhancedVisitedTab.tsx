@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Check, Grid3x3, List, Star } from 'lucide-react';
+import { Check, Grid3x3, List, Star, Map, Search, Download, X } from 'lucide-react';
 import { NoVisitedPlacesEmptyState, NoResultsEmptyState } from './EmptyStates';
 import { AddPlaceDropdown } from './AddPlaceDropdown';
 import type { VisitedPlace } from '@/types/common';
@@ -22,30 +22,52 @@ function capitalizeCity(city: string): string {
 
 export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisitedTabProps) {
   const router = useRouter();
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
   const [filterCity, setFilterCity] = useState<string>('');
   const [filterCategory, setFilterCategory] = useState<string>('');
   const [sortBy, setSortBy] = useState<'recent' | 'name'>('recent');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [showSearch, setShowSearch] = useState(false);
 
-  // Extract unique cities and categories
-  const { cities, categories } = useMemo(() => {
+  // Extract unique cities, categories, and stats
+  const { cities, categories, categoryStats, cityStats } = useMemo(() => {
     const citiesSet = new Set<string>();
     const categoriesSet = new Set<string>();
+    const categoryCount: Record<string, number> = {};
+    const cityCount: Record<string, number> = {};
 
     visitedPlaces.forEach(place => {
-      if (place.destination?.city) citiesSet.add(place.destination.city);
-      if (place.destination?.category) categoriesSet.add(place.destination.category);
+      if (place.destination?.city) {
+        citiesSet.add(place.destination.city);
+        cityCount[place.destination.city] = (cityCount[place.destination.city] || 0) + 1;
+      }
+      if (place.destination?.category) {
+        categoriesSet.add(place.destination.category);
+        categoryCount[place.destination.category] = (categoryCount[place.destination.category] || 0) + 1;
+      }
     });
 
     return {
       cities: Array.from(citiesSet).sort(),
-      categories: Array.from(categoriesSet).sort()
+      categories: Array.from(categoriesSet).sort(),
+      categoryStats: Object.entries(categoryCount).sort(([, a], [, b]) => b - a),
+      cityStats: Object.entries(cityCount).sort(([, a], [, b]) => b - a).slice(0, 5),
     };
   }, [visitedPlaces]);
 
   // Filter and sort places
   const filteredPlaces = useMemo(() => {
     let filtered = [...visitedPlaces];
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(p =>
+        p.destination?.name?.toLowerCase().includes(query) ||
+        p.destination?.city?.toLowerCase().includes(query) ||
+        p.destination?.category?.toLowerCase().includes(query)
+      );
+    }
 
     if (filterCity) {
       filtered = filtered.filter(p => p.destination?.city === filterCity);
@@ -62,16 +84,67 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
     });
 
     return filtered;
-  }, [visitedPlaces, filterCity, filterCategory, sortBy]);
+  }, [visitedPlaces, filterCity, filterCategory, sortBy, searchQuery]);
+
+  // Places with coordinates for map view
+  const placesWithCoords = useMemo(() => {
+    return filteredPlaces.filter(p =>
+      p.destination?.latitude && p.destination?.longitude
+    );
+  }, [filteredPlaces]);
+
+  // Export function
+  const handleExport = () => {
+    const exportData = visitedPlaces.map(p => ({
+      name: p.destination?.name,
+      city: p.destination?.city,
+      category: p.destination?.category,
+      visited_at: p.visited_at,
+      rating: p.rating,
+    }));
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'visited-places.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   if (visitedPlaces.length === 0) {
     return <NoVisitedPlacesEmptyState />;
   }
 
   return (
-    <div className="space-y-12">
-      {/* View Mode + Sort + Add Button - Minimal inline controls */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-8">
+      {/* Stats Summary */}
+      <div className="flex flex-wrap items-center gap-4 text-sm">
+        <span className="text-gray-600 dark:text-gray-400">
+          <span className="font-medium text-black dark:text-white">{visitedPlaces.length}</span> places visited
+        </span>
+        <span className="text-gray-300 dark:text-gray-700">|</span>
+        <span className="text-gray-600 dark:text-gray-400">
+          <span className="font-medium text-black dark:text-white">{cities.length}</span> cities
+        </span>
+        {categoryStats.length > 0 && (
+          <>
+            <span className="text-gray-300 dark:text-gray-700">|</span>
+            <div className="flex flex-wrap gap-2">
+              {categoryStats.slice(0, 4).map(([category, count]) => (
+                <span key={category} className="text-xs text-gray-500 capitalize">
+                  {category}: {count}
+                </span>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* View Mode + Search + Export + Add */}
+      <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 text-xs">
           <button
             onClick={() => setViewMode('grid')}
@@ -93,15 +166,66 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
           >
             List
           </button>
+          <button
+            onClick={() => setViewMode('map')}
+            className={`transition-all flex items-center gap-1 ${
+              viewMode === 'map'
+                ? 'font-medium text-black dark:text-white'
+                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+            }`}
+          >
+            <Map className="w-3 h-3" />
+            Map
+          </button>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowSearch(!showSearch)}
+            className={`p-1.5 transition-colors ${
+              showSearch ? 'text-black dark:text-white' : 'text-gray-400 hover:text-black dark:hover:text-white'
+            }`}
+            title="Search"
+          >
+            <Search className="w-4 h-4" />
+          </button>
+          <button
+            onClick={handleExport}
+            className="p-1.5 text-gray-400 hover:text-black dark:hover:text-white transition-colors"
+            title="Export"
+          >
+            <Download className="w-4 h-4" />
+          </button>
           <AddPlaceDropdown onPlaceAdded={onPlaceAdded} />
         </div>
       </div>
 
-      {/* Sort Controls - Separate row */}
+      {/* Search Input */}
+      {showSearch && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search places, cities, or categories..."
+            className="w-full pl-10 pr-10 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-transparent text-sm focus:outline-none focus:border-black dark:focus:border-white"
+            autoFocus
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black dark:hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Sort Controls */}
       <div className="flex items-center gap-3 text-xs">
+        <span className="text-gray-400">Sort:</span>
         <button
           onClick={() => setSortBy('recent')}
           className={`transition-all ${
@@ -259,6 +383,54 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
               </div>
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Map View */}
+      {viewMode === 'map' && filteredPlaces.length > 0 && (
+        <div className="space-y-4">
+          {placesWithCoords.length === 0 ? (
+            <div className="p-8 text-center rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+              <Map className="w-8 h-8 mx-auto text-gray-400 mb-3" />
+              <p className="text-sm text-gray-500">No location data available for these places</p>
+              <p className="text-xs text-gray-400 mt-1">Try switching to Grid or List view</p>
+            </div>
+          ) : (
+            <>
+              <div className="aspect-video rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900 overflow-hidden relative">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <Map className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {placesWithCoords.length} places with location data
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">Map view coming soon</p>
+                  </div>
+                </div>
+              </div>
+              {/* List of places with coords */}
+              <div className="space-y-2">
+                {placesWithCoords.slice(0, 10).map((place) => (
+                  <button
+                    key={place.destination_slug}
+                    onClick={() => router.push(`/destination/${place.destination_slug}`)}
+                    className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-colors text-left"
+                  >
+                    <div className="w-2 h-2 rounded-full bg-black dark:bg-white" />
+                    <span className="text-sm font-medium">{place.destination?.name}</span>
+                    <span className="text-xs text-gray-500">
+                      {place.destination?.city && capitalizeCity(place.destination.city)}
+                    </span>
+                  </button>
+                ))}
+                {placesWithCoords.length > 10 && (
+                  <p className="text-xs text-gray-400 text-center py-2">
+                    and {placesWithCoords.length - 10} more places
+                  </p>
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
