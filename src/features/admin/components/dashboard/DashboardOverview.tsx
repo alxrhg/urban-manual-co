@@ -12,21 +12,12 @@ import {
   Plus,
   RefreshCw,
   BarChart3,
-  Database,
   ChevronRight,
-  Utensils,
-  Wine,
-  Building2,
-  Coffee,
-  ShoppingBag,
-  Landmark,
-  Palmtree,
-  MoreHorizontal,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { Badge } from '@/ui/badge';
 import { Progress } from '@/ui/progress';
 import { Skeleton } from '@/ui/skeleton';
+import { Separator } from '@/ui/separator';
 
 interface DashboardStats {
   totalDestinations: number;
@@ -82,7 +73,6 @@ export function DashboardOverview() {
           supabase.from('destinations').select('city, country, category'),
         ]);
 
-        // Aggregate city data
         const cityCount: Record<string, number> = {};
         const countrySet = new Set<string>();
         const categoryCount: Record<string, number> = {};
@@ -106,7 +96,7 @@ export function DashboardOverview() {
 
         const topCategories = Object.entries(categoryCount)
           .sort((a, b) => b[1] - a[1])
-          .slice(0, 8)
+          .slice(0, 6)
           .map(([category, count]) => ({ category, count }));
 
         setStats({
@@ -136,240 +126,174 @@ export function DashboardOverview() {
     fetchStats();
   }, []);
 
-  // Calculate data completeness score
-  const completenessScore = stats
-    ? Math.round(
-        ((stats.totalDestinations - stats.missingImages) / stats.totalDestinations * 30 +
-          (stats.totalDestinations - stats.missingDescriptions) / stats.totalDestinations * 30 +
-          (stats.enrichedDestinations / stats.totalDestinations) * 40)
-      )
+  const completenessPercent = stats
+    ? Math.round((stats.enrichedDestinations / stats.totalDestinations) * 100)
     : 0;
-
-  const getCategoryIcon = (category: string) => {
-    const icons: Record<string, React.ReactNode> = {
-      restaurant: <Utensils className="w-3.5 h-3.5" />,
-      bar: <Wine className="w-3.5 h-3.5" />,
-      hotel: <Building2 className="w-3.5 h-3.5" />,
-      cafe: <Coffee className="w-3.5 h-3.5" />,
-      shop: <ShoppingBag className="w-3.5 h-3.5" />,
-      landmark: <Landmark className="w-3.5 h-3.5" />,
-      attraction: <Palmtree className="w-3.5 h-3.5" />,
-    };
-    return icons[category.toLowerCase()] || <MoreHorizontal className="w-3.5 h-3.5" />;
-  };
 
   return (
     <div className="space-y-8">
-      {/* Quick Actions - Command Bar Style */}
+      {/* Quick Actions */}
       <div className="flex flex-wrap gap-2">
         <Link
           href="/admin/destinations"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity"
         >
           <Plus className="w-4 h-4" />
           Add Destination
         </Link>
         <Link
           href="/admin/enrich"
-          className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
         >
           <Sparkles className="w-4 h-4" />
           Enrich
         </Link>
         <Link
           href="/admin/analytics"
-          className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
         >
           <BarChart3 className="w-4 h-4" />
           Analytics
         </Link>
         <Link
           href="/admin/reindex"
-          className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Reindex
         </Link>
       </div>
 
-      {/* Data Health Card */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Data Completeness Score */}
-        <div className="lg:col-span-1 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
-          <div className="flex items-center gap-2 mb-4">
-            <Database className="w-4 h-4 text-gray-500" />
-            <h3 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">
-              Data Health
-            </h3>
-          </div>
-          {loading ? (
-            <Skeleton className="h-16 w-16 rounded-full mx-auto" />
-          ) : (
-            <div className="flex flex-col items-center">
-              <div className="relative w-20 h-20">
-                <svg className="w-20 h-20 transform -rotate-90">
-                  <circle
-                    cx="40"
-                    cy="40"
-                    r="36"
-                    stroke="currentColor"
-                    strokeWidth="8"
-                    fill="none"
-                    className="text-gray-200 dark:text-gray-800"
-                  />
-                  <circle
-                    cx="40"
-                    cy="40"
-                    r="36"
-                    stroke="currentColor"
-                    strokeWidth="8"
-                    fill="none"
-                    strokeDasharray={`${completenessScore * 2.26} 226`}
-                    strokeLinecap="round"
-                    className={completenessScore >= 80 ? 'text-green-500' : completenessScore >= 60 ? 'text-amber-500' : 'text-red-500'}
-                  />
-                </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-xl font-semibold text-black dark:text-white">
-                  {completenessScore}%
-                </span>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 text-center">
-                Images, descriptions & enrichment
-              </p>
-            </div>
-          )}
-        </div>
+      <Separator />
 
-        {/* Stats Grid */}
-        <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard
-            label="Destinations"
-            value={stats?.totalDestinations || 0}
-            loading={loading}
-            onClick={() => router.push('/admin/destinations')}
-            badge={stats?.addedThisWeek ? `+${stats.addedThisWeek}` : undefined}
-          />
-          <StatCard
-            label="Cities"
-            value={stats?.citiesCount || 0}
-            loading={loading}
-            onClick={() => router.push('/admin/cities')}
-          />
-          <StatCard
-            label="Countries"
-            value={stats?.countriesCount || 0}
-            loading={loading}
-            onClick={() => router.push('/admin/countries')}
-          />
-          <StatCard
-            label="Enriched"
-            value={stats?.enrichedDestinations || 0}
-            loading={loading}
-            onClick={() => router.push('/admin/enrich')}
-            badge={stats ? `${Math.round((stats.enrichedDestinations / stats.totalDestinations) * 100)}%` : undefined}
-          />
-          <StatCard
-            label="Crown Picks"
-            value={stats?.crownPicks || 0}
-            loading={loading}
-            icon={<Crown className="w-3.5 h-3.5 text-amber-500" />}
-          />
-          <StatCard
-            label="Michelin"
-            value={stats?.michelinSpots || 0}
-            loading={loading}
-            icon={<img src="/michelin-star.svg" alt="" className="w-3.5 h-3.5" />}
-          />
-          <StatCard
-            label="User Saves"
-            value={stats?.totalSaves || 0}
-            loading={loading}
-            onClick={() => router.push('/admin/analytics')}
-          />
-          <StatCard
-            label="Visits"
-            value={stats?.totalVisits || 0}
-            loading={loading}
-            onClick={() => router.push('/admin/analytics')}
-          />
-        </div>
-      </div>
+      {/* Primary Stats - Definition List */}
+      <dl className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-4">
+        <StatDefinition
+          term="Destinations"
+          value={stats?.totalDestinations}
+          loading={loading}
+          onClick={() => router.push('/admin/destinations')}
+          trend={stats?.addedThisWeek ? `+${stats.addedThisWeek} this week` : undefined}
+        />
+        <StatDefinition
+          term="Cities"
+          value={stats?.citiesCount}
+          loading={loading}
+          onClick={() => router.push('/admin/cities')}
+        />
+        <StatDefinition
+          term="Countries"
+          value={stats?.countriesCount}
+          loading={loading}
+          onClick={() => router.push('/admin/countries')}
+        />
+        <StatDefinition
+          term="Enriched"
+          value={stats?.enrichedDestinations}
+          loading={loading}
+          onClick={() => router.push('/admin/enrich')}
+          suffix={stats ? `${completenessPercent}%` : undefined}
+        />
+      </dl>
+
+      <Separator />
 
       {/* Needs Attention */}
       {!loading && stats && (stats.missingImages > 0 || stats.missingDescriptions > 0 || stats.notEnriched > 0) && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {stats.missingImages > 0 && (
-            <button
-              onClick={() => router.push('/admin/destinations?filter=no_image')}
-              className="flex items-center justify-between p-4 rounded-xl border border-orange-200 dark:border-orange-900/50 bg-orange-50/50 dark:bg-orange-950/20 hover:bg-orange-100/50 dark:hover:bg-orange-900/30 transition-colors group"
-            >
-              <div className="flex items-center gap-3">
-                <ImageOff className="w-4 h-4 text-orange-500" />
-                <div className="text-left">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Missing Images</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{stats.missingImages} destinations</p>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
-            </button>
-          )}
-          {stats.missingDescriptions > 0 && (
-            <button
-              onClick={() => router.push('/admin/destinations?filter=no_description')}
-              className="flex items-center justify-between p-4 rounded-xl border border-orange-200 dark:border-orange-900/50 bg-orange-50/50 dark:bg-orange-950/20 hover:bg-orange-100/50 dark:hover:bg-orange-900/30 transition-colors group"
-            >
-              <div className="flex items-center gap-3">
-                <FileText className="w-4 h-4 text-orange-500" />
-                <div className="text-left">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Missing Descriptions</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{stats.missingDescriptions} destinations</p>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
-            </button>
-          )}
-          {stats.notEnriched > 0 && (
-            <button
-              onClick={() => router.push('/admin/destinations?filter=not_enriched')}
-              className="flex items-center justify-between p-4 rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors group"
-            >
-              <div className="flex items-center gap-3">
-                <Sparkles className="w-4 h-4 text-blue-500" />
-                <div className="text-left">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Not Enriched</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{stats.notEnriched} destinations</p>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
-            </button>
-          )}
-        </div>
+        <>
+          <div>
+            <h3 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium mb-3">
+              Needs Attention
+            </h3>
+            <div className="space-y-2">
+              {stats.missingImages > 0 && (
+                <button
+                  onClick={() => router.push('/admin/destinations?filter=no_image')}
+                  className="flex items-center justify-between w-full py-2 group text-left"
+                >
+                  <span className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 group-hover:text-black dark:group-hover:text-white transition-colors">
+                    <ImageOff className="w-4 h-4 text-orange-500" />
+                    {stats.missingImages} missing images
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 transition-colors" />
+                </button>
+              )}
+              {stats.missingDescriptions > 0 && (
+                <button
+                  onClick={() => router.push('/admin/destinations?filter=no_description')}
+                  className="flex items-center justify-between w-full py-2 group text-left"
+                >
+                  <span className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 group-hover:text-black dark:group-hover:text-white transition-colors">
+                    <FileText className="w-4 h-4 text-orange-500" />
+                    {stats.missingDescriptions} missing descriptions
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 transition-colors" />
+                </button>
+              )}
+              {stats.notEnriched > 0 && (
+                <button
+                  onClick={() => router.push('/admin/destinations?filter=not_enriched')}
+                  className="flex items-center justify-between w-full py-2 group text-left"
+                >
+                  <span className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 group-hover:text-black dark:group-hover:text-white transition-colors">
+                    <Sparkles className="w-4 h-4 text-gray-400" />
+                    {stats.notEnriched} not enriched
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 transition-colors" />
+                </button>
+              )}
+            </div>
+          </div>
+          <Separator />
+        </>
       )}
+
+      {/* Content Highlights */}
+      <dl className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-4">
+        <StatDefinition
+          term="Crown Picks"
+          value={stats?.crownPicks}
+          loading={loading}
+          icon={<Crown className="w-3.5 h-3.5 text-amber-500" />}
+        />
+        <StatDefinition
+          term="Michelin Spots"
+          value={stats?.michelinSpots}
+          loading={loading}
+          icon={<img src="/michelin-star.svg" alt="" className="w-3.5 h-3.5" />}
+        />
+        <StatDefinition
+          term="User Saves"
+          value={stats?.totalSaves}
+          loading={loading}
+          onClick={() => router.push('/admin/analytics')}
+        />
+        <StatDefinition
+          term="Visits Logged"
+          value={stats?.totalVisits}
+          loading={loading}
+          onClick={() => router.push('/admin/analytics')}
+        />
+      </dl>
+
+      <Separator />
 
       {/* Two Column: Categories + Cities */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Categories */}
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">
-              By Category
-            </h3>
-          </div>
-          <div className="space-y-2">
+          <h3 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium mb-3">
+            By Category
+          </h3>
+          <div className="space-y-1">
             {loading ? (
               Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-8 w-full" />
+                <Skeleton key={i} className="h-6 w-full" />
               ))
             ) : (
               stats?.topCategories.map((cat, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-gray-400">{getCategoryIcon(cat.category)}</span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300 capitalize">{cat.category}</span>
-                  </div>
+                <div key={i} className="flex items-center justify-between py-1.5">
+                  <span className="text-sm text-gray-700 dark:text-gray-300 capitalize">{cat.category}</span>
                   <span className="text-sm text-gray-400 tabular-nums">{cat.count}</span>
                 </div>
               ))
@@ -379,21 +303,21 @@ export function DashboardOverview() {
 
         {/* Top Cities */}
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">
               Top Cities
             </h3>
             <Link
               href="/admin/cities"
-              className="text-xs text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+              className="text-xs text-gray-400 hover:text-black dark:hover:text-white transition-colors"
             >
               View all
             </Link>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {loading ? (
               Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-6 w-full" />
+                <Skeleton key={i} className="h-5 w-full" />
               ))
             ) : (
               stats?.topCities.map((city, i) => (
@@ -404,7 +328,7 @@ export function DashboardOverview() {
                   </div>
                   <Progress
                     value={(city.count / (stats?.topCities[0]?.count || 1)) * 100}
-                    className="h-1"
+                    className="h-0.5"
                   />
                 </div>
               ))
@@ -413,41 +337,45 @@ export function DashboardOverview() {
         </div>
       </div>
 
+      <Separator />
+
       {/* Recent Additions */}
       <div>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">
             Recent Additions
           </h3>
           <Link
             href="/admin/destinations"
-            className="flex items-center gap-1 text-xs text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+            className="flex items-center gap-1 text-xs text-gray-400 hover:text-black dark:hover:text-white transition-colors"
           >
             View all
             <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="divide-y divide-gray-100 dark:divide-gray-800">
           {loading ? (
             Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full rounded-xl" />
+              <div key={i} className="py-3">
+                <Skeleton className="h-4 w-48" />
+              </div>
             ))
           ) : (
             stats?.recentDestinations.map((dest, i) => (
               <Link
                 key={i}
                 href={`/destinations/${dest.slug}`}
-                className="flex items-center justify-between p-4 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-colors group"
+                className="flex items-center justify-between py-3 group"
               >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-black dark:text-white truncate group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
+                <div>
+                  <span className="text-sm text-black dark:text-white group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors">
                     {dest.name}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{dest.city}</p>
+                  </span>
+                  <span className="text-sm text-gray-400 ml-2">{dest.city}</span>
                 </div>
-                <Badge variant="secondary" className="text-[10px] uppercase ml-2 shrink-0">
+                <span className="text-xs text-gray-400 uppercase tracking-wider">
                   {dest.category}
-                </Badge>
+                </span>
               </Link>
             ))
           )}
@@ -457,59 +385,54 @@ export function DashboardOverview() {
   );
 }
 
-// Compact stat card
-function StatCard({
-  label,
+function StatDefinition({
+  term,
   value,
   loading,
   onClick,
-  badge,
+  trend,
+  suffix,
   icon,
 }: {
-  label: string;
-  value: number;
+  term: string;
+  value?: number;
   loading: boolean;
   onClick?: () => void;
-  badge?: string;
+  trend?: string;
+  suffix?: string;
   icon?: React.ReactNode;
 }) {
   const content = (
     <>
-      <div className="flex items-center gap-1.5 mb-1">
+      <dt className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-0.5">
         {icon}
-        <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
-      </div>
+        {term}
+      </dt>
       {loading ? (
         <Skeleton className="h-6 w-12" />
       ) : (
-        <div className="flex items-baseline gap-2">
-          <span className="text-xl font-semibold text-black dark:text-white tabular-nums">
-            {value.toLocaleString()}
+        <dd className="flex items-baseline gap-2">
+          <span className="text-xl font-medium text-black dark:text-white tabular-nums">
+            {value?.toLocaleString() ?? '—'}
           </span>
-          {badge && (
-            <Badge variant="secondary" className="text-[10px]">
-              {badge}
-            </Badge>
+          {suffix && (
+            <span className="text-xs text-gray-400">{suffix}</span>
           )}
-        </div>
+          {trend && (
+            <span className="text-xs text-green-600 dark:text-green-400">{trend}</span>
+          )}
+        </dd>
       )}
     </>
   );
 
   if (onClick) {
     return (
-      <button
-        onClick={onClick}
-        className="text-left p-3 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
-      >
-        {content}
+      <button onClick={onClick} className="text-left group">
+        <div className="group-hover:opacity-70 transition-opacity">{content}</div>
       </button>
     );
   }
 
-  return (
-    <div className="p-3 rounded-xl border border-gray-100 dark:border-gray-800">
-      {content}
-    </div>
-  );
+  return <div>{content}</div>;
 }
