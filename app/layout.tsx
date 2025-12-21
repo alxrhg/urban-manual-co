@@ -22,6 +22,7 @@ import { PanelLayout } from "@/components/PanelMount";
 import MyStatsig from "./my-statsig";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
+import { WebVitalsTracker } from "@/components/WebVitalsTracker";
 import { SplashScreen } from "@/components/SplashScreen";
 import { CookieConsent } from "@/components/CookieConsent";
 import { NotificationPrompt } from "@/components/NotificationPrompt";
@@ -291,6 +292,7 @@ export default function RootLayout({
             <GoogleAnalytics />
             <Analytics />
             <SpeedInsights />
+            <WebVitalsTracker />
             </ChristmasThemeProvider>
           </ThemeProvider>
         </MyStatsig>
