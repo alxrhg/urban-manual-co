@@ -87,6 +87,9 @@ export async function PUT(request: NextRequest) {
   }
 }
 
+// Architect-related UUID fields in destinations table
+const ARCHITECT_FIELDS = ['architect_id', 'design_firm_id', 'interior_designer_id'] as const;
+
 export async function DELETE(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const type = searchParams.get('type') as DataType;
@@ -106,6 +109,21 @@ export async function DELETE(request: NextRequest) {
 
     // Use service role client to bypass RLS for admin operations
     const supabase = createServiceRoleClient();
+
+    // For architects: clear foreign key references in destinations before deletion
+    if (type === 'architects') {
+      for (const field of ARCHITECT_FIELDS) {
+        const { error: updateError } = await supabase
+          .from('destinations')
+          .update({ [field]: null })
+          .eq(field, id);
+
+        if (updateError) {
+          throw new Error(`Failed to clear ${field} references: ${updateError.message}`);
+        }
+      }
+    }
+
     const { error } = await supabase.from(type).delete().eq('id', id);
 
     if (error) throw error;
