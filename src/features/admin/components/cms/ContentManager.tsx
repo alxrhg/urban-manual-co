@@ -30,6 +30,9 @@ import {
   FileText,
   Tag,
   Calendar,
+  Columns3,
+  Star,
+  Clock,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { Destination } from '@/types/destination';
@@ -98,6 +101,28 @@ const CATEGORIES = [
 const ITEMS_PER_PAGE_OPTIONS = [12, 24, 48, 96];
 const DEFAULT_ITEMS_PER_PAGE = 24;
 
+// Column configuration for table view
+type ColumnId = 'city' | 'category' | 'status' | 'rating' | 'address' | 'created_at' | 'updated_at';
+
+interface ColumnConfig {
+  id: ColumnId;
+  label: string;
+  sortable?: boolean;
+  sortField?: SortField;
+}
+
+const TABLE_COLUMNS: ColumnConfig[] = [
+  { id: 'city', label: 'City', sortable: true, sortField: 'city' },
+  { id: 'category', label: 'Category', sortable: true, sortField: 'category' },
+  { id: 'status', label: 'Status' },
+  { id: 'rating', label: 'Rating' },
+  { id: 'address', label: 'Address' },
+  { id: 'created_at', label: 'Created', sortable: true, sortField: 'created_at' },
+  { id: 'updated_at', label: 'Updated', sortable: true, sortField: 'updated_at' },
+];
+
+const DEFAULT_VISIBLE_COLUMNS: ColumnId[] = ['city', 'category', 'status'];
+
 const getSortLabel = (field: SortField, order: SortOrder): string => {
   const labels: Record<SortField, Partial<Record<SortOrder, string>>> = {
     name: { asc: 'Name A-Z', desc: 'Name Z-A' },
@@ -136,6 +161,8 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
   // Bulk action states
   const [showBulkCategoryModal, setShowBulkCategoryModal] = useState(false);
   const [bulkCategory, setBulkCategory] = useState<string>('');
+  // Column visibility state
+  const [visibleColumns, setVisibleColumns] = useState<Set<ColumnId>>(new Set(DEFAULT_VISIBLE_COLUMNS));
 
   // Fetch unique cities
   useEffect(() => {
@@ -330,6 +357,18 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
     setCrownOnly(false);
     setMichelinOnly(false);
     setMissingDataFilter('all');
+  };
+
+  const toggleColumn = (columnId: ColumnId) => {
+    setVisibleColumns(prev => {
+      const next = new Set(prev);
+      if (next.has(columnId)) {
+        next.delete(columnId);
+      } else {
+        next.add(columnId);
+      }
+      return next;
+    });
   };
 
   const hasActiveFilters = !!(
@@ -537,6 +576,43 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
               </span>
             )}
           </button>
+
+          {/* Column Toggle - Only show in table view */}
+          {viewMode === 'table' && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-150"
+                >
+                  <Columns3 className="w-3 h-3" />
+                  <span className="hidden sm:inline">Columns</span>
+                  <ChevronDown className="w-3 h-3 opacity-50" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 rounded-xl">
+                <div className="px-2 py-1.5">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Toggle columns</p>
+                </div>
+                <DropdownMenuSeparator />
+                {TABLE_COLUMNS.map((column) => (
+                  <DropdownMenuItem
+                    key={column.id}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      toggleColumn(column.id);
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Checkbox
+                      checked={visibleColumns.has(column.id)}
+                      className="pointer-events-none"
+                    />
+                    <span>{column.label}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
           <div className="hidden sm:flex items-center gap-0.5">
             <button
@@ -944,6 +1020,7 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
           handleSort={handleSort}
           sortField={sortField}
           sortOrder={sortOrder}
+          visibleColumns={visibleColumns}
         />
       )}
 
@@ -1029,6 +1106,7 @@ function TableView({
   handleSort,
   sortField,
   sortOrder,
+  visibleColumns,
 }: {
   destinations: Destination[];
   selectedItems: Set<number>;
@@ -1042,6 +1120,7 @@ function TableView({
   handleSort: (field: SortField) => void;
   sortField: SortField;
   sortOrder: SortOrder;
+  visibleColumns: Set<ColumnId>;
 }) {
   const SortButton = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <button
@@ -1057,6 +1136,86 @@ function TableView({
     </button>
   );
 
+  // Format date for display
+  const formatDate = (dateString?: string | null) => {
+    if (!dateString) return '—';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  // Render cell content based on column type
+  const renderCell = (columnId: ColumnId, dest: Destination) => {
+    switch (columnId) {
+      case 'city':
+        return <span className="text-sm text-gray-500 dark:text-gray-400">{dest.city || '—'}</span>;
+      case 'category':
+        return <span className="text-xs text-gray-500 dark:text-gray-400 capitalize px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md">{dest.category}</span>;
+      case 'status':
+        return (
+          <div className="flex items-center gap-1.5">
+            {dest.last_enriched_at && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full">
+                <Check className="w-3 h-3" />
+                Enriched
+              </span>
+            )}
+            {dest.image && (
+              <span className="inline-flex items-center text-[10px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 p-1 rounded">
+                <ImageIcon className="w-3 h-3" />
+              </span>
+            )}
+          </div>
+        );
+      case 'rating':
+        return dest.rating ? (
+          <span className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+            <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+            {dest.rating.toFixed(1)}
+          </span>
+        ) : (
+          <span className="text-sm text-gray-300 dark:text-gray-600">—</span>
+        );
+      case 'address':
+        return (
+          <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px] block">
+            {dest.address || '—'}
+          </span>
+        );
+      case 'created_at':
+        return (
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {formatDate(dest.created_at)}
+          </span>
+        );
+      case 'updated_at':
+        return (
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {formatDate(dest.updated_at)}
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Render header for each column
+  const renderHeader = (columnId: ColumnId) => {
+    const column = TABLE_COLUMNS.find(c => c.id === columnId);
+    if (!column) return null;
+
+    if (column.sortable && column.sortField) {
+      return <SortButton field={column.sortField}>{column.label}</SortButton>;
+    }
+    return (
+      <span className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500 font-medium">
+        {column.label}
+      </span>
+    );
+  };
+
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-800/50">
       <table className="w-full">
@@ -1071,15 +1230,11 @@ function TableView({
             <th className="px-4 py-3 text-left">
               <SortButton field="name">Name</SortButton>
             </th>
-            <th className="px-4 py-3 text-left hidden md:table-cell">
-              <SortButton field="city">City</SortButton>
-            </th>
-            <th className="px-4 py-3 text-left hidden sm:table-cell">
-              <SortButton field="category">Category</SortButton>
-            </th>
-            <th className="px-4 py-3 text-left hidden lg:table-cell">
-              <span className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500 font-medium">Status</span>
-            </th>
+            {TABLE_COLUMNS.filter(col => visibleColumns.has(col.id)).map(column => (
+              <th key={column.id} className="px-4 py-3 text-left">
+                {renderHeader(column.id)}
+              </th>
+            ))}
             <th className="w-10 px-4 py-3" />
           </tr>
         </thead>
@@ -1129,27 +1284,11 @@ function TableView({
                   </div>
                 </button>
               </td>
-              <td className="px-4 py-3 hidden md:table-cell">
-                <span className="text-sm text-gray-500 dark:text-gray-400">{dest.city}</span>
-              </td>
-              <td className="px-4 py-3 hidden sm:table-cell">
-                <span className="text-xs text-gray-500 dark:text-gray-400 capitalize px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md">{dest.category}</span>
-              </td>
-              <td className="px-4 py-3 hidden lg:table-cell">
-                <div className="flex items-center gap-1.5">
-                  {dest.last_enriched_at && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full">
-                      <Check className="w-3 h-3" />
-                      Enriched
-                    </span>
-                  )}
-                  {dest.image && (
-                    <span className="inline-flex items-center text-[10px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 p-1 rounded">
-                      <ImageIcon className="w-3 h-3" />
-                    </span>
-                  )}
-                </div>
-              </td>
+              {TABLE_COLUMNS.filter(col => visibleColumns.has(col.id)).map(column => (
+                <td key={column.id} className="px-4 py-3">
+                  {renderCell(column.id, dest)}
+                </td>
+              ))}
               <td className="px-4 py-3">
                 <RowActions
                   destination={dest}
