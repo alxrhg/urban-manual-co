@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, X, LayoutDashboard, MapPin, Building2, Globe, Map, BarChart3, Sparkles } from 'lucide-react';
+import { Menu, X, LayoutDashboard, MapPin, Building2, Globe, Map, BarChart3, Sparkles, Compass } from 'lucide-react';
 
 const NAV_LINKS = [
   { href: '/admin', label: 'Overview', value: 'overview', icon: LayoutDashboard },
   { href: '/admin/destinations', label: 'Destinations', value: 'destinations', icon: MapPin },
   { href: '/admin/brands', label: 'Brands', value: 'brands', icon: Building2 },
+  { href: '/admin/architects', label: 'Architects', value: 'architects', icon: Compass },
   { href: '/admin/cities', label: 'Cities', value: 'cities', icon: MapPin },
   { href: '/admin/countries', label: 'Countries', value: 'countries', icon: Globe },
   { href: '/admin/neighborhoods', label: 'Neighborhoods', value: 'neighborhoods', icon: Map },

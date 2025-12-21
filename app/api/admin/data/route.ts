@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server';
 
-type DataType = 'brands' | 'cities' | 'countries' | 'neighborhoods';
+type DataType = 'brands' | 'cities' | 'countries' | 'neighborhoods' | 'architects';
 
-const VALID_TYPES: DataType[] = ['brands', 'cities', 'countries', 'neighborhoods'];
+const VALID_TYPES: DataType[] = ['brands', 'cities', 'countries', 'neighborhoods', 'architects'];
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
