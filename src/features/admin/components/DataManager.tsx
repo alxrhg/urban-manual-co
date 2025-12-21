@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import {
   Search, Plus, Pencil, Trash2, X, Upload, Loader2, ChevronLeft, MoreVertical,
-  Building2, MapPin, Globe, Map, AlertCircle, ExternalLink, RefreshCw, Merge, Settings2, Check
+  Building2, MapPin, Globe, Map, AlertCircle, ExternalLink, RefreshCw, Merge, Settings2, Check, Compass
 } from 'lucide-react';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
@@ -79,8 +79,20 @@ interface Neighborhood {
   image_url: string | null;
 }
 
-type DataType = 'brands' | 'cities' | 'countries' | 'neighborhoods';
-type DataItem = Brand | City | Country | Neighborhood;
+interface Architect {
+  id: string;
+  name: string;
+  slug: string;
+  bio: string | null;
+  birth_year: number | null;
+  death_year: number | null;
+  nationality: string | null;
+  design_philosophy: string | null;
+  image_url: string | null;
+}
+
+type DataType = 'brands' | 'cities' | 'countries' | 'neighborhoods' | 'architects';
+type DataItem = Brand | City | Country | Neighborhood | Architect;
 
 interface DataManagerProps {
   type: DataType;
@@ -102,6 +114,7 @@ const TYPE_CONFIG = {
   cities: { singular: 'City', plural: 'Cities', icon: MapPin },
   countries: { singular: 'Country', plural: 'Countries', icon: Globe },
   neighborhoods: { singular: 'Neighborhood', plural: 'Neighborhoods', icon: Map },
+  architects: { singular: 'Architect', plural: 'Architects', icon: Compass },
 };
 
 
@@ -139,6 +152,7 @@ export function DataManager({ type }: DataManagerProps) {
     category: true,
     location: true,
     code: true,
+    nationality: true,
     slug: true,
   });
 
@@ -479,6 +493,14 @@ export function DataManager({ type }: DataManagerProps) {
                   Code
                 </DropdownMenuCheckboxItem>
               )}
+              {type === 'architects' && (
+                <DropdownMenuCheckboxItem
+                  checked={visibleColumns.nationality}
+                  onCheckedChange={(checked) => setVisibleColumns({ ...visibleColumns, nationality: !!checked })}
+                >
+                  Nationality
+                </DropdownMenuCheckboxItem>
+              )}
               <DropdownMenuCheckboxItem
                 checked={visibleColumns.slug}
                 onCheckedChange={(checked) => setVisibleColumns({ ...visibleColumns, slug: !!checked })}
@@ -607,6 +629,11 @@ export function DataManager({ type }: DataManagerProps) {
                     Code
                   </th>
                 )}
+                {type === 'architects' && visibleColumns.nationality && (
+                  <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3 hidden sm:table-cell">
+                    Nationality
+                  </th>
+                )}
                 {visibleColumns.slug && (
                   <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3 hidden md:table-cell">
                     Slug
@@ -686,6 +713,13 @@ export function DataManager({ type }: DataManagerProps) {
                     <td className="px-4 py-3 hidden sm:table-cell">
                       <span className="text-sm text-gray-600 dark:text-gray-400">
                         {'code' in item ? item.code || '—' : '—'}
+                      </span>
+                    </td>
+                  )}
+                  {type === 'architects' && visibleColumns.nationality && (
+                    <td className="px-4 py-3 hidden sm:table-cell">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {'nationality' in item ? item.nationality || '—' : '—'}
                       </span>
                     </td>
                   )}
@@ -988,6 +1022,75 @@ export function DataManager({ type }: DataManagerProps) {
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       className={cn(inputClasses, "h-24 resize-none")}
                       placeholder="Brief description..."
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Architect-specific fields */}
+              {type === 'architects' && (
+                <>
+                  <div>
+                    <label className={labelClasses}>Nationality</label>
+                    <input
+                      type="text"
+                      value={formData.nationality || ''}
+                      onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
+                      className={inputClasses}
+                      placeholder="e.g., Japanese, Swiss, American"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClasses}>Birth Year</label>
+                      <input
+                        type="number"
+                        value={formData.birth_year || ''}
+                        onChange={(e) => setFormData({ ...formData, birth_year: e.target.value })}
+                        className={inputClasses}
+                        placeholder="1920"
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClasses}>Death Year</label>
+                      <input
+                        type="number"
+                        value={formData.death_year || ''}
+                        onChange={(e) => setFormData({ ...formData, death_year: e.target.value })}
+                        className={inputClasses}
+                        placeholder="Leave blank if living"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Image</label>
+                    <div className="flex items-center gap-3">
+                      {formData.image_url && (
+                        <img src={formData.image_url} alt="Architect" className="w-16 h-16 rounded-lg object-cover" />
+                      )}
+                      <label className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <Upload className="h-4 w-4" />
+                        <span className="text-sm">Upload Image</span>
+                        <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'image_url')} className="hidden" />
+                      </label>
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Bio</label>
+                    <textarea
+                      value={formData.bio || ''}
+                      onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                      className={cn(inputClasses, "h-24 resize-none")}
+                      placeholder="Brief biography..."
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClasses}>Design Philosophy</label>
+                    <textarea
+                      value={formData.design_philosophy || ''}
+                      onChange={(e) => setFormData({ ...formData, design_philosophy: e.target.value })}
+                      className={cn(inputClasses, "h-24 resize-none")}
+                      placeholder="Key design principles and philosophy..."
                     />
                   </div>
                 </>
