@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Star, Bookmark, Check, Share2, ExternalLink, Plus } from 'lucide-react';
+import { ArrowLeft, Star, Bookmark, Share2, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { useTrip } from '@/features/trips';
 
 interface StickyHeaderProps {
   destinationName: string;
@@ -34,20 +33,12 @@ export function StickyHeader({
   city,
   rating,
   reviewCount,
-  category,
   isSaved,
-  isVisited,
   bookingUrl,
   onSave,
-  onVisit,
   onShare,
-  destinationId,
-  destinationSlug,
 }: StickyHeaderProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const { addToTrip, isInCurrentTrip } = useTrip();
-
-  const isInTrip = destinationSlug ? isInCurrentTrip(destinationSlug) : false;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -58,18 +49,6 @@ export function StickyHeader({
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const handleAddToTrip = () => {
-    if (destinationId && destinationSlug) {
-      addToTrip({
-        destination_id: destinationId,
-        destination_slug: destinationSlug,
-        destination_name: destinationName,
-        destination_city: city,
-        destination_category: category,
-      });
-    }
-  };
 
   return (
     <div
@@ -112,20 +91,6 @@ export function StickyHeader({
 
           {/* Right: Actions */}
           <div className="flex items-center gap-2">
-            {/* Add to Trip */}
-            <button
-              onClick={handleAddToTrip}
-              className={cn(
-                'hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
-                isInTrip
-                  ? 'bg-blue-600 text-white'
-                  : 'border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-              )}
-            >
-              <Plus className="w-3.5 h-3.5" />
-              {isInTrip ? 'In Trip' : 'Add to Trip'}
-            </button>
-
             {/* Share */}
             <button
               onClick={onShare}
