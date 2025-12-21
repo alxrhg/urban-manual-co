@@ -74,7 +74,7 @@ export default function AdminDestinationsPage() {
         data.category = 'Restaurant';
       }
 
-      const supabase = createClient();
+      const supabase = createClient({ skipValidation: true });
       if (editingDestination) {
         const { error } = await supabase
           .from('destinations')
