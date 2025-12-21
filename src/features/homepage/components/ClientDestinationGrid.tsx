@@ -5,7 +5,8 @@ import { useHomepageData } from './HomepageDataProvider';
 import { InstantGridSkeleton } from './InstantGridSkeleton';
 import { ServerDestinationGrid } from './ServerDestinationGrid';
 import { ClientGridWrapper } from './ClientGridWrapper';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { SmartEmptyState } from '@/components/SmartEmptyState';
+import { ChevronLeft, ChevronRight, AlertCircle, RefreshCw } from 'lucide-react';
 
 /**
  * Client Destination Grid with Pagination
@@ -22,6 +23,8 @@ export function ClientDestinationGrid() {
     displayedDestinations,
     filteredDestinations,
     isLoading,
+    hasError,
+    errorMessage,
     currentPage,
     totalPages,
     setCurrentPage,
@@ -32,6 +35,8 @@ export function ClientDestinationGrid() {
     crownOnly,
     clearFilters,
     openDestination,
+    refetch,
+    setSearchTerm,
   } = useHomepageData();
 
   const hasFilters = selectedCity || selectedCategory || searchTerm || michelinOnly || crownOnly;
@@ -109,7 +114,33 @@ export function ClientDestinationGrid() {
     return <InstantGridSkeleton count={21} />;
   }
 
-  // Show empty state if no destinations at all
+  // Show error state with retry button
+  if (hasError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="w-16 h-16 mb-4 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+          <AlertCircle className="w-8 h-8 text-red-500 dark:text-red-400" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+          Unable to load destinations
+        </h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-6">
+          {errorMessage || 'Something went wrong. Please check your connection and try again.'}
+        </p>
+        <button
+          onClick={() => refetch()}
+          className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white
+                     bg-gray-900 dark:bg-white dark:text-gray-900 rounded-full
+                     hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  // Show empty state if no destinations at all (but no error - unexpected state)
   if (destinations.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -135,16 +166,49 @@ export function ClientDestinationGrid() {
           </svg>
         </div>
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-          No destinations found
+          No destinations available
         </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
-          Unable to load destinations. Please check your connection and refresh the page.
+        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-6">
+          We couldn&apos;t find any destinations. Try refreshing the page.
         </p>
+        <button
+          onClick={() => refetch()}
+          className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white
+                     bg-gray-900 dark:bg-white dark:text-gray-900 rounded-full
+                     hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Refresh
+        </button>
       </div>
     );
   }
 
-  // Show no results for current filters
+  // Show smart no results for search with alternatives
+  if (filteredDestinations.length === 0 && searchTerm) {
+    return (
+      <SmartEmptyState
+        query={searchTerm}
+        intent={{
+          city: selectedCity || null,
+          category: selectedCategory || null,
+        }}
+        onAlternativeClick={(alternative) => {
+          // Handle alternative click - update search or clear and apply suggestion
+          if (alternative.includes('Try removing') || alternative.includes('Expand')) {
+            clearFilters();
+          } else if (alternative.includes('Browse all')) {
+            clearFilters();
+          } else {
+            // Apply the alternative as a new search term
+            setSearchTerm(alternative);
+          }
+        }}
+      />
+    );
+  }
+
+  // Show no results for filters (without search term) - simpler state
   if (filteredDestinations.length === 0 && hasFilters) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -167,7 +231,7 @@ export function ClientDestinationGrid() {
           No results found
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-4">
-          Try adjusting your filters or search term
+          No destinations match your current filters
         </p>
         <button
           onClick={clearFilters}
