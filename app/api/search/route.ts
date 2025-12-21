@@ -51,7 +51,7 @@ function parseQueryFallback(query: string): {
   const words = query.split(/\s+/);
 
   const cities = ['tokyo', 'paris', 'new york', 'london', 'rome', 'barcelona', 'berlin', 'amsterdam', 'sydney', 'dubai'];
-  const categories = ['restaurant', 'cafe', 'hotel', 'bar', 'shop', 'museum', 'park', 'temple', 'shrine'];
+  const categories = ['restaurant', 'restaurants', 'cafe', 'cafes', 'hotel', 'hotels', 'bar', 'bars', 'shop', 'shops', 'shopping', 'museum', 'museums', 'gallery', 'culture', 'dining', 'food'];
 
   // Common hotel/restaurant brands
   const brands = [
@@ -168,26 +168,38 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     }
     
     // Map category synonyms to database categories
+    // Note: Database uses 'Dining' for restaurants, 'Shopping' for shops, etc.
     const categorySynonyms: Record<string, string> = {
-      'restaurant': 'Restaurant',
-      'dining': 'Restaurant',
-      'food': 'Restaurant',
-      'eat': 'Restaurant',
-      'meal': 'Restaurant',
+      'restaurant': 'Dining',
+      'restaurants': 'Dining',
+      'dining': 'Dining',
+      'food': 'Dining',
+      'eat': 'Dining',
+      'meal': 'Dining',
       'hotel': 'Hotel',
+      'hotels': 'Hotel',
       'stay': 'Hotel',
       'accommodation': 'Hotel',
       'lodging': 'Hotel',
       'cafe': 'Cafe',
+      'cafes': 'Cafe',
       'coffee': 'Cafe',
       'bar': 'Bar',
+      'bars': 'Bar',
       'drink': 'Bar',
       'cocktail': 'Bar',
       'nightlife': 'Bar',
       'culture': 'Culture',
       'museum': 'Culture',
+      'museums': 'Culture',
       'art': 'Culture',
-      'gallery': 'Culture'
+      'gallery': 'Culture',
+      'shop': 'Shopping',
+      'shops': 'Shopping',
+      'shopping': 'Shopping',
+      'store': 'Shopping',
+      'stores': 'Shopping',
+      'retail': 'Shopping'
     };
     
     // Normalize category

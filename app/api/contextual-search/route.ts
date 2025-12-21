@@ -251,12 +251,25 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   }
 
   // Apply category filter
+  // Note: Database uses 'Dining' for restaurants, 'Shopping' for shops, etc.
   if (intent.category) {
     const categoryMap: Record<string, string> = {
-      'restaurant': 'Restaurant',
+      'restaurant': 'Dining',
+      'restaurants': 'Dining',
+      'dining': 'Dining',
+      'food': 'Dining',
       'hotel': 'Hotel',
+      'hotels': 'Hotel',
       'cafe': 'Cafe',
+      'cafes': 'Cafe',
       'bar': 'Bar',
+      'bars': 'Bar',
+      'museum': 'Culture',
+      'museums': 'Culture',
+      'gallery': 'Culture',
+      'shop': 'Shopping',
+      'shops': 'Shopping',
+      'shopping': 'Shopping',
     };
     const normalizedCategory = categoryMap[intent.category.toLowerCase()] || intent.category;
     baseQuery = baseQuery.ilike('category', `%${normalizedCategory}%`);

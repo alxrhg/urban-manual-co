@@ -105,26 +105,38 @@ function createSSEMessage(data: any): string {
 }
 
 // Category synonym mapping
+// Note: Database uses 'Dining' for restaurants, 'Shopping' for shops, etc.
 const CATEGORY_SYNONYMS: Record<string, string> = {
-  'restaurant': 'Restaurant',
-  'dining': 'Restaurant',
-  'food': 'Restaurant',
-  'eat': 'Restaurant',
-  'meal': 'Restaurant',
+  'restaurant': 'Dining',
+  'restaurants': 'Dining',
+  'dining': 'Dining',
+  'food': 'Dining',
+  'eat': 'Dining',
+  'meal': 'Dining',
   'hotel': 'Hotel',
+  'hotels': 'Hotel',
   'stay': 'Hotel',
   'accommodation': 'Hotel',
   'lodging': 'Hotel',
   'cafe': 'Cafe',
+  'cafes': 'Cafe',
   'coffee': 'Cafe',
   'bar': 'Bar',
+  'bars': 'Bar',
   'drink': 'Bar',
   'cocktail': 'Bar',
   'nightlife': 'Bar',
   'culture': 'Culture',
   'museum': 'Culture',
+  'museums': 'Culture',
   'art': 'Culture',
-  'gallery': 'Culture'
+  'gallery': 'Culture',
+  'shop': 'Shopping',
+  'shops': 'Shopping',
+  'shopping': 'Shopping',
+  'store': 'Shopping',
+  'stores': 'Shopping',
+  'retail': 'Shopping'
 };
 
 // Generate embedding using OpenAI with caching
