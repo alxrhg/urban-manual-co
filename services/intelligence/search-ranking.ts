@@ -20,9 +20,9 @@ export interface SearchResultDestination extends Destination {
   route_from_city_center_json?: Record<string, unknown>;
   realtime_status?: string;
   updated_at?: string;
-  style_tags?: string[];
-  ambience_tags?: string[];
-  vibe_tags?: string[];
+  style_tags?: string[] | null;
+  ambience_tags?: string[] | null;
+  vibe_tags?: string[] | null;
 }
 
 /** Search intent parameters */
