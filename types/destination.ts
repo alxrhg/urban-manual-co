@@ -1,3 +1,6 @@
+// Re-export category types for convenience
+export { VALID_CATEGORIES, type CategoryType } from '@/lib/categories';
+
 export interface Destination {
   id?: number; // Database primary key
   slug: string;
@@ -5,7 +8,7 @@ export interface Destination {
   city: string;
   country?: string;
   neighborhood?: string | null; // Specific neighborhood within city
-  category: string;
+  category: string; // Valid values: Dining, Hotel, Bar, Cafe, Culture, Shopping, Bakery, Park, Other
   micro_description?: string; // Short 1-line description for cards
   description?: string;
   content?: string;

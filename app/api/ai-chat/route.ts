@@ -26,6 +26,7 @@ import {
   estimateTokens,
 } from '@/lib/ai/cost-tracking';
 import { withErrorHandling } from '@/lib/errors';
+import { resolveCategory } from '@/lib/categories';
 
 // LRU Cache implementation with TTL support
 class LRUCache<T> {
@@ -104,40 +105,6 @@ function createSSEMessage(data: any): string {
   return `data: ${JSON.stringify(data)}\n\n`;
 }
 
-// Category synonym mapping
-// Note: Database uses 'Dining' for restaurants, 'Shopping' for shops, etc.
-const CATEGORY_SYNONYMS: Record<string, string> = {
-  'restaurant': 'Dining',
-  'restaurants': 'Dining',
-  'dining': 'Dining',
-  'food': 'Dining',
-  'eat': 'Dining',
-  'meal': 'Dining',
-  'hotel': 'Hotel',
-  'hotels': 'Hotel',
-  'stay': 'Hotel',
-  'accommodation': 'Hotel',
-  'lodging': 'Hotel',
-  'cafe': 'Cafe',
-  'cafes': 'Cafe',
-  'coffee': 'Cafe',
-  'bar': 'Bar',
-  'bars': 'Bar',
-  'drink': 'Bar',
-  'cocktail': 'Bar',
-  'nightlife': 'Bar',
-  'culture': 'Culture',
-  'museum': 'Culture',
-  'museums': 'Culture',
-  'art': 'Culture',
-  'gallery': 'Culture',
-  'shop': 'Shopping',
-  'shops': 'Shopping',
-  'shopping': 'Shopping',
-  'store': 'Shopping',
-  'stores': 'Shopping',
-  'retail': 'Shopping'
-};
 
 // Generate embedding using OpenAI with caching
 async function generateEmbedding(text: string): Promise<number[] | null> {
@@ -1018,11 +985,11 @@ async function processStreamingAIChatRequest(
           generateEmbedding(query)
         ]);
 
-        // Normalize category
+        // Normalize category using centralized resolver
         if (intent.category) {
-          const normalized = CATEGORY_SYNONYMS[intent.category.toLowerCase()];
-          if (normalized) {
-            intent.category = normalized;
+          const resolved = resolveCategory(intent.category);
+          if (resolved) {
+            intent.category = resolved;
           }
         }
 
@@ -1158,11 +1125,11 @@ async function processAIChatRequest(
       generateEmbedding(query)
     ]);
 
-    // Normalize category using synonyms
+    // Normalize category using centralized resolver
     if (intent.category) {
-      const normalized = CATEGORY_SYNONYMS[intent.category.toLowerCase()];
-      if (normalized) {
-        intent.category = normalized;
+      const resolved = resolveCategory(intent.category);
+      if (resolved) {
+        intent.category = resolved;
       }
     }
 

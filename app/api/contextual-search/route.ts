@@ -5,6 +5,7 @@ import { generateContext } from '@/services/gemini';
 import { getSeasonalContext } from '@/services/seasonality';
 import type { Listing } from '@/services/gemini';
 import { withErrorHandling, createSuccessResponse } from '@/lib/errors';
+import { resolveCategory } from '@/lib/categories';
 
 function getSupabaseClient() {
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
@@ -250,28 +251,9 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     baseQuery = baseQuery.ilike('city', `%${intent.city}%`);
   }
 
-  // Apply category filter
-  // Note: Database uses 'Dining' for restaurants, 'Shopping' for shops, etc.
+  // Apply category filter using centralized resolver
   if (intent.category) {
-    const categoryMap: Record<string, string> = {
-      'restaurant': 'Dining',
-      'restaurants': 'Dining',
-      'dining': 'Dining',
-      'food': 'Dining',
-      'hotel': 'Hotel',
-      'hotels': 'Hotel',
-      'cafe': 'Cafe',
-      'cafes': 'Cafe',
-      'bar': 'Bar',
-      'bars': 'Bar',
-      'museum': 'Culture',
-      'museums': 'Culture',
-      'gallery': 'Culture',
-      'shop': 'Shopping',
-      'shops': 'Shopping',
-      'shopping': 'Shopping',
-    };
-    const normalizedCategory = categoryMap[intent.category.toLowerCase()] || intent.category;
+    const normalizedCategory = resolveCategory(intent.category) || intent.category;
     baseQuery = baseQuery.ilike('category', `%${normalizedCategory}%`);
   }
 
