@@ -101,7 +101,7 @@ const ITEMS_PER_PAGE_OPTIONS = [12, 24, 48, 96];
 const DEFAULT_ITEMS_PER_PAGE = 24;
 
 // Column configuration for table view
-type ColumnId = 'city' | 'category' | 'status' | 'rating' | 'address';
+type ColumnId = 'city' | 'neighborhood' | 'category' | 'status' | 'rating' | 'address' | 'brand';
 
 interface ColumnConfig {
   id: ColumnId;
@@ -112,10 +112,12 @@ interface ColumnConfig {
 
 const TABLE_COLUMNS: ColumnConfig[] = [
   { id: 'city', label: 'City', sortable: true, sortField: 'city' },
+  { id: 'neighborhood', label: 'Neighborhood' },
   { id: 'category', label: 'Category', sortable: true, sortField: 'category' },
   { id: 'status', label: 'Status' },
   { id: 'rating', label: 'Rating' },
   { id: 'address', label: 'Address' },
+  { id: 'brand', label: 'Brand' },
 ];
 
 const DEFAULT_VISIBLE_COLUMNS: ColumnId[] = ['city', 'category', 'status'];
@@ -1138,6 +1140,8 @@ function TableView({
     switch (columnId) {
       case 'city':
         return <span className="text-sm text-gray-500 dark:text-gray-400">{dest.city || '—'}</span>;
+      case 'neighborhood':
+        return <span className="text-sm text-gray-500 dark:text-gray-400">{dest.neighborhood || '—'}</span>;
       case 'category':
         return <span className="text-xs text-gray-500 dark:text-gray-400 capitalize px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md">{dest.category}</span>;
       case 'status':
@@ -1171,6 +1175,8 @@ function TableView({
             {dest.formatted_address || '—'}
           </span>
         );
+      case 'brand':
+        return <span className="text-sm text-gray-500 dark:text-gray-400">{dest.brand || '—'}</span>;
       default:
         return null;
     }
