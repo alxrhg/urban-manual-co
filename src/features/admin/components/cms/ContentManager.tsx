@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useKeyboardShortcuts, formatShortcut, type Shortcut } from '@/domain/hooks/useKeyboardShortcuts';
 import {
   Search,
   Plus,
@@ -351,6 +352,48 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
   ].filter(Boolean).length;
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+  // Keyboard navigation shortcuts for pagination
+  const paginationShortcuts: Shortcut[] = useMemo(() => [
+    {
+      id: 'prev-page',
+      key: 'ArrowLeft',
+      handler: () => {
+        if (page > 1) setPage(page - 1);
+      },
+      description: 'Previous page',
+      category: 'Navigation',
+    },
+    {
+      id: 'next-page',
+      key: 'ArrowRight',
+      handler: () => {
+        if (page < totalPages) setPage(page + 1);
+      },
+      description: 'Next page',
+      category: 'Navigation',
+    },
+    {
+      id: 'first-page',
+      key: 'Home',
+      handler: () => setPage(1),
+      description: 'First page',
+      category: 'Navigation',
+    },
+    {
+      id: 'last-page',
+      key: 'End',
+      handler: () => setPage(totalPages || 1),
+      description: 'Last page',
+      category: 'Navigation',
+    },
+  ], [page, totalPages, setPage]);
+
+  useKeyboardShortcuts({
+    shortcuts: paginationShortcuts,
+    context: 'list',
+    enabled: totalPages > 1,
+  });
 
   // Bulk actions handlers
   const handleBulkEnrich = async () => {
@@ -906,10 +949,17 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4">
-          <p className="text-xs sm:text-sm text-gray-400 dark:text-gray-500 order-2 sm:order-1">
-            {((page - 1) * itemsPerPage) + 1}–{Math.min(page * itemsPerPage, totalCount)} of {totalCount.toLocaleString()}
-          </p>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4" role="navigation" aria-label="Pagination">
+          <div className="flex items-center gap-3 order-2 sm:order-1">
+            <p className="text-xs sm:text-sm text-gray-400 dark:text-gray-500">
+              {((page - 1) * itemsPerPage) + 1}–{Math.min(page * itemsPerPage, totalCount)} of {totalCount.toLocaleString()}
+            </p>
+            <span className="hidden lg:flex items-center gap-1.5 text-[10px] text-gray-400 dark:text-gray-600">
+              <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 font-mono">←</kbd>
+              <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 font-mono">→</kbd>
+              <span>to navigate</span>
+            </span>
+          </div>
           <div className="flex items-center gap-0.5 order-1 sm:order-2">
             <button
               onClick={() => setPage(Math.max(1, page - 1))}

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useKeyboardShortcuts, type Shortcut } from '@/domain/hooks/useKeyboardShortcuts';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -94,6 +95,48 @@ export function DataTable<TData, TValue>({
       ]
     )
   );
+
+  // Keyboard navigation shortcuts for pagination
+  const paginationShortcuts: Shortcut[] = React.useMemo(() => [
+    {
+      id: 'prev-page',
+      key: 'ArrowLeft',
+      handler: () => {
+        if (table.getCanPreviousPage()) table.previousPage();
+      },
+      description: 'Previous page',
+      category: 'Navigation',
+    },
+    {
+      id: 'next-page',
+      key: 'ArrowRight',
+      handler: () => {
+        if (table.getCanNextPage()) table.nextPage();
+      },
+      description: 'Next page',
+      category: 'Navigation',
+    },
+    {
+      id: 'first-page',
+      key: 'Home',
+      handler: () => table.setPageIndex(0),
+      description: 'First page',
+      category: 'Navigation',
+    },
+    {
+      id: 'last-page',
+      key: 'End',
+      handler: () => table.setPageIndex(table.getPageCount() - 1),
+      description: 'Last page',
+      category: 'Navigation',
+    },
+  ], [table]);
+
+  useKeyboardShortcuts({
+    shortcuts: paginationShortcuts,
+    context: 'list',
+    enabled: table.getPageCount() > 1,
+  });
 
   return (
     <div className="space-y-4">
@@ -201,9 +244,18 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
-          {table.getFilteredRowModel().rows.length} destination(s) found.
+      <div className="flex items-center justify-between" role="navigation" aria-label="Pagination">
+        <div className="flex items-center gap-3">
+          <div className="text-sm text-muted-foreground">
+            {table.getFilteredRowModel().rows.length} destination(s) found.
+          </div>
+          {table.getPageCount() > 1 && (
+            <span className="hidden lg:flex items-center gap-1.5 text-[10px] text-gray-400 dark:text-gray-600">
+              <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 font-mono">←</kbd>
+              <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 font-mono">→</kbd>
+              <span>to navigate</span>
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Button
