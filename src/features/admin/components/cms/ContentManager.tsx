@@ -530,24 +530,15 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
 
   return (
     <div className="space-y-6">
-      {/* Header Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-lg font-medium text-black dark:text-white">Content</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {totalCount.toLocaleString()} destinations
-          </p>
-        </div>
-        <Button onClick={onCreateNew} className="rounded-full w-full sm:w-auto">
-          <Plus className="w-4 h-4 mr-2" />
-          Add New
-        </Button>
-      </div>
-
-      {/* Toolbar */}
+      {/* Unified Header + Toolbar */}
       <div className="pb-4 space-y-3">
-        {/* Search + View Toggle */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* Title with count */}
+          <h2 className="text-lg font-medium text-black dark:text-white whitespace-nowrap">
+            Content <span className="text-gray-400 dark:text-gray-500">{totalCount.toLocaleString()}</span>
+          </h2>
+
+          {/* Search */}
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <Input
@@ -559,6 +550,7 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
             />
           </div>
 
+          {/* Filters Button */}
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
@@ -613,6 +605,7 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
             </DropdownMenu>
           )}
 
+          {/* View Toggles */}
           <div className="hidden sm:flex items-center gap-0.5">
             <button
               onClick={() => setViewMode('table')}
@@ -639,6 +632,12 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
               <LayoutGrid className="w-3.5 h-3.5" />
             </button>
           </div>
+
+          {/* Add New Button */}
+          <Button onClick={onCreateNew} className="rounded-full">
+            <Plus className="w-4 h-4 mr-2" />
+            Add New
+          </Button>
         </div>
 
         {/* Filters Panel */}
