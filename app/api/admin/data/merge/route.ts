@@ -13,8 +13,9 @@ const FIELD_MAPPING: Record<Exclude<DataType, 'architects'>, string> = {
   neighborhoods: 'neighborhood',
 };
 
-// Architect-related UUID fields in destinations table
-const ARCHITECT_FIELDS = ['architect_id', 'design_firm_id', 'interior_designer_id'] as const;
+// Architect-related UUID fields in destinations table (both reference architects table)
+// Note: design_firm_id references design_firms table, not architects
+const ARCHITECT_FIELDS = ['architect_id', 'interior_designer_id'] as const;
 
 export async function POST(request: NextRequest) {
   try {

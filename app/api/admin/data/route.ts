@@ -87,8 +87,9 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// Architect-related UUID fields in destinations table
-const ARCHITECT_FIELDS = ['architect_id', 'design_firm_id', 'interior_designer_id'] as const;
+// Architect-related UUID fields in destinations table (both reference architects table)
+// Note: design_firm_id references design_firms table, not architects
+const ARCHITECT_FIELDS = ['architect_id', 'interior_designer_id'] as const;
 
 export async function DELETE(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
