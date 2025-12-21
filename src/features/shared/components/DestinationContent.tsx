@@ -20,6 +20,26 @@ import {
   Plus,
   Loader2,
   Edit,
+  Utensils,
+  Coffee,
+  Wine,
+  Mountain,
+  Sparkles,
+  Users,
+  Heart,
+  Camera,
+  Palette,
+  TreePine,
+  ShoppingBag,
+  Bed,
+  Award,
+  BadgeCheck,
+  CalendarDays,
+  Info,
+  Copy,
+  Mail,
+  MessageCircle,
+  Twitter,
 } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
@@ -330,103 +350,317 @@ function getSubtleRecommendation(
   return null;
 }
 
+// ============================================
+// KEY HIGHLIGHTS - Visual feature badges
+// ============================================
+
+interface HighlightBadge {
+  icon: React.ReactNode;
+  label: string;
+  color: 'gray' | 'blue' | 'green' | 'amber' | 'purple' | 'rose';
+}
+
+/**
+ * Generate key highlight badges based on destination data
+ * Shows atmosphere, features, and vibe at a glance
+ */
+function getKeyHighlights(
+  destination: Destination,
+  categoryType: CategoryType,
+  priceLevel?: number | null,
+  hasArchitect?: boolean,
+  michelin?: number
+): HighlightBadge[] {
+  const highlights: HighlightBadge[] = [];
+  const IconClass = "w-3 h-3";
+
+  // Category-based highlights
+  if (categoryType === 'dining') {
+    highlights.push({ icon: <Utensils className={IconClass} />, label: 'Dining', color: 'gray' });
+    if (michelin && michelin > 0) {
+      highlights.push({ icon: <Star className={IconClass} />, label: `${michelin} Michelin Star${michelin > 1 ? 's' : ''}`, color: 'amber' });
+    }
+  } else if (categoryType === 'nightlife') {
+    highlights.push({ icon: <Wine className={IconClass} />, label: 'Cocktails', color: 'purple' });
+  } else if (categoryType === 'hotel') {
+    highlights.push({ icon: <Bed className={IconClass} />, label: 'Accommodation', color: 'blue' });
+  } else if (categoryType === 'culture') {
+    highlights.push({ icon: <Palette className={IconClass} />, label: 'Culture', color: 'rose' });
+  } else if (categoryType === 'shopping') {
+    highlights.push({ icon: <ShoppingBag className={IconClass} />, label: 'Shopping', color: 'green' });
+  } else if (categoryType === 'outdoor') {
+    highlights.push({ icon: <TreePine className={IconClass} />, label: 'Outdoor', color: 'green' });
+  }
+
+  // Architecture highlight
+  if (hasArchitect) {
+    highlights.push({ icon: <Building2 className={IconClass} />, label: 'Notable Design', color: 'blue' });
+  }
+
+  // Price level highlights
+  if (priceLevel) {
+    if (priceLevel >= 4) {
+      highlights.push({ icon: <Sparkles className={IconClass} />, label: 'Luxury', color: 'amber' });
+    } else if (priceLevel === 1) {
+      highlights.push({ icon: <Heart className={IconClass} />, label: 'Great Value', color: 'green' });
+    }
+  }
+
+  // Crown / Editor's pick
+  if (destination.crown) {
+    highlights.push({ icon: <Award className={IconClass} />, label: "Editor's Pick", color: 'amber' });
+  }
+
+  // Parse tags if available
+  if (destination.tags && Array.isArray(destination.tags)) {
+    const tagMappings: Record<string, { icon: React.ReactNode; color: HighlightBadge['color'] }> = {
+      'family-friendly': { icon: <Users className={IconClass} />, color: 'blue' },
+      'romantic': { icon: <Heart className={IconClass} />, color: 'rose' },
+      'scenic': { icon: <Mountain className={IconClass} />, color: 'green' },
+      'photogenic': { icon: <Camera className={IconClass} />, color: 'purple' },
+      'cozy': { icon: <Coffee className={IconClass} />, color: 'amber' },
+    };
+
+    destination.tags.slice(0, 3).forEach(tag => {
+      const mapping = tagMappings[tag.toLowerCase()];
+      if (mapping) {
+        highlights.push({ icon: mapping.icon, label: tag.charAt(0).toUpperCase() + tag.slice(1).replace(/-/g, ' '), color: mapping.color });
+      }
+    });
+  }
+
+  // Limit to 5 highlights
+  return highlights.slice(0, 5);
+}
+
+/**
+ * Generate insider tips based on category and context
+ */
+function getInsiderTips(
+  categoryType: CategoryType,
+  destination: Destination,
+  priceLevel?: number | null,
+  rating?: number | null,
+  reviewCount?: number | null
+): string[] {
+  const tips: string[] = [];
+
+  // Category-based tips
+  if (categoryType === 'dining') {
+    if (priceLevel && priceLevel >= 3) {
+      tips.push('Reservations recommended, especially weekends');
+    }
+    if (rating && rating >= 4.5 && reviewCount && reviewCount > 200) {
+      tips.push('Popular spot - arrive early or book ahead');
+    }
+    if (destination.michelin_stars) {
+      tips.push('Smart casual dress code typically expected');
+    }
+  } else if (categoryType === 'hotel') {
+    tips.push('Book directly for best rate guarantee');
+    if (priceLevel && priceLevel >= 4) {
+      tips.push('Ask about complimentary upgrades at check-in');
+    }
+  } else if (categoryType === 'culture') {
+    tips.push('Visit weekday mornings for fewer crowds');
+    tips.push('Check for free admission days');
+  } else if (categoryType === 'nightlife') {
+    tips.push('Arrive before 10 PM to avoid lines');
+    if (priceLevel && priceLevel >= 3) {
+      tips.push('Smart casual dress code may apply');
+    }
+  } else if (categoryType === 'shopping') {
+    tips.push('Ask about tax-free shopping for tourists');
+  } else if (categoryType === 'outdoor') {
+    tips.push('Best visited during golden hour for photos');
+    tips.push('Check weather conditions before visiting');
+  }
+
+  // Architecture tips
+  if (destination.architect || destination.architect_id) {
+    tips.push('Take time to appreciate the architectural details');
+  }
+
+  return tips.slice(0, 3);
+}
+
+/**
+ * Estimate visit duration based on category
+ */
+function getEstimatedDuration(categoryType: CategoryType): string {
+  const durations: Record<CategoryType, string> = {
+    dining: '1-2 hours',
+    hotel: 'Overnight stay',
+    culture: '1-3 hours',
+    nightlife: '2-4 hours',
+    shopping: '30 min - 2 hours',
+    outdoor: '1-3 hours',
+    architecture: '30 min - 1 hour',
+    general: '1-2 hours',
+  };
+  return durations[categoryType];
+}
+
+/**
+ * Get "best for" audience suggestions
+ */
+function getBestForAudience(
+  categoryType: CategoryType,
+  destination: Destination,
+  priceLevel?: number | null
+): string[] {
+  const audiences: string[] = [];
+
+  if (categoryType === 'dining') {
+    if (priceLevel && priceLevel >= 4) {
+      audiences.push('Special occasions', 'Date night');
+    } else if (priceLevel && priceLevel <= 2) {
+      audiences.push('Casual dining', 'Groups');
+    } else {
+      audiences.push('Foodies', 'Couples');
+    }
+  } else if (categoryType === 'hotel') {
+    if (priceLevel && priceLevel >= 4) {
+      audiences.push('Luxury travelers', 'Honeymooners');
+    } else {
+      audiences.push('Business travelers', 'Families');
+    }
+  } else if (categoryType === 'culture') {
+    audiences.push('Art lovers', 'History buffs', 'Families');
+  } else if (categoryType === 'nightlife') {
+    audiences.push('Night owls', 'Cocktail enthusiasts');
+  } else if (categoryType === 'outdoor') {
+    audiences.push('Nature lovers', 'Photographers', 'Families');
+  } else if (categoryType === 'architecture') {
+    audiences.push('Design enthusiasts', 'Photographers');
+  } else {
+    audiences.push('Curious travelers');
+  }
+
+  return audiences.slice(0, 3);
+}
+
 // Section priority by category type (lower = higher priority)
 const SECTION_PRIORITIES: Record<CategoryType, Record<string, number>> = {
   dining: {
-    hours: 1,      // Most important for restaurants
-    contact: 2,
+    quickfacts: 1,   // Essential info at a glance
+    booking: 2,      // Reservation options
     description: 3,
-    parent: 4,
-    nested: 5,
-    architecture: 6,
-    map: 7,
-    trip: 8,
-    similar: 9,
-    related: 10,
+    insidertips: 4,  // Helpful tips
+    reviews: 5,      // Social proof
+    parent: 6,
+    nested: 7,
+    architecture: 8,
+    map: 9,
+    trip: 10,
+    similar: 11,
+    related: 12,
+    share: 13,
   },
   hotel: {
-    contact: 1,    // Address/phone first for hotels
+    quickfacts: 1,   // Address/contact first for hotels
+    booking: 2,      // Booking options
+    description: 3,
+    nested: 4,       // Show venues inside hotel
+    insidertips: 5,
+    reviews: 6,
+    architecture: 7,
+    map: 8,
+    trip: 9,
+    similar: 10,
+    parent: 11,
+    related: 12,
+    share: 13,
+  },
+  culture: {
+    description: 1,  // Story matters for museums
+    quickfacts: 2,
+    insidertips: 3,
+    reviews: 4,
+    architecture: 5,
+    nested: 6,
+    parent: 7,
+    map: 8,
+    trip: 9,
+    similar: 10,
+    related: 11,
+    share: 12,
+    booking: 13,
+  },
+  nightlife: {
+    quickfacts: 1,   // When it's open matters
     description: 2,
-    nested: 3,     // Show venues inside hotel
-    hours: 4,
+    insidertips: 3,
+    reviews: 4,
     architecture: 5,
     map: 6,
     trip: 7,
     similar: 8,
     parent: 9,
-    related: 10,
-  },
-  culture: {
-    description: 1, // Story matters for museums
-    hours: 2,
-    architecture: 3,
-    contact: 4,
-    nested: 5,
-    parent: 6,
-    map: 7,
-    trip: 8,
-    similar: 9,
-    related: 10,
-  },
-  nightlife: {
-    hours: 1,      // When it's open matters
-    description: 2,
-    contact: 3,
-    architecture: 4,
-    map: 5,
-    trip: 6,
-    similar: 7,
-    parent: 8,
-    nested: 9,
-    related: 10,
+    nested: 10,
+    related: 11,
+    share: 12,
+    booking: 13,
   },
   architecture: {
     architecture: 1, // Architect info is primary
     description: 2,
-    hours: 3,
-    contact: 4,
-    nested: 5,
-    parent: 6,
-    map: 7,
-    trip: 8,
-    similar: 9,
-    related: 10,
+    quickfacts: 3,
+    insidertips: 4,
+    reviews: 5,
+    nested: 6,
+    parent: 7,
+    map: 8,
+    trip: 9,
+    similar: 10,
+    related: 11,
+    share: 12,
+    booking: 13,
   },
   shopping: {
-    hours: 1,
-    contact: 2,
-    description: 3,
-    map: 4,
-    trip: 5,
-    similar: 6,
-    architecture: 7,
-    parent: 8,
-    nested: 9,
-    related: 10,
+    quickfacts: 1,
+    description: 2,
+    insidertips: 3,
+    reviews: 4,
+    map: 5,
+    trip: 6,
+    similar: 7,
+    architecture: 8,
+    parent: 9,
+    nested: 10,
+    related: 11,
+    share: 12,
+    booking: 13,
   },
   outdoor: {
     description: 1,
-    map: 2,        // Location matters for outdoor
-    hours: 3,
-    contact: 4,
-    trip: 5,
-    similar: 6,
-    architecture: 7,
-    parent: 8,
-    nested: 9,
-    related: 10,
+    quickfacts: 2,
+    insidertips: 3,
+    map: 4,          // Location matters for outdoor
+    reviews: 5,
+    trip: 6,
+    similar: 7,
+    architecture: 8,
+    parent: 9,
+    nested: 10,
+    related: 11,
+    share: 12,
+    booking: 13,
   },
   general: {
     description: 1,
-    hours: 2,
-    contact: 3,
-    architecture: 4,
-    nested: 5,
-    parent: 6,
-    map: 7,
-    trip: 8,
-    similar: 9,
-    related: 10,
+    quickfacts: 2,
+    insidertips: 3,
+    reviews: 4,
+    architecture: 5,
+    nested: 6,
+    parent: 7,
+    map: 8,
+    trip: 9,
+    similar: 10,
+    related: 11,
+    share: 12,
+    booking: 13,
   },
 };
 
@@ -458,17 +692,17 @@ const SectionSkeleton = ({ type }: { type: string }) => {
           <SkeletonPulse className="h-4 w-4/6" />
         </div>
       );
-    case 'hours':
+    case 'quickfacts':
       return (
         <div className="mt-6 space-y-3">
           <SkeletonPulse className="h-3 w-24" />
-          <div className="flex items-center gap-3">
-            <SkeletonPulse className="h-4 w-4" />
-            <SkeletonPulse className="h-4 w-40" />
-          </div>
-          <div className="flex items-center gap-3">
-            <SkeletonPulse className="h-4 w-4" />
-            <SkeletonPulse className="h-4 w-52" />
+          <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 space-y-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex items-center justify-between">
+                <SkeletonPulse className="h-4 w-20" />
+                <SkeletonPulse className="h-4 w-24" />
+              </div>
+            ))}
           </div>
         </div>
       );
@@ -506,6 +740,48 @@ const SectionSkeleton = ({ type }: { type: string }) => {
           <SkeletonPulse className="aspect-[2/1] rounded-xl" />
         </div>
       );
+    case 'insidertips':
+      return (
+        <div className="mt-6">
+          <SkeletonPulse className="h-3 w-24 mb-3" />
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 space-y-2">
+            <SkeletonPulse className="h-4 w-full" />
+            <SkeletonPulse className="h-4 w-5/6" />
+          </div>
+        </div>
+      );
+    case 'reviews':
+      return (
+        <div className="mt-6 space-y-4">
+          <SkeletonPulse className="h-3 w-24" />
+          {[1, 2].map((i) => (
+            <div key={i} className="space-y-2">
+              <SkeletonPulse className="h-3 w-24" />
+              <SkeletonPulse className="h-4 w-full" />
+              <SkeletonPulse className="h-4 w-4/5" />
+            </div>
+          ))}
+        </div>
+      );
+    case 'booking':
+      return (
+        <div className="mt-6">
+          <SkeletonPulse className="h-3 w-32 mb-3" />
+          <SkeletonPulse className="h-12 w-full rounded-xl" />
+        </div>
+      );
+    case 'share':
+      return (
+        <div className="mt-6">
+          <SkeletonPulse className="h-3 w-24 mb-3" />
+          <div className="flex gap-2">
+            <SkeletonPulse className="h-11 flex-1 rounded-xl" />
+            <SkeletonPulse className="h-11 w-11 rounded-xl" />
+            <SkeletonPulse className="h-11 w-11 rounded-xl" />
+            <SkeletonPulse className="h-11 w-11 rounded-xl" />
+          </div>
+        </div>
+      );
     default:
       return (
         <div className="mt-6 space-y-2">
@@ -533,6 +809,14 @@ interface DestinationContentProps {
   onShowWhyThis: () => void;
 }
 
+interface GoogleReview {
+  author_name?: string;
+  rating?: number;
+  text?: string;
+  relative_time_description?: string;
+  time?: number;
+}
+
 interface EnrichedData {
   formatted_address?: string;
   international_phone_number?: string;
@@ -547,6 +831,8 @@ interface EnrichedData {
   design_firm_obj?: { id: string; name: string; slug: string };
   movement_obj?: { id: string; name: string; slug: string };
   architectural_style?: string;
+  reviews?: GoogleReview[];
+  architect_destination_count?: number;
 }
 
 /**
@@ -674,6 +960,8 @@ const DestinationContent = memo(function DestinationContent({
             opening_hours_json,
             utc_offset,
             architectural_style,
+            reviews_json,
+            architect_id,
             architect:architects!architect_id(id, name, slug, image_url),
             design_firm:design_firms(id, name, slug),
             interior_designer:architects!interior_designer_id(id, name, slug),
@@ -703,6 +991,18 @@ const DestinationContent = memo(function DestinationContent({
             } catch {}
           }
 
+          // Parse reviews
+          if (data.reviews_json) {
+            try {
+              const reviewsData = typeof data.reviews_json === 'string'
+                ? JSON.parse(data.reviews_json)
+                : data.reviews_json;
+              if (Array.isArray(reviewsData)) {
+                enriched.reviews = reviewsData.slice(0, 5) as GoogleReview[];
+              }
+            } catch {}
+          }
+
           // Extract architect objects
           const d = data as any;
           if (d.architect) {
@@ -717,6 +1017,16 @@ const DestinationContent = memo(function DestinationContent({
           if (d.movement) {
             const obj = Array.isArray(d.movement) ? d.movement[0] : d.movement;
             if (obj?.name) enriched.movement_obj = obj;
+          }
+
+          // Fetch architect destination count if architect exists
+          if (data.architect_id) {
+            const { count } = await supabase
+              .from('destinations')
+              .select('id', { count: 'exact', head: true })
+              .eq('architect_id', data.architect_id)
+              .neq('slug', destination.slug);
+            if (count) enriched.architect_destination_count = count;
           }
 
           setEnrichedData(enriched);
@@ -886,7 +1196,7 @@ const DestinationContent = memo(function DestinationContent({
     setShowFullDescription(false);
 
     // Start progressive reveal after initial load
-    const revealSections = ['description', 'hours', 'architecture', 'parent', 'nested', 'trip', 'map', 'similar', 'related'];
+    const revealSections = ['description', 'quickfacts', 'booking', 'insidertips', 'reviews', 'architecture', 'parent', 'nested', 'trip', 'map', 'similar', 'related', 'share'];
     const timers: NodeJS.Timeout[] = [];
 
     revealSections.forEach((section, index) => {
@@ -1076,24 +1386,52 @@ const DestinationContent = memo(function DestinationContent({
   // SMART SECTION AVAILABILITY
   // ============================================
 
+  // Generate key highlights, insider tips, and best for audiences
+  const keyHighlights = useMemo(() => getKeyHighlights(
+    destination,
+    categoryType,
+    enrichedData?.price_level,
+    !!hasArchInfo,
+    destination.michelin_stars
+  ), [destination, categoryType, enrichedData?.price_level, hasArchInfo]);
+
+  const insiderTips = useMemo(() => getInsiderTips(
+    categoryType,
+    destination,
+    enrichedData?.price_level,
+    rating ?? undefined,
+    reviewCount ?? undefined
+  ), [categoryType, destination, enrichedData?.price_level, rating, reviewCount]);
+
+  const estimatedDuration = useMemo(() => getEstimatedDuration(categoryType), [categoryType]);
+
+  const bestForAudience = useMemo(() => getBestForAudience(
+    categoryType,
+    destination,
+    enrichedData?.price_level
+  ), [categoryType, destination, enrichedData?.price_level]);
+
   // Determine which sections have data
   const hasDescription = !!(destination.micro_description || destination.description);
-  const hasHours = !!(todayHours || enrichedData?.formatted_address || enrichedData?.international_phone_number || enrichedData?.website);
-  const hasContact = !!(enrichedData?.formatted_address || enrichedData?.international_phone_number || enrichedData?.website);
+  const hasQuickFacts = !!(todayHours || enrichedData?.formatted_address || enrichedData?.international_phone_number || enrichedData?.website);
   const hasMap = !!(destination.latitude && destination.longitude);
   const hasNested = nestedDestinations.length > 0;
   const hasParent = !!parentDestination;
   const hasSimilar = similarPlaces.length > 0;
   const hasRelated = related.length > 0;
   const hasTrip = true; // Always show trip section
+  const hasInsiderTips = insiderTips.length > 0;
+  const hasReviews = !!(enrichedData?.reviews && enrichedData.reviews.length > 0);
+  const hasBooking = !!(destination.opentable_url || destination.resy_url || destination.booking_url || enrichedData?.website);
+  const hasShare = true; // Always show share section
 
   // Build available sections with their priorities
-  type SectionKey = 'description' | 'hours' | 'contact' | 'architecture' | 'nested' | 'parent' | 'map' | 'trip' | 'similar' | 'related';
+  type SectionKey = 'description' | 'quickfacts' | 'architecture' | 'nested' | 'parent' | 'map' | 'trip' | 'similar' | 'related' | 'insidertips' | 'reviews' | 'booking' | 'share';
 
   const availableSections: { key: SectionKey; priority: number }[] = [];
 
   if (hasDescription) availableSections.push({ key: 'description', priority: sectionPriorities.description });
-  if (hasHours) availableSections.push({ key: 'hours', priority: sectionPriorities.hours });
+  if (hasQuickFacts) availableSections.push({ key: 'quickfacts', priority: sectionPriorities.quickfacts });
   if (hasArchInfo) availableSections.push({ key: 'architecture', priority: sectionPriorities.architecture });
   if (hasNested) availableSections.push({ key: 'nested', priority: sectionPriorities.nested });
   if (hasParent) availableSections.push({ key: 'parent', priority: sectionPriorities.parent });
@@ -1101,6 +1439,10 @@ const DestinationContent = memo(function DestinationContent({
   if (hasTrip) availableSections.push({ key: 'trip', priority: isFromTrip ? 0 : sectionPriorities.trip }); // Boost if from trip
   if (hasSimilar) availableSections.push({ key: 'similar', priority: sectionPriorities.similar });
   if (hasRelated) availableSections.push({ key: 'related', priority: sectionPriorities.related });
+  if (hasInsiderTips) availableSections.push({ key: 'insidertips', priority: sectionPriorities.insidertips });
+  if (hasReviews) availableSections.push({ key: 'reviews', priority: sectionPriorities.reviews });
+  if (hasBooking) availableSections.push({ key: 'booking', priority: sectionPriorities.booking });
+  if (hasShare) availableSections.push({ key: 'share', priority: sectionPriorities.share });
 
   // Sort by priority (lower = higher priority)
   const sortedSections = availableSections.sort((a, b) => a.priority - b.priority);
@@ -1196,62 +1538,127 @@ const DestinationContent = memo(function DestinationContent({
           </div>
         );
 
-      case 'hours':
+      case 'quickfacts':
         const localTimeStr = getLocalTimeAtDestination(enrichedData?.utc_offset, destination.city);
+        const priceLevelDisplay = enrichedData?.price_level
+          ? { text: '$'.repeat(enrichedData.price_level), label: ['Budget', 'Moderate', 'Upscale', 'Luxury'][enrichedData.price_level - 1] || '' }
+          : null;
+
         return (
-          <div key="hours" className="mt-6">
+          <div key="quickfacts" className="mt-6">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <p className="text-[11px] uppercase tracking-wider text-gray-400">
-                  {categoryType === 'dining' || categoryType === 'nightlife' ? 'Hours & Contact' : 'Contact & Hours'}
-                </p>
+                <p className="text-[11px] uppercase tracking-wider text-gray-400">Quick Facts</p>
                 {localTimeStr && (
                   <span className="text-[10px] text-gray-400 dark:text-gray-500">
                     · {localTimeStr} local
                   </span>
                 )}
               </div>
-              {bestTimeHint && (
-                <span className="text-[11px] text-blue-600 dark:text-blue-400 font-medium">{bestTimeHint}</span>
-              )}
             </div>
-            <div className="space-y-3">
+
+            {/* Quick facts grid */}
+            <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 space-y-3">
+              {/* Hours with status */}
               {todayHours && (
-                <div className="flex items-start gap-3">
-                  <Clock className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <span className="text-[14px] text-gray-700 dark:text-gray-300">{todayHours}</span>
-                    {hoursAnalysis.timeUntilChange && (
-                      <span className={`ml-2 text-[12px] font-medium ${
-                        hoursAnalysis.category === 'closing-soon' ? 'text-amber-600' :
-                        hoursAnalysis.category === 'opening-soon' ? 'text-blue-600' : ''
-                      }`}>
-                        ({hoursAnalysis.status})
-                      </span>
-                    )}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-gray-400" />
+                    <span className="text-[13px] text-gray-600 dark:text-gray-400">Hours</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[13px] font-medium ${
+                      hoursAnalysis.category === 'open' ? 'text-green-600' :
+                      hoursAnalysis.category === 'closing-soon' ? 'text-amber-600' :
+                      hoursAnalysis.category === 'opening-soon' ? 'text-blue-600' :
+                      'text-gray-500'
+                    }`}>
+                      {hoursAnalysis.status || 'Check hours'}
+                    </span>
                   </div>
                 </div>
               )}
-              {enrichedData?.formatted_address && (
-                <button onClick={handleDirections} className="flex items-start gap-3 text-left hover:opacity-70 transition-opacity">
-                  <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-[14px] text-gray-700 dark:text-gray-300">{enrichedData.formatted_address}</span>
-                </button>
+
+              {/* Price level */}
+              {priceLevelDisplay && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-gray-400" />
+                    <span className="text-[13px] text-gray-600 dark:text-gray-400">Price</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-medium text-gray-900 dark:text-white">{priceLevelDisplay.text}</span>
+                    <span className="text-[12px] text-gray-500">({priceLevelDisplay.label})</span>
+                  </div>
+                </div>
               )}
+
+              {/* Duration estimate */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4 text-gray-400" />
+                  <span className="text-[13px] text-gray-600 dark:text-gray-400">Duration</span>
+                </div>
+                <span className="text-[13px] font-medium text-gray-900 dark:text-white">{estimatedDuration}</span>
+              </div>
+
+              {/* Best for */}
+              {bestForAudience.length > 0 && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-gray-400" />
+                    <span className="text-[13px] text-gray-600 dark:text-gray-400">Best for</span>
+                  </div>
+                  <span className="text-[13px] font-medium text-gray-900 dark:text-white">{bestForAudience.join(', ')}</span>
+                </div>
+              )}
+
+              {/* Address */}
+              {enrichedData?.formatted_address && (
+                <div className="flex items-start justify-between pt-2 border-t border-gray-200 dark:border-white/10">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
+                    <span className="text-[13px] text-gray-600 dark:text-gray-400 flex-1">{enrichedData.formatted_address}</span>
+                  </div>
+                  <button
+                    onClick={handleDirections}
+                    className="text-[12px] font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap ml-2"
+                  >
+                    Get directions
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Contact buttons */}
+            <div className="flex gap-2 mt-3">
               {enrichedData?.international_phone_number && (
-                <a href={`tel:${enrichedData.international_phone_number}`} className="flex items-center gap-3 hover:opacity-70 transition-opacity">
-                  <Phone className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                  <span className="text-[14px] text-gray-700 dark:text-gray-300">{enrichedData.international_phone_number}</span>
+                <a
+                  href={`tel:${enrichedData.international_phone_number}`}
+                  className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl border border-gray-200 dark:border-white/20 text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                >
+                  <Phone className="h-4 w-4" />
+                  Call
                 </a>
               )}
               {enrichedData?.website && (
-                <a href={enrichedData.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:opacity-70 transition-opacity">
-                  <Globe className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                  <span className="text-[14px] text-blue-600 dark:text-blue-400 truncate">
-                    {(() => { try { return new URL(enrichedData.website).hostname.replace('www.', ''); } catch { return enrichedData.website; } })()}
-                  </span>
+                <a
+                  href={enrichedData.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl border border-gray-200 dark:border-white/20 text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                >
+                  <Globe className="h-4 w-4" />
+                  Website
                 </a>
               )}
+              <button
+                onClick={handleDirections}
+                className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl border border-gray-200 dark:border-white/20 text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+              >
+                <Navigation className="h-4 w-4" />
+                Directions
+              </button>
             </div>
           </div>
         );
@@ -1262,22 +1669,34 @@ const DestinationContent = memo(function DestinationContent({
             <p className="text-[11px] uppercase tracking-wider text-gray-400 mb-3">Design & Architecture</p>
             <div className="space-y-1">
               {enrichedData?.architect_obj && (
-                <Link href={`/architect/${enrichedData.architect_obj.slug}`} className="flex items-center gap-3 py-2 group">
-                  <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden">
-                    {enrichedData.architect_obj.image_url ? (
-                      <Image src={enrichedData.architect_obj.image_url} alt="" width={40} height={40} className="object-cover" />
-                    ) : (
-                      <span className="text-[14px] font-medium text-gray-500">{enrichedData.architect_obj.name.charAt(0)}</span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[12px] text-gray-400">Architect</p>
-                    <p className="text-[14px] font-medium text-gray-900 dark:text-white group-hover:text-blue-600 truncate">
-                      {enrichedData.architect_obj.name}
-                    </p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-gray-300" />
-                </Link>
+                <>
+                  <Link href={`/architect/${enrichedData.architect_obj.slug}`} className="flex items-center gap-3 py-2 group">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden">
+                      {enrichedData.architect_obj.image_url ? (
+                        <Image src={enrichedData.architect_obj.image_url} alt="" width={40} height={40} className="object-cover" />
+                      ) : (
+                        <span className="text-[14px] font-medium text-gray-500">{enrichedData.architect_obj.name.charAt(0)}</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] text-gray-400">Architect</p>
+                      <p className="text-[14px] font-medium text-gray-900 dark:text-white group-hover:text-blue-600 truncate">
+                        {enrichedData.architect_obj.name}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-gray-300" />
+                  </Link>
+                  {/* More by this architect link */}
+                  {enrichedData.architect_destination_count && enrichedData.architect_destination_count > 0 && (
+                    <Link
+                      href={`/architect/${enrichedData.architect_obj.slug}`}
+                      className="flex items-center gap-2 ml-[52px] py-1 text-[12px] text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      <Building2 className="h-3 w-3" />
+                      See {enrichedData.architect_destination_count} other project{enrichedData.architect_destination_count !== 1 ? 's' : ''} by this architect
+                    </Link>
+                  )}
+                </>
               )}
               {!enrichedData?.architect_obj && destination.architect && (
                 <div className="flex items-center gap-3 py-2">
@@ -1307,7 +1726,7 @@ const DestinationContent = memo(function DestinationContent({
               {enrichedData?.architectural_style && (
                 <div className="flex items-center gap-3 py-2">
                   <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                    <span className="text-[12px] font-medium text-gray-500">S</span>
+                    <Palette className="h-4 w-4 text-gray-500" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[12px] text-gray-400">Style</p>
@@ -1464,6 +1883,216 @@ const DestinationContent = memo(function DestinationContent({
                   <ChevronRight className="h-4 w-4 text-gray-300" />
                 </button>
               ))}
+            </div>
+          </div>
+        );
+
+      case 'insidertips':
+        return (
+          <div key="insidertips" className="mt-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Info className="h-4 w-4 text-blue-500" />
+              <p className="text-[11px] uppercase tracking-wider text-gray-400">Insider Tips</p>
+            </div>
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 space-y-2">
+              {insiderTips.map((tip, index) => (
+                <div key={index} className="flex items-start gap-2">
+                  <span className="text-[13px] text-blue-600 dark:text-blue-400 mt-0.5">•</span>
+                  <p className="text-[13px] text-blue-800 dark:text-blue-200">{tip}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'reviews':
+        const reviews = enrichedData?.reviews || [];
+        if (reviews.length === 0) return null;
+
+        // Calculate rating distribution
+        const ratingCounts = [0, 0, 0, 0, 0];
+        reviews.forEach(r => {
+          if (r.rating) ratingCounts[Math.floor(r.rating) - 1]++;
+        });
+
+        return (
+          <div key="reviews" className="mt-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                <p className="text-[11px] uppercase tracking-wider text-gray-400">Reviews</p>
+              </div>
+              {rating && reviewCount && (
+                <span className="text-[13px] font-medium text-gray-900 dark:text-white">
+                  {rating.toFixed(1)} ({reviewCount.toLocaleString()})
+                </span>
+              )}
+            </div>
+
+            {/* Reviews list */}
+            <div className="space-y-4">
+              {reviews.slice(0, 3).map((review, index) => (
+                <div key={index} className="border-b border-gray-100 dark:border-white/10 pb-4 last:border-0 last:pb-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    {/* Star rating */}
+                    <div className="flex items-center gap-0.5">
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <Star
+                          key={star}
+                          className={`h-3 w-3 ${star <= (review.rating || 0) ? 'text-amber-500 fill-amber-500' : 'text-gray-200'}`}
+                        />
+                      ))}
+                    </div>
+                    {review.relative_time_description && (
+                      <span className="text-[11px] text-gray-400">{review.relative_time_description}</span>
+                    )}
+                  </div>
+                  {review.text && (
+                    <p className="text-[13px] text-gray-700 dark:text-gray-300 line-clamp-3">
+                      "{review.text}"
+                    </p>
+                  )}
+                  {review.author_name && (
+                    <p className="text-[12px] text-gray-500 mt-1">— {review.author_name}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'booking':
+        const hasOpenTable = !!destination.opentable_url;
+        const hasResy = !!destination.resy_url;
+        const hasDirectBooking = !!destination.booking_url;
+        const hasAnyBooking = hasOpenTable || hasResy || hasDirectBooking;
+
+        if (!hasAnyBooking && !enrichedData?.website) return null;
+
+        return (
+          <div key="booking" className="mt-6">
+            <div className="flex items-center gap-2 mb-3">
+              <CalendarDays className="h-4 w-4 text-green-600" />
+              <p className="text-[11px] uppercase tracking-wider text-gray-400">Reserve a Table</p>
+            </div>
+
+            <div className="space-y-2">
+              {hasOpenTable && (
+                <a
+                  href={destination.opentable_url!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-red-600 text-white hover:bg-red-700 transition-colors"
+                >
+                  <span className="text-[14px] font-medium">Book on OpenTable</span>
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+              {hasResy && (
+                <a
+                  href={destination.resy_url!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                >
+                  <span className="text-[14px] font-medium">Book on Resy</span>
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+              {hasDirectBooking && (
+                <a
+                  href={destination.booking_url!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90 transition-opacity"
+                >
+                  <span className="text-[14px] font-medium">Book Direct</span>
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+              {!hasAnyBooking && enrichedData?.website && (
+                <a
+                  href={enrichedData.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                >
+                  <span className="text-[14px] font-medium">Visit Website to Book</span>
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+            </div>
+
+            {enrichedData?.international_phone_number && (
+              <p className="text-[12px] text-gray-500 mt-2 text-center">
+                Or call {enrichedData.international_phone_number} for reservations
+              </p>
+            )}
+          </div>
+        );
+
+      case 'share':
+        const shareUrl = typeof window !== 'undefined'
+          ? `${window.location.origin}/destination/${destination.slug}`
+          : `/destination/${destination.slug}`;
+
+        const handleCopyLink = async () => {
+          try {
+            await navigator.clipboard.writeText(shareUrl);
+            toast.success('Link copied to clipboard');
+          } catch {
+            toast.error('Failed to copy link');
+          }
+        };
+
+        const handleEmailShare = () => {
+          const subject = encodeURIComponent(`Check out ${destination.name}`);
+          const body = encodeURIComponent(`I found this amazing place on Urban Manual: ${destination.name}\n\n${shareUrl}`);
+          window.open(`mailto:?subject=${subject}&body=${body}`);
+        };
+
+        const handleTwitterShare = () => {
+          const text = encodeURIComponent(`Check out ${destination.name} on Urban Manual!`);
+          window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(shareUrl)}`);
+        };
+
+        const handleWhatsAppShare = () => {
+          const text = encodeURIComponent(`Check out ${destination.name} on Urban Manual: ${shareUrl}`);
+          window.open(`https://wa.me/?text=${text}`);
+        };
+
+        return (
+          <div key="share" className="mt-6">
+            <p className="text-[11px] uppercase tracking-wider text-gray-400 mb-3">Share This Place</p>
+            <div className="flex gap-2">
+              <button
+                onClick={handleCopyLink}
+                className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl border border-gray-200 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+              >
+                <Copy className="h-4 w-4" />
+                <span className="text-[13px] font-medium">Copy Link</span>
+              </button>
+              <button
+                onClick={handleWhatsAppShare}
+                className="h-11 w-11 flex items-center justify-center rounded-xl border border-gray-200 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                title="Share on WhatsApp"
+              >
+                <MessageCircle className="h-4 w-4" />
+              </button>
+              <button
+                onClick={handleTwitterShare}
+                className="h-11 w-11 flex items-center justify-center rounded-xl border border-gray-200 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                title="Share on Twitter"
+              >
+                <Twitter className="h-4 w-4" />
+              </button>
+              <button
+                onClick={handleEmailShare}
+                className="h-11 w-11 flex items-center justify-center rounded-xl border border-gray-200 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                title="Share via Email"
+              >
+                <Mail className="h-4 w-4" />
+              </button>
             </div>
           </div>
         );
@@ -1729,6 +2358,44 @@ const DestinationContent = memo(function DestinationContent({
                   {subtleRecommendation}
                 </span>
               )}
+            </div>
+          )}
+
+          {/* Key Highlights - Visual feature badges */}
+          {keyHighlights.length > 0 && (
+            <div className="flex items-center gap-2 mt-3 flex-wrap">
+              {keyHighlights.map((highlight, index) => {
+                const colorClasses = {
+                  gray: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
+                  blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300',
+                  green: 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300',
+                  amber: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300',
+                  purple: 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300',
+                  rose: 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300',
+                };
+                return (
+                  <span
+                    key={index}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${colorClasses[highlight.color]}`}
+                  >
+                    {highlight.icon}
+                    {highlight.label}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Verified Curated Badge */}
+          {destination.crown && (
+            <div className="flex items-center gap-2 mt-3 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-900/20 dark:to-amber-800/10 border border-amber-200/50 dark:border-amber-700/30">
+              <BadgeCheck className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <span className="text-[12px] font-medium text-amber-800 dark:text-amber-300">
+                Verified by Urban Manual
+              </span>
+              <span className="text-[11px] text-amber-600/70 dark:text-amber-400/70">
+                · Hand-picked by our travel experts
+              </span>
             </div>
           )}
         </div>
