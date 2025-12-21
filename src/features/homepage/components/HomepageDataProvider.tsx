@@ -29,6 +29,8 @@ interface HomepageDataContextType {
 
   // State
   isLoading: boolean;
+  hasError: boolean;
+  errorMessage: string | null;
   currentPage: number;
   totalPages: number;
   selectedCity: string;
@@ -61,6 +63,7 @@ interface HomepageDataContextType {
   closeAIChat: () => void;
   setMichelinOnly: (value: boolean) => void;
   setCrownOnly: (value: boolean) => void;
+  refetch: () => Promise<void>;
 }
 
 const HomepageDataContext = createContext<HomepageDataContextType | null>(null);
@@ -114,6 +117,8 @@ function HomepageDataProviderInner({
   const [cities, setCities] = useState<string[]>(serverCities);
   const [categories, setCategories] = useState<string[]>(serverCategories);
   const [isLoading, setIsLoading] = useState(serverDestinations.length === 0);
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Filter state
   const [selectedCity, setSelectedCity] = useState('');
@@ -145,48 +150,66 @@ function HomepageDataProviderInner({
     else if (viewParam === 'grid') setViewMode('grid');
   }, [searchParams]);
 
+  // Fetch destinations from Supabase
+  const fetchDestinations = useCallback(async () => {
+    setIsLoading(true);
+    setHasError(false);
+    setErrorMessage(null);
+
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('destinations')
+        .select(`
+          id, slug, name, city, country, neighborhood, category,
+          micro_description, description, image, image_thumbnail,
+          michelin_stars, crown, rating, price_level, tags,
+          latitude, longitude
+        `)
+        .order('rating', { ascending: false, nullsFirst: false })
+        .limit(1000);
+
+      if (error) {
+        console.error('[Client] Supabase error:', error);
+        setHasError(true);
+        setErrorMessage('Unable to load destinations. Please check your connection.');
+        return;
+      }
+
+      if (data && data.length > 0) {
+        setDestinations(data as Destination[]);
+        const filters = extractFilters(data as Destination[]);
+        setCities(filters.cities);
+        setCategories(filters.categories);
+        setHasError(false);
+        setErrorMessage(null);
+      } else {
+        setHasError(true);
+        setErrorMessage('No destinations available. Please try again later.');
+      }
+    } catch (error) {
+      console.error('[Client] Error fetching destinations:', error);
+      setHasError(true);
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Something went wrong. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   // Client-side fallback fetch when server data is empty
   useEffect(() => {
     if (serverDestinations.length > 0) {
       setIsLoading(false);
+      setHasError(false);
       return;
     }
 
-    async function fetchClientData() {
-      try {
-        // Try Supabase first
-        const supabase = createClient();
-        const { data, error } = await supabase
-          .from('destinations')
-          .select(`
-            id, slug, name, city, country, neighborhood, category,
-            micro_description, description, image, image_thumbnail,
-            michelin_stars, crown, rating, price_level, tags,
-            latitude, longitude
-          `)
-          .order('rating', { ascending: false, nullsFirst: false })
-          .limit(1000); // Fetch all destinations (897+)
-
-        if (error) {
-          console.error('[Client] Supabase error:', error);
-          return;
-        }
-
-        if (data && data.length > 0) {
-          setDestinations(data as Destination[]);
-          const filters = extractFilters(data as Destination[]);
-          setCities(filters.cities);
-          setCategories(filters.categories);
-        }
-      } catch (error) {
-        console.error('[Client] Error fetching destinations:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchClientData();
-  }, [serverDestinations]);
+    fetchDestinations();
+  }, [serverDestinations, fetchDestinations]);
 
   // Filter destinations based on selected filters
   const filteredDestinations = useMemo(() => {
@@ -297,6 +320,8 @@ function HomepageDataProviderInner({
     cities,
     categories,
     isLoading,
+    hasError,
+    errorMessage,
     currentPage,
     totalPages,
     selectedCity,
@@ -321,6 +346,7 @@ function HomepageDataProviderInner({
     closeAIChat,
     setMichelinOnly,
     setCrownOnly,
+    refetch: fetchDestinations,
   };
 
   return (
