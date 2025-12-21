@@ -45,6 +45,10 @@ export * from "./components/EventDetailDrawer";
 export * from "./components/POIEditorDrawer";
 export * from "./components/AISuggestionsDrawer";
 export * from "./components/PlaceSelectorDrawer";
+export * from "./components/ShareTripDrawer";
+
+// Collaboration
+export * from "./components/TripInvitations";
 
 // Timeline & Planning
 export * from "./components/TimelineCanvas";

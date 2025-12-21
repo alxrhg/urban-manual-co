@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Settings, Plus, Pencil, Loader2, Map, ChevronDown, Utensils, Coffee, Building2, Plane, Hotel, Car, Waves, FileText, Calendar } from 'lucide-react';
+import { ArrowLeft, Settings, Plus, Pencil, Loader2, Map, ChevronDown, Utensils, Coffee, Building2, Plane, Hotel, Car, Waves, FileText, Calendar, Share2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +26,7 @@ interface TripHeaderProps {
   selectedDayNumber?: number;
   onSelectDay?: (dayNumber: number) => void;
   onSettingsClick?: () => void;
+  onShareClick?: () => void;
   onAutoplanClick?: () => void;
   onAddClick?: () => void;
   onAddItemClick?: (type: AddItemType) => void;
@@ -92,6 +93,7 @@ export default function TripHeader({
   selectedDayNumber = 1,
   onSelectDay,
   onSettingsClick,
+  onShareClick,
   onAutoplanClick,
   onAddClick,
   onAddItemClick,
@@ -196,8 +198,17 @@ export default function TripHeader({
             )}
 
             <button
+              onClick={onShareClick}
+              className="p-2.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
+              title="Share trip"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+
+            <button
               onClick={onSettingsClick}
               className="p-2.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
+              title="Settings"
             >
               <Settings className="w-4 h-4" />
             </button>
