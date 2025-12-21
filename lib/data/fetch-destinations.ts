@@ -26,7 +26,7 @@ function isSupabaseConfigured(): boolean {
  * Cached for 5 minutes to reduce database load
  */
 export const fetchInitialDestinations = unstable_cache(
-  async (limit: number = 100): Promise<Destination[]> => {
+  async (): Promise<Destination[]> => {
     // Skip database queries during build if Supabase isn't configured
     if (!isSupabaseConfigured()) {
       console.log('[SSR] Supabase not configured, skipping destination fetch');
@@ -60,8 +60,7 @@ export const fetchInitialDestinations = unstable_cache(
           latitude,
           longitude
         `)
-        .order('rating', { ascending: false, nullsFirst: false })
-        .limit(limit);
+        .order('rating', { ascending: false, nullsFirst: false });
 
       if (error) {
         console.error('[SSR] Error fetching destinations:', error.message);
@@ -351,7 +350,7 @@ export async function prefetchHomepageData() {
     filterOptions,
     trending,
   ] = await Promise.all([
-    fetchInitialDestinations(200),
+    fetchInitialDestinations(),
     fetchFilterOptions(),
     fetchTrendingDestinations(12),
   ]);
