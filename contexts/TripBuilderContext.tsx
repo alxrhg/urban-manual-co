@@ -236,6 +236,7 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
   const [activeTrip, setActiveTrip] = useState<ActiveTrip | null>(null);
   const [savedTrips, setSavedTrips] = useState<SavedTripSummary[]>([]);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [userDismissedPanel, setUserDismissedPanel] = useState(false);
   const [isBuilding, setIsBuilding] = useState(false);
   const [isLoadingTrips, setIsLoadingTrips] = useState(false);
   const [isSuggestingNext, setIsSuggestingNext] = useState(false);
@@ -266,7 +267,7 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
     refreshSavedTrips();
   }, [user, refreshSavedTrips]);
 
-  // Load trip from localStorage on mount
+  // Load trip and dismissal state from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem('urban-manual-active-trip');
     if (saved) {
@@ -277,6 +278,11 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
         console.error('Failed to load saved trip:', e);
       }
     }
+    // Restore panel dismissal state
+    const dismissed = localStorage.getItem('urban-manual-panel-dismissed');
+    if (dismissed === 'true') {
+      setUserDismissedPanel(true);
+    }
   }, []);
 
   // Save to localStorage on changes
@@ -285,15 +291,27 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
       localStorage.setItem('urban-manual-active-trip', JSON.stringify(activeTrip));
     } else {
       localStorage.removeItem('urban-manual-active-trip');
+      // Clear dismissal state when trip is cleared
+      localStorage.removeItem('urban-manual-panel-dismissed');
+      setUserDismissedPanel(false);
     }
   }, [activeTrip]);
 
-  // Auto-open panel when trip has items
+  // Persist panel dismissal state
   useEffect(() => {
-    if (activeTrip && activeTrip.days.some(d => d.items.length > 0) && !isPanelOpen) {
+    if (userDismissedPanel) {
+      localStorage.setItem('urban-manual-panel-dismissed', 'true');
+    } else {
+      localStorage.removeItem('urban-manual-panel-dismissed');
+    }
+  }, [userDismissedPanel]);
+
+  // Auto-open panel when trip has items (only if user hasn't dismissed it)
+  useEffect(() => {
+    if (activeTrip && activeTrip.days.some(d => d.items.length > 0) && !isPanelOpen && !userDismissedPanel) {
       setIsPanelOpen(true);
     }
-  }, [activeTrip?.days]);
+  }, [activeTrip?.days, userDismissedPanel]);
 
   // Start a new trip
   const startTrip = useCallback((city: string, days: number = 1, startDate?: string) => {
@@ -318,6 +336,7 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
       isModified: false,
     });
     setIsPanelOpen(true);
+    setUserDismissedPanel(false);
   }, []);
 
   // Add destination to trip
@@ -384,8 +403,9 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
       };
     });
 
-    // Open panel when adding
+    // Open panel when adding and reset dismissal state
     setIsPanelOpen(true);
+    setUserDismissedPanel(false);
   }, []);
 
   // Remove item from trip
@@ -765,6 +785,7 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
       });
 
       setIsPanelOpen(true);
+      setUserDismissedPanel(false);
     } catch (error) {
       console.error('Error loading trip:', error);
     }
@@ -823,6 +844,7 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
       });
 
       setIsPanelOpen(true);
+      setUserDismissedPanel(false);
     } catch (error) {
       console.error('Error generating itinerary:', error);
     } finally {
@@ -1282,9 +1304,26 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
   }, [activeTrip, loadTrip]);
 
   // Panel controls
-  const openPanel = useCallback(() => setIsPanelOpen(true), []);
-  const closePanel = useCallback(() => setIsPanelOpen(false), []);
-  const togglePanel = useCallback(() => setIsPanelOpen(p => !p), []);
+  const openPanel = useCallback(() => {
+    setIsPanelOpen(true);
+    setUserDismissedPanel(false);
+  }, []);
+  const closePanel = useCallback(() => {
+    setIsPanelOpen(false);
+    setUserDismissedPanel(true);
+  }, []);
+  const togglePanel = useCallback(() => {
+    setIsPanelOpen((p: boolean) => {
+      const newState = !p;
+      // If closing the panel, mark as dismissed
+      if (!newState) {
+        setUserDismissedPanel(true);
+      } else {
+        setUserDismissedPanel(false);
+      }
+      return newState;
+    });
+  }, []);
 
   // Computed values
   const totalItems = useMemo(() =>
