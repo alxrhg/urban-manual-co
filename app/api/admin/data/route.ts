@@ -14,14 +14,15 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = await createServerClient();
-
-    // Verify admin
-    const { data: { user } } = await supabase.auth.getUser();
+    // Verify admin using regular client
+    const authClient = await createServerClient();
+    const { data: { user } } = await authClient.auth.getUser();
     if (!user || user.app_metadata?.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Use service role client to bypass RLS for admin operations
+    const supabase = createServiceRoleClient();
     const { data, error } = await supabase.from(type).select('*').order('name');
 
     if (error) throw error;
@@ -40,14 +41,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
     }
 
-    const supabase = await createServerClient();
-
-    // Verify admin
-    const { data: { user } } = await supabase.auth.getUser();
+    // Verify admin using regular client
+    const authClient = await createServerClient();
+    const { data: { user } } = await authClient.auth.getUser();
     if (!user || user.app_metadata?.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Use service role client to bypass RLS for admin operations
+    const supabase = createServiceRoleClient();
     const { data, error } = await supabase.from(type).insert(itemData).select().single();
 
     if (error) throw error;
@@ -66,14 +68,15 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 
-    const supabase = await createServerClient();
-
-    // Verify admin
-    const { data: { user } } = await supabase.auth.getUser();
+    // Verify admin using regular client
+    const authClient = await createServerClient();
+    const { data: { user } } = await authClient.auth.getUser();
     if (!user || user.app_metadata?.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Use service role client to bypass RLS for admin operations
+    const supabase = createServiceRoleClient();
     const { data, error } = await supabase.from(type).update(itemData).eq('id', id).select().single();
 
     if (error) throw error;
@@ -94,17 +97,16 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    const supabase = await createServerClient();
-
-    // Verify admin
-    const { data: { user } } = await supabase.auth.getUser();
+    // Verify admin using regular client
+    const authClient = await createServerClient();
+    const { data: { user } } = await authClient.auth.getUser();
     if (!user || user.app_metadata?.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Use service role client to bypass RLS for admin delete operations
-    const serviceClient = createServiceRoleClient();
-    const { error } = await serviceClient.from(type).delete().eq('id', id);
+    // Use service role client to bypass RLS for admin operations
+    const supabase = createServiceRoleClient();
+    const { error } = await supabase.from(type).delete().eq('id', id);
 
     if (error) throw error;
     return NextResponse.json({ success: true });
