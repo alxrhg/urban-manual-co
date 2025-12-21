@@ -6,6 +6,7 @@ import { withCache, getDiscoveryEngineCache } from '@/lib/discovery-engine/cache
 import { withPerformanceMonitoring } from '@/lib/discovery-engine/performance';
 import { withErrorHandling } from '@/lib/errors';
 import { searchRatelimit, memorySearchRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';
+import { trackServerSearch, trackServerFilterUsage } from '@/lib/analytics/server-analytics';
 
 // Track if we've already warned about Discovery Engine configuration
 let hasWarnedAboutDiscoveryEngine = false;
@@ -152,6 +153,27 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       });
     }
 
+    // Track search analytics (including zero-result searches)
+    trackServerSearch({
+      query,
+      resultCount: results.results.length,
+      isZeroResults: results.results.length === 0,
+      filters: filters || {},
+      responseTimeMs: searchElapsed,
+      userId: finalUserId,
+      source: 'discovery_engine',
+      userAgent: request.headers.get('user-agent') || undefined,
+    }).catch((error) => {
+      console.warn('[Discovery Engine API] Analytics tracking failed:', error);
+    });
+
+    // Track filter usage if filters were applied
+    if (filters && Object.keys(filters).some(k => filters[k] !== undefined)) {
+      trackServerFilterUsage(filters, results.results.length, finalUserId).catch((error) => {
+        console.warn('[Discovery Engine API] Filter tracking failed:', error);
+      });
+    }
+
     return NextResponse.json({
       results: results.results,
       totalSize: results.totalSize,
@@ -162,9 +184,23 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     });
   } catch (error: any) {
     console.error('Discovery Engine search error:', error);
+
+    // Track failed search as zero results
+    trackServerSearch({
+      query: body?.query || '',
+      resultCount: 0,
+      isZeroResults: true,
+      filters: body?.filters,
+      responseTimeMs: 0,
+      source: 'discovery_engine_error',
+      userAgent: request.headers.get('user-agent') || undefined,
+    }).catch(() => {
+      // Ignore tracking errors
+    });
+
     // Return 200 with empty results instead of 500 to prevent breaking the UI
     return NextResponse.json(
-      { 
+      {
         results: [],
         totalSize: 0,
         query: body?.query || '',
@@ -275,6 +311,30 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
       });
     }
 
+    // Build filters object for tracking
+    const appliedFilters = { city, category, priceLevel, minRating };
+
+    // Track search analytics
+    trackServerSearch({
+      query,
+      resultCount: results.results.length,
+      isZeroResults: results.results.length === 0,
+      filters: appliedFilters,
+      responseTimeMs: 0, // Not measured in GET handler
+      userId: finalUserId,
+      source: 'discovery_engine_get',
+      userAgent: request.headers.get('user-agent') || undefined,
+    }).catch((error) => {
+      console.warn('[Discovery Engine API] Analytics tracking failed:', error);
+    });
+
+    // Track filter usage if filters were applied
+    if (Object.values(appliedFilters).some(v => v !== undefined)) {
+      trackServerFilterUsage(appliedFilters, results.results.length, finalUserId).catch((error) => {
+        console.warn('[Discovery Engine API] Filter tracking failed:', error);
+      });
+    }
+
     return NextResponse.json({
       results: results.results,
       totalSize: results.totalSize,
@@ -285,6 +345,19 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     console.error('Discovery Engine search error:', error);
     // Return 200 with empty results instead of 500 to prevent breaking the UI
     const query = searchParams.get('query') || '';
+
+    // Track failed search as zero results
+    trackServerSearch({
+      query,
+      resultCount: 0,
+      isZeroResults: true,
+      responseTimeMs: 0,
+      source: 'discovery_engine_error',
+      userAgent: request.headers.get('user-agent') || undefined,
+    }).catch(() => {
+      // Ignore tracking errors
+    });
+
     return NextResponse.json(
       {
         results: [],

@@ -12,6 +12,12 @@ import {
   formatDuration,
 } from '@/lib/trip-intelligence';
 import { isClosedOnDay, getHoursForDay } from '@/lib/utils/opening-hours';
+import {
+  trackTripCreate,
+  trackTripSave,
+  trackItineraryAdd,
+  trackFunnelStep,
+} from '@/lib/analytics/search-analytics';
 
 // ============================================
 // TYPES
@@ -318,6 +324,15 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
       isModified: false,
     });
     setIsPanelOpen(true);
+
+    // Track trip creation
+    trackTripCreate({
+      city,
+      days,
+      itemCount: 0,
+      source: 'manual',
+    });
+    trackFunnelStep('trip_start', { city, days });
   }, []);
 
   // Add destination to trip
@@ -386,6 +401,27 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
 
     // Open panel when adding
     setIsPanelOpen(true);
+
+    // Track itinerary add
+    trackItineraryAdd({
+      destinationSlug: destination.slug,
+      destinationId: destination.id,
+      city: destination.city || '',
+      category: destination.category || undefined,
+      tripDay: day || 1,
+      source: 'browse', // Can be overridden by caller context
+    });
+
+    // Track funnel progression
+    setActiveTrip(current => {
+      const totalItems = current?.days.reduce((sum, d) => sum + d.items.length, 0) || 0;
+      if (totalItems === 1) {
+        trackFunnelStep('trip_add_first', { destination: destination.slug });
+      } else if (totalItems > 1) {
+        trackFunnelStep('trip_add_multiple', { itemCount: totalItems });
+      }
+      return current;
+    });
   }, []);
 
   // Remove item from trip
@@ -665,12 +701,25 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
 
       const data = await response.json();
 
+      const isFirstSave = !activeTrip.id;
+
       setActiveTrip(prev => prev ? {
         ...prev,
         id: data.id,
         isModified: false,
         lastSaved: new Date().toISOString(),
       } : null);
+
+      // Track trip save
+      const totalItems = activeTrip.days.reduce((sum, d) => sum + d.items.length, 0);
+      trackTripSave({
+        tripId: data.id,
+        city: activeTrip.city,
+        days: activeTrip.days.length,
+        itemCount: totalItems,
+        isFirstSave,
+      });
+      trackFunnelStep('trip_save', { tripId: data.id, itemCount: totalItems });
 
       return data.id;
     } catch (error) {
@@ -814,6 +863,8 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
         });
       }
 
+      const totalItems = tripDays.reduce((sum, d) => sum + d.items.length, 0);
+
       setActiveTrip({
         title: `${city} Trip`,
         city,
@@ -823,6 +874,18 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
       });
 
       setIsPanelOpen(true);
+
+      // Track AI-generated trip creation
+      trackTripCreate({
+        city,
+        days,
+        itemCount: totalItems,
+        source: 'ai_generated',
+      });
+      trackFunnelStep('trip_start', { city, days, source: 'ai_generated' });
+      if (totalItems > 0) {
+        trackFunnelStep('trip_add_multiple', { itemCount: totalItems, source: 'ai_generated' });
+      }
     } catch (error) {
       console.error('Error generating itinerary:', error);
     } finally {
