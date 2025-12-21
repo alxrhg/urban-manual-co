@@ -43,6 +43,8 @@ import { TripChecklist } from '@/features/trip/components/editor/TripChecklist';
 import { useWeather, type DayWeather } from '@/lib/hooks/useWeather';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { Settings, Moon } from 'lucide-react';
+import TripIntelligencePanel from '@/features/trip/components/TripIntelligencePanel';
+import RouteVisualization from '@/features/trip/components/RouteVisualization';
 
 /**
  * TripPage - Completely rethought
@@ -403,11 +405,17 @@ export default function TripPage() {
 
         {/* Trip Intelligence - Smart Warnings & Suggestions (mobile only) */}
         <div className="lg:hidden">
-          <TripIntelligence
+          <TripIntelligencePanel
+            trip={trip}
             days={days}
+            selectedDayNumber={selectedDayNumber}
             city={primaryCity}
             weatherByDate={weatherByDate}
             onOptimizeRoute={(dayNumber, optimizedItems) => reorderItems(dayNumber, optimizedItems)}
+            onAddPlace={(dest, dayNum) => addPlace(dest, dayNum)}
+            onUpdateItemTime={updateItemTime}
+            onUpdateItem={updateItem}
+            compact
           />
         </div>
 
@@ -631,17 +639,20 @@ export default function TripPage() {
                 />
               )}
 
-              {/* Trip Intelligence */}
+              {/* Trip Intelligence Panel */}
               {!sidebarAddDay && (
-                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-                  <TripIntelligence
-                    days={days}
-                    city={primaryCity}
-                    weatherByDate={weatherByDate}
-                    onOptimizeRoute={(dayNumber, optimizedItems) => reorderItems(dayNumber, optimizedItems)}
-                    compact
-                  />
-                </div>
+                <TripIntelligencePanel
+                  trip={trip}
+                  days={days}
+                  selectedDayNumber={selectedDayNumber}
+                  city={primaryCity}
+                  weatherByDate={weatherByDate}
+                  onOptimizeRoute={(dayNumber, optimizedItems) => reorderItems(dayNumber, optimizedItems)}
+                  onAddPlace={(dest, dayNum) => addPlace(dest, dayNum)}
+                  onUpdateItemTime={updateItemTime}
+                  onUpdateItem={updateItem}
+                  onOpenSearch={() => setSidebarAddDay(selectedDayNumber)}
+                />
               )}
 
               {/* Drag & Drop Palette */}
@@ -1450,6 +1461,18 @@ function DaySection({
           </div>
         </div>
       </div>
+
+      {/* Route Visualization - shows route overview with travel times */}
+      {items.length >= 2 && (
+        <div className="mb-4">
+          <RouteVisualization
+            items={items}
+            dayNumber={dayNumber}
+            onOptimizeRoute={(optimized) => onReorder(optimized)}
+            isOptimizing={isOptimizing}
+          />
+        </div>
+      )}
 
       {/* Neighborhood tags */}
       {items.length > 0 && (
