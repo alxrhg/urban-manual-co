@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server';
 
-type DataType = 'brands' | 'cities' | 'countries' | 'neighborhoods';
+type DataType = 'brands' | 'cities' | 'countries' | 'neighborhoods' | 'architects';
 
-const VALID_TYPES: DataType[] = ['brands', 'cities', 'countries', 'neighborhoods'];
+const VALID_TYPES: DataType[] = ['brands', 'cities', 'countries', 'neighborhoods', 'architects'];
 
-// Mapping from entity type to the field name in destinations table
-const FIELD_MAPPING: Record<DataType, string> = {
+// Mapping from entity type to the field name in destinations table (for text-based types)
+const FIELD_MAPPING: Record<Exclude<DataType, 'architects'>, string> = {
   brands: 'brand',
   cities: 'city',
   countries: 'country',
   neighborhoods: 'neighborhood',
 };
+
+// Architect-related UUID fields in destinations table (both reference architects table)
+// Note: design_firm_id references design_firms table, not architects
+const ARCHITECT_FIELDS = ['architect_id', 'interior_designer_id'] as const;
 
 export async function POST(request: NextRequest) {
   try {
@@ -62,22 +66,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Target item not found' }, { status: 404 });
     }
 
-    const field = FIELD_MAPPING[validatedType];
+    let affectedCount = 0;
     const sourceName = sourceItem.name;
     const targetName = targetItem.name;
 
-    // Update all destinations that reference the source to reference the target
-    const { data: updatedDestinations, error: updateError } = await supabase
-      .from('destinations')
-      .update({ [field]: targetName })
-      .eq(field, sourceName)
-      .select('id');
+    if (validatedType === 'architects') {
+      // For architects: update all three architect-related UUID fields
+      for (const field of ARCHITECT_FIELDS) {
+        const { data: updated, error: updateError } = await supabase
+          .from('destinations')
+          .update({ [field]: targetId })
+          .eq(field, sourceId)
+          .select('id');
 
-    if (updateError) {
-      throw new Error(`Failed to update destinations: ${updateError.message}`);
+        if (updateError) {
+          throw new Error(`Failed to update destinations.${field}: ${updateError.message}`);
+        }
+        affectedCount += updated?.length || 0;
+      }
+    } else {
+      // For text-based types (brands, cities, etc.)
+      const field = FIELD_MAPPING[validatedType];
+      const { data: updatedDestinations, error: updateError } = await supabase
+        .from('destinations')
+        .update({ [field]: targetName })
+        .eq(field, sourceName)
+        .select('id');
+
+      if (updateError) {
+        throw new Error(`Failed to update destinations: ${updateError.message}`);
+      }
+      affectedCount = updatedDestinations?.length || 0;
     }
-
-    const affectedCount = updatedDestinations?.length || 0;
 
     // Optionally delete the source item
     let sourceDeleted = false;
@@ -148,22 +168,40 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Source item not found' }, { status: 404 });
     }
 
-    const field = FIELD_MAPPING[validatedType];
-    const sourceName = sourceItem.name;
+    let totalCount = 0;
 
-    // Count affected destinations
-    const { count, error: countError } = await supabase
-      .from('destinations')
-      .select('*', { count: 'exact', head: true })
-      .eq(field, sourceName);
+    if (validatedType === 'architects') {
+      // For architects: count references across all three UUID fields
+      for (const field of ARCHITECT_FIELDS) {
+        const { count, error: countError } = await supabase
+          .from('destinations')
+          .select('*', { count: 'exact', head: true })
+          .eq(field, sourceId);
 
-    if (countError) {
-      throw new Error(`Failed to count destinations: ${countError.message}`);
+        if (countError) {
+          throw new Error(`Failed to count destinations.${field}: ${countError.message}`);
+        }
+        totalCount += count || 0;
+      }
+    } else {
+      // For text-based types
+      const field = FIELD_MAPPING[validatedType];
+      const sourceName = sourceItem.name;
+
+      const { count, error: countError } = await supabase
+        .from('destinations')
+        .select('*', { count: 'exact', head: true })
+        .eq(field, sourceName);
+
+      if (countError) {
+        throw new Error(`Failed to count destinations: ${countError.message}`);
+      }
+      totalCount = count || 0;
     }
 
     return NextResponse.json({
       source: sourceItem,
-      affectedCount: count || 0,
+      affectedCount: totalCount,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Preview failed';
