@@ -107,7 +107,8 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-const FEATURED_CITIES = ['Taipei', 'Tokyo', 'New York', 'London'];
+// Show top 10 cities by default to reduce the "+X more" button
+const FEATURED_CITIES = ['Tokyo', 'New York', 'Paris', 'London', 'Taipei', 'Hong Kong', 'Seoul', 'Barcelona', 'Los Angeles', 'Singapore'];
 
 // AI-style rotating placeholders
 const AI_PLACEHOLDERS = [
@@ -614,8 +615,8 @@ export default function InteractiveHero() {
   const hasFilters = selectedCity || selectedCategory || searchTerm || michelinOnly;
 
   return (
-    <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
-      <div className="flex-1 flex items-center">
+    <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col">
+      <div className="flex items-center">
         <div className="w-full">
           {/* Greeting - Apple-style large typography */}
           <h2 className="text-[2rem] md:text-[2.5rem] leading-[1.1] font-semibold tracking-tight text-gray-900 dark:text-white mb-3">
@@ -1122,8 +1123,8 @@ export default function InteractiveHero() {
 
       {/* City Filters - Apple-style pill buttons (hidden when chat results are shown) */}
       {!showChatResults && (
-        <div className="flex-1 flex items-end">
-          <div className="w-full pt-6">
+        <div className="flex items-end">
+          <div className="w-full pt-4">
             <div className="mb-4">
               <div className="flex flex-wrap gap-x-1 gap-y-2">
                 <button
