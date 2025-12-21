@@ -89,6 +89,8 @@ export interface SavedTripSummary {
   updated_at: string;
 }
 
+export type ModalMode = 'list' | 'editor';
+
 export interface TripBuilderContextType {
   // State
   activeTrip: ActiveTrip | null;
@@ -97,6 +99,10 @@ export interface TripBuilderContextType {
   isBuilding: boolean;
   isLoadingTrips: boolean;
   isSuggestingNext: boolean;
+
+  // Modal State (unified trip planner)
+  isModalOpen: boolean;
+  modalMode: ModalMode;
 
   // Actions
   startTrip: (city: string, days?: number, startDate?: string) => void;
@@ -119,6 +125,11 @@ export interface TripBuilderContextType {
   openPanel: () => void;
   closePanel: () => void;
   togglePanel: () => void;
+
+  // Modal Controls (unified trip planner)
+  openModal: (mode?: ModalMode) => void;
+  closeModal: () => void;
+  setModalMode: (mode: ModalMode) => void;
 
   // AI Actions
   generateItinerary: (city: string, days: number, preferences?: {
@@ -239,6 +250,10 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
   const [isBuilding, setIsBuilding] = useState(false);
   const [isLoadingTrips, setIsLoadingTrips] = useState(false);
   const [isSuggestingNext, setIsSuggestingNext] = useState(false);
+
+  // Modal state for unified trip planner
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalModeState] = useState<ModalMode>('list');
 
   // Fetch saved trips from server
   const refreshSavedTrips = useCallback(async () => {
@@ -1286,6 +1301,22 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
   const closePanel = useCallback(() => setIsPanelOpen(false), []);
   const togglePanel = useCallback(() => setIsPanelOpen(p => !p), []);
 
+  // Modal controls (unified trip planner)
+  const openModal = useCallback((mode: ModalMode = 'list') => {
+    setModalModeState(mode);
+    setIsModalOpen(true);
+    // Fetch trips when opening modal
+    refreshSavedTrips();
+  }, [refreshSavedTrips]);
+
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false);
+  }, []);
+
+  const setModalMode = useCallback((mode: ModalMode) => {
+    setModalModeState(mode);
+  }, []);
+
   // Computed values
   const totalItems = useMemo(() =>
     activeTrip?.days.reduce((sum, day) => sum + day.items.length, 0) || 0
@@ -1309,6 +1340,8 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
     isBuilding,
     isLoadingTrips,
     isSuggestingNext,
+    isModalOpen,
+    modalMode,
     startTrip,
     addToTrip,
     removeFromTrip,
@@ -1327,6 +1360,9 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
     openPanel,
     closePanel,
     togglePanel,
+    openModal,
+    closeModal,
+    setModalMode,
     generateItinerary,
     optimizeDay,
     suggestNextItem,

@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { Plus, Globe, Loader2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { createClient } from '@/lib/supabase/client';
+import { useTripBuilder } from '@/contexts/TripBuilderContext';
+import { useDrawer } from '@/contexts/DrawerContext';
 import { useHomepageData } from './HomepageDataProvider';
 import { SearchFiltersComponent, SearchFilters } from '@/src/features/search/SearchFilters';
 
@@ -15,8 +15,9 @@ import { SearchFiltersComponent, SearchFilters } from '@/src/features/search/Sea
  * Clean, minimal navigation with action buttons and inline filters.
  */
 export default function NavigationBar() {
-  const router = useRouter();
   const { user } = useAuth();
+  const { startTrip, openModal } = useTripBuilder();
+  const { openDrawer } = useDrawer();
   const {
     selectedCity,
     selectedCategory,
@@ -37,36 +38,24 @@ export default function NavigationBar() {
 
   const hasFilters = selectedCity || selectedCategory || searchTerm || michelinOnly || crownOnly;
 
-  // Handle create trip
+  // Handle create trip - now uses unified trip planner modal
   const handleCreateTrip = useCallback(async () => {
     if (!user) {
-      router.push('/auth/login');
+      // Open login drawer for unauthenticated users
+      openDrawer('login');
       return;
     }
 
     try {
       setCreatingTrip(true);
-      const supabase = createClient();
-      if (!supabase) return;
-
-      const { data, error } = await supabase
-        .from('trips')
-        .insert({
-          user_id: user.id,
-          title: 'New Trip',
-          status: 'planning',
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      if (data) router.push(`/trips/${data.id}`);
-    } catch (err) {
-      console.error('Error creating trip:', err);
+      // Start a new trip using the context
+      startTrip('New Trip', 1);
+      // Open the modal in editor mode
+      openModal('editor');
     } finally {
       setCreatingTrip(false);
     }
-  }, [user, router]);
+  }, [user, startTrip, openModal, openDrawer]);
 
   // Handle filter changes from SearchFiltersComponent
   const handleFiltersChange = useCallback((newFilters: SearchFilters) => {

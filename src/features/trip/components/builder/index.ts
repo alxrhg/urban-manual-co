@@ -34,6 +34,9 @@ export { default as MobileTripFloatingBar } from './MobileTripFloatingBar';
 // Responsive wrapper (auto-switches between mobile/desktop)
 export { default as ResponsiveTripUI } from './ResponsiveTripUI';
 
+// Unified Trip Planner Modal
+export { default as TripPlannerModal } from '../TripPlannerModal';
+
 // Panel components (side panel architecture)
 export { default as TripPanel } from './TripPanel';
 export { default as TripHeader } from './TripHeader';

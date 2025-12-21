@@ -6,6 +6,7 @@ import { User, Map, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import { useDrawer } from "@/contexts/DrawerContext";
+import { useTripBuilder } from "@/contexts/TripBuilderContext";
 import { ChatDrawer } from "@/features/chat/components/ChatDrawer";
 import { LoginDrawer } from "@/features/account/components/LoginDrawer";
 import { LoginModal } from "@/components/LoginModal";
@@ -24,6 +25,7 @@ export function Header() {
   const pathname = usePathname();
   const { user } = useAuth();
   const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
+  const { openModal } = useTripBuilder();
   const { isChristmasMode } = useChristmasTheme();
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -141,7 +143,7 @@ export function Header() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/trips')}
+              onClick={() => openModal('list')}
               aria-label="View trips"
             >
               <Map className="w-4 h-4" />
