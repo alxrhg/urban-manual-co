@@ -70,10 +70,15 @@ export async function POST(request: NextRequest) {
     const sourceName = sourceItem.name;
     const targetName = targetItem.name;
 
+    // Use service role client for updates to bypass RLS
+    // This is necessary because admin merge operations need to update all destinations,
+    // not just those the current user has permission to modify
+    const serviceClient = createServiceRoleClient();
+
     if (validatedType === 'architects') {
-      // For architects: update all three architect-related UUID fields
+      // For architects: update all architect-related UUID fields
       for (const field of ARCHITECT_FIELDS) {
-        const { data: updated, error: updateError } = await supabase
+        const { data: updated, error: updateError } = await serviceClient
           .from('destinations')
           .update({ [field]: targetId })
           .eq(field, sourceId)
@@ -87,7 +92,7 @@ export async function POST(request: NextRequest) {
     } else {
       // For text-based types (brands, cities, etc.)
       const field = FIELD_MAPPING[validatedType];
-      const { data: updatedDestinations, error: updateError } = await supabase
+      const { data: updatedDestinations, error: updateError } = await serviceClient
         .from('destinations')
         .update({ [field]: targetName })
         .eq(field, sourceName)
@@ -103,8 +108,6 @@ export async function POST(request: NextRequest) {
     let sourceDeleted = false;
     let deleteError: string | null = null;
     if (deleteSource) {
-      // Use service role client to bypass RLS for admin delete operations
-      const serviceClient = createServiceRoleClient();
       const { error } = await serviceClient
         .from(validatedType)
         .delete()
