@@ -13,6 +13,17 @@ USER CONTEXT:
 - Group size: {{groupSizeInference}}
 - Brand affinity: {{brandAffinity}}
 
+VALID CATEGORIES (use EXACTLY these values for the "category" field):
+- Dining: restaurants, food, eating, bistros, trattorias, fine dining, casual dining
+- Hotel: hotels, stays, accommodations, resorts, lodging, inns, ryokans
+- Bar: bars, drinks, cocktails, pubs, nightlife, speakeasies, wine bars
+- Cafe: cafes, coffee shops, tea houses, espresso
+- Culture: museums, galleries, art, landmarks, monuments, temples, theaters
+- Shopping: shops, stores, boutiques, malls, markets, fashion, retail
+- Bakery: bakeries, pastries, bread, boulangeries
+- Park: parks, gardens, outdoor, nature, beaches
+- Other: spas, wellness, gyms, fitness
+
 RETURN JSON:
 {
   "intent": "search" | "my_places" | "recommendation" | "comparison" | "discovery" | "itinerary",
@@ -22,7 +33,7 @@ RETURN JSON:
     "filters": {
       "city": string | null,
       "neighborhood": string | null,
-      "category": string | null,
+      "category": "Dining" | "Hotel" | "Bar" | "Cafe" | "Culture" | "Shopping" | "Bakery" | "Park" | "Other" | null,
       "brand": string | null,
       "cuisine": string | null,
       "style": string | null,

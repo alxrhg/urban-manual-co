@@ -7,6 +7,7 @@ import { generateSuggestions, actionPatchToLegacySuggestion } from '@/lib/search
 import { getUserLocation } from '@/lib/location/getUserLocation';
 import { expandNearbyLocations, getLocationContext, findLocationByName } from '@/lib/search/expandLocations';
 import { withErrorHandling } from '@/lib/errors';
+import { resolveCategory } from '@/lib/categories';
 
 /**
  * POST /api/search/follow-up
@@ -83,27 +84,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     // CRITICAL FIX: If no category found in combined query, use original intent category
     // This prevents "cheap" from losing the "hotel" context
     if (!category && intent?.category) {
-      // Normalize intent category to match our database categories
-      // Note: Database uses 'Dining' for restaurants, 'Shopping' for shops, etc.
-      const categorySynonyms: Record<string, string> = {
-        'restaurant': 'Dining',
-        'restaurants': 'Dining',
-        'dining': 'Dining',
-        'food': 'Dining',
-        'hotel': 'Hotel',
-        'hotels': 'Hotel',
-        'cafe': 'Cafe',
-        'cafes': 'Cafe',
-        'bar': 'Bar',
-        'bars': 'Bar',
-        'museum': 'Culture',
-        'museums': 'Culture',
-        'gallery': 'Culture',
-        'shop': 'Shopping',
-        'shops': 'Shopping',
-        'shopping': 'Shopping',
-      };
-      category = categorySynonyms[intent.category.toLowerCase()] || intent.category;
+      category = resolveCategory(intent.category) || intent.category;
     }
 
     // Intelligent search
@@ -302,33 +283,13 @@ function combineQueries(
  * Extract category from follow-up message
  */
 function extractCategoryFromFollowUp(followUp: string): string | undefined {
-  const lower = followUp.toLowerCase();
-  // Note: Database uses 'Dining' for restaurants, 'Shopping' for shops, etc.
-  const categoryMap: Record<string, string> = {
-    'restaurant': 'Dining',
-    'restaurants': 'Dining',
-    'dining': 'Dining',
-    'food': 'Dining',
-    'hotel': 'Hotel',
-    'hotels': 'Hotel',
-    'cafe': 'Cafe',
-    'cafes': 'Cafe',
-    'bar': 'Bar',
-    'bars': 'Bar',
-    'museum': 'Culture',
-    'museums': 'Culture',
-    'gallery': 'Culture',
-    'shop': 'Shopping',
-    'shops': 'Shopping',
-    'shopping': 'Shopping',
-  };
-
-  for (const [key, value] of Object.entries(categoryMap)) {
-    if (lower.includes(key)) {
-      return value;
+  const words = followUp.toLowerCase().split(/\s+/);
+  for (const word of words) {
+    const resolved = resolveCategory(word);
+    if (resolved) {
+      return resolved;
     }
   }
-
   return undefined;
 }
 

@@ -3,6 +3,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { generateSearchResponseContext } from '@/lib/search/generateSearchContext';
 import { generateSuggestions, actionPatchToLegacySuggestion } from '@/lib/search/generateSuggestions';
 import { withErrorHandling } from '@/lib/errors';
+import { resolveCategory } from '@/lib/categories';
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
   try {
@@ -130,24 +131,15 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         if (filtered.length < beforeCount) appliedFilters.push(`in ${location}`);
       }
 
-      // Category filters
-      const categoryMap: Record<string, string[]> = {
-        'restaurant': ['Dining', 'Restaurant'],
-        'hotel': ['Hotel', 'Accommodation'],
-        'cafe': ['Cafe', 'Coffee'],
-        'bar': ['Bar', 'Nightlife'],
-        'museum': ['Culture', 'Museum'],
-        'gallery': ['Culture', 'Gallery', 'Art'],
-        'shop': ['Shopping', 'Retail'],
-        'store': ['Shopping', 'Retail'],
-      };
-
-      for (const [key, categories] of Object.entries(categoryMap)) {
-        if (lower.includes(key)) {
+      // Category filters using centralized resolver
+      const words = lower.split(/\s+/);
+      for (const word of words) {
+        const resolvedCategory = resolveCategory(word);
+        if (resolvedCategory) {
           filtered = filtered.filter((d: any) =>
-            categories.some(cat => d.category?.toLowerCase().includes(cat.toLowerCase()))
+            d.category?.toLowerCase() === resolvedCategory.toLowerCase()
           );
-          if (filtered.length < beforeCount) appliedFilters.push(key);
+          if (filtered.length < beforeCount) appliedFilters.push(word);
           break;
         }
       }
