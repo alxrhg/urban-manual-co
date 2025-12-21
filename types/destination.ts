@@ -82,4 +82,7 @@ export interface Destination {
   resy_url?: string | null;
   booking_url?: string | null;
   reservation_phone?: string | null;
+  // AI-generated subtitle fields
+  subtitle?: string | null;
+  subtitle_generated_at?: string | null;
 }
