@@ -53,6 +53,36 @@ interface DeterministicUI {
   whyBySlug?: Record<string, string[]>;
 }
 
+// ActionPatch type from travel-intelligence API for follow-up suggestions
+interface ActionPatch {
+  label: string;
+  patch: {
+    filters?: Partial<SearchFilters>;
+    query?: {
+      set?: string;
+      append?: string;
+      clear?: boolean;
+    };
+    intent?: {
+      mode?: string;
+      referenceSlug?: string;
+      itineraryDuration?: string;
+      socialContext?: string;
+    };
+    clearFilters?: boolean;
+    reset?: boolean;
+  };
+  reason: {
+    type: string;
+    text?: string;
+  };
+  icon?: string;
+  priority?: number;
+}
+
+// Union type for follow-up suggestions (can be string or ActionPatch)
+type FollowUpSuggestion = string | ActionPatch;
+
 // Instant search result type
 interface InstantResult {
   type: 'destination' | 'saved' | 'visited' | 'trip' | 'suggestion';
@@ -88,6 +118,32 @@ const AI_PLACEHOLDERS = [
   'Try: "romantic dinner in Paris"',
   'Try: "budget hotels near me"',
 ];
+
+// Helper to safely normalize follow-up suggestions from API
+// Handles both string[] and ActionPatch[] formats, filtering out invalid entries
+const normalizeFollowUps = (followUps: unknown): FollowUpSuggestion[] => {
+  if (!Array.isArray(followUps)) return [];
+
+  return followUps.filter((item): item is FollowUpSuggestion => {
+    // Valid string
+    if (typeof item === 'string' && item.trim().length > 0) {
+      return true;
+    }
+    // Valid ActionPatch object (must have label string)
+    if (
+      typeof item === 'object' &&
+      item !== null &&
+      'label' in item &&
+      typeof (item as ActionPatch).label === 'string' &&
+      (item as ActionPatch).label.trim().length > 0
+    ) {
+      return true;
+    }
+    // Invalid entry - log for debugging and filter out
+    console.warn('[InteractiveHero] Invalid follow-up suggestion filtered out:', item);
+    return false;
+  });
+};
 
 // Follow-up suggestions based on context
 const generateFollowUps = (
@@ -186,7 +242,7 @@ export default function InteractiveHero() {
   // Inline chat state
   const [chatResponse, setChatResponse] = useState('');
   const [chatDestinations, setChatDestinations] = useState<Destination[]>([]);
-  const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
+  const [followUpSuggestions, setFollowUpSuggestions] = useState<FollowUpSuggestion[]>([]);
   const [conversationHistory, setConversationHistory] = useState<Array<{ role: string; content: string }>>([]);
   const [showChatResults, setShowChatResults] = useState(false);
   const [lastQuery, setLastQuery] = useState('');
@@ -415,8 +471,8 @@ export default function InteractiveHero() {
         if (data.ui) {
           setDeterministicUI(data.ui);
         }
-        // Follow-ups are city suggestions for clarification
-        setFollowUpSuggestions(data.followUps || []);
+        // Follow-ups are city suggestions for clarification (normalized to handle ActionPatch objects)
+        setFollowUpSuggestions(normalizeFollowUps(data.followUps));
         setLocalSearchTerm('');
         return;
       }
@@ -463,8 +519,9 @@ export default function InteractiveHero() {
       // Store active filters for refinement
       setActiveFilters(newFilters);
 
-      // Use follow-ups from API (intelligent suggestions)
-      setFollowUpSuggestions(data.followUps || generateFollowUps(query, data.destinations || [], filters));
+      // Use follow-ups from API (intelligent suggestions, normalized to handle ActionPatch objects)
+      const apiFollowUps = normalizeFollowUps(data.followUps);
+      setFollowUpSuggestions(apiFollowUps.length > 0 ? apiFollowUps : generateFollowUps(query, data.destinations || [], filters));
 
       // Update conversation history for context
       setConversationHistory(prev => [
@@ -485,9 +542,26 @@ export default function InteractiveHero() {
   }, [localSearchTerm, conversationHistory, setSelectedCity, setSelectedCategory, setMichelinOnly, activeTrip, startTrip, addToTrip, activeFilters]);
 
   // Handle follow-up suggestion click
-  const handleFollowUp = useCallback((suggestion: string) => {
-    setLocalSearchTerm(suggestion);
-    handleSearch(undefined, suggestion);
+  const handleFollowUp = useCallback((suggestion: FollowUpSuggestion) => {
+    if (typeof suggestion === 'string') {
+      // Legacy string format
+      setLocalSearchTerm(suggestion);
+      handleSearch(undefined, suggestion);
+    } else {
+      // ActionPatch object format from API
+      const label = suggestion.label;
+      const filterPatch = suggestion.patch?.filters;
+
+      // If there's a query set, use it as the search query
+      if (suggestion.patch?.query?.set) {
+        setLocalSearchTerm(suggestion.patch.query.set);
+        handleSearch(undefined, suggestion.patch.query.set, filterPatch);
+      } else {
+        // Otherwise use the label as the query with the filter patch
+        setLocalSearchTerm(label);
+        handleSearch(undefined, label, filterPatch);
+      }
+    }
   }, [handleSearch]);
 
   // Handle context chip removal (re-run search without that filter)
@@ -1016,17 +1090,21 @@ export default function InteractiveHero() {
               {/* Follow-up suggestions */}
               {followUpSuggestions.length > 0 && !deterministicUI?.question && (
                 <div className="flex flex-wrap gap-2">
-                  {followUpSuggestions.map((suggestion, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleFollowUp(suggestion)}
-                      className="px-3 py-1.5 text-[12px] font-medium text-gray-600 dark:text-gray-300
-                                 bg-gray-100 dark:bg-white/10 rounded-full
-                                 hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
+                  {followUpSuggestions.map((suggestion, index) => {
+                    // Extract label from string or ActionPatch object
+                    const label = typeof suggestion === 'string' ? suggestion : suggestion.label;
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => handleFollowUp(suggestion)}
+                        className="px-3 py-1.5 text-[12px] font-medium text-gray-600 dark:text-gray-300
+                                   bg-gray-100 dark:bg-white/10 rounded-full
+                                   hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
                   <button
                     onClick={() => handleCloseChatResults(true)}
                     className="px-3 py-1.5 text-[12px] font-medium text-gray-400 dark:text-gray-500
