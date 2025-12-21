@@ -84,14 +84,24 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     // This prevents "cheap" from losing the "hotel" context
     if (!category && intent?.category) {
       // Normalize intent category to match our database categories
+      // Note: Database uses 'Dining' for restaurants, 'Shopping' for shops, etc.
       const categorySynonyms: Record<string, string> = {
-        'restaurant': 'Restaurant',
-        'dining': 'Restaurant',
+        'restaurant': 'Dining',
+        'restaurants': 'Dining',
+        'dining': 'Dining',
+        'food': 'Dining',
         'hotel': 'Hotel',
+        'hotels': 'Hotel',
         'cafe': 'Cafe',
+        'cafes': 'Cafe',
         'bar': 'Bar',
+        'bars': 'Bar',
         'museum': 'Culture',
+        'museums': 'Culture',
         'gallery': 'Culture',
+        'shop': 'Shopping',
+        'shops': 'Shopping',
+        'shopping': 'Shopping',
       };
       category = categorySynonyms[intent.category.toLowerCase()] || intent.category;
     }
@@ -293,21 +303,32 @@ function combineQueries(
  */
 function extractCategoryFromFollowUp(followUp: string): string | undefined {
   const lower = followUp.toLowerCase();
+  // Note: Database uses 'Dining' for restaurants, 'Shopping' for shops, etc.
   const categoryMap: Record<string, string> = {
-    'restaurant': 'Restaurant',
+    'restaurant': 'Dining',
+    'restaurants': 'Dining',
+    'dining': 'Dining',
+    'food': 'Dining',
     'hotel': 'Hotel',
+    'hotels': 'Hotel',
     'cafe': 'Cafe',
+    'cafes': 'Cafe',
     'bar': 'Bar',
+    'bars': 'Bar',
     'museum': 'Culture',
+    'museums': 'Culture',
     'gallery': 'Culture',
+    'shop': 'Shopping',
+    'shops': 'Shopping',
+    'shopping': 'Shopping',
   };
-  
+
   for (const [key, value] of Object.entries(categoryMap)) {
     if (lower.includes(key)) {
       return value;
     }
   }
-  
+
   return undefined;
 }
 
