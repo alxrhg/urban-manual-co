@@ -340,7 +340,11 @@ export function DataManager({ type }: DataManagerProps) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Merge failed');
 
-      alert(`Successfully merged "${mergeSource.name}" into "${mergeTarget.name}". ${data.affectedCount} destinations updated.`);
+      let message = `Successfully merged "${mergeSource.name}" into "${mergeTarget.name}". ${data.affectedCount} destinations updated.`;
+      if (deleteAfterMerge && !data.sourceDeleted) {
+        message += `\n\nWarning: Failed to delete source ${config.singular.toLowerCase()}${data.deleteError ? `: ${data.deleteError}` : '.'}`;
+      }
+      alert(message);
       closeMergeModal();
       await fetchData();
     } catch (err: unknown) {

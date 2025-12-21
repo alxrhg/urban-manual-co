@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server';
 
 type DataType = 'brands' | 'cities' | 'countries' | 'neighborhoods';
 
@@ -102,7 +102,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { error } = await supabase.from(type).delete().eq('id', id);
+    // Use service role client to bypass RLS for admin delete operations
+    const serviceClient = createServiceRoleClient();
+    const { error } = await serviceClient.from(type).delete().eq('id', id);
 
     if (error) throw error;
     return NextResponse.json({ success: true });

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server';
 
 type DataType = 'brands' | 'cities' | 'countries' | 'neighborhoods';
 
@@ -80,22 +80,29 @@ export async function POST(request: NextRequest) {
     const affectedCount = updatedDestinations?.length || 0;
 
     // Optionally delete the source item
+    let sourceDeleted = false;
+    let deleteError: string | null = null;
     if (deleteSource) {
-      const { error: deleteError } = await supabase
+      // Use service role client to bypass RLS for admin delete operations
+      const serviceClient = createServiceRoleClient();
+      const { error } = await serviceClient
         .from(validatedType)
         .delete()
         .eq('id', sourceId);
 
-      if (deleteError) {
-        // Don't fail the whole operation, just warn
-        console.warn(`Failed to delete source item: ${deleteError.message}`);
+      if (error) {
+        deleteError = error.message;
+        console.warn(`Failed to delete source item: ${error.message}`);
+      } else {
+        sourceDeleted = true;
       }
     }
 
     return NextResponse.json({
       success: true,
       affectedCount,
-      sourceDeleted: deleteSource,
+      sourceDeleted,
+      deleteError,
       source: sourceName,
       target: targetName,
     });
