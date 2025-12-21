@@ -122,47 +122,141 @@ export async function generateCityMetadata(city: string): Promise<Metadata> {
 }
 
 /**
+ * Parse opening hours JSON into Schema.org OpeningHoursSpecification format
+ */
+function parseOpeningHours(openingHoursJson: Record<string, unknown> | null | undefined) {
+  if (!openingHoursJson) return undefined;
+
+  // Google Places API returns opening_hours with periods array
+  const periods = openingHoursJson.periods as Array<{
+    open: { day: number; time: string };
+    close?: { day: number; time: string };
+  }> | undefined;
+
+  if (!periods || periods.length === 0) return undefined;
+
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  return periods.map(period => ({
+    '@type': 'OpeningHoursSpecification',
+    dayOfWeek: dayNames[period.open.day],
+    opens: `${period.open.time.slice(0, 2)}:${period.open.time.slice(2)}`,
+    closes: period.close
+      ? `${period.close.time.slice(0, 2)}:${period.close.time.slice(2)}`
+      : '23:59',
+  }));
+}
+
+/**
+ * Build enhanced PostalAddress from destination data
+ */
+function buildPostalAddress(destination: Destination) {
+  const address: Record<string, unknown> = {
+    '@type': 'PostalAddress',
+    addressLocality: destination.city,
+    addressCountry: destination.country,
+  };
+
+  // Add full street address if available
+  if (destination.formatted_address) {
+    address.streetAddress = destination.formatted_address;
+  }
+
+  return address;
+}
+
+/**
+ * Build GeoCoordinates if latitude/longitude available
+ */
+function buildGeoCoordinates(destination: Destination) {
+  if (destination.latitude && destination.longitude) {
+    return {
+      '@type': 'GeoCoordinates',
+      latitude: destination.latitude,
+      longitude: destination.longitude,
+    };
+  }
+  return undefined;
+}
+
+/**
  * Generate structured data (Schema.org JSON-LD) for destinations
  */
 export function generateDestinationSchema(destination: Destination) {
-  const baseSchema = {
+  const baseSchema: Record<string, unknown> = {
     '@context': 'https://schema.org',
     name: destination.name,
     description: destination.content?.replace(/<[^>]*>/g, ''),
-    image: destination.image,
+    image: destination.image || destination.primary_photo_url,
     url: `https://www.urbanmanual.co/destination/${destination.slug}`,
   };
+
+  // Add phone number if available
+  const phone = destination.international_phone_number || destination.phone_number;
+  if (phone) {
+    baseSchema.telephone = phone;
+  }
+
+  // Add geo coordinates if available
+  const geo = buildGeoCoordinates(destination);
+  if (geo) {
+    baseSchema.geo = geo;
+  }
+
+  // Add opening hours if available
+  const openingHours = parseOpeningHours(destination.opening_hours_json);
+  if (openingHours) {
+    baseSchema.openingHoursSpecification = openingHours;
+  }
+
+  // Add website if available
+  if (destination.website) {
+    baseSchema.sameAs = destination.website;
+  }
+
+  // Add Instagram if available
+  if (destination.instagram_url) {
+    baseSchema.sameAs = baseSchema.sameAs
+      ? [baseSchema.sameAs as string, destination.instagram_url]
+      : destination.instagram_url;
+  }
 
   // Determine schema type based on category
   const category = destination.category?.toLowerCase() || '';
 
   if (category === 'hotel') {
-    return {
+    const hotelSchema: Record<string, unknown> = {
       ...baseSchema,
       '@type': 'Hotel',
-      address: {
-        '@type': 'PostalAddress',
-        addressLocality: destination.city,
-        addressCountry: destination.country,
-      },
-      starRating: destination.rating
-        ? {
-            '@type': 'Rating',
-            ratingValue: destination.rating,
-            bestRating: 5,
-          }
-        : undefined,
+      address: buildPostalAddress(destination),
       priceRange: '$'.repeat(destination.price_level || 2),
     };
+
+    // Add star rating
+    if (destination.rating) {
+      hotelSchema.starRating = {
+        '@type': 'Rating',
+        ratingValue: destination.rating,
+        bestRating: 5,
+      };
+    }
+
+    // Add aggregate rating with review count
+    if (destination.rating && destination.user_ratings_total) {
+      hotelSchema.aggregateRating = {
+        '@type': 'AggregateRating',
+        ratingValue: destination.rating,
+        bestRating: 5,
+        ratingCount: destination.user_ratings_total,
+      };
+    }
+
+    return hotelSchema;
   } else if (['restaurant', 'Restaurant', 'cafe', 'bar'].includes(category)) {
-    const restaurantSchema: any = {
+    const restaurantSchema: Record<string, unknown> = {
       ...baseSchema,
       '@type': 'Restaurant',
-      address: {
-        '@type': 'PostalAddress',
-        addressLocality: destination.city,
-        addressCountry: destination.country,
-      },
+      address: buildPostalAddress(destination),
       servesCuisine: destination.tags?.join(', '),
       priceRange: '$'.repeat(destination.price_level || 2),
     };
@@ -174,26 +268,65 @@ export function generateDestinationSchema(destination: Destination) {
       }`;
     }
 
-    // Add rating if available
+    // Add aggregate rating with review count
     if (destination.rating) {
       restaurantSchema.aggregateRating = {
         '@type': 'AggregateRating',
         ratingValue: destination.rating,
         bestRating: 5,
+        ...(destination.user_ratings_total && { ratingCount: destination.user_ratings_total }),
       };
     }
 
+    // Add accepts reservations if booking URLs available
+    if (destination.opentable_url || destination.resy_url || destination.booking_url) {
+      restaurantSchema.acceptsReservations = true;
+    }
+
     return restaurantSchema;
+  } else if (category === 'museum') {
+    return {
+      ...baseSchema,
+      '@type': 'Museum',
+      address: buildPostalAddress(destination),
+      ...(destination.rating && destination.user_ratings_total && {
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: destination.rating,
+          bestRating: 5,
+          ratingCount: destination.user_ratings_total,
+        },
+      }),
+    };
+  } else if (category === 'shop') {
+    return {
+      ...baseSchema,
+      '@type': 'Store',
+      address: buildPostalAddress(destination),
+      priceRange: '$'.repeat(destination.price_level || 2),
+      ...(destination.rating && destination.user_ratings_total && {
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: destination.rating,
+          bestRating: 5,
+          ratingCount: destination.user_ratings_total,
+        },
+      }),
+    };
   } else {
     // Default to LocalBusiness for other categories
     return {
       ...baseSchema,
       '@type': 'LocalBusiness',
-      address: {
-        '@type': 'PostalAddress',
-        addressLocality: destination.city,
-        addressCountry: destination.country,
-      },
+      address: buildPostalAddress(destination),
+      ...(destination.rating && destination.user_ratings_total && {
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: destination.rating,
+          bestRating: 5,
+          ratingCount: destination.user_ratings_total,
+        },
+      }),
     };
   }
 }
@@ -693,6 +826,148 @@ export function generateDestinationFAQ(destination: Destination) {
       acceptedAnswer: {
         '@type': 'Answer',
         text: faq.answer,
+      },
+    })),
+  };
+}
+
+/**
+ * Format a slug into a display name
+ */
+function formatSlugToName(slug: string): string {
+  return decodeURIComponent(slug)
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+/**
+ * Generate metadata for category-city pages (e.g., /destinations/restaurants-tokyo/)
+ */
+export function generateCategoryCityMetadata(category: string, city: string, count?: number): Metadata {
+  const categoryName = formatSlugToName(category);
+  const cityName = formatSlugToName(city);
+
+  // SEO-optimized descriptions per category
+  const categoryDescriptions: Record<string, string> = {
+    restaurant: `Discover the best restaurants in ${cityName}. From Michelin-starred fine dining to local gems, find curated dining experiences.`,
+    restaurants: `Discover the best restaurants in ${cityName}. From Michelin-starred fine dining to local gems, find curated dining experiences.`,
+    hotel: `Find the finest hotels in ${cityName}. Luxury accommodations, boutique stays, and design-forward properties curated by The Urban Manual.`,
+    hotels: `Find the finest hotels in ${cityName}. Luxury accommodations, boutique stays, and design-forward properties curated by The Urban Manual.`,
+    cafe: `Explore the best cafes in ${cityName}. Specialty coffee, artisan pastries, and unique atmospheres for discerning travelers.`,
+    cafes: `Explore the best cafes in ${cityName}. Specialty coffee, artisan pastries, and unique atmospheres for discerning travelers.`,
+    bar: `Discover exceptional bars in ${cityName}. Cocktail lounges, speakeasies, and rooftop venues curated by The Urban Manual.`,
+    bars: `Discover exceptional bars in ${cityName}. Cocktail lounges, speakeasies, and rooftop venues curated by The Urban Manual.`,
+    shop: `Find curated shops in ${cityName}. Fashion boutiques, design stores, and unique local finds for the modern traveler.`,
+    shops: `Find curated shops in ${cityName}. Fashion boutiques, design stores, and unique local finds for the modern traveler.`,
+    museum: `Explore world-class museums in ${cityName}. Art, history, and contemporary exhibitions curated by The Urban Manual.`,
+    museums: `Explore world-class museums in ${cityName}. Art, history, and contemporary exhibitions curated by The Urban Manual.`,
+  };
+
+  const description = categoryDescriptions[category.toLowerCase()] ||
+    `Discover the best ${categoryName.toLowerCase()} in ${cityName}. Curated recommendations from The Urban Manual.`;
+
+  // Add count to description if available
+  const fullDescription = count
+    ? `${description.slice(0, -1)} - ${count} handpicked destinations.`
+    : description;
+
+  const title = `Best ${categoryName} in ${cityName} | The Urban Manual`;
+  const canonicalUrl = `https://www.urbanmanual.co/destinations/${encodeURIComponent(category.toLowerCase())}-${encodeURIComponent(city.toLowerCase())}`;
+
+  return {
+    title,
+    description: fullDescription,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title,
+      description: fullDescription,
+      url: canonicalUrl,
+      siteName: 'The Urban Manual',
+      locale: 'en_US',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description: fullDescription,
+    },
+  };
+}
+
+/**
+ * Generate breadcrumb schema for category-city pages (e.g., /destinations/restaurants-tokyo/)
+ */
+export function generateCategoryCityBreadcrumb(category: string, city: string) {
+  const categoryName = formatSlugToName(category);
+  const cityName = formatSlugToName(city);
+  const slug = `${category.toLowerCase()}-${city.toLowerCase()}`;
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://www.urbanmanual.co',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: cityName,
+        item: `https://www.urbanmanual.co/city/${encodeURIComponent(city)}`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: `${categoryName} in ${cityName}`,
+        item: `https://www.urbanmanual.co/destinations/${encodeURIComponent(slug)}`,
+      },
+    ],
+  };
+}
+
+/**
+ * Generate ItemList schema for category-city pages
+ */
+export function generateCategoryCitySchema(
+  category: string,
+  city: string,
+  destinations: Array<{
+    name: string;
+    slug: string;
+    image?: string | null;
+    description?: string | null;
+    content?: string | null;
+    rating?: number | null;
+    michelin_stars?: number | null;
+  }>
+) {
+  const categoryName = formatSlugToName(category);
+  const cityName = formatSlugToName(city);
+  const slug = `${category.toLowerCase()}-${city.toLowerCase()}`;
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: `Best ${categoryName} in ${cityName}`,
+    description: `Curated list of the best ${categoryName.toLowerCase()} in ${cityName}`,
+    url: `https://www.urbanmanual.co/destinations/${encodeURIComponent(slug)}`,
+    numberOfItems: destinations.length,
+    itemListElement: destinations.slice(0, 30).map((dest, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: dest.name,
+      url: `https://www.urbanmanual.co/destination/${dest.slug}`,
+      ...(dest.image && { image: dest.image }),
+      ...(dest.description || dest.content) && {
+        description: (dest.description || dest.content || '')
+          .replace(/<[^>]*>/g, '')
+          .substring(0, 150),
       },
     })),
   };

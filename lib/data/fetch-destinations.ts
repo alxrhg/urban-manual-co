@@ -364,6 +364,126 @@ export async function prefetchHomepageData() {
 }
 
 /**
+ * Fetch destinations for a specific category in a city
+ * Used for SEO-optimized pages like /destinations/restaurants-tokyo
+ * Cached per category-city combination for 5 minutes
+ */
+export const fetchCategoryCityDestinations = unstable_cache(
+  async (category: string, citySlug: string): Promise<Destination[]> => {
+    // Skip database queries during build if Supabase isn't configured
+    if (!isSupabaseConfigured()) {
+      return [];
+    }
+
+    try {
+      const supabase = createServiceRoleClient();
+
+      const { data, error } = await supabase
+        .from('destinations')
+        .select(`
+          id,
+          slug,
+          name,
+          city,
+          country,
+          neighborhood,
+          category,
+          micro_description,
+          description,
+          content,
+          image,
+          image_thumbnail,
+          michelin_stars,
+          crown,
+          rating,
+          user_ratings_total,
+          price_level,
+          tags,
+          opening_hours_json,
+          latitude,
+          longitude,
+          formatted_address,
+          international_phone_number
+        `)
+        .ilike('city', citySlug)
+        .ilike('category', category)
+        .order('rating', { ascending: false, nullsFirst: false })
+        .order('name');
+
+      if (error) {
+        console.error(`[SSR] Error fetching destinations for ${category} in ${citySlug}:`, error.message);
+        return [];
+      }
+
+      return (data || []) as Destination[];
+    } catch (error) {
+      console.error(`[SSR] Exception fetching destinations for ${category} in ${citySlug}:`, error);
+      return [];
+    }
+  },
+  ['category-city-destinations'],
+  {
+    revalidate: 300, // 5 minutes
+    tags: ['destinations'],
+  }
+);
+
+/**
+ * Fetch all category-city combinations for static generation
+ * Returns list of {category, city} pairs that have destinations
+ */
+export const fetchCategoryCityPairs = unstable_cache(
+  async (): Promise<Array<{ category: string; city: string; count: number }>> => {
+    // Skip database queries during build if Supabase isn't configured
+    if (!isSupabaseConfigured()) {
+      return [];
+    }
+
+    try {
+      const supabase = createServiceRoleClient();
+
+      const { data, error } = await supabase
+        .from('destinations')
+        .select('city, category');
+
+      if (error) {
+        console.error('[SSR] Error fetching category-city pairs:', error.message);
+        return [];
+      }
+
+      const destinations = data || [];
+
+      // Group by category-city and count
+      const pairData = destinations.reduce((acc, dest: { city?: string | null; category?: string | null }) => {
+        const city = (dest.city ?? '').toString().trim().toLowerCase();
+        const category = (dest.category ?? '').toString().trim().toLowerCase();
+        if (!city || !category) return acc;
+
+        const key = `${category}-${city}`;
+        if (!acc[key]) {
+          acc[key] = { category, city, count: 0 };
+        }
+        acc[key].count += 1;
+        return acc;
+      }, {} as Record<string, { category: string; city: string; count: number }>);
+
+      // Filter to pairs with at least 2 destinations and sort by count
+      return Object.values(pairData)
+        .filter(pair => pair.count >= 2)
+        .sort((a, b) => b.count - a.count);
+    } catch (error) {
+      console.error('[SSR] Exception fetching category-city pairs:', error);
+      return [];
+    }
+  },
+  ['category-city-pairs'],
+  {
+    revalidate: 600, // 10 minutes
+    tags: ['destinations'],
+  }
+);
+
+/**
  * Fetch brand statistics for the brands listing page
  * Cached for 10 minutes
  */
