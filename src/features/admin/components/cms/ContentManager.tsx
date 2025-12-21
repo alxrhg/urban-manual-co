@@ -32,7 +32,6 @@ import {
   Calendar,
   Columns3,
   Star,
-  Clock,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { Destination } from '@/types/destination';
@@ -102,7 +101,7 @@ const ITEMS_PER_PAGE_OPTIONS = [12, 24, 48, 96];
 const DEFAULT_ITEMS_PER_PAGE = 24;
 
 // Column configuration for table view
-type ColumnId = 'city' | 'category' | 'status' | 'rating' | 'address' | 'created_at' | 'updated_at';
+type ColumnId = 'city' | 'category' | 'status' | 'rating' | 'address';
 
 interface ColumnConfig {
   id: ColumnId;
@@ -117,8 +116,6 @@ const TABLE_COLUMNS: ColumnConfig[] = [
   { id: 'status', label: 'Status' },
   { id: 'rating', label: 'Rating' },
   { id: 'address', label: 'Address' },
-  { id: 'created_at', label: 'Created', sortable: true, sortField: 'created_at' },
-  { id: 'updated_at', label: 'Updated', sortable: true, sortField: 'updated_at' },
 ];
 
 const DEFAULT_VISIBLE_COLUMNS: ColumnId[] = ['city', 'category', 'status'];
@@ -1136,16 +1133,6 @@ function TableView({
     </button>
   );
 
-  // Format date for display
-  const formatDate = (dateString?: string | null) => {
-    if (!dateString) return '—';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
   // Render cell content based on column type
   const renderCell = (columnId: ColumnId, dest: Destination) => {
     switch (columnId) {
@@ -1182,18 +1169,6 @@ function TableView({
         return (
           <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px] block">
             {dest.formatted_address || '—'}
-          </span>
-        );
-      case 'created_at':
-        return (
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {formatDate(dest.created_at)}
-          </span>
-        );
-      case 'updated_at':
-        return (
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {formatDate(dest.updated_at)}
           </span>
         );
       default:
