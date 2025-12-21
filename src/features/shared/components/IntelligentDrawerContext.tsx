@@ -49,8 +49,8 @@ interface ExtendedContextType extends IntelligentDrawerContextType {
   // Trip integration
   analyzeTripFit: (destination: Destination) => TripFitAnalysis | null;
   activeTripInfo: TripContextInfo | null;
-  addToTripAndClose: (destination: Destination, day?: number) => void;
-  addToTripQuick: (destination: Destination, day?: number) => void;
+  addToTripAndClose: (destination: Destination, day?: number, timeSlot?: string) => void;
+  addToTripQuick: (destination: Destination, day?: number, timeSlot?: string) => void;
   // Account/Auth helpers
   openAccount: () => void;
   openAuth: () => void;
@@ -423,16 +423,16 @@ export function IntelligentDrawerProvider({ children }: { children: ReactNode })
   );
 
   const addToTripAndClose = useCallback(
-    (destination: Destination, day?: number) => {
-      tripBuilder.addToTrip(destination, day);
+    (destination: Destination, day?: number, timeSlot?: string) => {
+      tripBuilder.addToTrip(destination, day, timeSlot);
       back();
     },
     [tripBuilder, back]
   );
 
   const addToTripQuick = useCallback(
-    (destination: Destination, day?: number) => {
-      tripBuilder.addToTrip(destination, day);
+    (destination: Destination, day?: number, timeSlot?: string) => {
+      tripBuilder.addToTrip(destination, day, timeSlot);
       // Don't close - stay on current view
     },
     [tripBuilder]

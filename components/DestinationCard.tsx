@@ -1,21 +1,24 @@
 'use client';
 
-import { useState, useRef, useEffect, memo } from 'react';
+import { useState, useRef, useEffect, memo, useMemo } from 'react';
 import Image from 'next/image';
-import { MapPin, Check } from 'lucide-react';
+import { MapPin, Check, Luggage } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
 import { DestinationCardSkeleton } from '@/ui/DestinationCardSkeleton';
 import { DestinationBadges } from './DestinationBadges';
 import { QuickActions } from './QuickActions';
+import { useTripBuilder } from '@/contexts/TripBuilderContext';
 
 interface DestinationCardProps {
   destination: Destination;
   onClick?: () => void;
   index?: number;
   isVisited?: boolean;
+  isInTrip?: boolean; // Explicit override, otherwise auto-detected from context
   showBadges?: boolean;
   showQuickActions?: boolean;
+  showTripIndicator?: boolean; // Show "in trip" indicator
   className?: string;
   onAddToTrip?: () => void;
 }
@@ -29,8 +32,10 @@ export const DestinationCard = memo(function DestinationCard({
   onClick,
   index = 0,
   isVisited = false,
+  isInTrip: isInTripProp,
   showBadges = true,
   showQuickActions = true,
+  showTripIndicator = true,
   className = '',
   onAddToTrip,
 }: DestinationCardProps) {
@@ -38,6 +43,16 @@ export const DestinationCard = memo(function DestinationCard({
   const [isInView, setIsInView] = useState(false);
   const [imageError, setImageError] = useState(false);
   const cardRef = useRef<HTMLButtonElement>(null);
+
+  // Check if destination is in current trip
+  const { activeTrip } = useTripBuilder();
+  const isInTrip = useMemo(() => {
+    if (isInTripProp !== undefined) return isInTripProp;
+    if (!activeTrip || !destination.slug) return false;
+    return activeTrip.days.some(day =>
+      day.items.some(item => item.destination?.slug === destination.slug)
+    );
+  }, [isInTripProp, activeTrip, destination.slug]);
 
   // Intersection Observer for progressive loading
   useEffect(() => {
@@ -167,6 +182,24 @@ export const DestinationCard = memo(function DestinationCard({
         {isVisited && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
             <Check className="w-5 h-5 text-gray-900 dark:text-white stroke-[3]" />
+          </div>
+        )}
+
+        {/* In Trip Indicator - Top Left */}
+        {showTripIndicator && isInTrip && (
+          <div
+            className={`
+              absolute top-2 left-2 z-10
+              px-2 py-1
+              rounded-lg text-[10px] font-medium
+              bg-green-500 text-white
+              flex items-center gap-1
+              shadow-sm
+              animate-in fade-in duration-200
+            `}
+          >
+            <Luggage className="w-3 h-3" />
+            <span>In Trip</span>
           </div>
         )}
 
