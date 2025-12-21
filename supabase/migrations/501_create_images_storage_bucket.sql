@@ -24,15 +24,13 @@ TO public
 USING (bucket_id = 'images');
 
 -- Policy: Allow authenticated admins to upload images
+-- Admin role is stored in app_metadata (set via Supabase dashboard or service role)
 CREATE POLICY "Admin upload access for images"
 ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (
   bucket_id = 'images'
-  AND (
-    auth.jwt() ->> 'role' = 'admin'
-    OR (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
-  )
+  AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
 );
 
 -- Policy: Allow authenticated admins to update images
@@ -41,10 +39,7 @@ ON storage.objects FOR UPDATE
 TO authenticated
 USING (
   bucket_id = 'images'
-  AND (
-    auth.jwt() ->> 'role' = 'admin'
-    OR (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
-  )
+  AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
 );
 
 -- Policy: Allow authenticated admins to delete images
@@ -53,8 +48,5 @@ ON storage.objects FOR DELETE
 TO authenticated
 USING (
   bucket_id = 'images'
-  AND (
-    auth.jwt() ->> 'role' = 'admin'
-    OR (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
-  )
+  AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
 );
