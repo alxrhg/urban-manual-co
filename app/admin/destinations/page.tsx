@@ -75,7 +75,6 @@ export default function AdminDestinationsPage() {
       }
 
       const supabase = createClient({ skipValidation: true });
-      let savedSlug: string;
 
       if (editingDestination) {
         const { error } = await supabase
@@ -83,7 +82,6 @@ export default function AdminDestinationsPage() {
           .update(data)
           .eq('slug', editingDestination.slug);
         if (error) throw error;
-        savedSlug = data.slug || editingDestination.slug;
       } else {
         if (!data.slug && data.name) {
           data.slug = data.name.toLowerCase()
@@ -94,23 +92,13 @@ export default function AdminDestinationsPage() {
           .from('destinations')
           .insert([data] as Destination[]);
         if (error) throw error;
-        savedSlug = data.slug as string;
       }
 
-      // Fetch the updated/created destination to refresh the form
-      const { data: freshDestination } = await supabase
-        .from('destinations')
-        .select('*')
-        .eq('slug', savedSlug)
-        .single();
-
-      if (freshDestination) {
-        setEditingDestination(freshDestination);
-      }
-
-      // Refresh list in background, keep drawer open
+      // Close drawer and refresh list (without resetting pagination)
+      setShowCreateModal(false);
+      setEditingDestination(null);
       setRefreshKey(prev => prev + 1);
-      toast.success(editingDestination ? 'Saved' : 'Created');
+      toast.success(editingDestination ? 'Destination updated' : 'Destination created');
     } catch (e: unknown) {
       // ZERO JANK POLICY: Never expose raw error messages to users
       toast.safeError(e, 'Unable to save destination');
@@ -132,7 +120,7 @@ export default function AdminDestinationsPage() {
   return (
     <div className="space-y-6">
       <ContentManager
-        key={refreshKey}
+        refreshTrigger={refreshKey}
         onEditDestination={handleEditDestination}
         onCreateNew={handleCreateNew}
       />
