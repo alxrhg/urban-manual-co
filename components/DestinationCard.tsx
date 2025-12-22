@@ -238,9 +238,17 @@ export const DestinationCard = memo(function DestinationCard({
           {destination.name}
         </h3>
 
+        {/* Architect/Designer - Featured prominently when available */}
+        {destination.architect && (
+          <p className="text-xs font-medium text-blue-600 dark:text-blue-400 line-clamp-1">
+            Designed by {destination.architect}
+          </p>
+        )}
+
         {/* Micro Description - Always show with fallback, stuck to title */}
         <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
           {destination.micro_description ||
+           destination.architectural_style ||
            (destination.category && destination.city
              ? `${destination.category} in ${capitalizeCity(destination.city)}`
              : destination.city

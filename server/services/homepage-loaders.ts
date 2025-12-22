@@ -174,11 +174,13 @@ export const getHomepageDestinations = unstable_cache(
 
     try {
       // Only fetch essential fields for grid display - reduces payload by ~70%
+      // Includes architect for architecture-first display
       const { data, error } = await client
         .from('destinations')
         .select(`id, slug, name, city, country, category,
                  image, image_thumbnail, michelin_stars, crown,
-                 rating, price_level, micro_description`)
+                 rating, price_level, micro_description,
+                 architect, architectural_style`)
         .is('parent_destination_id', null)
         .limit(limit)
         .order('created_at', { ascending: false });
