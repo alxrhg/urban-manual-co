@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -137,10 +137,14 @@ export default function TripSettingsDrawer({
 
       {/* Destination with Autocomplete */}
       <div>
-        <label className="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-2 uppercase tracking-wide">
+        <label
+          htmlFor="trip-settings-destination"
+          className="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-2 uppercase tracking-wide"
+        >
           Destination
         </label>
         <CityAutocompleteInput
+          id="trip-settings-destination"
           value={destination}
           onChange={setDestination}
           placeholder="e.g. Tokyo, Paris, New York"
