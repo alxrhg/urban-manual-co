@@ -63,14 +63,38 @@ export function NoResultsEmptyState({ searchTerm }: { searchTerm?: string }) {
 }
 
 export function NoSavedPlacesEmptyState() {
+  const router = useRouter();
+
   return (
-    <EmptyState
-      icon="💝"
-      title="No saved places yet"
-      description="Save places to create your wishlist"
-      actionLabel="Browse Destinations"
-      actionHref="/"
-    />
+    <div className="max-w-md py-12">
+      <div className="text-4xl mb-4">💝</div>
+      <h3 className="text-lg font-medium mb-2">Build Your Travel Wishlist</h3>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
+        Save places you want to visit later. Organize them into collections and get personalized recommendations based on your interests.
+      </p>
+
+      <div className="space-y-3 mb-8">
+        <div className="flex items-start gap-3 text-sm text-gray-600 dark:text-gray-400">
+          <span className="text-base">1.</span>
+          <span>Browse destinations and tap the heart icon to save</span>
+        </div>
+        <div className="flex items-start gap-3 text-sm text-gray-600 dark:text-gray-400">
+          <span className="text-base">2.</span>
+          <span>Organize saved places into themed collections</span>
+        </div>
+        <div className="flex items-start gap-3 text-sm text-gray-600 dark:text-gray-400">
+          <span className="text-base">3.</span>
+          <span>Plan trips using your saved destinations</span>
+        </div>
+      </div>
+
+      <button
+        onClick={() => router.push('/')}
+        className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
+      >
+        Explore Destinations
+      </button>
+    </div>
   );
 }
 
@@ -87,14 +111,44 @@ export function NoVisitedPlacesEmptyState() {
 }
 
 export function NoCollectionsEmptyState({ onCreateCollection }: { onCreateCollection: () => void }) {
+  const COLLECTION_IDEAS = [
+    { emoji: '🍜', name: 'Best Local Eats', description: 'Authentic dining spots' },
+    { emoji: '🏨', name: 'Boutique Hotels', description: 'Unique places to stay' },
+    { emoji: '☕', name: 'Cozy Cafes', description: 'Perfect coffee spots' },
+    { emoji: '🌅', name: 'Sunset Views', description: 'Best viewpoints' },
+  ];
+
   return (
-    <EmptyState
-      icon="📚"
-      title="No collections yet"
-      description="Create lists to organize your places"
-      actionLabel="Create Collection"
-      onAction={onCreateCollection}
-    />
+    <div className="max-w-md py-12">
+      <div className="text-4xl mb-4">📚</div>
+      <h3 className="text-lg font-medium mb-2">Organize Your Discoveries</h3>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
+        Collections let you group saved places by theme, trip, or any way you like. Share your curated guides with friends or keep them private.
+      </p>
+
+      <div className="space-y-2 mb-8">
+        <p className="text-xs text-gray-400 uppercase tracking-wide mb-3">Collection Ideas</p>
+        {COLLECTION_IDEAS.map((idea) => (
+          <div
+            key={idea.name}
+            className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800"
+          >
+            <span className="text-lg">{idea.emoji}</span>
+            <div>
+              <p className="text-sm font-medium">{idea.name}</p>
+              <p className="text-xs text-gray-500">{idea.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={onCreateCollection}
+        className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
+      >
+        Create Your First Collection
+      </button>
+    </div>
   );
 }
 

@@ -7,7 +7,6 @@ import { supabase } from "@/lib/supabase";
 import { cityCountryMap } from "@/data/cityCountryMap";
 import { EnhancedVisitedTab } from "@/components/EnhancedVisitedTab";
 import { EnhancedSavedTab } from "@/components/EnhancedSavedTab";
-import { WorldMapVisualization } from "@/components/WorldMapVisualization";
 import { PageLoader } from "@/components/LoadingStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { AccountPrivacyManager } from "@/components/AccountPrivacyManager";
@@ -15,22 +14,17 @@ import { SecuritySettings } from "@/components/SecuritySettings";
 import { PreferencesTab } from "@/features/account/components/PreferencesTab";
 import { MCPIntegration } from "@/features/account/components/MCPIntegration";
 import { openCookieSettings } from "@/components/CookieConsent";
+import { NoCollectionsEmptyState } from "@/components/EmptyStates";
+import { EnhancedProfileTab } from "@/components/account/EnhancedProfileTab";
+import { EnhancedAchievementsTab } from "@/components/account/EnhancedAchievementsTab";
+import { EnhancedTripsTab } from "@/components/account/EnhancedTripsTab";
 import type { Collection, SavedPlace, VisitedPlace } from "@/types/common";
-import { formatDestinationsFromField } from "@/types/trip";
 import type { Trip } from "@/types/trip";
 import type { User } from "@supabase/supabase-js";
 import { toast } from "@/lib/toast";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
-
-// Helper function to capitalize city names
-function capitalizeCity(city: string): string {
-  return city
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
 
 export default function Account() {
   const router = useRouter();
@@ -65,9 +59,6 @@ export default function Account() {
   const [newCollectionPublic, setNewCollectionPublic] = useState(true);
   const [creatingCollection, setCreatingCollection] = useState(false);
 
-  // Trip management state
-  const [showTripDialog, setShowTripDialog] = useState(false);
-  const [editingTripId, setEditingTripId] = useState<string | null>(null);
 
   // Check authentication
   useEffect(() => {
@@ -413,46 +404,18 @@ export default function Account() {
 
         {/* Profile Tab */}
         {activeTab === 'profile' && (
-          <div className="fade-in max-w-2xl">
-            {/* Stats as simple text */}
-            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-              You&apos;ve visited <span className="text-black dark:text-white font-medium">{stats.visitedCount}</span> places
-              {stats.savedCount > 0 && <> and saved <span className="text-black dark:text-white font-medium">{stats.savedCount}</span> for later</>}
-              {stats.uniqueCities.size > 0 && <>, across <span className="text-black dark:text-white font-medium">{stats.uniqueCities.size}</span> {stats.uniqueCities.size === 1 ? 'city' : 'cities'}</>}
-              {stats.uniqueCountries.size > 0 && <> in <span className="text-black dark:text-white font-medium">{stats.uniqueCountries.size}</span> {stats.uniqueCountries.size === 1 ? 'country' : 'countries'}</>}.
-            </p>
-
-            {/* World Map */}
-            {stats.uniqueCountries.size > 0 && (
-              <div className="mt-12">
-                <WorldMapVisualization
-                  visitedCountries={stats.uniqueCountries}
-                  visitedDestinations={stats.visitedDestinationsWithCoords}
-                />
-                <p className="mt-4 text-sm text-gray-500">
-                  {Array.from(stats.uniqueCountries).sort().join(' · ')}
-                </p>
-              </div>
-            )}
-
-            {/* Recent Visits */}
-            {visitedPlaces.length > 0 && (
-              <div className="mt-12">
-                <h2 className="text-xs text-gray-500 mb-4">Recent</h2>
-                <div className="space-y-3">
-                  {visitedPlaces.slice(0, 5).map((place) => (
-                    <button
-                      key={place.destination_slug}
-                      onClick={() => router.push(`/destination/${place.destination_slug}`)}
-                      className="block text-left text-sm hover:opacity-60 transition-opacity"
-                    >
-                      <span className="font-medium">{place.destination?.name}</span>
-                      <span className="text-gray-500"> · {place.destination && capitalizeCity(place.destination.city)}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+          <div className="fade-in">
+            <EnhancedProfileTab
+              userId={user.id}
+              userEmail={user.email}
+              visitedPlaces={visitedPlaces}
+              savedPlaces={savedPlaces}
+              stats={stats}
+              onEditProfile={() => {
+                setActiveTab('settings');
+                setSettingsSubtab('profile');
+              }}
+            />
           </div>
         )}
 
@@ -477,15 +440,7 @@ export default function Account() {
         {activeTab === 'collections' && (
           <div className="fade-in max-w-2xl">
             {collections.length === 0 ? (
-              <div>
-                <p className="text-sm text-gray-500 mb-4">No collections yet.</p>
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="text-sm hover:opacity-60 transition-opacity"
-                >
-                  Create one →
-                </button>
-              </div>
+              <NoCollectionsEmptyState onCreateCollection={() => setShowCreateModal(true)} />
             ) : (
               <>
                 <div className="flex items-baseline justify-between mb-6">
@@ -516,126 +471,28 @@ export default function Account() {
 
         {/* Trips Tab */}
         {activeTab === 'trips' && (
-          <div className="fade-in max-w-2xl">
-            {trips.length === 0 ? (
-              <div>
-                <p className="text-sm text-gray-500 mb-4">No trips planned yet.</p>
-                <button
-                  onClick={() => {
-                    setEditingTripId(null);
-                    setShowTripDialog(true);
-                  }}
-                  className="text-sm hover:opacity-60 transition-opacity"
-                >
-                  Plan one →
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-baseline justify-between mb-6">
-                  <p className="text-sm text-gray-500">{trips.length} {trips.length === 1 ? 'trip' : 'trips'}</p>
-                  <button
-                    onClick={() => {
-                      setEditingTripId(null);
-                      setShowTripDialog(true);
-                    }}
-                    className="text-sm text-gray-500 hover:text-black dark:hover:text-white transition-colors"
-                  >
-                    + New
-                  </button>
-                </div>
-                <div className="space-y-4">
-                  {trips.map((trip) => (
-                    <div key={trip.id}>
-                      <button
-                        onClick={() => router.push(`/trips/${trip.id}`)}
-                        className="block text-left text-sm hover:opacity-60 transition-opacity"
-                      >
-                        <span className="font-medium">{trip.title}</span>
-                        {trip.destination && (
-                          <span className="text-gray-500"> · {formatDestinationsFromField(trip.destination)}</span>
-                        )}
-                      </button>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
-                        {trip.start_date && (
-                          <span>
-                            {new Date(trip.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                            {trip.end_date && `–${new Date(trip.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
-                          </span>
-                        )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingTripId(trip.id);
-                            setShowTripDialog(true);
-                          }}
-                          className="hover:text-black dark:hover:text-white transition-colors"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            if (confirm(`Delete "${trip.title}"?`)) {
-                              try {
-                                const { error } = await supabase.from('trips').delete().eq('id', trip.id);
-                                if (error) throw error;
-                                await loadUserData();
-                              } catch (error) {
-                                console.error('Error deleting trip:', error);
-                                toast.error('Failed to delete trip');
-                              }
-                            }
-                          }}
-                          className="hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
+          <div className="fade-in">
+            <EnhancedTripsTab
+              trips={trips}
+              onTripCreated={loadUserData}
+              onEditTrip={(tripId) => {
+                router.push(`/trips/${tripId}`);
+              }}
+              onNewTrip={() => {
+                router.push('/trips/new');
+              }}
+            />
           </div>
         )}
 
         {/* Achievements Tab */}
         {activeTab === 'achievements' && (
-          <div className="fade-in max-w-2xl">
-            {(() => {
-              const milestones = [
-                { label: 'First save', done: savedPlaces.length >= 1 },
-                { label: 'First visit', done: visitedPlaces.length >= 1 },
-                { label: '10 places visited', done: visitedPlaces.length >= 10 },
-                { label: '25 places visited', done: visitedPlaces.length >= 25 },
-                { label: '50 places visited', done: visitedPlaces.length >= 50 },
-                { label: '5 cities explored', done: stats.uniqueCities.size >= 5 },
-                { label: '10 cities explored', done: stats.uniqueCities.size >= 10 },
-                { label: '5 countries visited', done: stats.uniqueCountries.size >= 5 },
-              ];
-              const completed = milestones.filter(m => m.done).length;
-
-              return (
-                <>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-8">
-                    {completed} of {milestones.length} milestones reached.
-                  </p>
-                  <div className="space-y-3">
-                    {milestones.map((m, i) => (
-                      <div key={i} className="flex items-center gap-3 text-sm">
-                        <span className={m.done ? 'text-black dark:text-white' : 'text-gray-300 dark:text-gray-700'}>
-                          {m.done ? '✓' : '○'}
-                        </span>
-                        <span className={m.done ? 'text-black dark:text-white' : 'text-gray-400 dark:text-gray-600'}>
-                          {m.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              );
-            })()}
+          <div className="fade-in">
+            <EnhancedAchievementsTab
+              visitedPlaces={visitedPlaces}
+              savedPlaces={savedPlaces}
+              stats={stats}
+            />
           </div>
         )}
 
