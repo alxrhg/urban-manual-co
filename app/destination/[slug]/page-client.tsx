@@ -776,8 +776,8 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                               </div>
                             )}
                             {rec.michelin_stars && rec.michelin_stars > 0 && (
-                              <div className="absolute bottom-2 left-2 px-2 py-1 rounded-lg bg-red-600 text-white text-[10px] font-medium flex items-center gap-1">
-                                <img src="/michelin-star.svg" alt="Michelin" className="w-2.5 h-2.5" />
+                              <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-full bg-red-600 text-white text-xs font-medium flex items-center gap-1.5 shadow-md">
+                                <img src="/michelin-star.svg" alt="Michelin" className="h-3 w-3 brightness-0 invert" />
                                 {rec.michelin_stars}
                               </div>
                             )}

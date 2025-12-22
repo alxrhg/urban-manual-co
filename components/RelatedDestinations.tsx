@@ -83,8 +83,8 @@ export function RelatedDestinations({ destinationId }: { destinationId: string }
                     </div>
                   )}
                   {dest.michelin_stars && dest.michelin_stars > 0 && (
-                    <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                      <img src="/michelin-star.svg" alt="Michelin" className="h-3 w-3" />
+                    <div className="absolute bottom-2 left-2 bg-red-600 px-2.5 py-1 rounded-full text-xs font-medium text-white flex items-center gap-1.5 shadow-md">
+                      <img src="/michelin-star.svg" alt="Michelin" className="h-3 w-3 brightness-0 invert" />
                       <span>{dest.michelin_stars}</span>
                     </div>
                   )}
@@ -147,8 +147,8 @@ export function RelatedDestinations({ destinationId }: { destinationId: string }
                     </div>
                   )}
                   {dest.michelin_stars && dest.michelin_stars > 0 && (
-                    <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                      <img src="/michelin-star.svg" alt="Michelin" className="h-3 w-3" />
+                    <div className="absolute bottom-2 left-2 bg-red-600 px-2.5 py-1 rounded-full text-xs font-medium text-white flex items-center gap-1.5 shadow-md">
+                      <img src="/michelin-star.svg" alt="Michelin" className="h-3 w-3 brightness-0 invert" />
                       <span>{dest.michelin_stars}</span>
                     </div>
                   )}

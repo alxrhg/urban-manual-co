@@ -10,11 +10,11 @@ export function MichelinBadge({ stars, showLabel = false, className = '' }: Mich
   if (!stars || stars <= 0) return null;
 
   return (
-    <span className={`flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 ${className}`}>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-600 text-white text-xs font-medium shadow-md ${className}`}>
       <img
         src="/michelin-star.svg"
         alt="Michelin star"
-        className="h-3 w-3"
+        className="h-3 w-3 brightness-0 invert"
         loading="lazy"
       />
       {stars}
