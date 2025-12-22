@@ -83,128 +83,180 @@
 
 /* ============================================
    EDITORIAL DESIGN SYSTEM
+   Japanese-meets-Scandinavian minimalism
    Inspired by print magazines and conscious design
    ============================================ */
 
+/* Import serif font for editorial headlines */
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&display=swap');
+
 /* Editorial color palette CSS variables */
 :root {
-  /* Terracotta/rust - primary accent */
-  --editorial-terracotta-50: #fdf8f6;
-  --editorial-terracotta-100: #f9ede8;
-  --editorial-terracotta-200: #f2d9cf;
-  --editorial-terracotta-300: #e8bfaf;
-  --editorial-terracotta-400: #d99c82;
-  --editorial-terracotta-500: #c4604b;
-  --editorial-terracotta-600: #b54d3a;
-  --editorial-terracotta-700: #973f30;
-  --editorial-terracotta: #c4604b;
+  /* Serif font for headlines */
+  --font-editorial-serif: 'Source Serif 4', 'Georgia', 'Times New Roman', serif;
 
-  /* Cream/ivory - backgrounds */
-  --editorial-cream-50: #fefdfb;
-  --editorial-cream-100: #faf8f5;
-  --editorial-cream-200: #f5f3ef;
-  --editorial-cream-300: #ebe7e1;
-  --editorial-cream-400: #ddd7cf;
-  --editorial-cream-500: #c9c1b6;
-  --editorial-cream: #f5f3ef;
+  /* Light Mode Colors */
+  /* Background: Warm cream/off-white */
+  --editorial-bg: #F5F2ED;
+  --editorial-bg-elevated: #FDFCFA;
 
-  /* Charcoal - text */
-  --editorial-charcoal-300: #a9a8a4;
-  --editorial-charcoal-500: #706f6a;
-  --editorial-charcoal-600: #5a5955;
-  --editorial-charcoal-800: #3a3937;
-  --editorial-charcoal-900: #2d2c2a;
-  --editorial-charcoal: #3a3937;
+  /* Primary text: Deep charcoal */
+  --editorial-text-primary: #2C2825;
+
+  /* Secondary text: Warm gray */
+  --editorial-text-secondary: #6B6560;
+  --editorial-text-tertiary: #9A948C;
+
+  /* Accent: Terracotta/rust */
+  --editorial-accent: #A65D4C;
+  --editorial-accent-hover: #8F503F;
+  --editorial-accent-muted: #C17B5F;
+
+  /* Subtle borders */
+  --editorial-border: #E5E0D8;
+  --editorial-border-subtle: #EBE7E1;
+
+  /* Legacy support - map to new values */
+  --editorial-terracotta: #A65D4C;
+  --editorial-cream: #F5F2ED;
+  --editorial-charcoal: #2C2825;
 }
 
-/* Editorial button styles */
-.btn-editorial {
-  background-color: var(--editorial-terracotta);
-  color: white;
+/* Dark Mode Colors */
+.dark {
+  /* Background: Warm deep charcoal (not pure black) */
+  --editorial-bg: #1E1C1A;
+  --editorial-bg-elevated: #252320;
+
+  /* Primary text: Warm off-white */
+  --editorial-text-primary: #F0EDE8;
+
+  /* Secondary text: Muted warm gray */
+  --editorial-text-secondary: #9A948C;
+  --editorial-text-tertiary: #6B6560;
+
+  /* Accent: Muted amber/terracotta */
+  --editorial-accent: #C4907A;
+  --editorial-accent-hover: #D4A088;
+  --editorial-accent-muted: #A87A66;
+
+  /* Subtle borders */
+  --editorial-border: #2E2A27;
+  --editorial-border-subtle: #3A3633;
+}
+
+/* Editorial Typography */
+.font-editorial-serif {
+  font-family: var(--font-editorial-serif);
+}
+
+.text-editorial-headline {
+  font-family: var(--font-editorial-serif);
   font-weight: 500;
-  transition: background-color 0.2s ease;
-}
-
-.btn-editorial:hover {
-  background-color: var(--editorial-terracotta-600);
-}
-
-.btn-editorial-outline {
-  background-color: transparent;
-  border: 1px solid var(--editorial-cream-400);
-  color: var(--editorial-charcoal);
-  transition: all 0.2s ease;
-}
-
-.btn-editorial-outline:hover {
-  background-color: var(--editorial-cream-300);
-  border-color: var(--editorial-cream-500);
-}
-
-.dark .btn-editorial-outline {
-  border-color: var(--editorial-charcoal-900);
-  color: var(--editorial-cream);
-}
-
-.dark .btn-editorial-outline:hover {
-  background-color: var(--editorial-charcoal-900);
-}
-
-/* Editorial typography */
-.text-editorial-heading {
-  font-weight: 600;
   letter-spacing: -0.02em;
-  color: var(--editorial-charcoal-800);
+  line-height: 1.15;
+  color: var(--editorial-text-primary);
 }
 
-.dark .text-editorial-heading {
-  color: var(--editorial-cream-200);
+.text-editorial-title {
+  font-family: var(--font-editorial-serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  color: var(--editorial-text-primary);
 }
 
 .text-editorial-body {
-  color: var(--editorial-charcoal-600);
+  font-family: inherit;
+  color: var(--editorial-text-secondary);
   line-height: 1.6;
+  letter-spacing: 0.01em;
 }
 
-.dark .text-editorial-body {
-  color: var(--editorial-charcoal-300);
-}
-
+/* Small caps labels - key editorial element */
 .text-editorial-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--editorial-charcoal-300);
+  color: var(--editorial-text-tertiary);
 }
 
-.dark .text-editorial-label {
-  color: var(--editorial-charcoal-500);
+.text-editorial-meta {
+  font-size: 13px;
+  color: var(--editorial-text-secondary);
+  letter-spacing: 0.01em;
 }
 
-/* Editorial accent link */
+/* Editorial Button Styles - Minimal, restrained */
+.btn-editorial-primary {
+  background-color: transparent;
+  border: 1px solid var(--editorial-text-primary);
+  color: var(--editorial-text-primary);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  padding: 14px 28px;
+  transition: all 0.2s ease;
+}
+
+.btn-editorial-primary:hover {
+  background-color: var(--editorial-text-primary);
+  color: var(--editorial-bg);
+}
+
+.btn-editorial-ghost {
+  background-color: transparent;
+  border: 1px solid var(--editorial-border);
+  color: var(--editorial-text-secondary);
+  font-weight: 400;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  padding: 12px 20px;
+  transition: all 0.2s ease;
+}
+
+.btn-editorial-ghost:hover {
+  border-color: var(--editorial-text-secondary);
+  color: var(--editorial-text-primary);
+}
+
+.btn-editorial-accent {
+  background-color: transparent;
+  border: 1px solid var(--editorial-accent);
+  color: var(--editorial-accent);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  padding: 14px 28px;
+  transition: all 0.2s ease;
+}
+
+.btn-editorial-accent:hover {
+  background-color: var(--editorial-accent);
+  color: white;
+}
+
+/* Editorial Link */
 .link-editorial {
-  color: var(--editorial-terracotta);
+  color: var(--editorial-accent);
+  text-decoration: none;
   transition: color 0.2s ease;
 }
 
 .link-editorial:hover {
-  color: var(--editorial-terracotta-600);
+  color: var(--editorial-accent-hover);
 }
 
-/* Editorial card with terracotta accent */
-.card-editorial-accent {
-  background: linear-gradient(135deg, var(--editorial-terracotta-500) 0%, var(--editorial-terracotta-600) 100%);
-  color: white;
-}
-
-/* Editorial divider */
+/* Editorial Divider */
 .divider-editorial {
-  border-color: var(--editorial-cream-300);
+  border-color: var(--editorial-border);
 }
 
-.dark .divider-editorial {
-  border-color: var(--editorial-charcoal-900);
+/* Editorial Card */
+.card-editorial {
+  background-color: var(--editorial-bg-elevated);
+  border: 1px solid var(--editorial-border-subtle);
 }
 
 @import "tailwindcss";

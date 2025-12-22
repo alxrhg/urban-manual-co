@@ -1150,46 +1150,46 @@ const DestinationContent = memo(function DestinationContent({
           <button
             key="parent"
             onClick={() => onOpenRelated(parentDestination)}
-            className="w-full flex items-center gap-3 mt-6 py-4 border-t border-b border-[#ebe7e1] dark:border-[#2d2c2a] text-left group"
+            className="w-full flex items-center gap-4 py-6 border-t border-b border-[var(--editorial-border)] text-left group"
           >
-            <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#ebe7e1] dark:bg-[#2d2c2a] flex-shrink-0">
+            <div className="w-12 h-12 overflow-hidden bg-[var(--editorial-border)] flex-shrink-0">
               {parentDestination.image ? (
                 <Image src={parentDestination.image} alt="" width={48} height={48} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center"><MapPin className="h-5 w-5 text-[#a9a8a4]" /></div>
+                <div className="w-full h-full flex items-center justify-center"><MapPin className="h-5 w-5 text-[var(--editorial-text-tertiary)]" /></div>
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] uppercase tracking-[0.12em] text-[#a9a8a4] dark:text-[#706f6a]">Located inside</p>
-              <p className="text-[14px] font-medium text-[#3a3937] dark:text-[#f5f3ef] truncate group-hover:text-[#c4604b] transition-colors">{parentDestination.name}</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)]">Located inside</p>
+              <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] truncate group-hover:text-[var(--editorial-accent)] transition-colors">{parentDestination.name}</p>
             </div>
-            <ChevronRight className="h-4 w-4 text-[#c9c1b6] dark:text-[#484744] group-hover:text-[#c4604b] transition-colors" />
+            <ChevronRight className="h-4 w-4 text-[var(--editorial-text-tertiary)] group-hover:text-[var(--editorial-accent)] transition-colors" />
           </button>
         );
 
       case 'nested':
         return (
-          <div key="nested" className="mt-6">
-            <p className="text-[11px] uppercase tracking-[0.12em] text-[#a9a8a4] dark:text-[#706f6a] mb-3">Venues Inside</p>
-            <div className="space-y-1">
+          <div key="nested" className="py-8 border-b border-[var(--editorial-border)]">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-4">Venues Inside</p>
+            <div className="space-y-2">
               {nestedDestinations.map((nested) => (
                 <button
                   key={nested.slug}
                   onClick={() => onOpenRelated(nested)}
-                  className="w-full flex items-center gap-3 py-2.5 text-left group"
+                  className="w-full flex items-center gap-4 py-3 text-left group"
                 >
-                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-[#ebe7e1] dark:bg-[#2d2c2a] flex-shrink-0">
+                  <div className="w-11 h-11 overflow-hidden bg-[var(--editorial-border)] flex-shrink-0">
                     {nested.image ? (
-                      <Image src={nested.image} alt="" width={40} height={40} className="w-full h-full object-cover" />
+                      <Image src={nested.image} alt="" width={44} height={44} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center"><MapPin className="h-4 w-4 text-[#a9a8a4]" /></div>
+                      <div className="w-full h-full flex items-center justify-center"><MapPin className="h-4 w-4 text-[var(--editorial-text-tertiary)]" /></div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[14px] font-medium text-[#3a3937] dark:text-[#f5f3ef] truncate group-hover:text-[#c4604b] transition-colors">{nested.name}</p>
-                    <p className="text-[12px] text-[#706f6a] dark:text-[#a9a8a4]">{nested.category && capitalizeCategory(nested.category)}</p>
+                    <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] truncate group-hover:text-[var(--editorial-accent)] transition-colors">{nested.name}</p>
+                    <p className="text-[12px] text-[var(--editorial-text-tertiary)]">{nested.category && capitalizeCategory(nested.category)}</p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-[#c9c1b6] dark:text-[#484744] group-hover:text-[#c4604b] transition-colors" />
+                  <ChevronRight className="h-4 w-4 text-[var(--editorial-text-tertiary)] group-hover:text-[var(--editorial-accent)] transition-colors" />
                 </button>
               ))}
             </div>
@@ -1199,20 +1199,20 @@ const DestinationContent = memo(function DestinationContent({
       case 'hours':
         const localTimeStr = getLocalTimeAtDestination(enrichedData?.utc_offset, destination.city);
         return (
-          <div key="hours" className="py-5 border-b border-[#e8e4dc] dark:border-[#2d2b29]">
-            <p className="text-[11px] uppercase tracking-[0.15em] text-[#8a8680] dark:text-[#6a6864] mb-4">
-              Contact
+          <div key="hours" className="py-8 border-b border-[var(--editorial-border)]">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-5">
+              Hours & Contact
             </p>
-            <div className="space-y-4">
+            <div className="space-y-5">
               {todayHours && (
-                <div className="flex items-start gap-3">
-                  <Clock className="h-4 w-4 text-[#c4604b] mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-4">
+                  <Clock className="h-4 w-4 text-[var(--editorial-accent)] mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <span className="text-[14px] text-[#3a3937] dark:text-[#e8e4dc]">{todayHours}</span>
+                    <span className="text-[14px] text-[var(--editorial-text-primary)]">{todayHours}</span>
                     {hoursAnalysis.timeUntilChange && (
                       <span className={`ml-2 text-[12px] font-medium ${
                         hoursAnalysis.category === 'closing-soon' ? 'text-amber-600' :
-                        hoursAnalysis.category === 'opening-soon' ? 'text-[#c4604b]' : ''
+                        hoursAnalysis.category === 'opening-soon' ? 'text-[var(--editorial-accent)]' : ''
                       }`}>
                         {hoursAnalysis.status}
                       </span>
@@ -1221,21 +1221,21 @@ const DestinationContent = memo(function DestinationContent({
                 </div>
               )}
               {enrichedData?.formatted_address && (
-                <button onClick={handleDirections} className="flex items-start gap-3 text-left group">
-                  <MapPin className="h-4 w-4 text-[#c4604b] mt-0.5 flex-shrink-0" />
-                  <span className="text-[14px] text-[#3a3937] dark:text-[#e8e4dc] group-hover:text-[#c4604b] transition-colors">{enrichedData.formatted_address}</span>
+                <button onClick={handleDirections} className="flex items-start gap-4 text-left group">
+                  <MapPin className="h-4 w-4 text-[var(--editorial-accent)] mt-0.5 flex-shrink-0" />
+                  <span className="text-[14px] text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors">{enrichedData.formatted_address}</span>
                 </button>
               )}
               {enrichedData?.international_phone_number && (
-                <a href={`tel:${enrichedData.international_phone_number}`} className="flex items-center gap-3 group">
-                  <Phone className="h-4 w-4 text-[#c4604b] flex-shrink-0" />
-                  <span className="text-[14px] text-[#3a3937] dark:text-[#e8e4dc] group-hover:text-[#c4604b] transition-colors">{enrichedData.international_phone_number}</span>
+                <a href={`tel:${enrichedData.international_phone_number}`} className="flex items-center gap-4 group">
+                  <Phone className="h-4 w-4 text-[var(--editorial-accent)] flex-shrink-0" />
+                  <span className="text-[14px] text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors">{enrichedData.international_phone_number}</span>
                 </a>
               )}
               {enrichedData?.website && (
-                <a href={enrichedData.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group">
-                  <Globe className="h-4 w-4 text-[#c4604b] flex-shrink-0" />
-                  <span className="text-[14px] text-[#c4604b] group-hover:underline truncate">
+                <a href={enrichedData.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 group">
+                  <Globe className="h-4 w-4 text-[var(--editorial-accent)] flex-shrink-0" />
+                  <span className="text-[14px] text-[var(--editorial-accent)] group-hover:underline truncate">
                     {(() => { try { return new URL(enrichedData.website).hostname.replace('www.', ''); } catch { return enrichedData.website; } })()}
                   </span>
                 </a>
@@ -1246,60 +1246,60 @@ const DestinationContent = memo(function DestinationContent({
 
       case 'architecture':
         return (
-          <div key="architecture" className="py-5 border-b border-[#e8e4dc] dark:border-[#2d2b29]">
-            <p className="text-[11px] uppercase tracking-[0.15em] text-[#8a8680] dark:text-[#6a6864] mb-4">Design</p>
-            <div className="space-y-1">
+          <div key="architecture" className="py-8 border-b border-[var(--editorial-border)]">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-5">Design</p>
+            <div className="space-y-2">
               {enrichedData?.architect_obj && (
-                <Link href={`/architect/${enrichedData.architect_obj.slug}`} className="flex items-center gap-3 py-2.5 group">
-                  <div className="w-10 h-10 rounded-full bg-[#ebe7e1] dark:bg-[#2d2c2a] flex items-center justify-center overflow-hidden">
+                <Link href={`/architect/${enrichedData.architect_obj.slug}`} className="flex items-center gap-4 py-3 group">
+                  <div className="w-11 h-11 rounded-full bg-[var(--editorial-border)] flex items-center justify-center overflow-hidden">
                     {enrichedData.architect_obj.image_url ? (
-                      <Image src={enrichedData.architect_obj.image_url} alt="" width={40} height={40} className="object-cover" />
+                      <Image src={enrichedData.architect_obj.image_url} alt="" width={44} height={44} className="object-cover" />
                     ) : (
-                      <span className="text-[14px] font-medium text-[#706f6a]">{enrichedData.architect_obj.name.charAt(0)}</span>
+                      <span className="text-[14px] font-medium text-[var(--editorial-text-secondary)]">{enrichedData.architect_obj.name.charAt(0)}</span>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] text-[#a9a8a4] dark:text-[#706f6a]">Architect</p>
-                    <p className="text-[14px] font-medium text-[#3a3937] dark:text-[#f5f3ef] group-hover:text-[#c4604b] truncate transition-colors">
+                    <p className="text-[11px] uppercase tracking-[0.1em] text-[var(--editorial-text-tertiary)]">Architect</p>
+                    <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] truncate transition-colors">
                       {enrichedData.architect_obj.name}
                     </p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-[#c9c1b6] dark:text-[#484744] group-hover:text-[#c4604b] transition-colors" />
+                  <ChevronRight className="h-4 w-4 text-[var(--editorial-text-tertiary)] group-hover:text-[var(--editorial-accent)] transition-colors" />
                 </Link>
               )}
               {!enrichedData?.architect_obj && destination.architect && (
-                <div className="flex items-center gap-3 py-2.5">
-                  <div className="w-10 h-10 rounded-full bg-[#ebe7e1] dark:bg-[#2d2c2a] flex items-center justify-center">
-                    <Building2 className="h-4 w-4 text-[#706f6a]" />
+                <div className="flex items-center gap-4 py-3">
+                  <div className="w-11 h-11 rounded-full bg-[var(--editorial-border)] flex items-center justify-center">
+                    <Building2 className="h-4 w-4 text-[var(--editorial-text-secondary)]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] text-[#a9a8a4] dark:text-[#706f6a]">Architect</p>
-                    <p className="text-[14px] font-medium text-[#3a3937] dark:text-[#f5f3ef] truncate">{destination.architect}</p>
+                    <p className="text-[11px] uppercase tracking-[0.1em] text-[var(--editorial-text-tertiary)]">Architect</p>
+                    <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] truncate">{destination.architect}</p>
                   </div>
                 </div>
               )}
               {enrichedData?.interior_designer_obj && (
-                <Link href={`/architect/${enrichedData.interior_designer_obj.slug}`} className="flex items-center gap-3 py-2.5 group">
-                  <div className="w-10 h-10 rounded-full bg-[#ebe7e1] dark:bg-[#2d2c2a] flex items-center justify-center">
-                    <span className="text-[14px] font-medium text-[#706f6a]">{enrichedData.interior_designer_obj.name.charAt(0)}</span>
+                <Link href={`/architect/${enrichedData.interior_designer_obj.slug}`} className="flex items-center gap-4 py-3 group">
+                  <div className="w-11 h-11 rounded-full bg-[var(--editorial-border)] flex items-center justify-center">
+                    <span className="text-[14px] font-medium text-[var(--editorial-text-secondary)]">{enrichedData.interior_designer_obj.name.charAt(0)}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] text-[#a9a8a4] dark:text-[#706f6a]">Interior Designer</p>
-                    <p className="text-[14px] font-medium text-[#3a3937] dark:text-[#f5f3ef] group-hover:text-[#c4604b] truncate transition-colors">
+                    <p className="text-[11px] uppercase tracking-[0.1em] text-[var(--editorial-text-tertiary)]">Interior Designer</p>
+                    <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] truncate transition-colors">
                       {enrichedData.interior_designer_obj.name}
                     </p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-[#c9c1b6] dark:text-[#484744] group-hover:text-[#c4604b] transition-colors" />
+                  <ChevronRight className="h-4 w-4 text-[var(--editorial-text-tertiary)] group-hover:text-[var(--editorial-accent)] transition-colors" />
                 </Link>
               )}
               {enrichedData?.architectural_style && (
-                <div className="flex items-center gap-3 py-2.5">
-                  <div className="w-10 h-10 rounded-full bg-[#ebe7e1] dark:bg-[#2d2c2a] flex items-center justify-center">
-                    <span className="text-[12px] font-medium text-[#706f6a]">S</span>
+                <div className="flex items-center gap-4 py-3">
+                  <div className="w-11 h-11 rounded-full bg-[var(--editorial-border)] flex items-center justify-center">
+                    <span className="text-[12px] font-medium text-[var(--editorial-text-secondary)]">S</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] text-[#a9a8a4] dark:text-[#706f6a]">Style</p>
-                    <p className="text-[14px] font-medium text-[#3a3937] dark:text-[#f5f3ef] truncate">{enrichedData.architectural_style}</p>
+                    <p className="text-[11px] uppercase tracking-[0.1em] text-[var(--editorial-text-tertiary)]">Style</p>
+                    <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] truncate">{enrichedData.architectural_style}</p>
                   </div>
                 </div>
               )}
@@ -1309,12 +1309,12 @@ const DestinationContent = memo(function DestinationContent({
 
       case 'map':
         return (
-          <div key="map" className="mt-6">
+          <div key="map" className="py-8">
             <a
               href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + (destination.city || ''))}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="block relative aspect-[2/1] rounded-xl overflow-hidden bg-[#ebe7e1] dark:bg-[#2d2c2a]"
+              className="block relative aspect-[2/1] overflow-hidden bg-[var(--editorial-border)]"
             >
               <GoogleStaticMap
                 center={{ lat: destination.latitude!, lng: destination.longitude! }}
@@ -1323,7 +1323,7 @@ const DestinationContent = memo(function DestinationContent({
                 className="w-full h-full"
               />
               <div className="absolute inset-0 flex items-center justify-center hover:bg-black/10 transition-colors">
-                <span className="px-3 py-1.5 rounded-full bg-[#f5f3ef]/95 dark:bg-[#1c1a17]/95 text-[12px] font-medium text-[#3a3937] dark:text-[#f5f3ef] shadow-sm border border-[#ebe7e1] dark:border-[#2d2c2a]">
+                <span className="px-4 py-2 bg-[var(--editorial-bg)]/95 text-[12px] font-medium tracking-[0.02em] text-[var(--editorial-text-primary)] border border-[var(--editorial-text-primary)]">
                   Open in Maps
                 </span>
               </div>
@@ -1335,8 +1335,8 @@ const DestinationContent = memo(function DestinationContent({
         // Show "Start Trip" button if no active trip
         if (!activeTrip) {
           return (
-            <div key="trip" className="mt-6">
-              <p className="text-[11px] uppercase tracking-[0.12em] text-[#a9a8a4] dark:text-[#706f6a] mb-3">
+            <div key="trip" className="py-8 border-b border-[var(--editorial-border)]">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-4">
                 Add to Trip
               </p>
               <button
@@ -1345,7 +1345,7 @@ const DestinationContent = memo(function DestinationContent({
                   handleAddToTrip(1);
                 }}
                 disabled={isAddingToTrip}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-[#c4604b] hover:bg-[#b54d3a] text-white text-[14px] font-medium transition-all active:scale-[0.98] disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-[var(--editorial-accent)] hover:opacity-90 text-white text-[13px] font-medium tracking-[0.02em] transition-all active:scale-[0.98] disabled:opacity-50"
               >
                 <Plus className="w-4 h-4" />
                 Start {destination.city ? `${destination.city} Trip` : 'New Trip'}
@@ -1355,13 +1355,13 @@ const DestinationContent = memo(function DestinationContent({
         }
 
         return (
-          <div key="trip" className="mt-6">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[11px] uppercase tracking-[0.12em] text-[#a9a8a4] dark:text-[#706f6a]">
+          <div key="trip" className="py-8 border-b border-[var(--editorial-border)]">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)]">
                 {isFromTrip ? 'Add to Trip' : `Add to ${activeTrip.title}`}
               </p>
               {tripContext?.fit && (
-                <span className="text-[11px] text-[#165B33] dark:text-[#4ade80] font-medium">{tripContext.fit}</span>
+                <span className="text-[11px] text-[#4A7C59] font-medium">{tripContext.fit}</span>
               )}
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -1370,10 +1370,10 @@ const DestinationContent = memo(function DestinationContent({
                   key={day.dayNumber}
                   onClick={() => handleAddToTrip(day.dayNumber)}
                   disabled={isAddingToTrip}
-                  className={`px-4 py-2.5 rounded-xl text-[13px] font-medium transition-colors disabled:opacity-50 ${
+                  className={`px-4 py-2.5 text-[13px] font-medium transition-colors disabled:opacity-50 ${
                     tripContext?.day === day.dayNumber
-                      ? 'bg-[#c4604b] text-white'
-                      : 'bg-[#ebe7e1] dark:bg-[#2d2c2a] text-[#5a5955] dark:text-[#c8c7c4] hover:bg-[#ddd7cf] dark:hover:bg-[#3a3937]'
+                      ? 'bg-[var(--editorial-accent)] text-white'
+                      : 'bg-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:bg-[var(--editorial-text-tertiary)]/20'
                   }`}
                 >
                   {isAddingToTrip ? <Loader2 className="h-4 w-4 animate-spin" /> : `Day ${day.dayNumber}`}
@@ -1382,7 +1382,7 @@ const DestinationContent = memo(function DestinationContent({
               <button
                 onClick={() => handleAddToTrip()}
                 disabled={isAddingToTrip}
-                className="px-4 py-2.5 rounded-xl border border-dashed border-[#c9c1b6] dark:border-[#484744] text-[13px] font-medium text-[#706f6a] dark:text-[#a9a8a4] hover:border-[#a9a8a4] dark:hover:border-[#706f6a] transition-colors"
+                className="px-4 py-2.5 border border-dashed border-[var(--editorial-text-tertiary)] text-[13px] font-medium text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-secondary)] transition-colors"
               >
                 <Plus className="h-4 w-4 inline mr-1" />
                 New Day
@@ -1393,21 +1393,21 @@ const DestinationContent = memo(function DestinationContent({
 
       case 'similar':
         return (
-          <div key="similar" className="py-5 border-b border-[#e8e4dc] dark:border-[#2d2b29]">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-[11px] uppercase tracking-[0.15em] text-[#8a8680] dark:text-[#6a6864]">Similar</p>
-              <button onClick={onShowSimilar} className="text-[11px] font-medium text-[#c4604b] hover:underline transition-colors">
+          <div key="similar" className="py-8 border-b border-[var(--editorial-border)]">
+            <div className="flex items-center justify-between mb-5">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)]">Similar</p>
+              <button onClick={onShowSimilar} className="text-[11px] font-medium text-[var(--editorial-accent)] hover:underline transition-colors">
                 View all
               </button>
             </div>
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
+            <div className="flex gap-4 overflow-x-auto pb-2 -mx-8 px-8 scrollbar-hide">
               {similarPlaces.map((dest) => (
                 <button
                   key={dest.slug}
                   onClick={() => onOpenRelated(dest)}
-                  className="flex-shrink-0 w-32 text-left group"
+                  className="flex-shrink-0 w-[120px] text-left group"
                 >
-                  <div className="relative aspect-[4/5] rounded-lg overflow-hidden bg-[#e8e4dc] dark:bg-[#2d2b29] mb-2">
+                  <div className="relative aspect-square overflow-hidden bg-[var(--editorial-border)] mb-3">
                     {(dest.image || dest.image_thumbnail) && (
                       <Image
                         src={dest.image_thumbnail || dest.image || ''}
@@ -1417,8 +1417,8 @@ const DestinationContent = memo(function DestinationContent({
                       />
                     )}
                   </div>
-                  <p className="text-[13px] font-medium text-[#3a3937] dark:text-[#faf8f5] truncate group-hover:text-[#c4604b] transition-colors">{dest.name}</p>
-                  <p className="text-[11px] text-[#8a8680] dark:text-[#6a6864] truncate">{capitalizeCategory(dest.category || '')}</p>
+                  <p className="text-[13px] font-medium text-[var(--editorial-text-primary)] truncate group-hover:text-[var(--editorial-accent)] transition-colors">{dest.name}</p>
+                  <p className="text-[11px] text-[var(--editorial-text-tertiary)] truncate">{capitalizeCategory(dest.category || '')}</p>
                 </button>
               ))}
             </div>
@@ -1427,29 +1427,29 @@ const DestinationContent = memo(function DestinationContent({
 
       case 'related':
         return (
-          <div key="related" className="py-5 border-b border-[#e8e4dc] dark:border-[#2d2b29]">
-            <p className="text-[11px] uppercase tracking-[0.15em] text-[#8a8680] dark:text-[#6a6864] mb-4">
+          <div key="related" className="py-8 border-b border-[var(--editorial-border)]">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-5">
               More in {capitalizeCity(destination.city || '')}
             </p>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {related.slice(0, 4).map((dest) => (
                 <button
                   key={dest.slug}
                   onClick={() => onOpenRelated(dest)}
-                  className="w-full flex items-center gap-3 py-2 text-left group"
+                  className="w-full flex items-center gap-4 py-2 text-left group"
                 >
-                  <div className="w-14 h-14 rounded-lg overflow-hidden bg-[#e8e4dc] dark:bg-[#2d2b29] flex-shrink-0">
+                  <div className="w-14 h-14 overflow-hidden bg-[var(--editorial-border)] flex-shrink-0">
                     {dest.image ? (
                       <Image src={dest.image} alt="" width={56} height={56} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center"><MapPin className="h-5 w-5 text-[#c4604b]" /></div>
+                      <div className="w-full h-full flex items-center justify-center"><MapPin className="h-5 w-5 text-[var(--editorial-accent)]" /></div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[14px] font-medium text-[#3a3937] dark:text-[#faf8f5] truncate group-hover:text-[#c4604b] transition-colors">{dest.name}</p>
-                    <p className="text-[12px] text-[#8a8680] dark:text-[#6a6864]">{capitalizeCategory(dest.category || '')}</p>
+                    <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] truncate group-hover:text-[var(--editorial-accent)] transition-colors">{dest.name}</p>
+                    <p className="text-[12px] text-[var(--editorial-text-tertiary)]">{capitalizeCategory(dest.category || '')}</p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-[#c4604b] opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ChevronRight className="h-4 w-4 text-[var(--editorial-accent)] opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
               ))}
             </div>
@@ -1624,91 +1624,105 @@ const DestinationContent = memo(function DestinationContent({
   }
 
   return (
-    <div className="min-h-full">
-      {/* Hero Image - Full bleed, taller aspect ratio */}
-      <div className="relative aspect-[3/4] sm:aspect-[4/3] bg-[#e8e4dc] dark:bg-[#2a2826]">
-        {imageUrl ? (
-          <Image src={imageUrl} alt={destination.name} fill className="object-cover" priority />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <MapPin className="w-16 h-16 text-[#c9c1b6] dark:text-[#484744]" />
-          </div>
-        )}
-
-        {/* Gradient overlay at bottom for text readability */}
-        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/40 to-transparent" />
-
-        {/* Badges - positioned on image */}
-        <div className="absolute bottom-4 left-5 flex gap-2">
-          {destination.michelin_stars && destination.michelin_stars > 0 && (
-            <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-sm text-[11px] font-medium flex items-center gap-1.5 shadow-sm">
-              <img src="/michelin-star.svg" alt="Michelin" className="w-3.5 h-3.5" />
-              {destination.michelin_stars} Star{destination.michelin_stars > 1 ? 's' : ''}
-            </span>
+    <div className="min-h-full bg-[var(--editorial-bg)]">
+      {/* Hero Image - Square, with padding (print collateral style) */}
+      <div className="px-8 sm:px-10 pt-16 pb-6">
+        <div className="relative aspect-square bg-[var(--editorial-border)]">
+          {imageUrl ? (
+            <Image src={imageUrl} alt={destination.name} fill className="object-cover" priority />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <MapPin className="w-12 h-12 text-[var(--editorial-text-tertiary)]" />
+            </div>
           )}
-          {destination.crown && (
-            <span className="px-2.5 py-1 rounded-full bg-[#c4604b] text-white text-[11px] font-medium flex items-center gap-1 shadow-sm">
-              <Star className="w-3 h-3 fill-current" />
-              Editor's Pick
-            </span>
+
+          {/* Minimal badges */}
+          {(destination.michelin_stars || destination.crown) && (
+            <div className="absolute bottom-4 left-4 flex gap-2">
+              {destination.michelin_stars && destination.michelin_stars > 0 && (
+                <span className="px-3 py-1.5 bg-white/95 text-[10px] font-medium tracking-[0.1em] uppercase flex items-center gap-1.5">
+                  <img src="/michelin-star.svg" alt="Michelin" className="w-3 h-3" />
+                  {destination.michelin_stars} Star
+                </span>
+              )}
+              {destination.crown && (
+                <span className="px-3 py-1.5 bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)] text-[10px] font-medium tracking-[0.1em] uppercase">
+                  Curated
+                </span>
+              )}
+            </div>
           )}
         </div>
       </div>
 
-      {/* Editorial Content Section - Terracotta background */}
-      <div className="bg-[#c4604b] text-white px-6 py-8">
-        {/* Category Label - Editorial uppercase */}
-        <p className="text-[11px] uppercase tracking-[0.2em] text-white/70 mb-3">
+      {/* Content - Generous spacing, editorial typography */}
+      <div className="px-8 sm:px-10 pb-10 sm:pb-12">
+        {/* Category Label - Small caps */}
+        <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-4">
           {destination.category && capitalizeCategory(destination.category)}
           {destination.city && ` · ${capitalizeCity(destination.city)}`}
         </p>
 
-        {/* Title - Large, editorial */}
-        <h1 className="text-[28px] sm:text-[32px] font-semibold tracking-tight leading-[1.1] mb-4">
+        {/* Title - Serif, editorial */}
+        <h1 className="font-editorial-serif text-[28px] sm:text-[34px] font-medium tracking-[-0.02em] leading-[1.1] text-[var(--editorial-text-primary)] mb-5">
           {destination.name}
         </h1>
 
-        {/* Description - Editorial body text */}
-        {(destination.micro_description || destination.description) && (
-          <p className="text-[15px] leading-relaxed text-white/90 mb-6">
-            {showFullDescription
-              ? (destination.description || destination.micro_description)
-              : (destination.micro_description || destination.description || '').slice(0, 180)}
-            {(destination.description || destination.micro_description || '').length > 180 && !showFullDescription && '...'}
-          </p>
-        )}
-
-        {/* Quick Info Row */}
-        <div className="flex items-center gap-4 text-[13px] text-white/80">
+        {/* Meta row - Subtle */}
+        <div className="flex items-center gap-4 text-[13px] text-[var(--editorial-text-secondary)] mb-8">
           {rating && (
             <span className="flex items-center gap-1.5">
-              <Star className="w-3.5 h-3.5 fill-current" />
+              <Star className="w-3.5 h-3.5 text-[var(--editorial-accent)]" />
               {rating.toFixed(1)}
             </span>
+          )}
+          {enrichedData?.price_level && (
+            <span className="text-[var(--editorial-text-tertiary)]">{'·'}</span>
           )}
           {enrichedData?.price_level && (
             <span>{'$'.repeat(enrichedData.price_level)}</span>
           )}
           {hoursAnalysis.status && (
-            <span className={`${
-              hoursAnalysis.category === 'open' ? 'text-white' :
-              hoursAnalysis.category === 'closing-soon' ? 'text-yellow-200' : 'text-white/60'
-            }`}>
-              {hoursAnalysis.status}
-            </span>
+            <>
+              <span className="text-[var(--editorial-text-tertiary)]">{'·'}</span>
+              <span className={`${
+                hoursAnalysis.category === 'open' ? 'text-[#4A7C59]' :
+                hoursAnalysis.category === 'closing-soon' ? 'text-[var(--editorial-accent)]' : ''
+              }`}>
+                {hoursAnalysis.status}
+              </span>
+            </>
           )}
         </div>
-      </div>
 
-      {/* Actions Section - Clean, minimal */}
-      <div className="bg-[#faf8f5] dark:bg-[#1a1918] px-6 py-6 border-b border-[#e8e4dc] dark:border-[#2d2b29]">
-        <div className="flex gap-3">
-          {/* Primary Action */}
+        {/* Description - Editorial body */}
+        {(destination.micro_description || destination.description) && (
+          <div className="mb-10">
+            <p className="text-[15px] leading-[1.7] text-[var(--editorial-text-secondary)]">
+              {showFullDescription
+                ? (destination.description || destination.micro_description)
+                : (destination.micro_description || destination.description || '').slice(0, 220)}
+              {(destination.description || destination.micro_description || '').length > 220 && !showFullDescription && '...'}
+            </p>
+            {(destination.description || destination.micro_description || '').length > 220 && (
+              <button
+                onClick={() => setShowFullDescription(!showFullDescription)}
+                className="mt-3 text-[13px] text-[var(--editorial-accent)] hover:underline"
+              >
+                {showFullDescription ? 'Show less' : 'Continue reading'}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Actions - Minimal, outlined buttons */}
+        <div className="flex flex-wrap gap-3 mb-12">
+          {/* Primary Action - Outlined */}
           {activeTrip ? (
             <button
               onClick={() => handleAddToTrip(tripContext?.day || activeTrip.days[0]?.dayNumber || 1)}
               disabled={isAddingToTrip}
-              className="flex-1 h-12 flex items-center justify-center gap-2 rounded-xl bg-[#3a3937] dark:bg-white text-white dark:text-[#1a1918] text-[14px] font-medium transition-all hover:opacity-90 disabled:opacity-50"
+              className="flex-1 min-w-[140px] h-[52px] flex items-center justify-center gap-2 border border-[var(--editorial-text-primary)] text-[var(--editorial-text-primary)] text-[13px] font-medium tracking-[0.02em] transition-all hover:bg-[var(--editorial-text-primary)] hover:text-[var(--editorial-bg)] disabled:opacity-50"
             >
               {isAddingToTrip ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -1722,10 +1736,10 @@ const DestinationContent = memo(function DestinationContent({
           ) : (
             <button
               onClick={user ? handleSave : undefined}
-              className={`flex-1 h-12 flex items-center justify-center gap-2 rounded-xl text-[14px] font-medium transition-all ${
+              className={`flex-1 min-w-[140px] h-[52px] flex items-center justify-center gap-2 text-[13px] font-medium tracking-[0.02em] transition-all ${
                 isSaved
-                  ? 'bg-[#3a3937] dark:bg-white text-white dark:text-[#1a1918]'
-                  : 'bg-[#3a3937] dark:bg-white text-white dark:text-[#1a1918] hover:opacity-90'
+                  ? 'bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)] border border-[var(--editorial-text-primary)]'
+                  : 'border border-[var(--editorial-text-primary)] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-text-primary)] hover:text-[var(--editorial-bg)]'
               }`}
             >
               <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
@@ -1733,26 +1747,26 @@ const DestinationContent = memo(function DestinationContent({
             </button>
           )}
 
-          {/* Secondary Actions */}
+          {/* Ghost buttons */}
           <button
             onClick={handleShare}
-            className="h-12 w-12 flex items-center justify-center rounded-xl border border-[#e8e4dc] dark:border-[#3a3836] text-[#5a5955] dark:text-[#a9a8a4] hover:bg-[#f0ece4] dark:hover:bg-[#2d2b29] transition-colors"
+            className="h-[52px] w-[52px] flex items-center justify-center border border-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-all"
           >
             <Share2 className="h-4 w-4" />
           </button>
           <button
             onClick={handleDirections}
-            className="h-12 w-12 flex items-center justify-center rounded-xl border border-[#e8e4dc] dark:border-[#3a3836] text-[#5a5955] dark:text-[#a9a8a4] hover:bg-[#f0ece4] dark:hover:bg-[#2d2b29] transition-colors"
+            className="h-[52px] w-[52px] flex items-center justify-center border border-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-all"
           >
             <Navigation className="h-4 w-4" />
           </button>
           {isAdmin && (
             <button
               onClick={() => setIsEditMode(!isEditMode)}
-              className={`h-12 w-12 flex items-center justify-center rounded-xl border transition-colors ${
+              className={`h-[52px] w-[52px] flex items-center justify-center border transition-all ${
                 isEditMode
-                  ? 'bg-[#3a3937] dark:bg-white text-white dark:text-[#1a1918] border-transparent'
-                  : 'border-[#e8e4dc] dark:border-[#3a3836] text-[#5a5955] dark:text-[#a9a8a4] hover:bg-[#f0ece4] dark:hover:bg-[#2d2b29]'
+                  ? 'bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)] border-[var(--editorial-text-primary)]'
+                  : 'border-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)]'
               }`}
             >
               <Edit className="h-4 w-4" />
@@ -1760,24 +1774,24 @@ const DestinationContent = memo(function DestinationContent({
           )}
         </div>
 
-        {/* Been Here Button */}
+        {/* Been Here - Subtle */}
         {user && (
           <button
             onClick={handleVisit}
-            className={`w-full mt-3 h-11 flex items-center justify-center gap-2 rounded-xl border text-[13px] font-medium transition-all ${
+            className={`w-full h-[48px] flex items-center justify-center gap-2 text-[13px] font-medium tracking-[0.01em] transition-all mb-12 ${
               isVisited
-                ? 'bg-[#165B33] border-[#165B33] text-white'
-                : 'border-[#e8e4dc] dark:border-[#3a3836] text-[#5a5955] dark:text-[#a9a8a4] hover:bg-[#f0ece4] dark:hover:bg-[#2d2b29]'
+                ? 'bg-[#4A7C59] text-white'
+                : 'border border-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-secondary)]'
             }`}
           >
             <Check className="h-4 w-4" />
-            {isVisited ? 'Visited' : 'Mark as Visited'}
+            {isVisited ? 'Visited' : 'Mark as visited'}
           </button>
         )}
       </div>
 
-      {/* Detail Sections - Clean, editorial */}
-      <div className="bg-[#faf8f5] dark:bg-[#1a1918] px-6 py-6">
+      {/* Detail Sections - Clean dividers, generous spacing */}
+      <div className="bg-[var(--editorial-bg)] px-8 sm:px-10 pb-12">
         {/* Smart Sections */}
         {sortedSections
           .filter(({ key }) => key !== 'description') // Description is already shown above
@@ -1806,16 +1820,22 @@ const DestinationContent = memo(function DestinationContent({
           })}
 
         {/* View Full Page - Editorial link */}
-        <Link
-          href={`/destination/${destination.slug}`}
-          className="flex items-center justify-between w-full mt-8 py-5 border-t border-[#e8e4dc] dark:border-[#2d2b29] group"
-        >
-          <div>
-            <span className="text-[14px] font-medium text-[#3a3937] dark:text-[#faf8f5] group-hover:text-[#c4604b] transition-colors block">View full page</span>
-            <span className="text-[12px] text-[#8a8680] dark:text-[#6a6864]">urbanmanual.co</span>
-          </div>
-          <ExternalLink className="h-4 w-4 text-[#c4604b] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-        </Link>
+        <div className="mt-16 pt-8 border-t border-[var(--editorial-border)]">
+          <Link
+            href={`/destination/${destination.slug}`}
+            className="group flex items-center justify-between py-2"
+          >
+            <div>
+              <span className="text-[13px] text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors block">
+                View full page
+              </span>
+              <span className="text-[11px] text-[var(--editorial-text-tertiary)] tracking-wide">
+                urbanmanual.co
+              </span>
+            </div>
+            <ExternalLink className="h-4 w-4 text-[var(--editorial-accent)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </Link>
+        </div>
       </div>
     </div>
   );
