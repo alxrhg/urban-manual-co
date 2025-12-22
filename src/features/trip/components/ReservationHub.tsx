@@ -160,7 +160,7 @@ export default function ReservationHub({
             id: `restaurant-${item.id}`,
             type: 'restaurant',
             name: item.title || item.destination?.name || 'Restaurant',
-            subtitle: item.destination?.neighborhood || item.destination?.formatted_address,
+            subtitle: item.destination?.neighborhood || item.destination?.formatted_address || undefined,
             date: day.date || undefined,
             time: item.time || undefined,
             status: bookingStatus === 'booked' ? 'confirmed' : bookingStatus === 'waitlist' ? 'pending' : 'not_booked',
