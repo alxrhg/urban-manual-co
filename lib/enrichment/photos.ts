@@ -22,6 +22,7 @@ export interface PlacePhoto {
 }
 
 export interface PhotoMetadata {
+  name: string; // Full photo path (e.g., places/{placeId}/photos/{photoRef})
   photoReference: string;
   url: string;
   width: number;
@@ -111,10 +112,11 @@ export async function processPlacePhotos(
   
   const processedPhotos: PhotoMetadata[] = photosToProcess.map((photo) => {
     const photoReference = photo.name.split('/').pop() || photo.name;
-    
+
     return {
+      name: photo.name, // Store full path for proxy endpoint
       photoReference,
-      url: getPhotoUrl(photoReference, 1200),
+      url: getPhotoUrl(photo.name, 1200), // Use full path for URL
       width: photo.widthPx,
       height: photo.heightPx,
       author: photo.authorAttributions?.[0]?.displayName,
