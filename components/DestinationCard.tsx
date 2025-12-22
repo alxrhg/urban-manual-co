@@ -179,18 +179,18 @@ export const DestinationCard = memo(function DestinationCard({
                 <div
                   className={`
                     absolute bottom-2 left-2 z-10
-                    px-2.5 py-1 rounded-full
-                    bg-red-600 text-white text-xs font-medium
+                    px-3 py-1.5 rounded-full
+                    bg-gray-900/90 backdrop-blur-sm
+                    text-white text-sm font-medium
                     flex items-center gap-1.5
                     transform scale-100 group-hover:scale-[1.02]
                     transition-transform duration-300
-                    shadow-md
                   `}
                 >
                   <img
                     src="/michelin-star.svg"
                     alt="Michelin star"
-                    className="h-3 w-3 brightness-0 invert"
+                    className="h-4 w-4"
                   />
                   <span>{destination.michelin_stars}</span>
                 </div>

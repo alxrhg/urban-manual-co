@@ -79,11 +79,11 @@ export function LovablyDestinationCard({ destination, borderColor, onClick, show
       <div className="absolute top-2 right-2 flex flex-col gap-2 z-20">
         {/* Michelin Stars Badge (if any) */}
         {destination.michelin_stars && destination.michelin_stars > 0 && (
-          <div className="px-2.5 py-1 rounded-full bg-red-600 text-white text-xs font-medium flex items-center gap-1.5 shadow-md">
+          <div className="px-3 py-1.5 rounded-full bg-gray-900/90 backdrop-blur-sm text-white text-sm font-medium flex items-center gap-1.5">
             <img
               src="/michelin-star.svg"
               alt="Michelin star"
-              className="h-3 w-3 brightness-0 invert"
+              className="h-4 w-4"
             />
             <span>{destination.michelin_stars}</span>
           </div>
