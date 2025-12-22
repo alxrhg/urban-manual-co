@@ -402,7 +402,7 @@ export function DestinationForm({
       longitude: formData.longitude ? Number(formData.longitude) : null,
       rating: formData.rating ? Number(formData.rating) : null,
       price_level: formData.price_level ? Number(formData.price_level) : null,
-      parent_destination_id: selectedParent?.id || null,
+      // parent_destination_id is already in formData and kept in sync via UI handlers
       tags: formData.tags.length > 0 ? formData.tags : null,
     };
     await onSave(data);

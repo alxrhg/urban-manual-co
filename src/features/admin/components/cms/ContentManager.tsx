@@ -73,6 +73,8 @@ import {
 interface ContentManagerProps {
   onEditDestination?: (destination: Destination) => void;
   onCreateNew?: () => void;
+  /** When this value changes, data is refetched without resetting pagination */
+  refreshTrigger?: number;
 }
 
 type SortField = 'name' | 'city' | 'category' | 'updated_at' | 'created_at';
@@ -133,7 +135,7 @@ const getSortLabel = (field: SortField, order: SortOrder): string => {
   return labels[field]?.[order] || 'Sort';
 };
 
-export function ContentManager({ onEditDestination, onCreateNew }: ContentManagerProps) {
+export function ContentManager({ onEditDestination, onCreateNew, refreshTrigger }: ContentManagerProps) {
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -262,6 +264,14 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
   useEffect(() => {
     fetchDestinations();
   }, [fetchDestinations]);
+
+  // Refetch when refreshTrigger changes (without resetting pagination)
+  useEffect(() => {
+    if (refreshTrigger !== undefined && refreshTrigger > 0) {
+      fetchDestinations();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshTrigger]);
 
   useEffect(() => {
     setPage(1);
