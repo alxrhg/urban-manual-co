@@ -61,6 +61,14 @@ export async function generateTextEmbedding(text: string): Promise<EmbeddingResu
   }
 }
 
+// Type for Google Places review
+interface GooglePlacesReview {
+  text?: string;
+  author_name?: string;
+  rating?: number;
+  [key: string]: unknown;
+}
+
 /**
  * Generate embedding for a destination document using ml-service
  */
@@ -71,6 +79,7 @@ export async function generateDestinationEmbedding(destination: {
   description?: string;
   tags?: string[];
   ai_description?: string;
+  reviews_json?: GooglePlacesReview[] | null;
 }): Promise<EmbeddingResult> {
   try {
     const response = await fetch(`${ML_SERVICE_URL}/api/embed/destination`, {
@@ -94,6 +103,13 @@ export async function generateDestinationEmbedding(destination: {
     };
   } catch (error) {
     console.warn('ML service unavailable, falling back to OpenAI:', error);
+    // Extract review text from Google Places reviews
+    const reviewTexts = (destination.reviews_json || [])
+      .map(review => review.text)
+      .filter((text): text is string => typeof text === 'string' && text.length > 0)
+      .slice(0, 5)
+      .join('. ');
+
     // Construct text from destination fields
     const text = [
       destination.name,
@@ -101,6 +117,7 @@ export async function generateDestinationEmbedding(destination: {
       destination.category,
       destination.ai_description || destination.description,
       ...(destination.tags || []),
+      reviewTexts,
     ]
       .filter(Boolean)
       .join('. ');
