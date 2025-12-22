@@ -250,12 +250,12 @@ const DrawerShell = memo(function DrawerShell({
               </div>
             )}
 
-            {/* Floating Navigation Controls - Sharp square buttons */}
-            <div className="absolute top-5 left-5 right-5 z-20 flex items-center justify-between pointer-events-none">
+            {/* Navigation Controls - Minimal, just icons */}
+            <div className="absolute top-6 left-8 right-8 z-20 flex items-center justify-between pointer-events-none">
               {canGoBack && handleBack ? (
                 <button
                   onClick={handleBack}
-                  className="pointer-events-auto w-10 h-10 flex items-center justify-center bg-[var(--editorial-bg)]/95 border border-[var(--editorial-text-primary)] hover:bg-[var(--editorial-text-primary)] hover:text-[var(--editorial-bg)] transition-colors"
+                  className="pointer-events-auto p-1 text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
                   aria-label="Go back"
                 >
                   <ChevronLeft className="w-5 h-5" />
@@ -265,7 +265,7 @@ const DrawerShell = memo(function DrawerShell({
               )}
               <button
                 onClick={onClose}
-                className="pointer-events-auto w-10 h-10 flex items-center justify-center bg-[var(--editorial-bg)]/95 border border-[var(--editorial-text-primary)] hover:bg-[var(--editorial-text-primary)] hover:text-[var(--editorial-bg)] transition-colors"
+                className="pointer-events-auto p-1 text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
                 aria-label="Close"
               >
                 <X className="w-5 h-5" />

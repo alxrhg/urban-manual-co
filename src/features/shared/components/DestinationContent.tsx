@@ -1345,7 +1345,7 @@ const DestinationContent = memo(function DestinationContent({
                   handleAddToTrip(1);
                 }}
                 disabled={isAddingToTrip}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-[var(--editorial-accent)] hover:opacity-90 text-white text-[13px] font-medium tracking-[0.02em] transition-all active:scale-[0.98] disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3.5 border border-[var(--editorial-text-primary)] text-[var(--editorial-text-primary)] text-[13px] font-medium tracking-[0.02em] transition-all hover:bg-[var(--editorial-text-primary)] hover:text-[var(--editorial-bg)] active:scale-[0.98] disabled:opacity-50"
               >
                 <Plus className="w-4 h-4" />
                 Start {destination.city ? `${destination.city} Trip` : 'New Trip'}
@@ -1372,8 +1372,8 @@ const DestinationContent = memo(function DestinationContent({
                   disabled={isAddingToTrip}
                   className={`px-4 py-2.5 text-[13px] font-medium transition-colors disabled:opacity-50 ${
                     tripContext?.day === day.dayNumber
-                      ? 'bg-[var(--editorial-accent)] text-white'
-                      : 'bg-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:bg-[var(--editorial-text-tertiary)]/20'
+                      ? 'border border-[var(--editorial-text-primary)] bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)]'
+                      : 'border border-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-secondary)]'
                   }`}
                 >
                   {isAddingToTrip ? <Loader2 className="h-4 w-4 animate-spin" /> : `Day ${day.dayNumber}`}
@@ -1625,9 +1625,9 @@ const DestinationContent = memo(function DestinationContent({
 
   return (
     <div className="min-h-full bg-[var(--editorial-bg)]">
-      {/* Hero Image - Square, with padding (print collateral style) */}
+      {/* Hero Image - Square, inset with subtle border (print collateral style) */}
       <div className="px-8 sm:px-10 pt-16 pb-6">
-        <div className="relative aspect-square bg-[var(--editorial-border)]">
+        <div className="relative aspect-square bg-[var(--editorial-border)] border border-[var(--editorial-text-tertiary)]/30">
           {imageUrl ? (
             <Image src={imageUrl} alt={destination.name} fill className="object-cover" priority />
           ) : (
@@ -1695,10 +1695,10 @@ const DestinationContent = memo(function DestinationContent({
           )}
         </div>
 
-        {/* Description - Editorial body */}
+        {/* Description - Editorial body, serif */}
         {(destination.micro_description || destination.description) && (
           <div className="mb-10">
-            <p className="text-[15px] leading-[1.7] text-[var(--editorial-text-secondary)]">
+            <p className="font-editorial-serif text-[15px] leading-[1.8] text-[var(--editorial-text-secondary)]">
               {showFullDescription
                 ? (destination.description || destination.micro_description)
                 : (destination.micro_description || destination.description || '').slice(0, 220)}
