@@ -44,10 +44,10 @@
   scrollbar-width: none;
 }
 
-/* Custom scrollbar for editorial views */
+/* Custom scrollbar for editorial views - warm cream/terracotta palette */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -55,20 +55,156 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #e5e5e5;
+  background: #ddd7cf;
   border-radius: 3px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #d4d4d4;
+  background: #c9c1b6;
 }
 
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #404040;
+  background: #484744;
 }
 
 .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #525252;
+  background: #5a5955;
+}
+
+/* Editorial scrollbar - Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #ddd7cf transparent;
+}
+
+.dark .custom-scrollbar {
+  scrollbar-color: #484744 transparent;
+}
+
+/* ============================================
+   EDITORIAL DESIGN SYSTEM
+   Inspired by print magazines and conscious design
+   ============================================ */
+
+/* Editorial color palette CSS variables */
+:root {
+  /* Terracotta/rust - primary accent */
+  --editorial-terracotta-50: #fdf8f6;
+  --editorial-terracotta-100: #f9ede8;
+  --editorial-terracotta-200: #f2d9cf;
+  --editorial-terracotta-300: #e8bfaf;
+  --editorial-terracotta-400: #d99c82;
+  --editorial-terracotta-500: #c4604b;
+  --editorial-terracotta-600: #b54d3a;
+  --editorial-terracotta-700: #973f30;
+  --editorial-terracotta: #c4604b;
+
+  /* Cream/ivory - backgrounds */
+  --editorial-cream-50: #fefdfb;
+  --editorial-cream-100: #faf8f5;
+  --editorial-cream-200: #f5f3ef;
+  --editorial-cream-300: #ebe7e1;
+  --editorial-cream-400: #ddd7cf;
+  --editorial-cream-500: #c9c1b6;
+  --editorial-cream: #f5f3ef;
+
+  /* Charcoal - text */
+  --editorial-charcoal-300: #a9a8a4;
+  --editorial-charcoal-500: #706f6a;
+  --editorial-charcoal-600: #5a5955;
+  --editorial-charcoal-800: #3a3937;
+  --editorial-charcoal-900: #2d2c2a;
+  --editorial-charcoal: #3a3937;
+}
+
+/* Editorial button styles */
+.btn-editorial {
+  background-color: var(--editorial-terracotta);
+  color: white;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.btn-editorial:hover {
+  background-color: var(--editorial-terracotta-600);
+}
+
+.btn-editorial-outline {
+  background-color: transparent;
+  border: 1px solid var(--editorial-cream-400);
+  color: var(--editorial-charcoal);
+  transition: all 0.2s ease;
+}
+
+.btn-editorial-outline:hover {
+  background-color: var(--editorial-cream-300);
+  border-color: var(--editorial-cream-500);
+}
+
+.dark .btn-editorial-outline {
+  border-color: var(--editorial-charcoal-900);
+  color: var(--editorial-cream);
+}
+
+.dark .btn-editorial-outline:hover {
+  background-color: var(--editorial-charcoal-900);
+}
+
+/* Editorial typography */
+.text-editorial-heading {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--editorial-charcoal-800);
+}
+
+.dark .text-editorial-heading {
+  color: var(--editorial-cream-200);
+}
+
+.text-editorial-body {
+  color: var(--editorial-charcoal-600);
+  line-height: 1.6;
+}
+
+.dark .text-editorial-body {
+  color: var(--editorial-charcoal-300);
+}
+
+.text-editorial-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--editorial-charcoal-300);
+}
+
+.dark .text-editorial-label {
+  color: var(--editorial-charcoal-500);
+}
+
+/* Editorial accent link */
+.link-editorial {
+  color: var(--editorial-terracotta);
+  transition: color 0.2s ease;
+}
+
+.link-editorial:hover {
+  color: var(--editorial-terracotta-600);
+}
+
+/* Editorial card with terracotta accent */
+.card-editorial-accent {
+  background: linear-gradient(135deg, var(--editorial-terracotta-500) 0%, var(--editorial-terracotta-600) 100%);
+  color: white;
+}
+
+/* Editorial divider */
+.divider-editorial {
+  border-color: var(--editorial-cream-300);
+}
+
+.dark .divider-editorial {
+  border-color: var(--editorial-charcoal-900);
 }
 
 @import "tailwindcss";

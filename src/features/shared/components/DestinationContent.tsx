@@ -1119,23 +1119,23 @@ const DestinationContent = memo(function DestinationContent({
           : description;
 
         return (
-          <div key="description" className="mt-5">
+          <div key="description" className="mt-6">
             {/* User-related context badge */}
             {userRelatedContext && (
-              <div className="mb-3 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
-                <p className="text-[12px] text-blue-700 dark:text-blue-300 font-medium">
+              <div className="mb-4 px-3 py-2.5 rounded-lg bg-[#f9ede8] dark:bg-[#662e26]/20 border border-[#f2d9cf] dark:border-[#973f30]/30">
+                <p className="text-[12px] text-[#c4604b] dark:text-[#d99c82] font-medium">
                   {userRelatedContext}
                 </p>
               </div>
             )}
 
-            <p className="text-[15px] text-gray-700 dark:text-gray-300 leading-relaxed">
+            <p className="text-[15px] text-[#5a5955] dark:text-[#c8c7c4] leading-relaxed">
               {displayText}
             </p>
             {isLong && (
               <button
                 onClick={() => setShowFullDescription(!showFullDescription)}
-                className="mt-2 text-[13px] font-medium text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                className="mt-3 text-[13px] font-medium text-[#c4604b] hover:text-[#b54d3a] transition-colors"
               >
                 {showFullDescription ? 'Show less' : 'Read more'}
               </button>
@@ -1150,46 +1150,46 @@ const DestinationContent = memo(function DestinationContent({
           <button
             key="parent"
             onClick={() => onOpenRelated(parentDestination)}
-            className="w-full flex items-center gap-3 mt-5 py-3 border-t border-b border-gray-100 dark:border-white/10 text-left"
+            className="w-full flex items-center gap-3 mt-6 py-4 border-t border-b border-[#ebe7e1] dark:border-[#2d2c2a] text-left group"
           >
-            <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+            <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#ebe7e1] dark:bg-[#2d2c2a] flex-shrink-0">
               {parentDestination.image ? (
                 <Image src={parentDestination.image} alt="" width={48} height={48} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center"><MapPin className="h-5 w-5 text-gray-400" /></div>
+                <div className="w-full h-full flex items-center justify-center"><MapPin className="h-5 w-5 text-[#a9a8a4]" /></div>
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] uppercase tracking-wider text-gray-400">Located inside</p>
-              <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">{parentDestination.name}</p>
+              <p className="text-[11px] uppercase tracking-[0.12em] text-[#a9a8a4] dark:text-[#706f6a]">Located inside</p>
+              <p className="text-[14px] font-medium text-[#3a3937] dark:text-[#f5f3ef] truncate group-hover:text-[#c4604b] transition-colors">{parentDestination.name}</p>
             </div>
-            <ChevronRight className="h-4 w-4 text-gray-300" />
+            <ChevronRight className="h-4 w-4 text-[#c9c1b6] dark:text-[#484744] group-hover:text-[#c4604b] transition-colors" />
           </button>
         );
 
       case 'nested':
         return (
           <div key="nested" className="mt-6">
-            <p className="text-[11px] uppercase tracking-wider text-gray-400 mb-3">Venues Inside</p>
+            <p className="text-[11px] uppercase tracking-[0.12em] text-[#a9a8a4] dark:text-[#706f6a] mb-3">Venues Inside</p>
             <div className="space-y-1">
               {nestedDestinations.map((nested) => (
                 <button
                   key={nested.slug}
                   onClick={() => onOpenRelated(nested)}
-                  className="w-full flex items-center gap-3 py-2 text-left group"
+                  className="w-full flex items-center gap-3 py-2.5 text-left group"
                 >
-                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-[#ebe7e1] dark:bg-[#2d2c2a] flex-shrink-0">
                     {nested.image ? (
                       <Image src={nested.image} alt="" width={40} height={40} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center"><MapPin className="h-4 w-4 text-gray-400" /></div>
+                      <div className="w-full h-full flex items-center justify-center"><MapPin className="h-4 w-4 text-[#a9a8a4]" /></div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">{nested.name}</p>
-                    <p className="text-[12px] text-gray-500">{nested.category && capitalizeCategory(nested.category)}</p>
+                    <p className="text-[14px] font-medium text-[#3a3937] dark:text-[#f5f3ef] truncate group-hover:text-[#c4604b] transition-colors">{nested.name}</p>
+                    <p className="text-[12px] text-[#706f6a] dark:text-[#a9a8a4]">{nested.category && capitalizeCategory(nested.category)}</p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-gray-300" />
+                  <ChevronRight className="h-4 w-4 text-[#c9c1b6] dark:text-[#484744] group-hover:text-[#c4604b] transition-colors" />
                 </button>
               ))}
             </div>
@@ -1202,29 +1202,29 @@ const DestinationContent = memo(function DestinationContent({
           <div key="hours" className="mt-6">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <p className="text-[11px] uppercase tracking-wider text-gray-400">
+                <p className="text-[11px] uppercase tracking-[0.12em] text-[#a9a8a4] dark:text-[#706f6a]">
                   {categoryType === 'dining' || categoryType === 'nightlife' ? 'Hours & Contact' : 'Contact & Hours'}
                 </p>
                 {localTimeStr && (
-                  <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                  <span className="text-[10px] text-[#a9a8a4] dark:text-[#706f6a]">
                     · {localTimeStr} local
                   </span>
                 )}
               </div>
               {bestTimeHint && (
-                <span className="text-[11px] text-blue-600 dark:text-blue-400 font-medium">{bestTimeHint}</span>
+                <span className="text-[11px] text-[#c4604b] dark:text-[#d99c82] font-medium">{bestTimeHint}</span>
               )}
             </div>
             <div className="space-y-3">
               {todayHours && (
                 <div className="flex items-start gap-3">
-                  <Clock className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <Clock className="h-4 w-4 text-[#a9a8a4] mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <span className="text-[14px] text-gray-700 dark:text-gray-300">{todayHours}</span>
+                    <span className="text-[14px] text-[#5a5955] dark:text-[#c8c7c4]">{todayHours}</span>
                     {hoursAnalysis.timeUntilChange && (
                       <span className={`ml-2 text-[12px] font-medium ${
-                        hoursAnalysis.category === 'closing-soon' ? 'text-amber-600' :
-                        hoursAnalysis.category === 'opening-soon' ? 'text-blue-600' : ''
+                        hoursAnalysis.category === 'closing-soon' ? 'text-[#d99c82]' :
+                        hoursAnalysis.category === 'opening-soon' ? 'text-[#c4604b]' : ''
                       }`}>
                         ({hoursAnalysis.status})
                       </span>
@@ -1233,21 +1233,21 @@ const DestinationContent = memo(function DestinationContent({
                 </div>
               )}
               {enrichedData?.formatted_address && (
-                <button onClick={handleDirections} className="flex items-start gap-3 text-left hover:opacity-70 transition-opacity">
-                  <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-[14px] text-gray-700 dark:text-gray-300">{enrichedData.formatted_address}</span>
+                <button onClick={handleDirections} className="flex items-start gap-3 text-left hover:text-[#c4604b] transition-colors">
+                  <MapPin className="h-4 w-4 text-[#a9a8a4] mt-0.5 flex-shrink-0" />
+                  <span className="text-[14px] text-[#5a5955] dark:text-[#c8c7c4]">{enrichedData.formatted_address}</span>
                 </button>
               )}
               {enrichedData?.international_phone_number && (
-                <a href={`tel:${enrichedData.international_phone_number}`} className="flex items-center gap-3 hover:opacity-70 transition-opacity">
-                  <Phone className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                  <span className="text-[14px] text-gray-700 dark:text-gray-300">{enrichedData.international_phone_number}</span>
+                <a href={`tel:${enrichedData.international_phone_number}`} className="flex items-center gap-3 hover:text-[#c4604b] transition-colors">
+                  <Phone className="h-4 w-4 text-[#a9a8a4] flex-shrink-0" />
+                  <span className="text-[14px] text-[#5a5955] dark:text-[#c8c7c4]">{enrichedData.international_phone_number}</span>
                 </a>
               )}
               {enrichedData?.website && (
-                <a href={enrichedData.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:opacity-70 transition-opacity">
-                  <Globe className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                  <span className="text-[14px] text-blue-600 dark:text-blue-400 truncate">
+                <a href={enrichedData.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-[#b54d3a] transition-colors">
+                  <Globe className="h-4 w-4 text-[#a9a8a4] flex-shrink-0" />
+                  <span className="text-[14px] text-[#c4604b] dark:text-[#d99c82] truncate">
                     {(() => { try { return new URL(enrichedData.website).hostname.replace('www.', ''); } catch { return enrichedData.website; } })()}
                   </span>
                 </a>
@@ -1259,59 +1259,59 @@ const DestinationContent = memo(function DestinationContent({
       case 'architecture':
         return (
           <div key="architecture" className="mt-6">
-            <p className="text-[11px] uppercase tracking-wider text-gray-400 mb-3">Design & Architecture</p>
+            <p className="text-[11px] uppercase tracking-[0.12em] text-[#a9a8a4] dark:text-[#706f6a] mb-3">Design & Architecture</p>
             <div className="space-y-1">
               {enrichedData?.architect_obj && (
-                <Link href={`/architect/${enrichedData.architect_obj.slug}`} className="flex items-center gap-3 py-2 group">
-                  <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden">
+                <Link href={`/architect/${enrichedData.architect_obj.slug}`} className="flex items-center gap-3 py-2.5 group">
+                  <div className="w-10 h-10 rounded-full bg-[#ebe7e1] dark:bg-[#2d2c2a] flex items-center justify-center overflow-hidden">
                     {enrichedData.architect_obj.image_url ? (
                       <Image src={enrichedData.architect_obj.image_url} alt="" width={40} height={40} className="object-cover" />
                     ) : (
-                      <span className="text-[14px] font-medium text-gray-500">{enrichedData.architect_obj.name.charAt(0)}</span>
+                      <span className="text-[14px] font-medium text-[#706f6a]">{enrichedData.architect_obj.name.charAt(0)}</span>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] text-gray-400">Architect</p>
-                    <p className="text-[14px] font-medium text-gray-900 dark:text-white group-hover:text-blue-600 truncate">
+                    <p className="text-[12px] text-[#a9a8a4] dark:text-[#706f6a]">Architect</p>
+                    <p className="text-[14px] font-medium text-[#3a3937] dark:text-[#f5f3ef] group-hover:text-[#c4604b] truncate transition-colors">
                       {enrichedData.architect_obj.name}
                     </p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-gray-300" />
+                  <ChevronRight className="h-4 w-4 text-[#c9c1b6] dark:text-[#484744] group-hover:text-[#c4604b] transition-colors" />
                 </Link>
               )}
               {!enrichedData?.architect_obj && destination.architect && (
-                <div className="flex items-center gap-3 py-2">
-                  <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                    <Building2 className="h-4 w-4 text-gray-500" />
+                <div className="flex items-center gap-3 py-2.5">
+                  <div className="w-10 h-10 rounded-full bg-[#ebe7e1] dark:bg-[#2d2c2a] flex items-center justify-center">
+                    <Building2 className="h-4 w-4 text-[#706f6a]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] text-gray-400">Architect</p>
-                    <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">{destination.architect}</p>
+                    <p className="text-[12px] text-[#a9a8a4] dark:text-[#706f6a]">Architect</p>
+                    <p className="text-[14px] font-medium text-[#3a3937] dark:text-[#f5f3ef] truncate">{destination.architect}</p>
                   </div>
                 </div>
               )}
               {enrichedData?.interior_designer_obj && (
-                <Link href={`/architect/${enrichedData.interior_designer_obj.slug}`} className="flex items-center gap-3 py-2 group">
-                  <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                    <span className="text-[14px] font-medium text-gray-500">{enrichedData.interior_designer_obj.name.charAt(0)}</span>
+                <Link href={`/architect/${enrichedData.interior_designer_obj.slug}`} className="flex items-center gap-3 py-2.5 group">
+                  <div className="w-10 h-10 rounded-full bg-[#ebe7e1] dark:bg-[#2d2c2a] flex items-center justify-center">
+                    <span className="text-[14px] font-medium text-[#706f6a]">{enrichedData.interior_designer_obj.name.charAt(0)}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] text-gray-400">Interior Designer</p>
-                    <p className="text-[14px] font-medium text-gray-900 dark:text-white group-hover:text-blue-600 truncate">
+                    <p className="text-[12px] text-[#a9a8a4] dark:text-[#706f6a]">Interior Designer</p>
+                    <p className="text-[14px] font-medium text-[#3a3937] dark:text-[#f5f3ef] group-hover:text-[#c4604b] truncate transition-colors">
                       {enrichedData.interior_designer_obj.name}
                     </p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-gray-300" />
+                  <ChevronRight className="h-4 w-4 text-[#c9c1b6] dark:text-[#484744] group-hover:text-[#c4604b] transition-colors" />
                 </Link>
               )}
               {enrichedData?.architectural_style && (
-                <div className="flex items-center gap-3 py-2">
-                  <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                    <span className="text-[12px] font-medium text-gray-500">S</span>
+                <div className="flex items-center gap-3 py-2.5">
+                  <div className="w-10 h-10 rounded-full bg-[#ebe7e1] dark:bg-[#2d2c2a] flex items-center justify-center">
+                    <span className="text-[12px] font-medium text-[#706f6a]">S</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] text-gray-400">Style</p>
-                    <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">{enrichedData.architectural_style}</p>
+                    <p className="text-[12px] text-[#a9a8a4] dark:text-[#706f6a]">Style</p>
+                    <p className="text-[14px] font-medium text-[#3a3937] dark:text-[#f5f3ef] truncate">{enrichedData.architectural_style}</p>
                   </div>
                 </div>
               )}
@@ -1326,7 +1326,7 @@ const DestinationContent = memo(function DestinationContent({
               href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + (destination.city || ''))}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="block relative aspect-[2/1] rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800"
+              className="block relative aspect-[2/1] rounded-xl overflow-hidden bg-[#ebe7e1] dark:bg-[#2d2c2a]"
             >
               <GoogleStaticMap
                 center={{ lat: destination.latitude!, lng: destination.longitude! }}
@@ -1335,7 +1335,7 @@ const DestinationContent = memo(function DestinationContent({
                 className="w-full h-full"
               />
               <div className="absolute inset-0 flex items-center justify-center hover:bg-black/10 transition-colors">
-                <span className="px-3 py-1.5 rounded-full bg-white/95 text-[12px] font-medium text-gray-800 shadow-sm">
+                <span className="px-3 py-1.5 rounded-full bg-[#f5f3ef]/95 dark:bg-[#1c1a17]/95 text-[12px] font-medium text-[#3a3937] dark:text-[#f5f3ef] shadow-sm border border-[#ebe7e1] dark:border-[#2d2c2a]">
                   Open in Maps
                 </span>
               </div>
@@ -1348,7 +1348,7 @@ const DestinationContent = memo(function DestinationContent({
         if (!activeTrip) {
           return (
             <div key="trip" className="mt-6">
-              <p className="text-[11px] uppercase tracking-wider text-gray-400 mb-3">
+              <p className="text-[11px] uppercase tracking-[0.12em] text-[#a9a8a4] dark:text-[#706f6a] mb-3">
                 Add to Trip
               </p>
               <button
@@ -1357,7 +1357,7 @@ const DestinationContent = memo(function DestinationContent({
                   handleAddToTrip(1);
                 }}
                 disabled={isAddingToTrip}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[14px] font-medium transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-[#c4604b] hover:bg-[#b54d3a] text-white text-[14px] font-medium transition-all active:scale-[0.98] disabled:opacity-50"
               >
                 <Plus className="w-4 h-4" />
                 Start {destination.city ? `${destination.city} Trip` : 'New Trip'}
@@ -1369,11 +1369,11 @@ const DestinationContent = memo(function DestinationContent({
         return (
           <div key="trip" className="mt-6">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[11px] uppercase tracking-wider text-gray-400">
+              <p className="text-[11px] uppercase tracking-[0.12em] text-[#a9a8a4] dark:text-[#706f6a]">
                 {isFromTrip ? 'Add to Trip' : `Add to ${activeTrip.title}`}
               </p>
               {tripContext?.fit && (
-                <span className="text-[11px] text-green-600 font-medium">{tripContext.fit}</span>
+                <span className="text-[11px] text-[#165B33] dark:text-[#4ade80] font-medium">{tripContext.fit}</span>
               )}
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -1382,10 +1382,10 @@ const DestinationContent = memo(function DestinationContent({
                   key={day.dayNumber}
                   onClick={() => handleAddToTrip(day.dayNumber)}
                   disabled={isAddingToTrip}
-                  className={`px-4 py-2 rounded-xl text-[13px] font-medium transition-colors disabled:opacity-50 ${
+                  className={`px-4 py-2.5 rounded-xl text-[13px] font-medium transition-colors disabled:opacity-50 ${
                     tripContext?.day === day.dayNumber
-                      ? 'bg-black dark:bg-white text-white dark:text-black'
-                      : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20'
+                      ? 'bg-[#c4604b] text-white'
+                      : 'bg-[#ebe7e1] dark:bg-[#2d2c2a] text-[#5a5955] dark:text-[#c8c7c4] hover:bg-[#ddd7cf] dark:hover:bg-[#3a3937]'
                   }`}
                 >
                   {isAddingToTrip ? <Loader2 className="h-4 w-4 animate-spin" /> : `Day ${day.dayNumber}`}
@@ -1394,7 +1394,7 @@ const DestinationContent = memo(function DestinationContent({
               <button
                 onClick={() => handleAddToTrip()}
                 disabled={isAddingToTrip}
-                className="px-4 py-2 rounded-xl border border-dashed border-gray-300 dark:border-white/20 text-[13px] font-medium text-gray-500 hover:border-gray-400 transition-colors"
+                className="px-4 py-2.5 rounded-xl border border-dashed border-[#c9c1b6] dark:border-[#484744] text-[13px] font-medium text-[#706f6a] dark:text-[#a9a8a4] hover:border-[#a9a8a4] dark:hover:border-[#706f6a] transition-colors"
               >
                 <Plus className="h-4 w-4 inline mr-1" />
                 New Day
@@ -1407,19 +1407,19 @@ const DestinationContent = memo(function DestinationContent({
         return (
           <div key="similar" className="mt-6">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[11px] uppercase tracking-wider text-gray-400">Similar Places</p>
-              <button onClick={onShowSimilar} className="text-[11px] font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white">
+              <p className="text-[11px] uppercase tracking-[0.12em] text-[#a9a8a4] dark:text-[#706f6a]">Similar Places</p>
+              <button onClick={onShowSimilar} className="text-[11px] font-medium text-[#c4604b] hover:text-[#b54d3a] transition-colors">
                 See all
               </button>
             </div>
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 scrollbar-hide">
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
               {similarPlaces.map((dest) => (
                 <button
                   key={dest.slug}
                   onClick={() => onOpenRelated(dest)}
                   className="flex-shrink-0 w-28 text-left group"
                 >
-                  <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-2">
+                  <div className="relative aspect-square rounded-xl overflow-hidden bg-[#ebe7e1] dark:bg-[#2d2c2a] mb-2">
                     {(dest.image || dest.image_thumbnail) && (
                       <Image
                         src={dest.image_thumbnail || dest.image || ''}
@@ -1429,8 +1429,8 @@ const DestinationContent = memo(function DestinationContent({
                       />
                     )}
                   </div>
-                  <p className="text-[12px] font-medium text-gray-900 dark:text-white truncate">{dest.name}</p>
-                  <p className="text-[11px] text-gray-500 truncate">{capitalizeCategory(dest.category || '')}</p>
+                  <p className="text-[12px] font-medium text-[#3a3937] dark:text-[#f5f3ef] truncate group-hover:text-[#c4604b] transition-colors">{dest.name}</p>
+                  <p className="text-[11px] text-[#706f6a] dark:text-[#a9a8a4] truncate">{capitalizeCategory(dest.category || '')}</p>
                 </button>
               ))}
             </div>
@@ -1440,7 +1440,7 @@ const DestinationContent = memo(function DestinationContent({
       case 'related':
         return (
           <div key="related" className="mt-6">
-            <p className="text-[11px] uppercase tracking-wider text-gray-400 mb-3">
+            <p className="text-[11px] uppercase tracking-[0.12em] text-[#a9a8a4] dark:text-[#706f6a] mb-3">
               More in {capitalizeCity(destination.city || '')}
             </p>
             <div className="space-y-1">
@@ -1448,20 +1448,20 @@ const DestinationContent = memo(function DestinationContent({
                 <button
                   key={dest.slug}
                   onClick={() => onOpenRelated(dest)}
-                  className="w-full flex items-center gap-3 py-2 text-left group"
+                  className="w-full flex items-center gap-3 py-2.5 text-left group"
                 >
-                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#ebe7e1] dark:bg-[#2d2c2a] flex-shrink-0">
                     {dest.image ? (
                       <Image src={dest.image} alt="" width={48} height={48} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center"><MapPin className="h-5 w-5 text-gray-400" /></div>
+                      <div className="w-full h-full flex items-center justify-center"><MapPin className="h-5 w-5 text-[#a9a8a4]" /></div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">{dest.name}</p>
-                    <p className="text-[12px] text-gray-500">{capitalizeCategory(dest.category || '')}</p>
+                    <p className="text-[14px] font-medium text-[#3a3937] dark:text-[#f5f3ef] truncate group-hover:text-[#c4604b] transition-colors">{dest.name}</p>
+                    <p className="text-[12px] text-[#706f6a] dark:text-[#a9a8a4]">{capitalizeCategory(dest.category || '')}</p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-gray-300" />
+                  <ChevronRight className="h-4 w-4 text-[#c9c1b6] dark:text-[#484744] group-hover:text-[#c4604b] transition-colors" />
                 </button>
               ))}
             </div>
@@ -1636,14 +1636,14 @@ const DestinationContent = memo(function DestinationContent({
   }
 
   return (
-    <div className="pb-8">
-      {/* Hero Image */}
-      <div className="relative aspect-[4/3] bg-gray-100 dark:bg-gray-800">
+    <div className="pb-8 bg-[#f5f3ef] dark:bg-[#1c1a17]">
+      {/* Hero Image - Editorial style with warm tones */}
+      <div className="relative aspect-[4/3] bg-[#ebe7e1] dark:bg-[#2d2c2a]">
         {imageUrl ? (
           <Image src={imageUrl} alt={destination.name} fill className="object-cover" priority />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <MapPin className="w-12 h-12 text-gray-300 dark:text-gray-600" />
+            <MapPin className="w-12 h-12 text-[#c9c1b6] dark:text-[#484744]" />
           </div>
         )}
 
@@ -1673,13 +1673,13 @@ const DestinationContent = memo(function DestinationContent({
         </div>
       </div>
 
-      <div className="px-5">
-        {/* Title & Meta */}
-        <div className="pt-5 pb-4">
-          <h1 className="text-[22px] font-semibold text-gray-900 dark:text-white tracking-tight leading-tight">
+      <div className="px-6">
+        {/* Title & Meta - Editorial typography */}
+        <div className="pt-6 pb-4">
+          <h1 className="text-[24px] font-semibold text-[#3a3937] dark:text-[#f5f3ef] tracking-tight leading-tight">
             {destination.name}
           </h1>
-          <p className="text-[14px] text-gray-500 mt-1">
+          <p className="text-[14px] text-[#706f6a] dark:text-[#a9a8a4] mt-1.5">
             {destination.category && capitalizeCategory(destination.category)}
             {destination.city && ` · ${capitalizeCity(destination.city)}`}
           </p>
@@ -1687,7 +1687,7 @@ const DestinationContent = memo(function DestinationContent({
           {destination.brand && (
             <Link
               href={`/brand/${encodeURIComponent(destination.brand)}`}
-              className="inline-flex items-center gap-1.5 mt-2 text-[12px] text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="inline-flex items-center gap-1.5 mt-2 text-[12px] text-[#706f6a] hover:text-[#c4604b] dark:text-[#a9a8a4] dark:hover:text-[#d99c82] transition-colors"
             >
               <Building2 className="h-3 w-3" />
               {destination.brand}
@@ -1697,35 +1697,35 @@ const DestinationContent = memo(function DestinationContent({
           {rating && (
             <div className="flex items-center gap-1.5 mt-2">
               <img src="/google-logo.svg" alt="Google" className="h-3.5 w-3.5" />
-              <span className="text-[13px] font-medium text-gray-900 dark:text-white">{rating.toFixed(1)}</span>
+              <span className="text-[13px] font-medium text-[#3a3937] dark:text-[#f5f3ef]">{rating.toFixed(1)}</span>
               {reviewCount && (
-                <span className="text-[13px] text-gray-500">({reviewCount.toLocaleString()} reviews)</span>
+                <span className="text-[13px] text-[#706f6a] dark:text-[#a9a8a4]">({reviewCount.toLocaleString()} reviews)</span>
               )}
               {enrichedData?.price_level && (
-                <span className="text-[13px] text-gray-500 ml-2">{'$'.repeat(enrichedData.price_level)}</span>
+                <span className="text-[13px] text-[#706f6a] dark:text-[#a9a8a4] ml-2">{'$'.repeat(enrichedData.price_level)}</span>
               )}
               {/* Subtle context signals - appear naturally, no interaction */}
               {subtleContext.priceSignal && (
-                <span className="text-[11px] text-gray-400 ml-1">· {subtleContext.priceSignal}</span>
+                <span className="text-[11px] text-[#a9a8a4] dark:text-[#706f6a] ml-1">· {subtleContext.priceSignal}</span>
               )}
             </div>
           )}
 
           {/* Subtle signals row - only show if there's something genuinely useful */}
           {(subtleContext.timeSignal || subtleContext.availabilityHint || subtleRecommendation) && (
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
+            <div className="flex items-center gap-2 mt-3 flex-wrap">
               {subtleContext.timeSignal && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400">
+                <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#ebe7e1] dark:bg-[#2d2c2a] text-[#5a5955] dark:text-[#a9a8a4]">
                   {subtleContext.timeSignal}
                 </span>
               )}
               {subtleContext.availabilityHint && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400">
+                <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#ebe7e1] dark:bg-[#2d2c2a] text-[#5a5955] dark:text-[#a9a8a4]">
                   {subtleContext.availabilityHint}
                 </span>
               )}
               {subtleRecommendation && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400">
+                <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#f9ede8] dark:bg-[#662e26]/30 text-[#c4604b] dark:text-[#d99c82]">
                   {subtleRecommendation}
                 </span>
               )}
@@ -1747,7 +1747,7 @@ const DestinationContent = memo(function DestinationContent({
                 <button
                   onClick={() => handleAddToTrip(suggestedDay)}
                   disabled={isAddingToTrip}
-                  className="flex-1 h-11 flex items-center justify-center gap-2 rounded-xl bg-black dark:bg-white text-white dark:text-black text-[14px] font-medium transition-all disabled:opacity-50"
+                  className="flex-1 h-12 flex items-center justify-center gap-2 rounded-xl bg-[#c4604b] hover:bg-[#b54d3a] text-white text-[14px] font-medium transition-all disabled:opacity-50"
                 >
                   {isAddingToTrip ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -1761,7 +1761,7 @@ const DestinationContent = memo(function DestinationContent({
               ) : isPrimaryGo ? (
                 <button
                   onClick={handleDirections}
-                  className="flex-1 h-11 flex items-center justify-center gap-2 rounded-xl bg-green-600 text-white text-[14px] font-medium transition-all hover:bg-green-700"
+                  className="flex-1 h-12 flex items-center justify-center gap-2 rounded-xl bg-[#c4604b] hover:bg-[#b54d3a] text-white text-[14px] font-medium transition-all"
                 >
                   <Navigation className="h-4 w-4" />
                   Go Now
@@ -1769,10 +1769,10 @@ const DestinationContent = memo(function DestinationContent({
               ) : (
                 <button
                   onClick={user ? handleSave : undefined}
-                  className={`flex-1 h-11 flex items-center justify-center gap-2 rounded-xl border text-[14px] font-medium transition-all ${
+                  className={`flex-1 h-12 flex items-center justify-center gap-2 rounded-xl border text-[14px] font-medium transition-all ${
                     isSaved
-                      ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'border-gray-200 dark:border-white/20 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5'
+                      ? 'border-[#c4604b] bg-[#c4604b] text-white'
+                      : 'border-[#ddd7cf] dark:border-[#484744] text-[#3a3937] dark:text-[#f5f3ef] hover:bg-[#ebe7e1] dark:hover:bg-[#2d2c2a]'
                   }`}
                 >
                   <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
@@ -1784,10 +1784,10 @@ const DestinationContent = memo(function DestinationContent({
               {!isPrimaryTrip && (
                 <button
                   onClick={user ? handleSave : undefined}
-                  className={`h-11 w-11 flex items-center justify-center rounded-xl border text-[14px] font-medium transition-all ${
+                  className={`h-12 w-12 flex items-center justify-center rounded-xl border text-[14px] font-medium transition-all ${
                     isSaved
-                      ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'border-gray-200 dark:border-white/20 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5'
+                      ? 'border-[#c4604b] bg-[#c4604b] text-white'
+                      : 'border-[#ddd7cf] dark:border-[#484744] text-[#5a5955] dark:text-[#a9a8a4] hover:bg-[#ebe7e1] dark:hover:bg-[#2d2c2a]'
                   } ${isPrimaryGo ? '' : 'hidden'}`}
                 >
                   <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
@@ -1795,7 +1795,7 @@ const DestinationContent = memo(function DestinationContent({
               )}
               <button
                 onClick={handleShare}
-                className="h-11 w-11 flex items-center justify-center rounded-xl border border-gray-200 dark:border-white/20 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition-all"
+                className="h-12 w-12 flex items-center justify-center rounded-xl border border-[#ddd7cf] dark:border-[#484744] text-[#5a5955] dark:text-[#a9a8a4] hover:bg-[#ebe7e1] dark:hover:bg-[#2d2c2a] transition-all"
               >
                 <Share2 className="h-4 w-4" />
               </button>
@@ -1803,10 +1803,10 @@ const DestinationContent = memo(function DestinationContent({
               {isAdmin && (
                 <button
                   onClick={() => setIsEditMode(!isEditMode)}
-                  className={`h-11 w-11 flex items-center justify-center rounded-xl border transition-all ${
+                  className={`h-12 w-12 flex items-center justify-center rounded-xl border transition-all ${
                     isEditMode
-                      ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'border-gray-200 dark:border-white/20 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5'
+                      ? 'border-[#c4604b] bg-[#c4604b] text-white'
+                      : 'border-[#ddd7cf] dark:border-[#484744] text-[#5a5955] dark:text-[#a9a8a4] hover:bg-[#ebe7e1] dark:hover:bg-[#2d2c2a]'
                   }`}
                   title={isEditMode ? 'Exit edit mode' : 'Edit destination (Admin)'}
                 >
@@ -1816,7 +1816,7 @@ const DestinationContent = memo(function DestinationContent({
               {!isPrimaryGo && (
                 <button
                   onClick={handleDirections}
-                  className="h-11 w-11 flex items-center justify-center rounded-xl border border-gray-200 dark:border-white/20 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition-all"
+                  className="h-12 w-12 flex items-center justify-center rounded-xl border border-[#ddd7cf] dark:border-[#484744] text-[#5a5955] dark:text-[#a9a8a4] hover:bg-[#ebe7e1] dark:hover:bg-[#2d2c2a] transition-all"
                 >
                   <Navigation className="h-4 w-4" />
                 </button>
@@ -1825,14 +1825,14 @@ const DestinationContent = memo(function DestinationContent({
           );
         })()}
 
-        {/* Been Here Button */}
+        {/* Been Here Button - Editorial styling */}
         {user && (
           <button
             onClick={handleVisit}
-            className={`w-full mt-2 h-11 flex items-center justify-center gap-2 rounded-xl border text-[14px] font-medium transition-all ${
+            className={`w-full mt-3 h-12 flex items-center justify-center gap-2 rounded-xl border text-[14px] font-medium transition-all ${
               isVisited
-                ? 'border-green-600 bg-green-600 text-white'
-                : 'border-gray-200 dark:border-white/20 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5'
+                ? 'border-[#165B33] bg-[#165B33] text-white'
+                : 'border-[#ddd7cf] dark:border-[#484744] text-[#5a5955] dark:text-[#a9a8a4] hover:bg-[#ebe7e1] dark:hover:bg-[#2d2c2a]'
             }`}
           >
             <Check className="h-4 w-4" />
@@ -1866,13 +1866,13 @@ const DestinationContent = memo(function DestinationContent({
           );
         })}
 
-        {/* View Full Page */}
+        {/* View Full Page - Editorial link */}
         <Link
           href={`/destination/${destination.slug}`}
-          className="flex items-center justify-between w-full mt-6 py-4 border-t border-gray-100 dark:border-white/10 group"
+          className="flex items-center justify-between w-full mt-8 py-4 border-t border-[#ebe7e1] dark:border-[#2d2c2a] group"
         >
-          <span className="text-[15px] font-medium text-gray-900 dark:text-white">View full page</span>
-          <ExternalLink className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
+          <span className="text-[15px] font-medium text-[#3a3937] dark:text-[#f5f3ef] group-hover:text-[#c4604b] transition-colors">View full page</span>
+          <ExternalLink className="h-4 w-4 text-[#a9a8a4] group-hover:text-[#c4604b] transition-colors" />
         </Link>
       </div>
     </div>
