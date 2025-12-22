@@ -24,17 +24,15 @@ interface DrawerShellProps {
   onSaveScrollPosition?: (position: number) => void;
   /** Scroll position to restore */
   restoreScrollPosition?: number;
+  /** Editorial variant - uses terracotta background with white text */
+  variant?: 'default' | 'editorial';
 }
 
 /**
  * DrawerShell - Editorial-inspired drawer container
  *
- * A sophisticated drawer shell featuring:
- * - Warm cream background (#f5f3ef) inspired by print design
- * - Terracotta accents (#c4604b) for visual interest
- * - Refined typography with proper tracking
- * - Smooth gesture interactions
- * - Magazine-like editorial aesthetic
+ * Inspired by print magazines and conscious design aesthetics.
+ * Features a clean, minimal layout with warm terracotta accents.
  */
 const DrawerShell = memo(function DrawerShell({
   isOpen,
@@ -52,6 +50,7 @@ const DrawerShell = memo(function DrawerShell({
   scrollKey,
   onSaveScrollPosition,
   restoreScrollPosition,
+  variant = 'default',
 }: DrawerShellProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLElement>(null);
@@ -68,7 +67,6 @@ const DrawerShell = memo(function DrawerShell({
   // Restore scroll position when it changes
   useEffect(() => {
     if (contentRef.current && restoreScrollPosition !== undefined && restoreScrollPosition > 0) {
-      // Small delay to ensure content is rendered
       requestAnimationFrame(() => {
         contentRef.current?.scrollTo({ top: restoreScrollPosition, behavior: 'instant' });
       });
@@ -82,11 +80,11 @@ const DrawerShell = memo(function DrawerShell({
     }
   }, [scrollKey, restoreScrollPosition]);
 
-  // Size configurations - slightly wider for editorial feel
+  // Size configurations
   const sizeConfig = {
     small: { width: '380px', mobileHeight: '50vh' },
     medium: { width: '440px', mobileHeight: '85vh' },
-    large: { width: '560px', mobileHeight: '92vh' },
+    large: { width: '520px', mobileHeight: '92vh' },
     full: { width: '100%', mobileHeight: '100vh' },
   };
 
@@ -114,16 +112,13 @@ const DrawerShell = memo(function DrawerShell({
     const handleKeyboard = (e: KeyboardEvent) => {
       if (!isOpen) return;
 
-      // Escape - close drawer
       if (e.key === 'Escape') {
         e.preventDefault();
         onClose();
         return;
       }
 
-      // Backspace or Left Arrow - go back if possible
       if ((e.key === 'Backspace' || e.key === 'ArrowLeft') && canGoBack && handleBack) {
-        // Only if not focused on an input
         const target = e.target as HTMLElement;
         if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && !target.isContentEditable) {
           e.preventDefault();
@@ -132,10 +127,8 @@ const DrawerShell = memo(function DrawerShell({
         }
       }
 
-      // Cmd/Ctrl + S - save (if there's a save action - bubble up)
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
-        // Dispatch custom event for components to handle
         window.dispatchEvent(new CustomEvent('drawer:save'));
         return;
       }
@@ -164,12 +157,9 @@ const DrawerShell = memo(function DrawerShell({
       const threshold = 80;
       const velocityX = info.velocity.x;
 
-      // Swipe right to go back (if can go back)
       if ((info.offset.x > threshold || velocityX > 400) && canGoBack) {
         handleBack();
-      }
-      // Swipe right to close (if at root level)
-      else if ((info.offset.x > threshold * 1.5 || velocityX > 600) && !canGoBack) {
+      } else if ((info.offset.x > threshold * 1.5 || velocityX > 600) && !canGoBack) {
         onClose();
       }
     },
@@ -191,22 +181,25 @@ const DrawerShell = memo(function DrawerShell({
       : { x: 0 },
   };
 
+  // Editorial styling - clean, minimal, magazine-like
+  const isEditorial = variant === 'editorial';
+
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop - warmer, more subtle */}
+          {/* Backdrop */}
           <motion.div
             initial="hidden"
             animate="visible"
             exit="hidden"
             variants={backdropVariants}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: 0.3 }}
             onClick={onClose}
-            className="fixed inset-0 z-50 bg-[#3a3937]/30 backdrop-blur-[2px]"
+            className="fixed inset-0 z-50 bg-black/40"
           />
 
-          {/* Drawer - Editorial Design */}
+          {/* Drawer */}
           <motion.div
             ref={drawerRef}
             initial="hidden"
@@ -215,12 +208,12 @@ const DrawerShell = memo(function DrawerShell({
             variants={drawerVariants}
             transition={{
               type: 'spring',
-              damping: 32,
-              stiffness: 320,
+              damping: 30,
+              stiffness: 300,
             }}
             drag={position === 'bottom' ? 'y' : 'x'}
             dragConstraints={position === 'bottom' ? { top: 0, bottom: 0 } : { left: 0, right: 0 }}
-            dragElastic={0.15}
+            dragElastic={0.1}
             dragDirectionLock
             onDragStart={() => setIsDragging(true)}
             onDragEnd={(e, info) => {
@@ -232,79 +225,63 @@ const DrawerShell = memo(function DrawerShell({
               }
             }}
             className={`
-              fixed z-50 flex flex-col
-              bg-[#f5f3ef] dark:bg-[#1c1a17]
-              shadow-2xl shadow-[#3a3937]/10 dark:shadow-black/30
+              fixed z-50 flex flex-col overflow-hidden
+              bg-[#faf8f5] dark:bg-[#1a1918]
               ${position === 'bottom'
-                ? 'inset-x-0 bottom-0 rounded-t-[28px] md:right-4 md:left-auto md:top-4 md:bottom-4 md:rounded-2xl'
-                : 'right-0 top-0 bottom-0 md:right-4 md:top-4 md:bottom-4 md:rounded-2xl'
+                ? 'inset-x-0 bottom-0 rounded-t-[20px] md:right-5 md:left-auto md:top-5 md:bottom-5 md:rounded-[16px]'
+                : 'right-0 top-0 bottom-0 md:right-5 md:top-5 md:bottom-5 md:rounded-[16px]'
               }
               ${className}
             `}
             style={{
               width: position === 'bottom' ? '100%' : width,
-              maxWidth: position === 'bottom' ? '100%' : `min(${width}, calc(100vw - 2rem))`,
+              maxWidth: position === 'bottom' ? '100%' : `min(${width}, calc(100vw - 2.5rem))`,
               height: position === 'bottom' ? mobileHeight : '100%',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
             }}
             role="dialog"
             aria-modal="true"
           >
-            {/* Drag Handle (mobile only) - editorial style */}
+            {/* Drag Handle (mobile only) */}
             {position === 'bottom' && (
-              <div className="flex-shrink-0 h-7 flex items-center justify-center cursor-grab active:cursor-grabbing md:hidden">
-                <div className="w-12 h-1 rounded-full bg-[#c9c1b6] dark:bg-[#484744]" />
+              <div className="flex-shrink-0 h-6 flex items-center justify-center cursor-grab active:cursor-grabbing md:hidden bg-[#faf8f5] dark:bg-[#1a1918]">
+                <div className="w-10 h-1 rounded-full bg-[#d4d0c8] dark:bg-[#3a3836]" />
               </div>
             )}
 
-            {/* Header - Editorial typography */}
-            <header className="flex-shrink-0 px-6 py-5 border-b border-[#ebe7e1] dark:border-[#2d2c2a]">
-              {headerContent || (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 min-w-0">
-                    {canGoBack && handleBack && (
-                      <button
-                        onClick={handleBack}
-                        className="p-2 -ml-2 rounded-xl hover:bg-[#ebe7e1] dark:hover:bg-[#2d2c2a] transition-colors"
-                        aria-label="Go back"
-                      >
-                        <ChevronLeft className="w-5 h-5 text-[#706f6a] dark:text-[#a9a8a4]" />
-                      </button>
-                    )}
-                    <div className="min-w-0">
-                      {title && (
-                        <h2 className="text-[18px] font-semibold tracking-tight text-[#3a3937] dark:text-[#f5f3ef] truncate">
-                          {title}
-                        </h2>
-                      )}
-                      {subtitle && (
-                        <p className="text-[13px] text-[#a9a8a4] dark:text-[#706f6a] truncate mt-0.5">
-                          {subtitle}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={onClose}
-                    className="p-2 rounded-xl hover:bg-[#ebe7e1] dark:hover:bg-[#2d2c2a] transition-colors"
-                    aria-label="Close"
-                  >
-                    <X className="w-5 h-5 text-[#706f6a] dark:text-[#a9a8a4]" />
-                  </button>
-                </div>
+            {/* Floating Navigation Controls */}
+            <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
+              {canGoBack && handleBack ? (
+                <button
+                  onClick={handleBack}
+                  className="pointer-events-auto w-10 h-10 flex items-center justify-center rounded-full bg-white/90 dark:bg-black/60 backdrop-blur-sm shadow-lg hover:bg-white dark:hover:bg-black/80 transition-colors"
+                  aria-label="Go back"
+                >
+                  <ChevronLeft className="w-5 h-5 text-[#3a3937] dark:text-[#faf8f5]" />
+                </button>
+              ) : (
+                <div />
               )}
-            </header>
+              <button
+                onClick={onClose}
+                className="pointer-events-auto w-10 h-10 flex items-center justify-center rounded-full bg-white/90 dark:bg-black/60 backdrop-blur-sm shadow-lg hover:bg-white dark:hover:bg-black/80 transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5 text-[#3a3937] dark:text-[#faf8f5]" />
+              </button>
+            </div>
 
-            {/* Content - Editorial scrollbar styling */}
+            {/* Content - Full bleed, no header */}
             <main
               ref={contentRef}
-              className="flex-1 overflow-y-auto overscroll-contain custom-scrollbar"
+              className="flex-1 overflow-y-auto overscroll-contain"
             >
               {children}
             </main>
 
-            {/* Footer - Editorial style */}
+            {/* Footer */}
             {footerContent && (
-              <footer className="flex-shrink-0 px-6 py-5 border-t border-[#ebe7e1] dark:border-[#2d2c2a] bg-[#f5f3ef] dark:bg-[#1c1a17] pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+              <footer className="flex-shrink-0 px-6 py-4 border-t border-[#e8e4dc] dark:border-[#2d2b29] bg-[#faf8f5] dark:bg-[#1a1918] pb-[calc(1rem+env(safe-area-inset-bottom))]">
                 {footerContent}
               </footer>
             )}
