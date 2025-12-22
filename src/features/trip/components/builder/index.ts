@@ -34,6 +34,11 @@ export { default as MobileTripFloatingBar } from './MobileTripFloatingBar';
 // Responsive wrapper (auto-switches between mobile/desktop)
 export { default as ResponsiveTripUI } from './ResponsiveTripUI';
 
+// Floating panels for upcoming trips
+export { default as MinimalFloatingTripPanel, useFloatingTripPanel } from '../MinimalFloatingTripPanel';
+export { default as FloatingTripPanelWrapper } from '../FloatingTripPanelWrapper';
+export type { TripItemData, UpcomingTrip, MinimalFloatingTripPanelProps } from '../MinimalFloatingTripPanel';
+
 // Panel components (side panel architecture)
 export { default as TripPanel } from './TripPanel';
 export { default as TripHeader } from './TripHeader';

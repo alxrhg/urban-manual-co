@@ -6,7 +6,7 @@ import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminEditModeProvider } from "@/contexts/AdminEditModeContext";
 import { TripBuilderProvider } from "@/contexts/TripBuilderContext";
-import { ResponsiveTripUI } from "@/features/trip/components/builder";
+import { ResponsiveTripUI, FloatingTripPanelWrapper } from "@/features/trip/components/builder";
 import { IntelligentDrawerProvider } from "@/features/shared/components/IntelligentDrawerContext";
 import IntelligentDrawer from "@/features/shared/components/IntelligentDrawer";
 import { DrawerProvider } from "@/contexts/DrawerContext";
@@ -279,6 +279,7 @@ export default function RootLayout({
                               <NotificationPrompt />
                               <DrawerMount />
                               <ResponsiveTripUI />
+                              <FloatingTripPanelWrapper />
                               <IntelligentDrawer />
                             </IntelligentDrawerProvider>
                           </TripBuilderProvider>
