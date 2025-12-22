@@ -75,12 +75,15 @@ export default function AdminDestinationsPage() {
       }
 
       const supabase = createClient({ skipValidation: true });
+      let savedSlug: string;
+
       if (editingDestination) {
         const { error } = await supabase
           .from('destinations')
           .update(data)
           .eq('slug', editingDestination.slug);
         if (error) throw error;
+        savedSlug = data.slug || editingDestination.slug;
       } else {
         if (!data.slug && data.name) {
           data.slug = data.name.toLowerCase()
@@ -91,12 +94,23 @@ export default function AdminDestinationsPage() {
           .from('destinations')
           .insert([data] as Destination[]);
         if (error) throw error;
+        savedSlug = data.slug as string;
       }
 
-      setShowCreateModal(false);
-      setEditingDestination(null);
+      // Fetch the updated/created destination to refresh the form
+      const { data: freshDestination } = await supabase
+        .from('destinations')
+        .select('*')
+        .eq('slug', savedSlug)
+        .single();
+
+      if (freshDestination) {
+        setEditingDestination(freshDestination);
+      }
+
+      // Refresh list in background, keep drawer open
       setRefreshKey(prev => prev + 1);
-      toast.success(editingDestination ? 'Destination updated successfully' : 'Destination created successfully');
+      toast.success(editingDestination ? 'Saved' : 'Created');
     } catch (e: unknown) {
       // ZERO JANK POLICY: Never expose raw error messages to users
       toast.safeError(e, 'Unable to save destination');
