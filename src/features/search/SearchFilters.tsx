@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, MapPin, Loader2, Search, ChevronDown, Globe2, SlidersHorizontal, Sparkles, Funnel } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
+import { Button } from '@/ui/button';
 
 export interface SearchFilters {
   searchQuery?: string;
@@ -144,7 +145,7 @@ export function SearchFiltersComponent({
 
   return (
     <div className="relative">
-      <button
+      <Button
         ref={buttonRef}
         onClick={() => {
           if (buttonRef.current) {
@@ -156,12 +157,8 @@ export function SearchFiltersComponent({
           }
           handleToggle(!isOpen);
         }}
-        className={`flex items-center justify-center gap-2 h-[44px] px-5 text-sm font-medium rounded-full transition-all duration-200 ease-out ${
-          useFunnelIcon
-            ? "bg-white dark:border-[rgba(255,255,255,0.10)] border border-gray-200 dark:text-[rgba(255,255,255,0.92)] text-gray-900 hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.12)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_4px_14px_rgba(0,0,0,0.4)] dark:[background:linear-gradient(to_bottom,rgba(255,255,255,0.10),rgba(255,255,255,0.04))]"
-            : "bg-gray-100 dark:border-[rgba(255,255,255,0.10)] border border-gray-200 dark:text-[rgba(255,255,255,0.92)] text-gray-900 rounded-full transition-colors hover:bg-gray-200 dark:hover:bg-[rgba(255,255,255,0.12)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_4px_14px_rgba(0,0,0,0.4)] dark:[background:linear-gradient(to_bottom,rgba(255,255,255,0.10),rgba(255,255,255,0.04))]"
-        }`}
-        style={{ borderRadius: '9999px' }}
+        variant="outline"
+        size="sm"
         aria-label="Toggle filters"
         aria-expanded={isOpen}
       >
@@ -172,11 +169,11 @@ export function SearchFiltersComponent({
         )}
         <span className="hidden md:inline">Filters</span>
         {hasActiveFilters && (
-          <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs bg-gray-900 dark:bg-white text-white dark:text-black rounded-full">
+          <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[11px] bg-gray-900 dark:bg-white text-white dark:text-black rounded-full">
             {Object.keys(filters).length}
           </span>
         )}
-      </button>
+      </Button>
       <span aria-live="polite" role="status" className="sr-only">
         {hasActiveFilters
           ? `${activeFilterCount} active ${activeFilterCount === 1 ? 'filter' : 'filters'}`

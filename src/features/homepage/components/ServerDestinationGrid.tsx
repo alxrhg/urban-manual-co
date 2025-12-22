@@ -2,6 +2,14 @@ import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
 import Image from 'next/image';
 import { MapPin } from 'lucide-react';
+import {
+  CARD_WRAPPER,
+  CARD_MEDIA,
+  CARD_TITLE,
+  CARD_META,
+  CARD_IMAGE_HOVER,
+  CARD_BADGE,
+} from '@/components/CardStyles';
 
 /**
  * Server-Rendered Destination Grid - Apple Design System
@@ -39,17 +47,17 @@ function ServerDestinationCard({
   return (
     <article
       data-destination-slug={destination.slug}
-      className="group relative w-full flex flex-col"
+      className={CARD_WRAPPER}
     >
       {/* Image Container - Apple-style rounded corners */}
-      <div className="relative aspect-[4/3] overflow-hidden rounded-[12px] sm:rounded-[16px] bg-gray-100 dark:bg-gray-800/50 mb-2 sm:mb-3">
+      <div className={CARD_MEDIA}>
         {imageUrl ? (
           <Image
             src={imageUrl}
             alt={`${destination.name} in ${capitalizeCity(destination.city)}${destination.category ? ` - ${destination.category}` : ''}`}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+            className={CARD_IMAGE_HOVER}
             quality={85}
             loading={priority ? 'eager' : 'lazy'}
             priority={priority}
@@ -60,14 +68,10 @@ function ServerDestinationCard({
           </div>
         )}
 
-        {/* Michelin Stars Badge - Apple-style subtle badge */}
+        {/* Michelin Stars Badge */}
         {typeof destination.michelin_stars === 'number' &&
           destination.michelin_stars > 0 && (
-            <div className="absolute bottom-2.5 left-2.5 z-10 px-2.5 py-1 rounded-full
-                            text-[11px] font-medium tracking-wide
-                            bg-white/90 dark:bg-black/70 backdrop-blur-md
-                            text-gray-700 dark:text-gray-200
-                            flex items-center gap-1.5 shadow-sm">
+            <div className={CARD_BADGE}>
               <img
                 src="/michelin-star.svg"
                 alt="Michelin star"
@@ -79,11 +83,11 @@ function ServerDestinationCard({
       </div>
 
       {/* Info Section - Apple-style clean typography */}
-      <div className="flex-1 flex flex-col gap-0.5">
-        <h3 className="text-[14px] font-medium leading-snug text-gray-900 dark:text-white line-clamp-2 tracking-[-0.01em]">
+      <div className="flex-1 flex flex-col">
+        <h3 className={CARD_TITLE}>
           {destination.name}
         </h3>
-        <p className="text-[12px] text-gray-500 dark:text-gray-400 line-clamp-1 tracking-[-0.01em]">
+        <p className={CARD_META}>
           {destination.micro_description ||
             (destination.category && destination.city
               ? `${destination.category} in ${capitalizeCity(destination.city)}`
