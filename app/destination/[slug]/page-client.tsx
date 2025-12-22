@@ -119,9 +119,19 @@ export default function DestinationPageClient({ initialDestination, parentDestin
   // Collect all images for gallery
   const allImages = [
     destination.image,
-    ...(enrichedData?.photos?.map((p: { photo_reference?: string; url?: string }) =>
-      p.url || (p.photo_reference ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=${p.photo_reference}&key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}` : null)
-    ) || [])
+    ...(enrichedData?.photos?.map((p: { photoReference?: string; photo_reference?: string; url?: string; name?: string }) => {
+      // If we have the full name (path), use our proxy endpoint
+      if (p.name) {
+        return `/api/google-place-photo?name=${encodeURIComponent(p.name)}&maxWidth=800`;
+      }
+      // If we have photoReference and place_id, construct the full path for proxy
+      const ref = p.photoReference || p.photo_reference;
+      if (ref && destination.place_id) {
+        const fullName = `places/${destination.place_id}/photos/${ref}`;
+        return `/api/google-place-photo?name=${encodeURIComponent(fullName)}&maxWidth=800`;
+      }
+      return null;
+    }) || [])
   ].filter((img): img is string => !!img);
 
   // Track destination view
