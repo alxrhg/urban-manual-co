@@ -234,10 +234,15 @@ function EnhancedTimelineItemComponent({
                   <CheckCircle2 className="w-3 h-3" />
                   <span className="text-[10px] font-medium">Confirmed</span>
                 </div>
-              ) : bookingStatus === 'pending' ? (
+              ) : bookingStatus === 'need-to-book' ? (
                 <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full">
                   <Clock className="w-3 h-3" />
-                  <span className="text-[10px] font-medium">Pending</span>
+                  <span className="text-[10px] font-medium">Needs Booking</span>
+                </div>
+              ) : bookingStatus === 'waitlist' ? (
+                <div className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full">
+                  <Clock className="w-3 h-3" />
+                  <span className="text-[10px] font-medium">Waitlist</span>
                 </div>
               ) : null}
             </div>
