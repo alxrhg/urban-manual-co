@@ -318,15 +318,15 @@ export default function TripPage() {
       onDragEnd={handleDragEnd}
     >
     <UndoProvider>
-    <main className="w-full px-4 sm:px-6 pt-16 pb-24 sm:py-20 min-h-screen bg-[var(--editorial-bg)]">
+    <main className="w-full px-6 md:px-12 lg:px-16 pt-16 pb-24 sm:py-20 min-h-screen bg-[var(--editorial-bg)]">
       <div className="max-w-6xl mx-auto">
-        {/* Back link */}
+        {/* Back link - Editorial subtle */}
         <Link
           href="/trips"
-          className="inline-flex items-center gap-1.5 text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors mb-6"
+          className="inline-flex items-center gap-2 text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors mb-8"
+          style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
         >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Trips
+          ← Trips
         </Link>
 
         {/* Desktop flex layout with sidebar */}
@@ -356,34 +356,21 @@ export default function TripPage() {
               />
             </div>
 
-            {/* Action bar: Edit toggle + Settings */}
-            <div className="flex items-center justify-between mt-4 mb-2">
+            {/* Action bar: Edit toggle + Settings - Editorial minimal */}
+            <div className="flex items-center justify-between mt-6 mb-4">
               <button
                 onClick={() => setIsEditMode(!isEditMode)}
-                className={`flex items-center gap-1.5 px-4 py-2 sm:px-4 sm:py-1.5 text-[12px] sm:text-[11px] font-medium rounded-full transition-colors ${
-                  isEditMode
-                    ? 'bg-[var(--editorial-accent)] text-white'
-                    : 'text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] border border-[var(--editorial-border)]'
-                }`}
+                className="text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+                style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
               >
-                {isEditMode ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                    Done
-                  </>
-                ) : (
-                  <>
-                    <Pencil className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                    Edit
-                  </>
-                )}
+                {isEditMode ? 'Done editing' : 'Edit itinerary'}
               </button>
 
               <button
                 onClick={() => { setShowTripSettings(true); setSelectedItem(null); }}
-                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+                className="hidden lg:block text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+                style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
               >
-                <Settings className="w-3.5 h-3.5" />
                 Settings
               </button>
             </div>
@@ -425,35 +412,27 @@ export default function TripPage() {
           />
         </div>
 
-        {/* Day Tabs */}
+        {/* Day Tabs - Editorial minimal style */}
         {days.length > 0 && (
-          <div className="sticky top-16 z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 py-3 bg-[var(--editorial-bg)] mt-6">
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+          <div className="sticky top-16 z-30 py-4 bg-[var(--editorial-bg)] mt-8 border-b border-[var(--editorial-border)]">
+            <div className="flex gap-8 overflow-x-auto no-scrollbar">
               {days.map((day) => {
                 const isSelected = day.dayNumber === selectedDayNumber;
                 const dayDate = day.date
                   ? new Date(day.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                   : null;
-                const dayWeather = day.date ? weatherByDate[day.date] : undefined;
                 return (
                   <button
                     key={day.dayNumber}
                     onClick={() => setSelectedDayNumber(day.dayNumber)}
-                    className={`flex-shrink-0 flex flex-col items-center px-5 py-2.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-all ${
+                    className={`flex-shrink-0 pb-4 text-[13px] whitespace-nowrap transition-all -mb-px ${
                       isSelected
-                        ? 'bg-[var(--editorial-accent)] text-white'
-                        : 'bg-[var(--editorial-bg-elevated)] text-[var(--editorial-text-secondary)] hover:bg-[var(--editorial-border-subtle)] border border-[var(--editorial-border)]'
+                        ? 'text-[var(--editorial-text-primary)] border-b-2 border-[var(--editorial-text-primary)]'
+                        : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
                     }`}
+                    style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
                   >
-                    <span className="flex items-center gap-1.5">
-                      {isSelected && <Clock className="w-3 h-3" />}
-                      {dayDate || `Day ${day.dayNumber}`}
-                    </span>
-                    {dayWeather && (
-                      <span className={`text-[11px] mt-0.5 ${isSelected ? 'text-white/80' : 'text-[var(--editorial-text-tertiary)]'}`}>
-                        {dayWeather.tempMax}° {dayWeather.description.split(' ')[0]}
-                      </span>
-                    )}
+                    {dayDate || `Day ${day.dayNumber}`}
                   </button>
                 );
               })}
@@ -1161,23 +1140,20 @@ function DaySection({
           : ''
       }`}
     >
-      {/* Day header - editorial style with serif */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
+      {/* Day header - Editorial minimal style */}
+      <div className="flex items-baseline justify-between mb-6 mt-8">
+        <div className="flex items-baseline gap-4">
           <h3
-            className="text-[16px] font-normal text-[var(--editorial-text-primary)]"
+            className="text-[1.25rem] md:text-[1.5rem] font-normal text-[var(--editorial-text-primary)]"
             style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
           >
-            Day {dayNumber}{longDateDisplay && `: ${longDateDisplay}`}
+            {longDateDisplay || `Day ${dayNumber}`}
           </h3>
-          {/* Weather badge - warm styling */}
+          {/* Weather - subtle inline text */}
           {weather && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-full">
-              <WeatherIcon code={weather.weatherCode} className="w-3.5 h-3.5 text-[var(--editorial-accent)]" />
-              <span className="text-[12px] text-[var(--editorial-text-secondary)]">
-                {weather.tempMax}° {weather.description}
-              </span>
-            </div>
+            <span className="text-[12px] text-[var(--editorial-text-tertiary)]">
+              {weather.tempMax}° · {weather.description}
+            </span>
           )}
           {/* Day warnings - only shows when there's a problem */}
           <DayIntelligence
@@ -2339,7 +2315,7 @@ function ItemRow({
     return parts[0]?.trim().toUpperCase().slice(0, 3) || '---';
   };
 
-  // Special premium flight card rendering
+  // Flight card - Editorial clean style
   if (itemType === 'flight') {
     const notes = item.parsedNotes;
     const originCode = parseAirportCode(notes?.from);
@@ -2348,10 +2324,6 @@ function ItemRow({
     const flightNum = notes?.flightNumber || '';
     const depTime = notes?.departureTime;
     const arrTime = notes?.arrivalTime;
-    const terminal = notes?.terminal;
-    const gate = notes?.gate;
-    const seat = notes?.seatNumber;
-    const flightConfirmation = notes?.confirmationNumber;
 
     return (
       <Reorder.Item
@@ -2361,13 +2333,12 @@ function ItemRow({
         className={`${isEditMode ? 'cursor-grab active:cursor-grabbing' : ''} ${isDragging ? 'z-10' : ''}`}
         dragListener={isEditMode}
       >
+        {/* Editorial list-style flight item */}
         <div
           className={`
-            relative rounded-2xl overflow-hidden transition-all cursor-pointer
-            bg-stone-50 dark:bg-gray-800/60
-            ring-1 ring-stone-200/60 dark:ring-gray-700/50
-            hover:ring-stone-300 dark:hover:ring-gray-600
-            ${isDragging ? 'shadow-xl ring-2 ring-stone-400 dark:ring-gray-500' : ''}
+            relative py-4 transition-all cursor-pointer group
+            border-b border-[var(--editorial-border-subtle)]
+            ${isDragging ? 'bg-[var(--editorial-bg-elevated)] shadow-lg' : 'hover:bg-[var(--editorial-bg-elevated)]/50'}
           `}
           onClick={() => {
             const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
@@ -2378,99 +2349,40 @@ function ItemRow({
             }
           }}
         >
-          {/* Main Card Content */}
-          <div className="p-4">
-            {/* Header Row: Route + Status */}
-            <div className="flex items-start justify-between mb-3">
-              {/* Large Route Display */}
-              <div className="flex items-center gap-2">
-                <div className="text-center">
-                  <p className="text-xl font-semibold tracking-tight text-stone-900 dark:text-white font-mono">
-                    {originCode}
-                  </p>
-                </div>
-
-                {/* Flight Path */}
-                <div className="flex items-center gap-1 px-1.5">
-                  <div className="w-1 h-1 rounded-full bg-stone-300 dark:bg-gray-600" />
-                  <div className="w-8 h-px bg-stone-300 dark:bg-gray-600 relative">
-                    <Plane className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 text-stone-400 dark:text-gray-500" />
-                  </div>
-                  <div className="w-1 h-1 rounded-full bg-stone-300 dark:bg-gray-600" />
-                </div>
-
-                <div className="text-center">
-                  <p className="text-xl font-semibold tracking-tight text-stone-900 dark:text-white font-mono">
-                    {destCode}
-                  </p>
-                </div>
-              </div>
-
-              {/* Status Badge */}
-              <div className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-50 text-green-700 dark:bg-green-900/40 dark:text-green-300">
-                Confirmed
-              </div>
+          <div className="flex items-start gap-4">
+            {/* Time column */}
+            <div className="w-16 flex-shrink-0 text-right">
+              <span className="text-[12px] text-[var(--editorial-text-tertiary)] tabular-nums">
+                {depTime ? formatTime(depTime) : ''}
+              </span>
             </div>
 
-            {/* Dotted Perforation Line */}
-            <div className="relative my-3">
-              <div className="w-full border-t border-dashed border-stone-200 dark:border-gray-700" />
-              <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-2 h-4 bg-[var(--editorial-bg-elevated)] rounded-r-full" />
-              <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-2 h-4 bg-[var(--editorial-bg-elevated)] rounded-l-full" />
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <p
+                className="text-[14px] text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors"
+                style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+              >
+                {originCode} → {destCode}
+              </p>
+              <p className="text-[12px] text-[var(--editorial-text-tertiary)] mt-0.5">
+                {[airline, flightNum].filter(Boolean).join(' ')}
+                {arrTime && ` · arrives ${formatTime(arrTime)}`}
+              </p>
             </div>
 
-            {/* Time Row */}
-            <div className="flex items-center justify-between">
-              {/* Departure */}
-              <div>
-                <p className="text-[9px] uppercase tracking-wider text-stone-400 dark:text-gray-500">Depart</p>
-                <p className="text-base font-semibold text-stone-900 dark:text-white font-mono tabular-nums">
-                  {depTime ? formatTime(depTime) : '--:--'}
-                </p>
-              </div>
+            {/* Status - subtle text */}
+            <span className="text-[11px] text-[var(--editorial-text-tertiary)] italic">
+              confirmed
+            </span>
 
-              {/* Nonstop indicator */}
-              <div className="text-center">
-                <p className="text-[9px] text-stone-400 dark:text-gray-500">Nonstop</p>
+            {/* Edit mode drag handle */}
+            {isEditMode && (
+              <div className="flex-shrink-0 touch-none cursor-grab active:cursor-grabbing opacity-40 group-hover:opacity-100 transition-opacity">
+                <GripVertical className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
               </div>
-
-              {/* Arrival */}
-              <div className="text-right">
-                <p className="text-[9px] uppercase tracking-wider text-stone-400 dark:text-gray-500">Arrive</p>
-                <p className="text-base font-semibold text-stone-900 dark:text-white font-mono tabular-nums">
-                  {arrTime ? formatTime(arrTime) : '--:--'}
-                </p>
-              </div>
-            </div>
-
-            {/* Flight Identity Row */}
-            <div className="flex items-center justify-between mt-3 pt-2 border-t border-stone-100 dark:border-gray-700/50">
-              <div className="flex items-center gap-2">
-                <p className="text-xs font-medium text-stone-600 dark:text-gray-400">
-                  {airline}
-                </p>
-                {flightNum && (
-                  <p className="text-xs text-stone-400 dark:text-gray-500 font-mono">
-                    {flightNum}
-                  </p>
-                )}
-              </div>
-
-              {/* Terminal/Gate/Seat */}
-              <div className="flex items-center gap-2 text-[10px] text-stone-400 dark:text-gray-500 font-mono">
-                {terminal && <span>T{terminal}</span>}
-                {gate && <span>Gate {gate}</span>}
-                {seat && <span>{seat}</span>}
-              </div>
-            </div>
+            )}
           </div>
-
-          {/* Edit mode drag handle indicator */}
-          {isEditMode && (
-            <div className="absolute top-2 left-2 opacity-60">
-              <GripVertical className="w-4 h-4 text-stone-400" />
-            </div>
-          )}
         </div>
 
         {/* Expanded details (mobile) */}
@@ -2504,11 +2416,12 @@ function ItemRow({
       className={`${isEditMode ? 'cursor-grab active:cursor-grabbing' : ''} ${isDragging ? 'z-10' : ''}`}
       dragListener={isEditMode}
     >
+      {/* Editorial list-style item - minimal borders, clean typography */}
       <div
         className={`
-          relative rounded-2xl overflow-hidden transition-all cursor-pointer
-          bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)]
-          ${isDragging ? 'shadow-xl ring-2 ring-stone-400 dark:ring-gray-500' : 'hover:shadow-md'}
+          relative py-4 transition-all cursor-pointer group
+          border-b border-[var(--editorial-border-subtle)]
+          ${isDragging ? 'bg-[var(--editorial-bg-elevated)] shadow-lg' : 'hover:bg-[var(--editorial-bg-elevated)]/50'}
         `}
         onClick={() => {
           const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
@@ -2519,134 +2432,87 @@ function ItemRow({
           }
         }}
       >
-        <div className="p-4">
-          <div className="flex items-center gap-3">
-            {/* Drag handle - only visible in edit mode */}
-            {isEditMode && (
-              <div className="flex-shrink-0 touch-none cursor-grab active:cursor-grabbing">
-                <GripVertical className="w-4 h-4 text-gray-400 opacity-60" />
-              </div>
+        <div className="flex items-start gap-4">
+          {/* Time column - fixed width */}
+          <div className="w-16 flex-shrink-0 text-right">
+            {inlineTimes && (
+              <span className="text-[12px] text-[var(--editorial-text-tertiary)] tabular-nums">
+                {inlineTimes.split(' ')[0]}
+              </span>
             )}
+          </div>
 
-            {/* Icon */}
-            <div className="w-10 h-10 rounded-xl overflow-hidden bg-[var(--editorial-bg-elevated)] flex-shrink-0 flex items-center justify-center">
-              {iconType === 'hotel' ? (
-                <Hotel className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
-              ) : iconType === 'checkin' ? (
-                <DoorOpen className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
-              ) : iconType === 'checkout' ? (
-                <LogOut className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
-              ) : iconType === 'breakfast' ? (
-                <UtensilsCrossed className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
-              ) : iconType === 'train' ? (
-                <TrainIcon className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
-              ) : iconType === 'activity' ? (
-                (() => {
-                  const aType = (extraData as any).activityType;
-                  switch (aType) {
-                    case 'nap': return <BedDouble className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
-                    case 'pool': return <Waves className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
-                    case 'spa': return <Sparkles className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
-                    case 'gym': return <Dumbbell className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
-                    case 'breakfast-at-hotel': return <Coffee className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
-                    case 'getting-ready': return <Shirt className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
-                    case 'packing': case 'checkout-prep': return <Package className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
-                    case 'sunset': return <Sun className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
-                    case 'work': return <Briefcase className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
-                    case 'call': return <Phone className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
-                    case 'shopping-time': return <ShoppingBag className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
-                    case 'photo-walk': return <Camera className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
-                    default: return <Clock className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
-                  }
-                })()
-              ) : image && !imageError ? (
-                <Image
-                  src={image}
-                  alt=""
-                  width={40}
-                  height={40}
-                  className="w-full h-full object-cover"
-                  onError={() => setImageError(true)}
-                />
-              ) : (
-                <MapPin className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
-              )}
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <p
+              className="text-[14px] text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors"
+              style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+            >
+              {title}
+            </p>
+            <p className="text-[12px] text-[var(--editorial-text-tertiary)] mt-0.5">
+              {subtitle || (item.destination?.category) || ''}
+            </p>
+          </div>
+
+          {/* Edit mode drag handle */}
+          {isEditMode && (
+            <div className="flex-shrink-0 touch-none cursor-grab active:cursor-grabbing opacity-40 group-hover:opacity-100 transition-opacity">
+              <GripVertical className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
             </div>
+          )}
 
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-stone-900 dark:text-white truncate">{title}</p>
-              <p className="text-xs text-[var(--editorial-text-tertiary)] truncate">
-                {subtitle || (item.destination?.category) || 'Place'}
-              </p>
-            </div>
+          {/* More options - subtle */}
+          <div className="relative opacity-0 group-hover:opacity-100 transition-opacity" ref={actionsRef}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowActions(!showActions);
+              }}
+              className="w-6 h-6 flex items-center justify-center rounded text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+            >
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
 
-            {/* Rating badge */}
-            {rating && (
-              <div className="flex items-center gap-0.5 mr-2">
-                <span className="text-xs text-red-500">●</span>
-              </div>
-            )}
-
-            {/* More options button */}
-            <div className="relative" ref={actionsRef}>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowActions(!showActions);
-                }}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                <MoreHorizontal className="w-5 h-5 text-gray-400" />
-              </button>
-
-              {/* Actions dropdown */}
-              <AnimatePresence>
-                {showActions && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute right-0 top-full mt-1 z-50 bg-[var(--editorial-bg-elevated)] rounded-2xl shadow-lg border border-[var(--editorial-border)] overflow-hidden min-w-[140px]"
+            {/* Actions dropdown */}
+            <AnimatePresence>
+              {showActions && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-full mt-1 z-50 bg-[var(--editorial-bg-elevated)] rounded-lg shadow-lg border border-[var(--editorial-border)] overflow-hidden min-w-[120px]"
+                >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowActions(false);
+                      onToggle();
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors"
+                    style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
                   >
+                    Edit
+                  </button>
+                  {onRemove && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowActions(false);
-                        onToggle();
+                        onRemove();
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[var(--editorial-accent)] hover:bg-[var(--editorial-border-subtle)] transition-colors"
+                      style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
                     >
-                      <Pencil className="w-4 h-4" />
-                      Edit
+                      Remove
                     </button>
-                    {onRemove && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowActions(false);
-                          onRemove();
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Delete
-                      </button>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
-
-        {/* Edit mode drag handle indicator */}
-        {isEditMode && (
-          <div className="absolute top-2 left-2 opacity-60">
-            <GripVertical className="w-4 h-4 text-stone-400" />
-          </div>
-        )}
       </div>
 
       {/* Expanded edit form - mobile only (desktop uses sidebar) */}

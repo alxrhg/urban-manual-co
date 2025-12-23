@@ -288,45 +288,36 @@ export function TripEditorHeader({
 
   return (
     <div className="group">
-      {/* Static map cover */}
-      <div className="relative aspect-[3/1] rounded-xl overflow-hidden mb-4">
-        {staticMapUrl && !mapError ? (
-          <>
-            <Image
-              src={staticMapUrl}
-              alt={`Map of ${primaryCity}`}
-              fill
-              className="object-cover"
-              unoptimized
-              onError={() => setMapError(true)}
-            />
-            {/* City overlay */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-[var(--editorial-bg-elevated)] rounded-full px-3 py-1.5 shadow-lg flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-[var(--editorial-accent)]" />
-              <span className="text-xs font-medium text-[var(--editorial-text-primary)]">{primaryCity}</span>
-              <span className="text-xs text-[var(--editorial-text-tertiary)]">{totalItems} pinned</span>
-            </div>
-          </>
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[var(--editorial-border-subtle)] to-[var(--editorial-border)] flex items-center justify-center">
-            <div className="text-center">
-              <MapPin className="w-8 h-8 text-[var(--editorial-accent)] mx-auto mb-1" />
-              <span className="text-xs text-[var(--editorial-text-secondary)]">{primaryCity || 'Add places to see map'}</span>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Static map cover - Optional, minimal */}
+      {staticMapUrl && !mapError && (
+        <div className="relative aspect-[4/1] overflow-hidden mb-8">
+          <Image
+            src={staticMapUrl}
+            alt={`Map of ${primaryCity}`}
+            fill
+            className="object-cover opacity-60"
+            unoptimized
+            onError={() => setMapError(true)}
+          />
+        </div>
+      )}
 
-      {/* Title and info - click to edit */}
+      {/* Title and info - Editorial style, click to edit */}
       <div onClick={() => setIsEditing(true)} className="cursor-pointer">
+        <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-3">
+          {primaryCity || 'Trip'}
+        </p>
         <h1
-          className="text-xl font-normal text-[var(--editorial-text-primary)] group-hover:opacity-70 transition-opacity"
+          className="text-[2rem] md:text-[2.5rem] font-normal text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors leading-tight mb-3"
           style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
         >
           {trip.title}
         </h1>
-        <p className="text-sm text-[var(--editorial-text-tertiary)] group-hover:opacity-70 transition-opacity">
-          {[primaryCity, dateDisplay, `${totalItems} ${totalItems === 1 ? 'place' : 'places'}`].filter(Boolean).join(' · ')}
+        <p
+          className="text-[13px] text-[var(--editorial-text-secondary)] group-hover:opacity-70 transition-opacity"
+          style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+        >
+          {[dateDisplay, totalItems > 0 ? `${totalItems} ${totalItems === 1 ? 'place' : 'places'}` : null].filter(Boolean).join(' · ')}
         </p>
       </div>
     </div>

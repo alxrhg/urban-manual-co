@@ -251,8 +251,8 @@ export function ClientDestinationGrid() {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Grid with Quick Actions on Hover */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 sm:gap-5 md:gap-6 lg:gap-7 items-start">
+      {/* Grid with Quick Actions on Hover - Editorial spacing */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 sm:gap-8 md:gap-10 lg:gap-12 items-start">
         {displayedDestinations.map((destination, index) => (
           <DestinationCard
             key={destination.slug}
@@ -265,86 +265,52 @@ export function ClientDestinationGrid() {
         ))}
       </div>
 
-      {/* Pagination Controls - Apple style */}
+      {/* Pagination Controls - Editorial minimal style */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 sm:gap-4 mt-10 sm:mt-12 mb-8">
+        <div className="flex items-center justify-center gap-6 mt-16 sm:mt-20 mb-8">
           {/* Previous Button */}
           <button
             onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
             disabled={currentPage === 1}
-            className="flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 rounded-full
-                       border border-gray-200 dark:border-white/10
-                       bg-white dark:bg-white/5
+            className="text-[13px] text-[var(--editorial-text-tertiary)]
                        disabled:opacity-30 disabled:cursor-not-allowed
-                       hover:bg-gray-50 dark:hover:bg-white/10
-                       active:bg-gray-100 dark:active:bg-white/15
-                       transition-all duration-200"
+                       hover:text-[var(--editorial-text-primary)]
+                       transition-colors"
             aria-label="Previous page"
           >
-            <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            <ChevronLeft className="w-5 h-5" />
           </button>
 
-          {/* Page Numbers - show fewer on mobile */}
-          <div className="flex items-center gap-0.5 sm:gap-1">
-            {Array.from({ length: Math.min(totalPages, typeof window !== 'undefined' && window.innerWidth < 640 ? 5 : 7) }, (_, i) => {
-              let pageNum: number;
-              const maxVisible = 7; // Use consistent logic, CSS will handle visibility
-
-              // Smart page number display
-              if (totalPages <= maxVisible) {
-                pageNum = i + 1;
-              } else if (currentPage <= 4) {
-                pageNum = i + 1;
-              } else if (currentPage >= totalPages - 3) {
-                pageNum = totalPages - maxVisible + 1 + i;
-              } else {
-                pageNum = currentPage - 3 + i;
-              }
-
-              return (
-                <button
-                  key={pageNum}
-                  onClick={() => setCurrentPage(pageNum)}
-                  className={`w-10 h-10 sm:w-10 sm:h-10 rounded-full text-[13px] font-medium transition-all duration-200
-                             active:scale-95 ${
-                    currentPage === pageNum
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 active:bg-gray-200 dark:active:bg-white/15'
-                  } ${i >= 5 ? 'hidden sm:flex items-center justify-center' : 'flex items-center justify-center'}`}
-                >
-                  {pageNum}
-                </button>
-              );
-            })}
-          </div>
+          {/* Page indicator - minimal */}
+          <span
+            className="text-[13px] text-[var(--editorial-text-secondary)]"
+            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+          >
+            {currentPage} of {totalPages}
+          </span>
 
           {/* Next Button */}
           <button
             onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
             disabled={currentPage === totalPages}
-            className="flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 rounded-full
-                       border border-gray-200 dark:border-white/10
-                       bg-white dark:bg-white/5
+            className="text-[13px] text-[var(--editorial-text-tertiary)]
                        disabled:opacity-30 disabled:cursor-not-allowed
-                       hover:bg-gray-50 dark:hover:bg-white/10
-                       active:bg-gray-100 dark:active:bg-white/15
-                       transition-all duration-200"
+                       hover:text-[var(--editorial-text-primary)]
+                       transition-colors"
             aria-label="Next page"
           >
-            <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            <ChevronRight className="w-5 h-5" />
           </button>
         </div>
       )}
 
-      {/* Results count & keyboard hint */}
-      <div className="text-center text-[13px] text-gray-400 dark:text-gray-500 mb-8">
+      {/* Results count - subtle, editorial */}
+      <div
+        className="text-center text-[12px] text-[var(--editorial-text-tertiary)] mb-12"
+        style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+      >
         <span>
-          Showing {(currentPage - 1) * displayedDestinations.length + 1}-
-          {Math.min(currentPage * displayedDestinations.length, filteredDestinations.length)} of {filteredDestinations.length} destinations
-        </span>
-        <span className="hidden md:inline ml-2">
-          • Use <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 font-mono text-[11px]">←</kbd>{' '}
-          <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 font-mono text-[11px]">→</kbd> to navigate
+          {filteredDestinations.length} places curated
         </span>
       </div>
     </div>

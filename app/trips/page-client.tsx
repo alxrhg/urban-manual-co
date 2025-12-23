@@ -4,7 +4,6 @@ import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { Plus, MapPin, Calendar } from 'lucide-react';
 import { formatDestinationsFromField } from '@/types/trip';
 import {
   getTripState,
@@ -121,42 +120,43 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
   }, [userId, router]);
 
   return (
-    <main className="w-full px-4 sm:px-6 md:px-10 py-20 min-h-screen bg-[var(--editorial-bg)]">
-        {/* Header - Editorial style */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
+    <main className="w-full px-6 md:px-12 lg:px-16 py-20 min-h-screen bg-[var(--editorial-bg)]">
+        {/* Header - Editorial style with generous whitespace */}
+        <div className="mb-16">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-4">
+            Your Journeys
+          </p>
+          <div className="flex items-baseline justify-between">
             <h1
-              className="text-3xl font-normal text-[var(--editorial-text-primary)]"
+              className="text-[2.5rem] md:text-[3rem] font-normal text-[var(--editorial-text-primary)] leading-tight"
               style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
             >
               Trips
             </h1>
             <button
               onClick={() => setShowWizard(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-[var(--editorial-accent)] text-white text-sm font-medium rounded-lg hover:bg-[var(--editorial-accent-hover)] transition-colors"
+              className="text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+              style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
             >
-              <Plus className="w-4 h-4" />
               New Trip
             </button>
           </div>
-          <p className="text-sm text-[var(--editorial-text-secondary)]">
-            {trips.length} {trips.length === 1 ? 'trip' : 'trips'}
-          </p>
         </div>
 
-        {/* Tab Navigation - Editorial style */}
+        {/* Tab Navigation - Editorial minimal style */}
         {categorizedTrips.upcoming.length > 0 && categorizedTrips.past.length > 0 && (
-          <div className="mb-12">
-            <div className="flex flex-wrap gap-x-5 gap-y-2 text-[13px]">
+          <div className="mb-16 border-b border-[var(--editorial-border)]">
+            <div className="flex gap-8 text-[13px]">
               {(['all', 'upcoming', 'past'] as FilterTab[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveFilter(tab)}
-                  className={`transition-all duration-200 ${
+                  className={`pb-4 transition-all duration-200 ${
                     activeFilter === tab
-                      ? 'font-medium text-[var(--editorial-text-primary)]'
-                      : 'font-medium text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
+                      ? 'text-[var(--editorial-text-primary)] border-b-2 border-[var(--editorial-text-primary)] -mb-px'
+                      : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
                   }`}
+                  style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
@@ -167,27 +167,35 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
 
         {/* Trip List */}
         {trips.length === 0 ? (
-          /* Empty State - No trips at all */
-          <div className="text-center py-16 border border-dashed border-[var(--editorial-border)] rounded-lg bg-[var(--editorial-bg-elevated)]">
-            <MapPin className="h-12 w-12 mx-auto text-[var(--editorial-text-tertiary)] mb-4" />
-            <p className="text-sm text-[var(--editorial-text-secondary)] mb-6">No trips yet</p>
+          /* Empty State - Editorial minimal */
+          <div className="text-center py-24">
+            <p
+              className="text-[15px] text-[var(--editorial-text-secondary)] mb-8"
+              style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+            >
+              No trips planned yet
+            </p>
             <button
               onClick={() => setShowWizard(true)}
-              className="px-5 py-2.5 bg-[var(--editorial-accent)] text-white text-sm font-medium rounded-lg hover:bg-[var(--editorial-accent-hover)] transition-colors"
+              className="text-[13px] text-[var(--editorial-text-primary)] hover:text-[var(--editorial-accent)] transition-colors"
+              style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
             >
-              Create your first trip
+              Plan your first journey →
             </button>
           </div>
         ) : filteredTrips.length === 0 ? (
           /* Empty State - Filter has no results */
-          <div className="text-center py-12">
-            <p className="text-sm text-[var(--editorial-text-tertiary)]">
+          <div className="text-center py-16">
+            <p
+              className="text-[14px] text-[var(--editorial-text-tertiary)] italic"
+              style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+            >
               No {activeFilter === 'upcoming' ? 'upcoming' : 'past'} trips
             </p>
           </div>
         ) : (
-          /* Trip Grid */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          /* Trip List - Editorial vertical layout with generous spacing */
+          <div className="space-y-12 max-w-2xl">
             {filteredTrips.map((trip) => (
               <TripCard key={trip.id} trip={trip} />
             ))}
@@ -205,57 +213,60 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
 }
 
 /**
- * Trip Card - Editorial design style
+ * Trip Card - Editorial "Of Study" style
+ * Minimal, no borders, serif typography, subtle status
  */
 function TripCard({ trip }: { trip: TripWithStats }) {
   const state = getTripState(trip.end_date, trip.start_date, trip.stats);
   const destinations = formatDestinationsFromField(trip.destination);
   const totalItems = getTotalItems(trip.stats);
 
+  // Format dates elegantly
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const dateDisplay = trip.start_date && trip.end_date
+    ? `${formatDate(trip.start_date)} – ${formatDate(trip.end_date)}`
+    : trip.start_date
+    ? formatDate(trip.start_date)
+    : null;
+
   return (
     <Link
       href={`/trips/${trip.id}`}
-      className="flex flex-col border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)] rounded-lg overflow-hidden hover:bg-[var(--editorial-border-subtle)] transition-colors"
+      className="block group"
     >
-      <div className="text-left p-5 flex-1">
-        <h3 className="font-medium text-[15px] text-[var(--editorial-text-primary)] mb-2 line-clamp-2">{trip.title}</h3>
-        {trip.description && (
-          <p className="text-[13px] text-[var(--editorial-text-secondary)] line-clamp-2 mb-3">{trip.description}</p>
-        )}
-        <div className="space-y-1.5 text-[12px] text-[var(--editorial-text-tertiary)]">
-          {destinations && (
-            <div className="flex items-center gap-2">
-              <MapPin className="h-3.5 w-3.5" />
-              <span>{destinations}</span>
-            </div>
-          )}
-          {(trip.start_date || trip.end_date) && (
-            <div className="flex items-center gap-2">
-              <Calendar className="h-3.5 w-3.5" />
-              <span>
-                {trip.start_date ? new Date(trip.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
-                {trip.end_date && ` – ${new Date(trip.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
-              </span>
-            </div>
-          )}
-          {totalItems > 0 && (
-            <div className="text-[12px] text-[var(--editorial-text-tertiary)] pt-1">
-              {totalItems} {totalItems === 1 ? 'place' : 'places'}
-            </div>
-          )}
-          {state && (
-            <div className="pt-2">
-              <span className={`capitalize text-[11px] px-2.5 py-1 rounded-md font-medium ${
-                state === 'upcoming'
-                  ? 'bg-[var(--editorial-accent)]/10 text-[var(--editorial-accent)]'
-                  : 'bg-[var(--editorial-border)] text-[var(--editorial-text-secondary)]'
-              }`}>
-                {state}
-              </span>
-            </div>
-          )}
-        </div>
+      {/* Trip Title - Serif */}
+      <h3
+        className="text-[1.25rem] md:text-[1.5rem] font-normal text-[var(--editorial-text-primary)] mb-2
+                   group-hover:text-[var(--editorial-accent)] transition-colors leading-tight"
+        style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+      >
+        {trip.title}
+      </h3>
+
+      {/* Meta info - Clean text layout */}
+      <div className="text-[13px] text-[var(--editorial-text-secondary)] mb-1">
+        {dateDisplay && <span>{dateDisplay}</span>}
+        {destinations && dateDisplay && <span className="mx-2">·</span>}
+        {destinations && <span className="lowercase">{destinations}</span>}
       </div>
+
+      {/* Status - Subtle italic text, not a badge */}
+      <p className="text-[12px] text-[var(--editorial-text-tertiary)]">
+        {state && (
+          <span className="italic">{state}</span>
+        )}
+        {state && totalItems > 0 && <span className="mx-2">·</span>}
+        {totalItems > 0 && (
+          <span>{totalItems} {totalItems === 1 ? 'place' : 'places'}</span>
+        )}
+      </p>
+
+      {/* Subtle separator line */}
+      <div className="mt-12 border-b border-[var(--editorial-border)]" />
     </Link>
   );
 }

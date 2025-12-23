@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Globe, Loader2, X } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
@@ -85,47 +85,47 @@ export default function NavigationBar() {
   }, [setMichelinOnly, setSelectedCity, setSelectedCategory]);
 
   return (
-    <div className="mb-6">
+    <div className="mb-10">
       <div className="flex justify-between items-center">
-        {/* Left side - Results count and clear filters */}
-        <div className="flex items-center gap-3">
-          <p className="text-[13px] text-[var(--editorial-text-secondary)]">
-            {filteredDestinations.length} destinations
+        {/* Left side - Subtle results count */}
+        <div className="flex items-center gap-4">
+          <p
+            className="text-[12px] text-[var(--editorial-text-tertiary)] tracking-wide"
+            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+          >
+            {filteredDestinations.length} places
           </p>
           {hasFilters && (
             <button
               onClick={clearFilters}
-              className="flex items-center gap-1 text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+              className="text-[11px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
             >
-              <X className="h-3 w-3" />
-              Clear
+              Clear filters
             </button>
           )}
         </div>
 
-        {/* Right side - Actions */}
-        <div className="flex items-center gap-3">
-          {/* Create Trip */}
+        {/* Right side - Minimal actions */}
+        <div className="flex items-center gap-6">
+          {/* Create Trip - Text link style */}
           <button
             onClick={handleCreateTrip}
             disabled={creatingTrip}
-            className="flex h-10 flex-shrink-0 items-center justify-center gap-2 rounded-lg
-                       bg-[var(--editorial-accent)] px-4 text-[13px] font-medium
-                       text-white
-                       disabled:opacity-50 hover:bg-[var(--editorial-accent-hover)]
-                       active:scale-[0.98] transition-all duration-200"
+            className="text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)]
+                       disabled:opacity-50 transition-colors"
+            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
           >
             {creatingTrip ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Creating...
+              </span>
             ) : (
-              <Plus className="h-4 w-4" />
+              'Create Trip'
             )}
-            <span className="hidden sm:inline">
-              {creatingTrip ? 'Creating...' : 'Create Trip'}
-            </span>
           </button>
 
-          {/* Filters */}
+          {/* Filters - Minimal */}
           <SearchFiltersComponent
             filters={advancedFilters}
             onFiltersChange={handleFiltersChange}
@@ -135,17 +135,14 @@ export default function NavigationBar() {
             useFunnelIcon={true}
           />
 
-          {/* Discover by Cities */}
+          {/* Discover by Cities - Text link */}
           <Link
             href="/cities"
-            className="hidden sm:flex h-10 flex-shrink-0 items-center justify-center gap-2 rounded-lg
-                       border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)]
-                       px-4 text-[13px] font-medium text-[var(--editorial-text-primary)]
-                       hover:bg-[var(--editorial-border-subtle)]
-                       active:scale-[0.98] transition-all duration-200"
+            className="hidden sm:block text-[13px] text-[var(--editorial-text-secondary)]
+                       hover:text-[var(--editorial-text-primary)] transition-colors"
+            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
           >
-            <Globe className="h-4 w-4" />
-            <span>Discover by Cities</span>
+            Explore Cities
           </Link>
         </div>
       </div>
