@@ -1799,11 +1799,10 @@ const DestinationContent = memo(function DestinationContent({
           <div>
             <div className="aspect-[4/3] rounded-lg overflow-hidden mb-4">
               <GoogleStaticMap
-                latitude={destination.latitude}
-                longitude={destination.longitude}
+                center={{ lat: destination.latitude, lng: destination.longitude }}
                 zoom={15}
-                width={400}
                 height={300}
+                showPin
               />
             </div>
             {enrichedData?.formatted_address && (
