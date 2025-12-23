@@ -76,16 +76,17 @@ export default async function HomePage() {
             Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual
           </h1>
 
-          {/* Hero Section - Apple-inspired spacious layout */}
-          <section className="min-h-[50vh] flex flex-col pl-6 md:pl-10 pr-0 py-10 pb-6 md:pb-10">
-            <div className="w-full flex md:justify-start flex-1 items-center">
+          {/* Editorial Hero Section - Magazine-inspired minimal layout */}
+          <section className="px-6 md:px-10 pt-8 pb-16 md:pt-12 md:pb-24">
+            <div className="max-w-[1400px] mx-auto">
+              {/* Hero Content */}
               <InteractiveHero />
             </div>
           </section>
 
           {/* Content Section */}
-          <div className="w-full px-4 sm:px-6 md:px-10 mt-6 sm:mt-8">
-            <div className="max-w-[1800px] mx-auto">
+          <div className="w-full px-6 md:px-10">
+            <div className="max-w-[1400px] mx-auto">
               {/* Navigation bar */}
               <NavigationBar />
 

@@ -613,28 +613,42 @@ export default function InteractiveHero() {
   const filteredCount = filteredDestinations.length;
   const hasFilters = selectedCity || selectedCategory || searchTerm || michelinOnly;
 
+  // Get featured destinations for the editorial hero
+  const featuredDestinations = useMemo(() => {
+    return destinations.slice(0, 3);
+  }, [destinations]);
+
   return (
-    <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
-      <div className="flex-1 flex items-center">
-        <div className="w-full">
-          {/* Greeting - Editorial serif typography */}
-          <h2
-            className="text-[2rem] md:text-[2.5rem] leading-[1.1] font-medium tracking-[-0.02em] text-[var(--editorial-text-primary)] mb-3"
-            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
-          >
-            {userName ? `${getGreeting()}, ${userName}` : 'Discover the world'}
-          </h2>
-          <p className="text-[14px] text-[var(--editorial-text-secondary)] mb-10 leading-relaxed">
-            {isLoading
-              ? 'Loading destinations...'
-              : hasFilters
-                ? `${filteredCount} of ${destinationCount}+ destinations`
-                : `${destinationCount}+ curated destinations worldwide`}
+    <div className="w-full">
+      {/* Editorial Two-Column Layout - Of Study Inspired */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
+
+        {/* Left Column - Editorial Text */}
+        <div className="flex flex-col justify-center lg:py-12">
+          {/* Small Caps Label */}
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-6">
+            Curated Travel Guide
           </p>
 
-          {/* Search Input - Clean monochrome style */}
-          <form onSubmit={handleSearch} className="mb-6">
-            <div className="relative max-w-xl">
+          {/* Main Headline - Large Serif */}
+          <h2
+            className="text-[2.5rem] md:text-[3.5rem] lg:text-[4rem] leading-[1.05] font-normal tracking-[-0.02em] text-[var(--editorial-text-primary)] mb-6"
+            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+          >
+            {userName ? `${getGreeting()}, ${userName}` : 'Discover the world\'s finest'}
+          </h2>
+
+          {/* Subheadline */}
+          <p
+            className="text-[15px] md:text-[17px] text-[var(--editorial-text-secondary)] mb-10 leading-[1.7] max-w-md"
+            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+          >
+            {destinationCount}+ handpicked hotels, restaurants, and destinations across the globe.
+          </p>
+
+          {/* Search Input - Minimal Editorial Style */}
+          <form onSubmit={handleSearch} className="mb-0">
+            <div className="relative max-w-md">
               {/* AI indicator - Animated thinking/loading */}
               <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none z-10">
                 {isSearching || isLoadingInstant ? (
@@ -1120,12 +1134,72 @@ export default function InteractiveHero() {
             </div>
           )}
         </div>
+
+        {/* Right Column - Featured Destinations (Of Study Style) */}
+        <div className="hidden lg:flex gap-4 items-stretch">
+          {/* Left Card - Branding/Statement */}
+          <div
+            className="flex-1 flex flex-col justify-between p-8 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)]"
+            style={{ aspectRatio: '3/4' }}
+          >
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-4">
+                Est. 2024
+              </p>
+            </div>
+            <div>
+              <h3
+                className="text-[1.5rem] leading-[1.2] text-[var(--editorial-text-primary)] mb-4"
+                style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+              >
+                Urban Manual
+              </h3>
+              <p className="text-[12px] text-[var(--editorial-text-secondary)] leading-[1.6]">
+                A curated guide for those who appreciate the finer details of travel.
+              </p>
+            </div>
+          </div>
+
+          {/* Right Card - Featured Destination with Terracotta */}
+          {featuredDestinations[0] && (
+            <button
+              onClick={() => openDestination(featuredDestinations[0])}
+              className="flex-1 flex flex-col bg-[var(--editorial-accent)] text-white overflow-hidden group"
+              style={{ aspectRatio: '3/4' }}
+            >
+              <div className="relative flex-1 overflow-hidden">
+                {featuredDestinations[0].image && (
+                  <Image
+                    src={featuredDestinations[0].image}
+                    alt={featuredDestinations[0].name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                )}
+              </div>
+              <div className="p-6">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-white/70 mb-2">
+                  {featuredDestinations[0].category}
+                </p>
+                <h3
+                  className="text-[1.1rem] leading-[1.3] mb-2"
+                  style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+                >
+                  {featuredDestinations[0].name}
+                </h3>
+                <p className="text-[12px] text-white/80">
+                  {capitalizeCity(featuredDestinations[0].city)}
+                </p>
+              </div>
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* City Filters - Apple-style pill buttons (hidden when chat results are shown) */}
+      {/* City/Category Filters - Below the grid */}
       {!showChatResults && (
-        <div className="flex-1 flex items-end">
-          <div className="w-full pt-6">
+        <div className="pt-12 lg:pt-16">
+          <div className="w-full">
             <div className="mb-6">
               <div className="flex flex-wrap gap-x-4 gap-y-2">
                 <button
