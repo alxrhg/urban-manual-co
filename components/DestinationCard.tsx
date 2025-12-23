@@ -164,7 +164,7 @@ export const DestinationCard = memo(function DestinationCard({
 
         {/* Visited Check Badge - Center */}
         {isVisited && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-[var(--editorial-bg-primary)]/90 backdrop-blur-sm flex items-center justify-center shadow-lg">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
             <Check className="w-5 h-5 text-[var(--editorial-text-primary)] stroke-[3]" />
           </div>
         )}
@@ -178,16 +178,17 @@ export const DestinationCard = memo(function DestinationCard({
                 <div
                   className={`
                     absolute bottom-2 left-2 z-10
-                    px-2.5 py-1 text-[var(--editorial-text-secondary)] text-xs
-                    bg-[var(--editorial-bg-primary)]/90 backdrop-blur-sm
+                    px-2.5 py-1 text-[var(--editorial-text-primary)] text-xs font-medium
+                    bg-white/95 backdrop-blur-sm rounded-full
                     flex items-center gap-1.5
+                    shadow-sm
                     transition-transform duration-300
                   `}
                 >
                   <img
                     src="/michelin-star.svg"
                     alt="Michelin star"
-                    className="h-3 w-3"
+                    className="h-3.5 w-3.5"
                   />
                   <span>{destination.michelin_stars}</span>
                 </div>
