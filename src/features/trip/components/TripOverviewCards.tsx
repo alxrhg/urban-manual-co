@@ -103,7 +103,7 @@ export default function TripOverviewCards({
       {cards.map((card, index) => (
         <div
           key={index}
-          className="flex flex-col items-center justify-center p-4 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-xl transition-colors hover:border-[var(--editorial-border-subtle)]"
+          className="flex flex-col items-center justify-center p-4 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-2xl transition-colors hover:border-[var(--editorial-border-subtle)]"
         >
           <div className={`p-2 rounded-full ${card.bgColor} mb-2`}>
             <card.icon className={`w-4 h-4 ${card.color}`} />
