@@ -1628,7 +1628,6 @@ const DestinationContent = memo(function DestinationContent({
 
   // Get hours information
   const hours = enrichedData?.opening_hours?.weekday_text;
-  const todayHours = hours ? getTodayHours(hours, enrichedData?.utc_offset, destination.city) : null;
   const isOpen = hours ? checkIfOpen(hours, enrichedData?.utc_offset, destination.city) : null;
 
   return (
