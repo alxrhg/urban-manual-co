@@ -86,12 +86,11 @@ export const DestinationCard = memo(function DestinationCard({
       `}
       aria-label={`View ${destination.name} in ${capitalizeCity(destination.city)}`}
     >
-        {/* Image Container with Progressive Loading */}
+        {/* Image Container with Progressive Loading - Square, no border-radius */}
         <div
           className={`
-            relative aspect-video overflow-hidden rounded-2xl
+            relative aspect-square overflow-hidden
             bg-gray-100 dark:bg-gray-800
-            border border-gray-200 dark:border-gray-800
             transition-all duration-300 ease-out
             mb-3
             ${isLoaded ? 'opacity-100' : 'opacity-0'}
@@ -165,7 +164,7 @@ export const DestinationCard = memo(function DestinationCard({
 
         {/* Visited Check Badge - Center */}
         {isVisited && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center justify-center shadow-lg">
             <Check className="w-5 h-5 text-gray-900 dark:text-white stroke-[3]" />
           </div>
         )}
@@ -179,13 +178,10 @@ export const DestinationCard = memo(function DestinationCard({
                 <div
                   className={`
                     absolute bottom-2 left-2 z-10
-                    px-3 py-1 border border-gray-200 dark:border-gray-800
-                    rounded-2xl text-gray-600 dark:text-gray-400 text-xs
+                    px-2.5 py-1 text-gray-600 dark:text-gray-400 text-xs
                     bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm
                     flex items-center gap-1.5
-                    transform scale-100 group-hover:scale-[1.02]
                     transition-transform duration-300
-                    shadow-sm group-hover:shadow-md
                   `}
                 >
                   <img
@@ -203,13 +199,10 @@ export const DestinationCard = memo(function DestinationCard({
                 <div
                   className={`
                     absolute bottom-2 right-2 z-10
-                    px-3 py-1 border border-gray-200 dark:border-gray-800
-                    rounded-2xl text-gray-600 dark:text-gray-400 text-xs
+                    px-2.5 py-1 text-gray-600 dark:text-gray-400 text-xs
                     bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm
                     flex items-center gap-1.5
-                    transform scale-100 group-hover:scale-[1.02]
                     transition-transform duration-300
-                    shadow-sm group-hover:shadow-md
                   `}
                 >
                   <img
@@ -260,7 +253,7 @@ export const DestinationCard = memo(function DestinationCard({
       {/* Focus Ring for Accessibility */}
       <div
         className={`
-          absolute inset-0 rounded-2xl
+          absolute inset-0
           ring-2 ring-offset-2 ring-black dark:ring-white
           opacity-0 focus-within:opacity-100
           transition-opacity duration-200

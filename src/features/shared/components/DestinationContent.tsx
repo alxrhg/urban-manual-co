@@ -1625,18 +1625,16 @@ const DestinationContent = memo(function DestinationContent({
 
   return (
     <div className="min-h-full bg-[var(--editorial-bg)] flex flex-col">
-      {/* Single Square Image - 1:1 aspect ratio enforced */}
+      {/* Single Square Image - 1:1 aspect ratio */}
       <div className="flex-shrink-0 px-6 sm:px-8 pt-14 pb-0">
-        <div className="relative w-full" style={{ paddingBottom: '100%' }}>
-          <div className="absolute inset-0 bg-[var(--editorial-border)]">
-            {imageUrl ? (
-              <Image src={imageUrl} alt={destination.name} fill className="object-cover" priority />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <MapPin className="w-12 h-12 text-[var(--editorial-text-tertiary)]" />
-              </div>
-            )}
-          </div>
+        <div className="relative w-full bg-[var(--editorial-border)]" style={{ aspectRatio: '1/1' }}>
+          {imageUrl ? (
+            <Image src={imageUrl} alt={destination.name} fill className="object-cover" priority />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <MapPin className="w-12 h-12 text-[var(--editorial-text-tertiary)]" />
+            </div>
+          )}
         </div>
       </div>
 

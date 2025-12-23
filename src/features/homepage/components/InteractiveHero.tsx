@@ -617,11 +617,14 @@ export default function InteractiveHero() {
     <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
       <div className="flex-1 flex items-center">
         <div className="w-full">
-          {/* Greeting - Apple-style large typography */}
-          <h2 className="text-[2rem] md:text-[2.5rem] leading-[1.1] font-semibold tracking-tight text-gray-900 dark:text-white mb-3">
+          {/* Greeting - Editorial serif typography */}
+          <h2
+            className="text-[2rem] md:text-[2.5rem] leading-[1.1] font-medium tracking-[-0.02em] text-gray-900 dark:text-white mb-3"
+            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+          >
             {userName ? `${getGreeting()}, ${userName}` : 'Discover the world'}
           </h2>
-          <p className="text-[13px] text-gray-500 dark:text-gray-400 mb-8 tracking-[-0.01em]">
+          <p className="text-[14px] text-gray-500 dark:text-gray-400 mb-10 leading-relaxed">
             {isLoading
               ? 'Loading destinations...'
               : hasFilters
@@ -649,18 +652,17 @@ export default function InteractiveHero() {
                 onBlur={() => setTimeout(() => setIsFocused(false), 150)}
                 onKeyDown={handleInputKeyDown}
                 placeholder={showChatResults ? 'Ask a follow-up question...' : AI_PLACEHOLDERS[placeholderIndex]}
-                className="w-full h-12 pl-11 pr-14 text-[15px] bg-gray-100 dark:bg-white/[0.08]
-                           border-0 rounded-full text-gray-900 dark:text-white
+                className="w-full h-12 pl-11 pr-14 text-[15px] bg-transparent
+                           border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white
                            placeholder:text-gray-400 dark:placeholder:text-gray-500
-                           focus:outline-none focus:ring-2 focus:ring-gray-900/20 dark:focus:ring-white/20
-                           focus:bg-white dark:focus:bg-white/[0.12]
+                           focus:outline-none focus:border-gray-900 dark:focus:border-white
                            transition-all duration-200"
               />
               <button
                 type="submit"
                 disabled={isSearching || !localSearchTerm.trim()}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center
-                           rounded-full bg-gray-900 dark:bg-white
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center
+                           bg-gray-900 dark:bg-white
                            text-white dark:text-gray-900
                            hover:bg-gray-800 dark:hover:bg-gray-100
                            active:bg-gray-700 dark:active:bg-gray-200
@@ -679,7 +681,7 @@ export default function InteractiveHero() {
                 <div
                   ref={dropdownRef}
                   className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900
-                             rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700
+                             shadow-xl border border-gray-200 dark:border-gray-700
                              max-h-[400px] overflow-y-auto z-50 animate-in fade-in slide-in-from-top-2 duration-200"
                 >
                   {/* Results */}
@@ -699,13 +701,13 @@ export default function InteractiveHero() {
                                 <button
                                   key={`${result.type}-${result.id}`}
                                   onClick={() => handleInstantResultClick(result)}
-                                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left
+                                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-left
                                              transition-colors ${selectedIndex === actualIndex
                                                ? 'bg-gray-100 dark:bg-white/10'
                                                : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
                                 >
                                   {result.image ? (
-                                    <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700">
+                                    <div className="w-10 h-10 overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700">
                                       <Image
                                         src={result.image}
                                         alt={result.name}
@@ -1124,14 +1126,14 @@ export default function InteractiveHero() {
       {!showChatResults && (
         <div className="flex-1 flex items-end">
           <div className="w-full pt-6">
-            <div className="mb-4">
-              <div className="flex flex-wrap gap-x-1 gap-y-2">
+            <div className="mb-6">
+              <div className="flex flex-wrap gap-x-4 gap-y-2">
                 <button
                   onClick={() => setSelectedCity('')}
-                  className={`px-3 py-1.5 text-[12px] font-medium rounded-full transition-all duration-200 ${
+                  className={`text-[13px] font-medium transition-colors duration-200 ${
                     !selectedCity
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
+                      ? 'text-gray-900 dark:text-white'
+                      : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
                   All Cities
@@ -1140,10 +1142,10 @@ export default function InteractiveHero() {
                   <button
                     key={city}
                     onClick={() => handleCityClick(city)}
-                    className={`px-3 py-1.5 text-[12px] font-medium rounded-full transition-all duration-200 ${
+                    className={`text-[13px] font-medium transition-colors duration-200 ${
                       selectedCity.toLowerCase() === city.toLowerCase()
-                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
+                        ? 'text-gray-900 dark:text-white'
+                        : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
                     }`}
                   >
                     {capitalizeCity(city)}
@@ -1152,7 +1154,7 @@ export default function InteractiveHero() {
                 {cities.length > displayedCities.length && !showAllCities && (
                   <button
                     onClick={() => setShowAllCities(true)}
-                    className="px-3 py-1.5 text-[12px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-all duration-200"
+                    className="text-[13px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
                   >
                     +{cities.length - displayedCities.length} more
                   </button>
@@ -1160,7 +1162,7 @@ export default function InteractiveHero() {
                 {showAllCities && (
                   <button
                     onClick={() => setShowAllCities(false)}
-                    className="px-3 py-1.5 text-[12px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-all duration-200"
+                    className="text-[13px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
                   >
                     Show less
                   </button>

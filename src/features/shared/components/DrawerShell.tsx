@@ -227,7 +227,6 @@ const DrawerShell = memo(function DrawerShell({
             className={`
               fixed z-50 flex flex-col overflow-hidden
               bg-[var(--editorial-bg)]
-              border-[2px] border-[#2C2825] dark:border-[#F2EDE6]
               ${position === 'bottom'
                 ? 'inset-x-0 bottom-0 md:right-5 md:left-auto md:top-5 md:bottom-5'
                 : 'right-0 top-0 bottom-0 md:right-5 md:top-5 md:bottom-5'
