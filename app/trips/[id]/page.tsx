@@ -318,131 +318,120 @@ export default function TripPage() {
       onDragEnd={handleDragEnd}
     >
     <UndoProvider>
-    <main className="w-full px-6 md:px-12 lg:px-16 pt-16 pb-24 sm:py-20 min-h-screen bg-[var(--editorial-bg)]">
-      <div className="max-w-6xl mx-auto">
-        {/* Back link - Editorial subtle */}
+    <main className="w-full min-h-screen bg-[var(--editorial-bg)] print:bg-white">
+      {/* Editorial single-column layout */}
+      <div className="max-w-2xl mx-auto px-6 md:px-8 pt-12 pb-24">
+        {/* Back link */}
         <Link
           href="/trips"
-          className="inline-flex items-center gap-2 text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors mb-8"
+          className="inline-block text-[13px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors mb-12 print:hidden"
           style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
         >
-          ← Trips
+          ← Back
         </Link>
 
-        {/* Desktop flex layout with sidebar */}
-        <div className="lg:flex lg:gap-8">
-          {/* Main content column */}
-          <div className="flex-1 min-w-0 max-w-xl lg:max-w-none">
-            {/* Header - tap to edit */}
-            <TripEditorHeader
-              trip={trip}
-              primaryCity={primaryCity}
-              totalItems={totalItems}
-              userId={user?.id}
-              days={days}
-              onUpdate={updateTrip}
-              onDelete={handleDelete}
-            />
-
-            {/* Local Time + Quick Actions */}
-            <div className="flex items-center justify-between mt-4 mb-4">
-              <LocalTimeDisplay city={primaryCity} />
-              <TripQuickActions
-                tripId={tripId}
-                tripTitle={trip.title || 'My Trip'}
-                startDate={trip.start_date}
-                endDate={trip.end_date}
-                destination={primaryCity}
-              />
-            </div>
-
-            {/* Action bar: Edit toggle + Settings - Editorial minimal */}
-            <div className="flex items-center justify-between mt-6 mb-4">
-              <button
-                onClick={() => setIsEditMode(!isEditMode)}
-                className="text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
-                style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
-              >
-                {isEditMode ? 'Done editing' : 'Edit itinerary'}
-              </button>
-
-              <button
-                onClick={() => { setShowTripSettings(true); setSelectedItem(null); }}
-                className="hidden lg:block text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
-                style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
-              >
-                Settings
-              </button>
-            </div>
-
-        {/* Trip Notes - expandable (mobile only, desktop uses sidebar) */}
-        <div className="mt-4 lg:hidden">
-          <button
-            onClick={() => setShowTripNotes(!showTripNotes)}
-            className="text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)] transition-colors"
-          >
-            {tripNotes ? 'View checklist' : 'Add checklist'}
-            <ChevronDown className={`inline w-3 h-3 ml-1 transition-transform ${showTripNotes ? 'rotate-180' : ''}`} />
-          </button>
-
-          <AnimatePresence>
-            {showTripNotes && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
-              >
-                <TripChecklist
-                  notes={tripNotes}
-                  onSave={(notes) => updateTrip({ notes })}
-                />
-              </motion.div>
+        {/* Editorial Header */}
+        <header className="mb-16">
+          {/* Location · Dates - Small caps */}
+          <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-4">
+            {primaryCity}
+            {trip.start_date && (
+              <>
+                {' · '}
+                {new Date(trip.start_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+                {trip.end_date && trip.end_date !== trip.start_date && (
+                  <>–{new Date(trip.end_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</>
+                )}
+                {!trip.end_date && (
+                  <>, {new Date(trip.start_date + 'T00:00:00').getFullYear()}</>
+                )}
+              </>
             )}
-          </AnimatePresence>
-        </div>
+          </p>
 
-        {/* Trip Intelligence - Smart Warnings & Suggestions (mobile only) */}
-        <div className="lg:hidden">
-          <TripIntelligence
-            days={days}
-            city={primaryCity}
-            weatherByDate={weatherByDate}
-            onOptimizeRoute={(dayNumber, optimizedItems) => reorderItems(dayNumber, optimizedItems)}
-          />
-        </div>
+          {/* Title - Large serif */}
+          <h1
+            className="text-[2.5rem] md:text-[3rem] font-normal text-[var(--editorial-text-primary)] leading-tight mb-6"
+            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+          >
+            {trip.title}
+          </h1>
 
-        {/* Day Tabs - Editorial minimal style */}
-        {days.length > 0 && (
-          <div className="sticky top-16 z-30 py-4 bg-[var(--editorial-bg)] mt-8 border-b border-[var(--editorial-border)]">
-            <div className="flex gap-8 overflow-x-auto no-scrollbar">
-              {days.map((day) => {
-                const isSelected = day.dayNumber === selectedDayNumber;
-                const dayDate = day.date
-                  ? new Date(day.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                  : null;
-                return (
-                  <button
-                    key={day.dayNumber}
-                    onClick={() => setSelectedDayNumber(day.dayNumber)}
-                    className={`flex-shrink-0 pb-4 text-[13px] whitespace-nowrap transition-all -mb-px ${
-                      isSelected
-                        ? 'text-[var(--editorial-text-primary)] border-b-2 border-[var(--editorial-text-primary)]'
-                        : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
-                    }`}
-                    style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
-                  >
-                    {dayDate || `Day ${day.dayNumber}`}
-                  </button>
-                );
-              })}
-            </div>
+          {/* Divider */}
+          <div className="w-24 h-px bg-[var(--editorial-text-primary)] mb-6" />
+
+          {/* Stats - Inline text */}
+          <p
+            className="text-[14px] text-[var(--editorial-text-secondary)]"
+            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+          >
+            {days.length} {days.length === 1 ? 'day' : 'days'}
+            {totalItems > 0 && <> · {totalItems} {totalItems === 1 ? 'place' : 'places'}</>}
+            {hotels.length > 0 && <> · {hotels.length} {hotels.length === 1 ? 'hotel' : 'hotels'}</>}
+          </p>
+
+          {/* Actions - Text links */}
+          <div className="flex items-center gap-6 mt-6 print:hidden">
+            <TripQuickActions
+              tripId={tripId}
+              tripTitle={trip.title || 'My Trip'}
+              startDate={trip.start_date}
+              endDate={trip.end_date}
+              destination={primaryCity}
+            />
+            <span className="text-[var(--editorial-text-tertiary)]">·</span>
+            <button
+              onClick={() => setIsEditMode(!isEditMode)}
+              className="text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+              style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+            >
+              {isEditMode ? 'Done' : 'Edit'}
+            </button>
           </div>
-        )}
+        </header>
 
-        {/* Selected Day */}
-        <div className="mt-4">
-          {days.filter(day => day.dayNumber === selectedDayNumber).map((day) => {
+        {/* Main Content - Single column */}
+        <div>
+          {/* Local Time - subtle inline display */}
+          {primaryCity && (
+            <p
+              className="text-[12px] text-[var(--editorial-text-tertiary)] mb-12"
+              style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+            >
+              <LocalTimeDisplay city={primaryCity} />
+            </p>
+          )}
+
+          {/* Checklist - collapsed by default */}
+          {tripNotes && (
+            <div className="mb-12 print:hidden">
+              <button
+                onClick={() => setShowTripNotes(!showTripNotes)}
+                className="text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)] transition-colors"
+                style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+              >
+                {showTripNotes ? 'Hide checklist' : 'View checklist'}
+              </button>
+              <AnimatePresence>
+                {showTripNotes && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden mt-4"
+                  >
+                    <TripChecklist
+                      notes={tripNotes}
+                      onSave={(notes) => updateTrip({ notes })}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+
+          {/* Day Sections - All days shown sequentially like a book */}
+          {days.map((day) => {
             const dayDate = day.date;
             const weather = dayDate ? weatherByDate[dayDate] : undefined;
             const nightlyHotel = nightlyHotelByDay[day.dayNumber] || null;
@@ -523,152 +512,24 @@ export default function TripPage() {
               />
             );
           })}
-        </div>
 
-        {/* Empty state - context-aware */}
-        {totalItems === 0 && days.length > 0 && (
-          <div className="text-center py-8 mt-4">
-            <p className="text-[14px] text-[var(--editorial-text-secondary)] mb-2">
-              {primaryCity
-                ? `Start planning your ${primaryCity} trip`
-                : 'Start planning your trip'}
-            </p>
-            <p className="text-[12px] text-[var(--editorial-text-tertiary)]">
-              Tap the + button to add places, flights, or hotels
-            </p>
-          </div>
-        )}
-          </div>
-          {/* End main content column */}
-
-          {/* Desktop Sidebar */}
-          <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
-            <div className="sticky top-24 space-y-4 max-h-[calc(100vh-8rem)] overflow-y-auto pb-8">
-              {/* Add Place Panel */}
-              {sidebarAddDay !== null && (
-                <AddPlacePanel
-                  city={primaryCity}
-                  dayNumber={sidebarAddDay}
-                  onClose={() => setSidebarAddDay(null)}
-                  onAddPlace={(dest) => {
-                    addPlace(dest, sidebarAddDay);
-                    setSidebarAddDay(null);
-                  }}
-                  onAddFlight={(data) => {
-                    addFlight({
-                      type: 'flight',
-                      airline: data.airline || '',
-                      flightNumber: data.flightNumber || '',
-                      from: data.from,
-                      to: data.to,
-                      departureDate: '',
-                      departureTime: data.departureTime || '',
-                      arrivalDate: '',
-                      arrivalTime: data.arrivalTime || '',
-                      confirmationNumber: data.confirmationNumber,
-                    }, sidebarAddDay);
-                    setSidebarAddDay(null);
-                  }}
-                  onAddTrain={(data) => {
-                    addTrain({
-                      type: 'train',
-                      trainLine: data.trainLine,
-                      trainNumber: data.trainNumber,
-                      from: data.from,
-                      to: data.to,
-                      departureDate: '',
-                      departureTime: data.departureTime || '',
-                      arrivalDate: '',
-                      arrivalTime: data.arrivalTime,
-                      confirmationNumber: data.confirmationNumber,
-                    }, sidebarAddDay);
-                    setSidebarAddDay(null);
-                  }}
-                  onAddHotel={(data) => {
-                    // Get the day's date for checkInDate if not provided in form
-                    const dayInfo = days.find(d => d.dayNumber === sidebarAddDay);
-                    const dayDate = dayInfo?.date || '';
-                    addHotel({
-                      type: 'hotel',
-                      name: data.name,
-                      address: data.address,
-                      checkInDate: data.checkInDate || dayDate,
-                      checkInTime: data.checkInTime,
-                      checkOutDate: data.checkOutDate,
-                      checkOutTime: data.checkOutTime,
-                      confirmationNumber: data.confirmationNumber,
-                      destination_slug: data.destination_slug,
-                      image: data.image,
-                      latitude: data.latitude,
-                      longitude: data.longitude,
-                    }, sidebarAddDay);
-                    setSidebarAddDay(null);
-                  }}
-                  onAddActivity={(data) => {
-                    addActivity(data as ActivityData, sidebarAddDay);
-                    setSidebarAddDay(null);
-                  }}
-                />
-              )}
-
-              {/* Selected Item Details */}
-              {selectedItem && !sidebarAddDay && (
-                <DestinationBox
-                  item={selectedItem}
-                  onClose={() => setSelectedItem(null)}
-                  onTimeChange={updateItemTime}
-                  onNotesChange={updateItemNotes}
-                  onItemUpdate={(id, updates) => updateItem(id, updates)}
-                  onRemove={removeItem}
-                />
-              )}
-
-              {/* Trip Settings */}
-              {showTripSettings && !sidebarAddDay && (
-                <TripSettingsBox
-                  trip={trip}
-                  onUpdate={updateTrip}
-                  onDelete={handleDelete}
-                  onClose={() => setShowTripSettings(false)}
-                />
-              )}
-
-              {/* Trip Intelligence */}
-              {!sidebarAddDay && (
-                <div className="bg-[var(--editorial-bg-elevated)] rounded-xl border border-[var(--editorial-border)] overflow-hidden">
-                  <TripIntelligence
-                    days={days}
-                    city={primaryCity}
-                    weatherByDate={weatherByDate}
-                    onOptimizeRoute={(dayNumber, optimizedItems) => reorderItems(dayNumber, optimizedItems)}
-                    compact
-                  />
-                </div>
-              )}
-
-              {/* Drag & Drop Palette */}
-              {!sidebarAddDay && !selectedItem && (
-                <SidebarDestinationPalette
-                  city={primaryCity}
-                  selectedDayNumber={selectedDayNumber}
-                  onAddPlace={(dest, dayNum) => addPlace(dest, dayNum)}
-                />
-              )}
-
-              {/* Checklist */}
-              {!sidebarAddDay && (
-                <div className="bg-[var(--editorial-bg-elevated)] rounded-xl border border-[var(--editorial-border)] p-4">
-                  <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-3">Checklist</h3>
-                  <TripChecklist
-                    notes={tripNotes}
-                    onSave={(notes) => updateTrip({ notes })}
-                  />
-                </div>
-              )}
+          {/* Empty state */}
+          {totalItems === 0 && days.length > 0 && (
+            <div className="text-center py-16">
+              <p
+                className="text-[15px] text-[var(--editorial-text-secondary)] mb-2"
+                style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+              >
+                {primaryCity
+                  ? `Begin planning your journey to ${primaryCity}`
+                  : 'Begin planning your journey'}
+              </p>
+              <p className="text-[12px] text-[var(--editorial-text-tertiary)]">
+                Click + on any day to add places
+              </p>
             </div>
-          </div>
+          )}
         </div>
-        {/* End desktop flex layout */}
       </div>
 
       {/* Saving feedback indicator */}
@@ -1120,156 +981,128 @@ function DaySection({
     setSearchSource('curated');
   };
 
-  // Parse as local time to avoid timezone shifts
-  const dateDisplay = date
-    ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-    : null;
+  // Day number words
+  const dayWords = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen'];
+  const dayWord = dayWords[dayNumber] || dayNumber.toString();
 
-  // Format date like "March 5th"
-  const longDateDisplay = date
-    ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+  // Parse as local time
+  const parsedDate = date ? new Date(date + 'T00:00:00') : null;
+  const dateDisplay = parsedDate
+    ? parsedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
     : null;
 
   return (
-    <div
+    <section
       ref={setNodeRef}
       id={`day-${dayNumber}`}
-      className={`scroll-mt-20 rounded-xl transition-all duration-200 ${
+      className={`scroll-mt-20 mb-16 transition-all duration-200 ${
         showDropState
-          ? 'bg-[var(--editorial-accent)]/10 ring-2 ring-[var(--editorial-accent)]/50 ring-inset p-3 -mx-3'
+          ? 'bg-[var(--editorial-accent)]/5 ring-1 ring-[var(--editorial-accent)]/30 ring-inset p-4 -mx-4 rounded-lg'
           : ''
       }`}
     >
-      {/* Day header - Editorial minimal style */}
-      <div className="flex items-baseline justify-between mb-6 mt-8">
-        <div className="flex items-baseline gap-4">
-          <h3
-            className="text-[1.25rem] md:text-[1.5rem] font-normal text-[var(--editorial-text-primary)]"
-            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
-          >
-            {longDateDisplay || `Day ${dayNumber}`}
-          </h3>
-          {/* Weather - subtle inline text */}
+      {/* Day header - Editorial chapter style */}
+      <header className="mb-8">
+        <h2
+          className="text-[1.75rem] md:text-[2rem] font-normal text-[var(--editorial-text-primary)] mb-2"
+          style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+        >
+          Day {dayWord}
+        </h2>
+        <p className="text-[13px] text-[var(--editorial-text-secondary)]">
+          {dateDisplay}
           {weather && (
-            <span className="text-[12px] text-[var(--editorial-text-tertiary)]">
-              {weather.tempMax}° · {weather.description}
+            <span className="text-[var(--editorial-text-tertiary)]">
+              {' · '}{weather.tempMax}°F · {weather.description}
             </span>
           )}
-          {/* Day warnings - only shows when there's a problem */}
-          <DayIntelligence
-            items={items.map(item => ({
-              id: item.id,
-              title: item.title,
-              time: item.time,
-              destination: item.destination ? {
-                category: item.destination.category,
-                latitude: item.destination.latitude,
-                longitude: item.destination.longitude,
-              } : null,
-              parsedNotes: item.parsedNotes ? {
-                type: item.parsedNotes.type,
-                category: item.parsedNotes.category,
-              } : undefined,
-            }))}
-            weatherForecast={weather ? {
-              condition: weather.description,
-              precipitation: weather.precipProbability,
-              tempMax: weather.tempMax,
-            } : null}
-          />
-        </div>
+        </p>
+      </header>
 
-        <div className="flex items-center gap-2">
-          {/* Optimize prompt */}
-          {canOptimize && (
+      {/* Action row - subtle text links */}
+      <div className="flex items-center gap-4 mb-8 print:hidden">
+        {/* Add button - text link */}
+        <button
+          onClick={() => {
+            setShowAddMenu(!showAddMenu);
+            setShowSearch(false);
+            setShowTransportForm(null);
+          }}
+          className="text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+          style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+        >
+          + Add
+        </button>
+
+        {canOptimize && (
+          <>
+            <span className="text-[var(--editorial-text-tertiary)]">·</span>
             <button
               onClick={optimizeRoute}
               disabled={isOptimizing}
-              className="flex items-center gap-1.5 text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)] transition-colors px-3 py-1 rounded-full hover:bg-[var(--editorial-border-subtle)]"
+              className="text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+              style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
             >
-              {isOptimizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Route className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">Optimize</span>
+              {isOptimizing ? 'Optimizing...' : 'Optimize route'}
             </button>
-          )}
+          </>
+        )}
 
-          {/* Plus button */}
-          <div className="relative">
-            <button
-              onClick={() => {
-                // Desktop: use sidebar panel
-                const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
-                if (isDesktop && onOpenSidebarAdd) {
-                  onOpenSidebarAdd();
-                } else {
-                  // Mobile: use inline menu
-                  setShowAddMenu(!showAddMenu);
-                  setShowSearch(false);
-                  setShowTransportForm(null);
-                }
-              }}
-              className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center rounded-full bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] hover:bg-[var(--editorial-border-subtle)] transition-colors"
-            >
-              <Plus className={`w-4 h-4 sm:w-3.5 sm:h-3.5 text-[var(--editorial-text-secondary)] transition-transform ${showAddMenu || showSearch || showTransportForm ? 'rotate-45' : ''}`} />
-            </button>
-
-            {/* Add menu dropdown (mobile only) */}
-            <AnimatePresence>
-              {showAddMenu && !showSearch && !showTransportForm && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  className="absolute right-0 top-full mt-1 w-44 sm:w-40 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-2xl shadow-lg overflow-hidden z-20 lg:hidden"
+        {/* Add menu dropdown */}
+        <div className="relative">
+          <AnimatePresence>
+            {showAddMenu && !showSearch && !showTransportForm && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                className="absolute left-0 top-full mt-2 w-48 bg-[var(--editorial-bg)] border border-[var(--editorial-border)] z-20 py-1"
+              >
+                <button
+                  onClick={() => { setShowSearch(true); setSearchSource('curated'); }}
+                  className="w-full px-4 py-2 text-left text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors"
                 >
-                  <button
-                    onClick={() => { setShowSearch(true); setSearchSource('curated'); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors text-left"
-                  >
-                    <Search className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-                    From curation
-                  </button>
-                  <button
-                    onClick={() => { setShowSearch(true); setSearchSource('google'); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors text-left"
-                  >
-                    <Globe className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-                    From Google
-                  </button>
-                  <div className="border-t border-[var(--editorial-border)] my-1" />
-                  <button
-                    onClick={() => setShowTransportForm('flight')}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors text-left"
-                  >
-                    <Plane className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-                    Flight
-                  </button>
-                  <button
-                    onClick={() => setShowTransportForm('hotel')}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors text-left"
-                  >
-                    <Hotel className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-                    Hotel
-                  </button>
-                  <button
-                    onClick={() => setShowTransportForm('train')}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors text-left"
-                  >
-                    <TrainIcon className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-                    Train
-                  </button>
-                  <div className="border-t border-[var(--editorial-border)] my-1" />
-                  <button
-                    onClick={() => setShowTransportForm('activity')}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors text-left"
-                  >
-                    <Clock className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-                    Activity
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  Search curated places
+                </button>
+                <button
+                  onClick={() => { setShowSearch(true); setSearchSource('google'); }}
+                  className="w-full px-4 py-2 text-left text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors"
+                >
+                  Search Google
+                </button>
+                <div className="h-px bg-[var(--editorial-border)] my-1" />
+                <button
+                  onClick={() => setShowTransportForm('flight')}
+                  className="w-full px-4 py-2 text-left text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors"
+                >
+                  Add flight
+                </button>
+                <button
+                  onClick={() => setShowTransportForm('hotel')}
+                  className="w-full px-4 py-2 text-left text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors"
+                >
+                  Add hotel
+                </button>
+                <button
+                  onClick={() => setShowTransportForm('train')}
+                  className="w-full px-4 py-2 text-left text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors"
+                >
+                  Add train
+                </button>
+                <div className="h-px bg-[var(--editorial-border)] my-1" />
+                <button
+                  onClick={() => setShowTransportForm('activity')}
+                  className="w-full px-4 py-2 text-left text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors"
+                >
+                  Add activity
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
 
-            {/* Inline search panel (mobile only) */}
+      {/* Search panel */}
             <AnimatePresence>
               {showSearch && (
                 <>
@@ -1449,9 +1282,6 @@ function DaySection({
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
-        </div>
-      </div>
 
       {/* Neighborhood tags */}
       {items.length > 0 && (
@@ -1521,37 +1351,36 @@ function DaySection({
         <TravelTime from={orderedItems[orderedItems.length - 1]} to={nightlyHotel} />
       )}
 
-      {/* Nightly hotel indicator - Clean card matching flight style */}
+      {/* Nightly hotel - editorial style */}
       {nightlyHotel && (
         <button
           onClick={() => onSelectItem?.(nightlyHotel)}
-          className="w-full mt-2 relative overflow-hidden rounded-2xl bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] hover:shadow-md transition-all text-left"
+          className="w-full mt-4 py-4 border-b border-[var(--editorial-border-subtle)] hover:bg-[var(--editorial-bg-elevated)]/50 transition-all text-left group"
         >
-          <div className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[var(--editorial-bg-elevated)] flex items-center justify-center">
-                  <Moon className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-stone-900 dark:text-white">
-                    {nightlyHotel.title || 'Hotel'}
-                  </p>
-                  <p className="text-xs text-[var(--editorial-text-tertiary)] mt-0.5">
-                    Overnight stay
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] text-[var(--editorial-text-tertiary)] uppercase tracking-wide">
-                  Night
-                </p>
-              </div>
+          <div className="flex items-start gap-4">
+            <div className="w-16 flex-shrink-0 text-right">
+              <span className="text-[12px] text-[var(--editorial-text-tertiary)] tabular-nums italic">
+                night
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p
+                className="text-[14px] text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors"
+                style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+              >
+                {nightlyHotel.title || 'Hotel'}
+              </p>
+              <p className="text-[12px] text-[var(--editorial-text-tertiary)] mt-0.5">
+                Overnight stay
+              </p>
             </div>
           </div>
         </button>
       )}
-    </div>
+
+      {/* Day divider */}
+      <div className="h-px bg-[var(--editorial-border)] mt-8" />
+    </section>
   );
 }
 
