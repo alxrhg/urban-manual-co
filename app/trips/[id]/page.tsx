@@ -43,7 +43,6 @@ import { TripChecklist } from '@/features/trip/components/editor/TripChecklist';
 import { useWeather, type DayWeather } from '@/lib/hooks/useWeather';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { Settings, Moon } from 'lucide-react';
-import TripOverviewCards from '@/features/trip/components/TripOverviewCards';
 import LocalTimeDisplay from '@/features/trip/components/LocalTimeDisplay';
 import TripQuickActions from '@/features/trip/components/TripQuickActions';
 
@@ -356,14 +355,6 @@ export default function TripPage() {
                 destination={primaryCity}
               />
             </div>
-
-            {/* Trip Overview Cards - Stats at a glance */}
-            <TripOverviewCards
-              startDate={trip.start_date}
-              endDate={trip.end_date}
-              days={days}
-              className="mb-6"
-            />
 
             {/* Action bar: Edit toggle + Settings */}
             <div className="flex items-center justify-between mt-4 mb-2">
