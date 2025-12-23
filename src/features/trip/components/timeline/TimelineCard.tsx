@@ -70,7 +70,7 @@ function TimelineCardComponent({
   return (
     <div
       className={`
-        h-full rounded-2xl cursor-pointer
+        h-full rounded-lg cursor-pointer
         bg-gray-50/80 dark:bg-gray-800/50
         backdrop-blur-sm
         ${isActive

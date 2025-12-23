@@ -395,7 +395,7 @@ export function SearchFiltersComponent({
               />
               {/* Dropdown popover */}
               <div
-                className="fixed z-50 w-[90vw] max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
+                className="fixed z-50 w-[90vw] max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-2xl ring-1 ring-black/5 dark:ring-white/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
                 style={{
                   top: `${dropdownPosition.top}px`,
                   right: `${dropdownPosition.right}px`,

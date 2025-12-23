@@ -115,7 +115,7 @@ export function LoadingCardSkeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'rounded-2xl bg-white dark:bg-gray-900 overflow-hidden',
+        'rounded-lg bg-white dark:bg-gray-900 overflow-hidden',
         'border border-gray-200 dark:border-gray-800',
         className
       )}
@@ -290,7 +290,7 @@ export function LoadingStateWrapper({
             {onRetry && (
               <button
                 onClick={onRetry}
-                className="px-4 py-2 text-sm font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-full hover:opacity-90 transition-opacity"
+                className="px-4 py-2 text-sm font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-opacity"
               >
                 Try again
               </button>
@@ -394,7 +394,7 @@ export function QueryStateWrapper<T>({
             {onRetry && (
               <button
                 onClick={onRetry}
-                className="px-4 py-2 text-sm font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-full hover:opacity-90 transition-opacity"
+                className="px-4 py-2 text-sm font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-opacity"
               >
                 Try again
               </button>

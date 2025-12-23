@@ -80,7 +80,7 @@ export function Achievements({ className }: AchievementsProps) {
           <button
             key={category}
             onClick={() => setActiveCategory(category)}
-            className={`px-4 py-2 rounded-2xl text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeCategory === category
                 ? 'bg-black dark:bg-white text-white dark:text-black'
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -105,7 +105,7 @@ export function Achievements({ className }: AchievementsProps) {
             return (
               <div
                 key={achievement.id}
-                className={`relative p-4 rounded-xl border-2 transition-all ${
+                className={`relative p-4 rounded-lg border-2 transition-all ${
                   unlocked
                     ? `${RARITY_BORDERS[achievement.rarity]} bg-white dark:bg-gray-900`
                     : 'border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 opacity-60'
@@ -171,7 +171,7 @@ export function Achievements({ className }: AchievementsProps) {
                     {/* Rarity Badge */}
                     <div className="mt-3">
                       <span
-                        className="inline-block px-2 py-1 rounded text-xs font-medium border"
+                        className="inline-block px-2 py-1 rounded-md text-xs font-medium border"
                         style={{
                           color: unlocked
                             ? RARITY_COLORS[achievement.rarity] || '#f59e0b'

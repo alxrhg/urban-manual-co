@@ -53,7 +53,7 @@ export default function HotelNightCard({
 
   if (compact) {
     return (
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-900 via-purple-900 to-indigo-900 dark:from-indigo-950 dark:via-purple-950 dark:to-indigo-950">
+      <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-indigo-900 via-purple-900 to-indigo-900 dark:from-indigo-950 dark:via-purple-950 dark:to-indigo-950">
         {/* Stars */}
         <div className="absolute inset-0">
           {stars.slice(0, 4).map((star, i) => (
@@ -95,7 +95,7 @@ export default function HotelNightCard({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-950 dark:from-indigo-950 dark:via-purple-950 dark:to-gray-950">
+    <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-950 dark:from-indigo-950 dark:via-purple-950 dark:to-gray-950">
       {/* Stars background */}
       <div className="absolute inset-0">
         {stars.map((star, i) => (
@@ -119,7 +119,7 @@ export default function HotelNightCard({
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center">
+            <div className="w-12 h-12 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
               <Moon className="w-6 h-6 text-indigo-200" />
             </div>
             <div>

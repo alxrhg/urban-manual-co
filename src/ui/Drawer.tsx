@@ -251,7 +251,7 @@ export function Drawer({
   const computedMobileMaxHeight = mobileMaxHeight ?? '100vh';
   
   // Radius
-  const radiusClass = mobileBorderRadius ?? 'rounded-t-[28px]';
+  const radiusClass = mobileBorderRadius ?? 'rounded-t-lg';
 
   if (!isOpen && !keepStateOnClose) return null;
 
@@ -316,7 +316,7 @@ export function Drawer({
           aria-modal="true"
         >
           {/* Drag Handle Area */}
-          <div className="drawer-handle flex-shrink-0 w-full h-6 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none bg-inherit z-10 absolute top-0 left-0 right-0 rounded-t-[28px]">
+          <div className="drawer-handle flex-shrink-0 w-full h-6 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none bg-inherit z-10 absolute top-0 left-0 right-0 rounded-t-lg">
             <div className="w-10 h-1.5 rounded-full bg-gray-300/80 dark:bg-gray-600/80 mt-2" />
           </div>
 
@@ -342,9 +342,9 @@ export function Drawer({
         <div
           ref={window.innerWidth >= 1024 ? desktopRef : (window.innerWidth >= 768 ? tabletRef : mobileSideRef)}
           className={`
-            fixed 
-            ${window.innerWidth >= 768 
-              ? `${desktopSpacing} rounded-2xl` 
+            fixed
+            ${window.innerWidth >= 768
+              ? `${desktopSpacing} rounded-lg`
               : `top-0 bottom-0 w-full ${position === 'right' ? 'right-0' : 'left-0'}`
             }
             ${backgroundClasses} ${shadowClasses} ${window.innerWidth >= 768 ? borderClasses : ''}

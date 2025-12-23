@@ -91,7 +91,7 @@ export function SavedPlacesDrawer() {
             {canGoBack ? (
               <button
                 onClick={goBack}
-                className="p-2 -ml-2 rounded-full hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+                className="p-2 -ml-2 rounded-lg hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
               >
                 <ChevronLeft className="w-5 h-5 text-stone-600 dark:text-gray-400" />
               </button>
@@ -111,7 +111,7 @@ export function SavedPlacesDrawer() {
           </div>
           <button
             onClick={handleClose}
-            className="p-2.5 sm:p-2 rounded-full bg-stone-100 dark:bg-gray-800 text-stone-500 dark:text-gray-400 hover:bg-stone-200 dark:hover:bg-gray-700 hover:text-stone-900 dark:hover:text-white active:scale-95 transition-all min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
+            className="p-2.5 sm:p-2 rounded-lg bg-stone-100 dark:bg-gray-800 text-stone-500 dark:text-gray-400 hover:bg-stone-200 dark:hover:bg-gray-700 hover:text-stone-900 dark:hover:text-white active:scale-95 transition-all min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
           >
             <X className="w-5 h-5 sm:w-4 sm:h-4" />
           </button>
@@ -128,7 +128,7 @@ export function SavedPlacesDrawer() {
             </div>
           ) : savedPlaces.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 sm:py-16 px-8 text-center">
-              <div className="w-20 h-20 sm:w-16 sm:h-16 rounded-full bg-stone-100 dark:bg-gray-800 flex items-center justify-center mb-5">
+              <div className="w-20 h-20 sm:w-16 sm:h-16 rounded-lg bg-stone-100 dark:bg-gray-800 flex items-center justify-center mb-5">
                 <Bookmark className="w-9 h-9 sm:w-7 sm:h-7 text-stone-400 dark:text-gray-500" />
               </div>
               <h3 className="text-lg sm:text-base font-semibold text-stone-900 dark:text-white mb-2">

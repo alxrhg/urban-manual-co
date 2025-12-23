@@ -45,7 +45,7 @@ export function BookingLinks({
             href={opentableUrl || resyUrl || '#'}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 px-3 py-1 bg-black dark:bg-white text-white dark:text-black rounded-full text-xs font-medium hover:opacity-80 transition-opacity"
+            className="inline-flex items-center gap-1 px-3 py-1 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
           >
             <Calendar className="h-3 w-3" />
             <span>Reserve</span>
@@ -57,7 +57,7 @@ export function BookingLinks({
             href={googleMapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-full text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-md text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             <ExternalLink className="h-3 w-3" />
             <span>View on Maps</span>
@@ -68,7 +68,7 @@ export function BookingLinks({
   }
 
   return (
-    <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-3">
+    <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 space-y-3">
       <h3 className="text-sm font-medium">Book & Visit</h3>
 
       <div className="space-y-2">

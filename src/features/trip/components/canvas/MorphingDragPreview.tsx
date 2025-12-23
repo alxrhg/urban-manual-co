@@ -58,7 +58,7 @@ export default function MorphingDragPreview({
       className={`
         ${cardWidth}
         bg-white dark:bg-gray-800
-        rounded-2xl
+        rounded-lg
         shadow-2xl
         border-2
         overflow-hidden

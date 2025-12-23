@@ -359,7 +359,7 @@ export function AchievementsDisplay({
           <div key={theme} className="space-y-8">
             {/* Section Header */}
             <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-xl bg-gradient-to-br ${themeConfig.color} border border-gray-100 dark:border-gray-800`}>
+              <div className={`p-3 rounded-lg bg-gradient-to-br ${themeConfig.color} border border-gray-100 dark:border-gray-800`}>
                 <IconComponent className="h-6 w-6 text-gray-700 dark:text-gray-300" />
               </div>
               <div>
@@ -383,7 +383,7 @@ export function AchievementsDisplay({
                   return (
                     <div
                       key={achievement.id}
-                      className={`relative p-6 rounded-2xl border transition-all ${
+                      className={`relative p-6 rounded-lg border transition-all ${
                         isUnlocked
                           ? 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm'
                           : 'border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 opacity-75'
@@ -451,7 +451,7 @@ export function AchievementsDisplay({
               </div>
             ) : (
               /* Empty State for Theme */
-              <div className="p-12 rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 text-center">
+              <div className="p-12 rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 text-center">
                 <div className="text-4xl mb-4 opacity-50">
                   <IconComponent className="h-12 w-12 mx-auto text-gray-400" />
                 </div>

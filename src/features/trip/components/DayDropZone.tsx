@@ -26,7 +26,7 @@ export default function DayDropZone({ dayNumber, children, className = '' }: Day
       ref={setNodeRef}
       className={`
         transition-all duration-200
-        ${isOver ? 'ring-2 ring-blue-400 ring-offset-2 dark:ring-offset-gray-950 rounded-2xl' : ''}
+        ${isOver ? 'ring-2 ring-blue-400 ring-offset-2 dark:ring-offset-gray-950 rounded-lg' : ''}
         ${className}
       `}
     >

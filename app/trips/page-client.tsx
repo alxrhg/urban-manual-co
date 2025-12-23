@@ -164,12 +164,12 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
         {/* Trip List */}
         {trips.length === 0 ? (
           /* Empty State - No trips at all */
-          <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
+          <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-lg">
             <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No trips yet</p>
             <button
               onClick={() => setShowWizard(true)}
-              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
+              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-lg hover:opacity-80 transition-opacity"
             >
               Create your first trip
             </button>
@@ -212,7 +212,7 @@ function TripCard({ trip }: { trip: TripWithStats }) {
   return (
     <Link
       href={`/trips/${trip.id}`}
-      className="flex flex-col border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+      className="flex flex-col border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
     >
       <div className="text-left p-4 flex-1">
         <h3 className="font-medium text-sm mb-2 line-clamp-2">{trip.title}</h3>

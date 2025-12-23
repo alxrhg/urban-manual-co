@@ -43,7 +43,7 @@ export function DrawerSkeleton() {
         </div>
 
         {/* Map placeholder */}
-        <div className="h-64 bg-gray-200 dark:bg-gray-800 rounded-2xl relative overflow-hidden">
+        <div className="h-64 bg-gray-200 dark:bg-gray-800 rounded-lg relative overflow-hidden">
           <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
         </div>
 
@@ -55,7 +55,7 @@ export function DrawerSkeleton() {
           <div className="flex gap-4 overflow-x-hidden">
             {[1, 2, 3].map(i => (
               <div key={i} className="flex-shrink-0 w-40">
-                <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-2xl mb-2 relative overflow-hidden">
+                <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-lg mb-2 relative overflow-hidden">
                   <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
                 </div>
                 <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full relative overflow-hidden">

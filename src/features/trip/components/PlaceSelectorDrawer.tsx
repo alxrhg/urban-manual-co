@@ -214,7 +214,7 @@ export default function PlaceSelectorDrawer({
                 <button
                   key={cat}
                   onClick={() => setCategory(cat)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition ${
                     category === cat
                       ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900'
                       : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700'
@@ -304,7 +304,7 @@ export default function PlaceSelectorDrawer({
             ) : googlePlace ? (
               <div className="space-y-4">
                 {/* Place Card */}
-                <div className="rounded-2xl overflow-hidden border border-stone-200 dark:border-stone-800">
+                <div className="rounded-lg overflow-hidden border border-stone-200 dark:border-stone-800">
                   {googlePlace.image && (
                     <div className="aspect-video relative">
                       <Image

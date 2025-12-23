@@ -335,7 +335,7 @@ export default function SmartSuggestions({
           <button
             key={suggestion.id}
             onClick={() => handleLocalSuggestion(suggestion)}
-            className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-gray-800 transition-all"
+            className="group flex items-center gap-2 px-3 py-1.5 rounded-md bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-gray-800 transition-all"
           >
             <Plus className="w-3 h-3 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
             <span className="text-[12px] text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white">

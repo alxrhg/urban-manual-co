@@ -11,13 +11,13 @@ import { cn } from '@/lib/utils';
 
 // Shared style constants for auth components
 const AUTH_INPUT_CLASSES =
-  'w-full px-4 py-4 sm:py-3 border border-gray-200 dark:border-gray-700 rounded-2xl bg-gray-50 dark:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 focus:border-gray-300 dark:focus:border-gray-600 focus:bg-white dark:focus:bg-gray-800 transition-all duration-200 text-base sm:text-sm text-gray-900 dark:text-white min-h-[56px] sm:min-h-[48px] placeholder:text-gray-400 dark:placeholder:text-gray-500';
+  'w-full px-4 py-4 sm:py-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 focus:border-gray-300 dark:focus:border-gray-600 focus:bg-white dark:focus:bg-gray-800 transition-all duration-200 text-base sm:text-sm text-gray-900 dark:text-white min-h-[56px] sm:min-h-[48px] placeholder:text-gray-400 dark:placeholder:text-gray-500';
 
 const AUTH_PRIMARY_BUTTON_CLASSES =
-  'w-full px-6 py-4 sm:py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm sm:text-base font-medium disabled:opacity-50 min-h-[56px] sm:min-h-[48px] shadow-sm hover:shadow-md active:shadow-sm transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2';
+  'w-full px-6 py-4 sm:py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-sm sm:text-base font-medium disabled:opacity-50 min-h-[56px] sm:min-h-[48px] shadow-sm hover:shadow-md active:shadow-sm transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2';
 
 const AUTH_SECONDARY_BUTTON_CLASSES =
-  'w-full px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium shadow-sm hover:shadow-md active:shadow-sm transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]';
+  'w-full px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-sm font-medium shadow-sm hover:shadow-md active:shadow-sm transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]';
 
 const AUTH_LABEL_CLASSES = 'block text-sm font-medium mb-2 text-gray-900 dark:text-white';
 

@@ -26,7 +26,7 @@ export default function TripsTab({ trips, onTripsUpdated }: TripsTabProps) {
         <p className="text-xs text-gray-500 dark:text-gray-400">
           {trips.length} {trips.length === 1 ? 'trip' : 'trips'}
         </p>
-        <Button onClick={handleNewTrip} className="rounded-full">
+        <Button onClick={handleNewTrip} className="rounded-lg">
           <Plus className="w-4 h-4" />
           New Trip
         </Button>
@@ -35,7 +35,7 @@ export default function TripsTab({ trips, onTripsUpdated }: TripsTabProps) {
       {/* Trips Grid */}
       {trips.length === 0 ? (
         <div className="text-center py-16 px-6 rounded-[16px] border border-dashed border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
             <Plane className="w-8 h-8 text-gray-400 dark:text-gray-500" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
@@ -44,7 +44,7 @@ export default function TripsTab({ trips, onTripsUpdated }: TripsTabProps) {
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
             Start planning your next adventure by creating your first trip.
           </p>
-          <Button onClick={handleNewTrip} className="rounded-full">
+          <Button onClick={handleNewTrip} className="rounded-lg">
             <Plus className="w-4 h-4" />
             Create Trip
           </Button>

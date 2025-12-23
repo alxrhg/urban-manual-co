@@ -87,7 +87,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
     <div className="flex items-center justify-between w-full">
       <button
         onClick={onClose}
-        className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 active:bg-gray-300 dark:active:bg-gray-600 transition-all duration-150 active:scale-95"
+        className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 active:bg-gray-300 dark:active:bg-gray-600 transition-all duration-150 active:scale-95"
         aria-label="Close"
       >
         <X className="h-4 w-4 text-gray-600 dark:text-gray-300" />

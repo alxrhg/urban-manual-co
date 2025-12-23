@@ -85,7 +85,7 @@ function AvatarWithRing({
 // Travel Badge Component
 function TravelBadge({ badge }: { badge: { name: string } }) {
   return (
-    <span className="mt-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-full text-xs font-medium text-gray-600 dark:text-gray-400">
+    <span className="mt-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-md text-xs font-medium text-gray-600 dark:text-gray-400">
       {badge.name}
     </span>
   );
@@ -111,7 +111,7 @@ function UpcomingTripCard({
   return (
     <button
       onClick={onClick}
-      className="w-full p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-left group"
+      className="w-full p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-left group"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -158,7 +158,7 @@ function RecommendationCard({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-left w-full group"
+      className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-left w-full group"
     >
       <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 relative">
         {destination.image ? (
@@ -204,7 +204,7 @@ function LibraryTile({
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center justify-center gap-1 p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 active:scale-[0.98] transition-all"
+      className="flex flex-col items-center justify-center gap-1 p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 active:scale-[0.98] transition-all"
     >
       <Icon className="w-5 h-5 text-gray-600 dark:text-gray-400 mb-1" />
       <span className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -233,7 +233,7 @@ function SettingsRow({
   return (
     <Component
       onClick={onClick}
-      className={`group w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl transition-colors ${
+      className={`group w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-colors ${
         onClick ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900' : ''
       }`}
     >
@@ -475,7 +475,7 @@ const AccountContent = memo(function AccountContent() {
         </p>
         <button
           onClick={() => navigate('auth', {})}
-          className="w-full max-w-[280px] py-3 rounded-full bg-black dark:bg-white text-white dark:text-black text-sm font-medium hover:opacity-80 transition-opacity"
+          className="w-full max-w-[280px] py-3 rounded-lg bg-black dark:bg-white text-white dark:text-black text-sm font-medium hover:opacity-80 transition-opacity"
         >
           Get Started
         </button>
@@ -558,7 +558,7 @@ const AccountContent = memo(function AccountContent() {
 
       {/* Journey Progress */}
       <div className="px-5 mb-4">
-        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg">
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
             <span className="font-semibold text-gray-900 dark:text-white">{stats.visited}</span> places
             {stats.countries > 0 && (
@@ -630,7 +630,7 @@ const AccountContent = memo(function AccountContent() {
       <div className="px-5 pb-5 pt-2 border-t border-gray-200 dark:border-gray-800">
         <button
           onClick={handleSignOut}
-          className="flex w-full items-center justify-center gap-2 py-3 rounded-full text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          className="flex w-full items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
         >
           <LogOut className="w-4 h-4" />
           Sign Out

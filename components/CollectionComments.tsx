@@ -144,13 +144,13 @@ export function CollectionComments({ collectionId, isOwner }: CollectionComments
             placeholder="Add a comment..."
             rows={3}
             maxLength={500}
-            className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white resize-none text-sm"
+            className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:border-black dark:focus:border-white resize-none text-sm"
           />
           <div className="flex justify-end">
             <button
               type="submit"
               disabled={!newComment.trim() || submitting}
-              className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-lg hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? 'Posting...' : 'Post Comment'}
             </button>
@@ -159,11 +159,11 @@ export function CollectionComments({ collectionId, isOwner }: CollectionComments
       )}
 
       {!user && (
-        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl text-center">
+        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg text-center">
           <p className="text-sm text-gray-500 mb-3">Sign in to leave a comment</p>
           <button
             onClick={() => router.push('/auth/login')}
-            className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-2xl hover:opacity-80 transition-opacity"
+            className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-lg hover:opacity-80 transition-opacity"
           >
             Sign In
           </button>
@@ -187,7 +187,7 @@ export function CollectionComments({ collectionId, isOwner }: CollectionComments
             return (
               <div
                 key={comment.id}
-                className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl"
+                className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg"
               >
                 <div className="flex items-start gap-3">
                   {/* Avatar */}

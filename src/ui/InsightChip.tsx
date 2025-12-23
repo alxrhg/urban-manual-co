@@ -135,7 +135,7 @@ export function InsightChip({
   return (
     <span
       className={`
-        inline-flex items-center gap-1 rounded-full text-[10px] font-medium
+        inline-flex items-center gap-1 rounded-md text-[10px] font-medium
         ${padding} ${styles.bg} ${styles.text}
         ${isClickable ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}
         ${className}

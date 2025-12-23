@@ -63,7 +63,7 @@ export function RealtimeReportForm({
 
   if (success) {
     return (
-      <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-2xl">
+      <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
         <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
           <Check className="h-5 w-5" />
           <span className="font-medium">Report submitted successfully!</span>
@@ -76,7 +76,7 @@ export function RealtimeReportForm({
   }
 
   return (
-    <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-4">
+    <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 space-y-4">
       <div>
         <h3 className="text-sm font-medium mb-1">Report Current Status</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400">

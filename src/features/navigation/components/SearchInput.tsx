@@ -80,7 +80,7 @@ export function SearchInput({
         placeholder={placeholder}
         autoFocus={autoFocus}
         className={cn(
-          'w-full border border-gray-200 dark:border-gray-800 rounded-2xl',
+          'w-full border border-gray-200 dark:border-gray-800 rounded-lg',
           'bg-white dark:bg-gray-950 text-gray-900 dark:text-white',
           'placeholder:text-gray-400 dark:placeholder:text-gray-500',
           'focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white',

@@ -22,7 +22,7 @@ const TripEmptyState = memo(function TripEmptyState({
   return (
     <div className="flex flex-col items-center justify-center h-full p-6 text-center">
       {/* Icon */}
-      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 dark:from-white/10 dark:to-white/5 flex items-center justify-center mb-5 shadow-sm">
+      <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-gray-100 to-gray-50 dark:from-white/10 dark:to-white/5 flex items-center justify-center mb-5 shadow-sm">
         <Sparkles className="w-7 h-7 text-gray-400" />
       </div>
 

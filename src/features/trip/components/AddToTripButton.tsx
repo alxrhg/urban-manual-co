@@ -203,7 +203,7 @@ export default function AddToTripButton({
     <button
       onClick={handleClick}
       disabled={isInTrip}
-      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all duration-200 ${
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-all duration-200 ${
         isInTrip
           ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
           : justAdded

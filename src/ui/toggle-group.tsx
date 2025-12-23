@@ -18,7 +18,7 @@ const ToggleGroup = React.forwardRef<
 ToggleGroup.displayName = ToggleGroupPrimitive.Root.displayName
 
 const toggleGroupVariants = cva(
-  "inline-flex items-center justify-center rounded-2xl",
+  "inline-flex items-center justify-center rounded-lg",
   {
     variants: {
       variant: {
@@ -47,7 +47,7 @@ const toggleGroupVariants = cva(
 )
 
 const toggleGroupItemVariants = cva(
-  "inline-flex items-center justify-center rounded-2xl text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-black dark:data-[state=on]:bg-white data-[state=on]:text-white dark:data-[state=on]:text-black data-[state=off]:border data-[state=off]:border-gray-200 dark:data-[state=off]:border-gray-800 data-[state=off]:hover:bg-gray-50 dark:data-[state=off]:hover:bg-gray-900",
+  "inline-flex items-center justify-center rounded-lg text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-black dark:data-[state=on]:bg-white data-[state=on]:text-white dark:data-[state=on]:text-black data-[state=off]:border data-[state=off]:border-gray-200 dark:data-[state=off]:border-gray-800 data-[state=off]:hover:bg-gray-50 dark:data-[state=off]:hover:bg-gray-900",
   {
     variants: {
       variant: {

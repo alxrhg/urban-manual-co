@@ -209,7 +209,7 @@ export default function TripDaySection({
   return (
     <div
       className={`
-        border border-gray-200 dark:border-gray-800 rounded-xl sm:rounded-2xl overflow-hidden
+        border border-gray-200 dark:border-gray-800 rounded-xl sm:rounded-lg overflow-hidden
         transition-colors duration-200
         ${isSelected ? 'ring-1 ring-gray-300 dark:ring-gray-700' : ''}
       `}
@@ -288,25 +288,25 @@ export default function TripDaySection({
               <div className="flex flex-wrap justify-center gap-2 mb-4">
                 <button
                   onClick={() => onAddItem?.(day.dayNumber, 'cafe')}
-                  className="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 >
                   + Breakfast
                 </button>
                 <button
                   onClick={() => onAddItem?.(day.dayNumber, 'museum')}
-                  className="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 >
                   + Museum
                 </button>
                 <button
                   onClick={() => onAddItem?.(day.dayNumber, 'restaurant')}
-                  className="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 >
                   + Lunch
                 </button>
                 <button
                   onClick={() => onAddItem?.(day.dayNumber, 'bar')}
-                  className="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 >
                   + Drinks
                 </button>

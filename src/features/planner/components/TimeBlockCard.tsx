@@ -156,7 +156,7 @@ export const TimeBlockCard = memo(function TimeBlockCard({
 
       <div
         className={`
-          group relative rounded-2xl border transition-all duration-200
+          group relative rounded-lg border transition-all duration-200
           ${isDragging
             ? 'shadow-xl border-violet-300 dark:border-violet-700 bg-white dark:bg-gray-800 z-50 scale-[1.02]'
             : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-md'
@@ -251,13 +251,13 @@ export const TimeBlockCard = memo(function TimeBlockCard({
             {(badge || crowdLevel) && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {badgeStyle && (
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${badgeStyle.className}`}>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium ${badgeStyle.className}`}>
                     {badgeStyle.icon}
                     {badge}
                   </span>
                 )}
                 {crowdStyle && crowdLevel !== 'low' && (
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${crowdStyle.bg} ${crowdStyle.text}`}>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium ${crowdStyle.bg} ${crowdStyle.text}`}>
                     <Users className="w-3 h-3" />
                     {crowdLevel === 'high' ? 'Busy' : crowdLevel === 'very_high' ? 'Very Busy' : 'Moderate'}
                   </span>

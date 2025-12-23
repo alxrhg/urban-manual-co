@@ -157,7 +157,7 @@ const WhyThisContent = memo(function WhyThisContent({
   return (
     <div className="px-5 py-4">
       {/* Destination Preview */}
-      <div className="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 dark:bg-white/5 mb-5">
+      <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-white/5 mb-5">
         <div className="w-14 h-14 rounded-xl bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0">
           {imageUrl ? (
             <Image
@@ -185,7 +185,7 @@ const WhyThisContent = memo(function WhyThisContent({
 
       {/* AI Explanation Header */}
       <div className="flex items-start gap-3 mb-5">
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
           <Lightbulb className="w-5 h-5 text-white" />
         </div>
         <div>
@@ -248,7 +248,7 @@ const WhyThisContent = memo(function WhyThisContent({
       )}
 
       {/* Feedback */}
-      <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5">
+      <div className="p-4 rounded-lg bg-gray-50 dark:bg-white/5">
         <p className="text-[13px] text-gray-600 dark:text-gray-400 mb-3">
           Was this recommendation helpful?
         </p>

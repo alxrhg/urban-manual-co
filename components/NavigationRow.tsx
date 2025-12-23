@@ -292,7 +292,7 @@ export function NavigationRow({
               <SlidersHorizontal className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
               <span>Filters</span>
               {hasActiveFilters && (
-                <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full">
+                <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-md">
                   {activeFilterCount}
                 </span>
               )}
@@ -434,7 +434,7 @@ export function NavigationRow({
                   value={filterSearchQuery}
                   onChange={(e) => setFilterSearchQuery(e.target.value)}
                   placeholder="Search destinations..."
-                  className="w-full pl-10 pr-10 py-3 px-4 text-sm border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent transition-all"
+                  className="w-full pl-10 pr-10 py-3 px-4 text-sm border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent transition-all"
                 />
                 {filterSearchQuery && (
                   <button
@@ -576,7 +576,7 @@ export function NavigationRow({
               <div className="flex flex-col space-y-3">
                 <h4 className="text-sm font-medium text-gray-900 dark:text-white">Location</h4>
                 <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
                     <span className="text-sm text-gray-700 dark:text-gray-300">Use current location</span>
                     <button
                       type="button"

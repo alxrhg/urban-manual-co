@@ -22,7 +22,7 @@ function MenuItem({
   return (
     <button
       onClick={onClick}
-      className="group w-full flex items-center gap-4 p-4 sm:p-3.5 rounded-2xl sm:rounded-xl hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 transition-colors text-left min-h-[64px] sm:min-h-[56px]"
+      className="group w-full flex items-center gap-4 p-4 sm:p-3.5 rounded-lg hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 transition-colors text-left min-h-[64px] sm:min-h-[56px]"
     >
       <div className="flex h-11 w-11 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-stone-100 dark:bg-gray-800 group-hover:bg-white dark:group-hover:bg-stone-700 transition-colors flex-shrink-0">
         <Icon className="h-5 w-5 text-stone-600 dark:text-gray-400" />
@@ -81,7 +81,7 @@ export function SettingsDrawer() {
             </div>
             <button
               onClick={handleClose}
-              className="p-2.5 sm:p-2 rounded-full bg-stone-100 dark:bg-gray-800 text-stone-500 dark:text-gray-400 hover:bg-stone-200 dark:hover:bg-gray-700 hover:text-stone-900 dark:hover:text-white active:scale-95 transition-all min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
+              className="p-2.5 sm:p-2 rounded-lg bg-stone-100 dark:bg-gray-800 text-stone-500 dark:text-gray-400 hover:bg-stone-200 dark:hover:bg-gray-700 hover:text-stone-900 dark:hover:text-white active:scale-95 transition-all min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
             >
               <X className="w-5 h-5 sm:w-4 sm:h-4" />
             </button>
@@ -89,7 +89,7 @@ export function SettingsDrawer() {
 
           {/* Content */}
           <div className="flex-1 flex flex-col items-center justify-center px-8 text-center pb-safe">
-            <div className="w-20 h-20 sm:w-16 sm:h-16 rounded-full bg-stone-100 dark:bg-gray-800 flex items-center justify-center mb-5">
+            <div className="w-20 h-20 sm:w-16 sm:h-16 rounded-lg bg-stone-100 dark:bg-gray-800 flex items-center justify-center mb-5">
               <Settings className="w-9 h-9 sm:w-7 sm:h-7 text-stone-400 dark:text-gray-500" />
             </div>
             <h3 className="text-lg sm:text-base font-semibold text-stone-900 dark:text-white mb-2">
@@ -134,7 +134,7 @@ export function SettingsDrawer() {
           </div>
           <button
             onClick={handleClose}
-            className="p-2.5 sm:p-2 rounded-full bg-stone-100 dark:bg-gray-800 text-stone-500 dark:text-gray-400 hover:bg-stone-200 dark:hover:bg-gray-700 hover:text-stone-900 dark:hover:text-white active:scale-95 transition-all min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
+            className="p-2.5 sm:p-2 rounded-lg bg-stone-100 dark:bg-gray-800 text-stone-500 dark:text-gray-400 hover:bg-stone-200 dark:hover:bg-gray-700 hover:text-stone-900 dark:hover:text-white active:scale-95 transition-all min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
           >
             <X className="w-5 h-5 sm:w-4 sm:h-4" />
           </button>

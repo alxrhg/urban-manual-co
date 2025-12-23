@@ -104,7 +104,7 @@ function SortableItineraryItem({
       style={style}
       className={`
         relative group transition-all duration-200
-        ${isDragging ? 'scale-[1.03] shadow-xl ring-2 ring-stone-900/10 dark:ring-white/20 rounded-2xl bg-white dark:bg-gray-800' : ''}
+        ${isDragging ? 'scale-[1.03] shadow-xl ring-2 ring-stone-900/10 dark:ring-white/20 rounded-lg bg-white dark:bg-gray-800' : ''}
       `}
     >
       {/* Drag Handle (edit mode only) */}
@@ -450,7 +450,7 @@ export default function ItineraryViewRedesign({
           {onAddItem && (
             <button
               onClick={() => onAddItem(selectedDay.dayNumber)}
-              className="px-5 py-2.5 bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded-full hover:opacity-90 transition-opacity"
+              className="px-5 py-2.5 bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded-lg hover:opacity-90 transition-opacity"
             >
               Add your first stop
             </button>

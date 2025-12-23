@@ -50,7 +50,7 @@ export default function AirlineLogoBadge({
     <div
       aria-hidden="true"
       className={cn(
-        'flex items-center justify-center overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-br text-white shadow-sm',
+        'flex items-center justify-center overflow-hidden rounded-lg border border-white/20 bg-gradient-to-br text-white shadow-sm',
         gradient,
         className
       )}

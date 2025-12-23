@@ -222,7 +222,7 @@ export default function DestinationBox({
   };
 
   return (
-    <div className={`bg-white dark:bg-gray-900 rounded-2xl border border-stone-200 dark:border-gray-800 overflow-hidden ${className}`}>
+    <div className={`bg-white dark:bg-gray-900 rounded-lg border border-stone-200 dark:border-gray-800 overflow-hidden ${className}`}>
       {/* Header */}
       <div className="px-4 pt-4 pb-3">
         <div className="flex items-start justify-between gap-3">
@@ -572,7 +572,7 @@ export default function DestinationBox({
                     setEditPriority(newValue);
                     saveChanges('priority', newValue);
                   }}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-all ${
                     editPriority === opt.value
                       ? opt.color
                       : 'bg-white dark:bg-gray-900 text-stone-400 border-stone-200 dark:border-gray-700 hover:border-stone-300'
@@ -639,7 +639,7 @@ export default function DestinationBox({
                   <button
                     key={tag}
                     onClick={() => toggleTag(tag)}
-                    className={`px-2.5 py-1 text-xs rounded-full border transition-all ${
+                    className={`px-2.5 py-1 text-xs rounded-md border transition-all ${
                       editTags.includes(tag)
                         ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900 border-stone-900 dark:border-white'
                         : 'bg-white dark:bg-gray-900 text-stone-500 border-stone-200 dark:border-gray-700 hover:border-stone-300'

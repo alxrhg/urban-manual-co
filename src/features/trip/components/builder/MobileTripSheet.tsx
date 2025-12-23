@@ -216,7 +216,7 @@ const MobileTripSheet = memo(function MobileTripSheet() {
 function EmptyDayState({ dayNumber }: { dayNumber: number }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-8 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center mb-4 shadow-inner">
+      <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center mb-4 shadow-inner">
         <MapPin className="w-7 h-7 text-gray-300 dark:text-gray-600" />
       </div>
       <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1">
@@ -246,7 +246,7 @@ function TravelConnector({ minutes }: { minutes: number }) {
         <div className="w-0.5 h-3 bg-gray-200 dark:bg-gray-700" />
         <div className="w-0.5 h-3 bg-gray-200 dark:bg-gray-700" />
       </div>
-      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 dark:bg-white/5 rounded-full">
+      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 dark:bg-white/5 rounded-md">
         <Navigation2 className="w-3 h-3 text-gray-400" />
         <span className="text-xs text-gray-500">{formatTime(minutes)}</span>
       </div>

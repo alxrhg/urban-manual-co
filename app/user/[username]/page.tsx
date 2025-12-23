@@ -208,7 +208,7 @@ export default function UserProfilePage() {
           </div>
 
           {collections.length === 0 ? (
-            <div className="text-center py-16 border border-gray-200 dark:border-gray-800 rounded-2xl bg-gray-50 dark:bg-gray-900">
+            <div className="text-center py-16 border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-gray-900">
               <div className="text-5xl mb-4">📚</div>
               <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
                 {isOwnProfile ? 'No public collections yet' : 'No collections yet'}
@@ -225,7 +225,7 @@ export default function UserProfilePage() {
                 <button
                   key={collection.id}
                   onClick={() => router.push(`/collection/${collection.id}`)}
-                  className="text-left p-6 border border-gray-200 dark:border-gray-800 rounded-2xl hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-md transition-all bg-white dark:bg-gray-900"
+                  className="text-left p-6 border border-gray-200 dark:border-gray-800 rounded-lg hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-md transition-all bg-white dark:bg-gray-900"
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <span className="text-4xl flex-shrink-0">{collection.emoji || '📚'}</span>

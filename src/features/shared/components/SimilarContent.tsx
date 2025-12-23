@@ -104,7 +104,7 @@ const SimilarContent = memo(function SimilarContent({
               key={f.key}
               onClick={() => setFilter(f.key)}
               className={`
-                px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors
+                px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors
                 ${filter === f.key
                   ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                   : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/20'
@@ -186,7 +186,7 @@ function GridCard({
   return (
     <button
       onClick={onClick}
-      className="relative group rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 text-left"
+      className="relative group rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 text-left"
     >
       <div className="aspect-square">
         {imageUrl ? (
@@ -212,7 +212,7 @@ function GridCard({
         </p>
       </div>
       {destination.rating && (
-        <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full bg-black/40 backdrop-blur-sm">
+        <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-md bg-black/40 backdrop-blur-sm">
           <img src="/google-logo.svg" alt="Google" className="w-3 h-3" />
           <span className="text-[11px] font-medium text-white">
             {destination.rating.toFixed(1)}
@@ -240,7 +240,7 @@ function ListCard({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-3 w-full p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left group"
+      className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left group"
     >
       <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0">
         {imageUrl ? (

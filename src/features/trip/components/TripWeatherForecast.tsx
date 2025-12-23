@@ -203,7 +203,7 @@ export default function TripWeatherForecast({
       );
     }
     return (
-      <div className="text-center py-6 px-4 border border-dashed border-stone-200 dark:border-stone-800 rounded-2xl">
+      <div className="text-center py-6 px-4 border border-dashed border-stone-200 dark:border-stone-800 rounded-lg">
         <Cloud className="w-8 h-8 text-stone-300 mx-auto mb-2" />
         <p className="text-xs text-stone-500">{error}</p>
       </div>

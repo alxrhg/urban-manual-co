@@ -112,7 +112,7 @@ export function CityAutocompleteInput({
         onFocus={handleInputFocus}
         placeholder={placeholder}
         required={required}
-        className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600 ${
+        className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600 ${
           isNewCity
             ? 'border-orange-400 dark:border-orange-500 bg-orange-50 dark:bg-orange-950/20'
             : ''
@@ -120,7 +120,7 @@ export function CityAutocompleteInput({
       />
       
       {isNewCity && value && (
-        <div className="mt-2 flex items-start gap-2 px-3 py-2 rounded-xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800">
+        <div className="mt-2 flex items-start gap-2 px-3 py-2 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800">
           <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
           <div className="text-xs text-orange-900 dark:text-orange-200">
             <strong>New City:</strong> &quot;{value}&quot; will be added to the database.
@@ -131,14 +131,14 @@ export function CityAutocompleteInput({
       {showSuggestions && filteredCities.length > 0 && (
         <div
           ref={suggestionsRef}
-          className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg max-h-60 overflow-y-auto z-50"
+          className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50"
         >
           {filteredCities.slice(0, 10).map((city, index) => (
             <button
               key={index}
               type="button"
               onClick={() => handleSelectCity(city)}
-              className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors first:rounded-t-2xl last:rounded-b-2xl focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-800"
+              className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors first:rounded-t-lg last:rounded-b-lg focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-800"
             >
               {city}
             </button>

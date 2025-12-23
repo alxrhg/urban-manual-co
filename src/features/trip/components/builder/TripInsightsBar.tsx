@@ -120,7 +120,7 @@ export const TripHealthBadge = memo(function TripHealthBadge({
   return (
     <div
       className={`
-        inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
+        inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md
         text-[10px] font-semibold tracking-wide
         ${getHealthColor(score)}
         transition-colors duration-200
@@ -150,7 +150,7 @@ export const TripHealthCard = memo(function TripHealthCard({
   const categories = Object.entries(health.categoryBalance);
 
   return (
-    <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 space-y-4">
+    <div className="p-4 rounded-lg bg-gray-50 dark:bg-white/5 space-y-4">
       {/* Header with score */}
       <div className="flex items-center justify-between">
         <div>
@@ -202,7 +202,7 @@ export const TripHealthCard = memo(function TripHealthCard({
             {categories.map(([category, count]) => (
               <span
                 key={category}
-                className="px-2 py-0.5 text-[10px] bg-white dark:bg-white/10 rounded-full text-gray-600 dark:text-gray-300"
+                className="px-2 py-0.5 text-[10px] bg-white dark:bg-white/10 rounded-md text-gray-600 dark:text-gray-300"
               >
                 {category} ({count})
               </span>

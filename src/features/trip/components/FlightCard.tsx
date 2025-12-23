@@ -200,7 +200,7 @@ export default function FlightCard({ flight, departureDate, onExpand }: FlightCa
   };
 
   return (
-    <div className="relative rounded-2xl bg-stone-50 dark:bg-gray-800/60 overflow-hidden shadow-sm ring-1 ring-stone-200/50 dark:ring-gray-700/50">
+    <div className="relative rounded-lg bg-stone-50 dark:bg-gray-800/60 overflow-hidden shadow-sm ring-1 ring-stone-200/50 dark:ring-gray-700/50">
       {/* Main Card Content */}
       <div className="p-5">
         {/* Header: Route + Status */}
@@ -241,7 +241,7 @@ export default function FlightCard({ flight, departureDate, onExpand }: FlightCa
 
           {/* Status Badge */}
           {flightInfo && (
-            <div className={`px-2.5 py-1 rounded-full text-[11px] font-medium ${getStatusStyles(flightInfo.status)}`}>
+            <div className={`px-2.5 py-1 rounded-md text-[11px] font-medium ${getStatusStyles(flightInfo.status)}`}>
               {flightInfo.statusText}
             </div>
           )}

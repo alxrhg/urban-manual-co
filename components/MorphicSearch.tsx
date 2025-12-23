@@ -106,7 +106,7 @@ export default function MorphicSearch({ onClose }: MorphicSearchProps) {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center pt-16">
       <div
-        className="w-full max-w-4xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden"
+        className="w-full max-w-4xl bg-white dark:bg-gray-900 rounded-lg shadow-2xl overflow-hidden"
         style={{ height: 'calc(100vh / 3)' }}
       >
         {/* Header */}

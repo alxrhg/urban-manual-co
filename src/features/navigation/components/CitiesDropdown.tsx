@@ -85,7 +85,7 @@ export function CitiesDropdown({
           className={cn(
             'absolute top-full left-0 mt-2 w-48 z-50',
             'bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800',
-            'rounded-2xl shadow-lg max-h-64 overflow-y-auto'
+            'rounded-lg shadow-lg max-h-64 overflow-y-auto'
           )}
         >
           <button

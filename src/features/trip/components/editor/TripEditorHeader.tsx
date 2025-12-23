@@ -178,13 +178,13 @@ export function TripEditorHeader({
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="px-3 py-1.5 bg-white/90 text-gray-900 text-xs font-medium rounded-full"
+                className="px-3 py-1.5 bg-white/90 text-gray-900 text-xs font-medium rounded-md"
               >
                 Change
               </button>
               <button
                 onClick={() => setCoverImage('')}
-                className="px-3 py-1.5 bg-gray-900/90 text-white text-xs font-medium rounded-full"
+                className="px-3 py-1.5 bg-gray-900/90 text-white text-xs font-medium rounded-md"
               >
                 Remove
               </button>

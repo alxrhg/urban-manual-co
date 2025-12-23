@@ -468,7 +468,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                   {destination.brand && (
                     <Link
                       href={`/brand/${encodeURIComponent(destination.brand)}`}
-                      className="px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 text-[12px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 text-[12px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
                     >
                       <Building2 className="w-3 h-3" />
                       {destination.brand}
@@ -480,14 +480,14 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleShare}
-                    className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-full text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <Share2 className="w-4 h-4" />
                     Share
                   </button>
                   <button
                     onClick={() => user ? (!isSaved && setShowSaveModal(true)) : router.push('/auth/login')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-colors ${
                       isSaved
                         ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                         : 'border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -505,7 +505,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                             user ? handleVisitToggle() : router.push('/auth/login');
                           }
                         }}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium transition-colors ${
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-colors ${
                           isVisited
                             ? 'bg-green-600 text-white'
                             : 'border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -637,7 +637,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                     {enrichedData.reviews.slice(0, 4).map((review: any, idx: number) => (
                       <div key={idx} className="p-4 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
                         <div className="flex items-center gap-3 mb-2">
-                          <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                             <span className="text-[12px] font-medium text-gray-600 dark:text-gray-400">
                               {review.author_name?.charAt(0)?.toUpperCase() || '?'}
                             </span>

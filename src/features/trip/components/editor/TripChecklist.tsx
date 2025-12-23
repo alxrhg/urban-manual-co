@@ -172,7 +172,7 @@ export function TripChecklist({ notes, onSave }: TripChecklistProps) {
       {hasChanges && (
         <button
           onClick={handleSave}
-          className="text-xs font-medium text-white dark:text-gray-900 bg-gray-900 dark:bg-white px-3 py-1.5 rounded-full flex items-center gap-1"
+          className="text-xs font-medium text-white dark:text-gray-900 bg-gray-900 dark:bg-white px-3 py-1.5 rounded-md flex items-center gap-1"
         >
           <Check className="w-3 h-3" /> Save checklist
         </button>

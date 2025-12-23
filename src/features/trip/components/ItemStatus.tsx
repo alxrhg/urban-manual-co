@@ -77,7 +77,7 @@ export default function ItemStatus({
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       {status !== 'unknown' && (
-        <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full ${config.bg}`}>
+        <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md ${config.bg}`}>
           <Icon className={`w-3 h-3 ${config.color}`} />
           <span className={`text-[10px] font-medium ${config.color}`}>
             {config.label}

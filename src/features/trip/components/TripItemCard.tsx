@@ -66,7 +66,7 @@ function SortableTripItemCard({
       style={style}
       className={`
         group relative mb-2 sm:mb-2 transition-all duration-200
-        ${isDragging ? 'z-50 scale-[1.03] shadow-xl ring-2 ring-gray-900/10 dark:ring-white/20 rounded-2xl bg-white dark:bg-gray-800' : ''}
+        ${isDragging ? 'z-50 scale-[1.03] shadow-xl ring-2 ring-gray-900/10 dark:ring-white/20 rounded-lg bg-white dark:bg-gray-800' : ''}
       `}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -120,7 +120,7 @@ function SortableTripItemCard({
         <div
           onClick={() => onEdit?.(item)}
           className={`
-            ${onEdit ? 'cursor-pointer' : ''} rounded-2xl transition-all
+            ${onEdit ? 'cursor-pointer' : ''} rounded-lg transition-all
             ${onEdit ? 'active:scale-[0.98] sm:active:scale-100' : ''}
             ${isActive ? 'ring-2 ring-gray-300 dark:ring-gray-600' : ''}
             ${onEdit ? 'hover:ring-1 hover:ring-gray-200 dark:hover:ring-gray-700' : ''}
@@ -154,7 +154,7 @@ function ViewOnlyTripItemCard({
         <div
           onClick={() => onEdit?.(item)}
           className={`
-            ${onEdit ? 'cursor-pointer' : ''} rounded-2xl transition-all
+            ${onEdit ? 'cursor-pointer' : ''} rounded-lg transition-all
             ${onEdit ? 'active:scale-[0.98] sm:active:scale-100' : ''}
             ${isActive ? 'ring-2 ring-gray-300 dark:ring-gray-600' : ''}
             ${onEdit ? 'hover:ring-1 hover:ring-gray-200 dark:hover:ring-gray-700' : ''}

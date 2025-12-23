@@ -111,7 +111,7 @@ export default function NeighborhoodBreakdown({
       <div className="flex flex-wrap items-center gap-2">
         {neighborhoods.map((neighborhood, index) => (
           <div key={neighborhood.name} className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-full">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-md">
               <MapPin className="w-3 h-3 text-gray-400" />
               <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
                 {neighborhood.name}

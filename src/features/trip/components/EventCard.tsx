@@ -83,13 +83,13 @@ export default function EventCard({ event, name, compact = true }: EventCardProp
   const duration = getDuration();
 
   return (
-    <div className="p-4 rounded-2xl bg-stone-100 dark:bg-gray-800/50">
+    <div className="p-4 rounded-lg bg-stone-100 dark:bg-gray-800/50">
       {/* REGION 1: Event Header (Name & Type Badge) */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <h3 className="text-lg font-semibold text-stone-900 dark:text-white leading-tight">
           {displayName}
         </h3>
-        <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide ${eventTypeColors[eventType]}`}>
+        <span className={`flex-shrink-0 px-2 py-0.5 rounded-md text-[10px] font-medium uppercase tracking-wide ${eventTypeColors[eventType]}`}>
           {eventTypeLabels[eventType]}
         </span>
       </div>

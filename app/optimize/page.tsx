@@ -357,7 +357,7 @@ export default function RouteOptimizerPage() {
             <span className="text-xl text-gray-400 mb-6">No saved places yet</span>
             <button
               onClick={() => router.push('/')}
-              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity font-medium"
+              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity font-medium"
             >
               Browse Destinations
             </button>
@@ -378,7 +378,7 @@ export default function RouteOptimizerPage() {
                         setSelectedPlaces([]);
                         setOptimizedRoute([]);
                       }}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                         selectedCity === city
                           ? 'bg-black dark:bg-white text-white dark:text-black'
                           : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-md'
@@ -397,7 +397,7 @@ export default function RouteOptimizerPage() {
                   type="time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                  className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                 />
               </div>
 
@@ -413,7 +413,7 @@ export default function RouteOptimizerPage() {
                       <button
                         key={place.slug}
                         onClick={() => togglePlace(place)}
-                        className={`w-full text-left p-4 rounded-2xl border transition-all ${
+                        className={`w-full text-left p-4 rounded-lg border transition-all ${
                           isSelected
                             ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
                             : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:shadow-md'
@@ -424,7 +424,7 @@ export default function RouteOptimizerPage() {
                             <img
                               src={place.image}
                               alt={place.name}
-                              className="w-12 h-12 rounded-2xl object-cover"
+                              className="w-12 h-12 rounded-lg object-cover"
                             />
                           )}
                           <div className="flex-1">
@@ -444,7 +444,7 @@ export default function RouteOptimizerPage() {
               <button
                 onClick={optimizeRoute}
                 disabled={selectedPlaces.length === 0 || optimizing}
-                className="w-full px-6 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
+                className="w-full px-6 py-4 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
               >
                 {optimizing ? (
                   <>
@@ -461,13 +461,13 @@ export default function RouteOptimizerPage() {
             </div>
 
             {/* Right: Optimized Route */}
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold">Your Optimized Route</h2>
                 {optimizedRoute.length > 0 && (
                   <button
                     onClick={exportToGoogleMaps}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 transition-colors text-sm font-medium"
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
                   >
                     <Download className="h-4 w-4" />
                     <span>Export to Maps</span>

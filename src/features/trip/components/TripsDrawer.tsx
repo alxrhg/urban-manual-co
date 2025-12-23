@@ -216,7 +216,7 @@ export function TripsDrawer() {
                   <button
                     key={trip.id}
                     onClick={() => handleSelectTrip(trip.id)}
-                    className="group relative w-full border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden hover:border-gray-300 dark:hover:border-gray-700 transition-all text-left bg-white dark:bg-gray-900"
+                    className="group relative w-full border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden hover:border-gray-300 dark:hover:border-gray-700 transition-all text-left bg-white dark:bg-gray-900"
                   >
                     <div className="flex">
                       {/* Left: Image */}

@@ -93,7 +93,7 @@ function CompactProfileHeader({
           <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">
             {displayUsername}
           </h3>
-          <span className="flex-shrink-0 px-2 py-0.5 border border-gray-200 dark:border-gray-800 rounded-full text-[10px] font-medium text-gray-500 dark:text-gray-400">
+          <span className="flex-shrink-0 px-2 py-0.5 border border-gray-200 dark:border-gray-800 rounded-md text-[10px] font-medium text-gray-500 dark:text-gray-400">
             {badge.name}
           </span>
         </div>
@@ -137,7 +137,7 @@ function NextTripHeroCard({
       whileTap={{ scale: 0.98 }}
       className="w-full text-left"
     >
-      <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 hover:bg-gray-100 dark:hover:bg-gray-800/80 transition-colors">
+      <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-800/80 transition-colors">
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
@@ -146,7 +146,7 @@ function NextTripHeroCard({
               Next Trip
             </span>
           </div>
-          <span className="text-xs font-semibold text-gray-900 dark:text-white bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-2.5 py-1 rounded-full">
+          <span className="text-xs font-semibold text-gray-900 dark:text-white bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-2.5 py-1 rounded-md">
             {trip.days_until === 0
               ? 'Today'
               : trip.days_until === 1
@@ -269,9 +269,9 @@ function JourneyProgress({
           </>
         )}
       </p>
-      <div className="h-1 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden mb-2">
+      <div className="h-1 bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden mb-2">
         <motion.div
-          className="h-full rounded-full bg-black dark:bg-white"
+          className="h-full rounded-lg bg-black dark:bg-white"
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -376,7 +376,7 @@ function SignOutButton({ onSignOut }: { onSignOut: () => void }) {
   return (
     <button
       onClick={onSignOut}
-      className="w-full flex items-center justify-center gap-2 py-3 rounded-full border border-gray-200 dark:border-gray-800 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+      className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-gray-200 dark:border-gray-800 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
     >
       <LogOut className="w-4 h-4" />
       Sign Out
@@ -561,7 +561,7 @@ export function AccountDrawer() {
 
           {/* Welcome content */}
           <div className="flex-1 flex flex-col items-center justify-center px-8 pb-8 text-center">
-            <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-900 flex items-center justify-center mb-6">
+            <div className="w-20 h-20 rounded-lg bg-gray-100 dark:bg-gray-900 flex items-center justify-center mb-6">
               <User className="h-8 w-8 text-gray-400 dark:text-gray-500" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
@@ -574,7 +574,7 @@ export function AccountDrawer() {
 
             <button
               onClick={() => openLegacyDrawer('login')}
-              className="w-full max-w-[280px] py-3 rounded-full bg-black dark:bg-white text-white dark:text-black text-sm font-medium hover:opacity-80 transition-opacity"
+              className="w-full max-w-[280px] py-3 rounded-lg bg-black dark:bg-white text-white dark:text-black text-sm font-medium hover:opacity-80 transition-opacity"
             >
               Get Started
             </button>

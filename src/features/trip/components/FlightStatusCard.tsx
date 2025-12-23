@@ -166,7 +166,7 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
   };
 
   return (
-    <div className="p-4 rounded-2xl bg-stone-100 dark:bg-gray-800/50">
+    <div className="p-4 rounded-lg bg-stone-100 dark:bg-gray-800/50">
       {/* REGION 1: Route Header (EWR → MIA) */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-4 mb-3">
         {/* Origin */}
@@ -224,7 +224,7 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
         <div className="flex items-center gap-2">
           {/* Status Badge */}
           {flightInfo && (
-            <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusColor(flightInfo.status)}`}>
+            <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium ${getStatusColor(flightInfo.status)}`}>
               {getStatusIcon(flightInfo.status)}
               {flightInfo.statusText}
             </div>

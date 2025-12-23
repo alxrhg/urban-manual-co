@@ -31,7 +31,7 @@ export function TripCoverImage({
   className = '',
   isPast = false,
 }: TripCoverImageProps) {
-  const baseClasses = `rounded-2xl flex-shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-800 ${isPast ? 'grayscale-[30%]' : ''}`;
+  const baseClasses = `rounded-lg flex-shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-800 ${isPast ? 'grayscale-[30%]' : ''}`;
   const combinedClasses = `${baseClasses} ${className}`;
 
   // Priority 1: User-uploaded cover image

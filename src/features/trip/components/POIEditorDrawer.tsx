@@ -370,16 +370,16 @@ export default function POIEditorDrawer({ destination, initialCity, onSave }: PO
                 <div className="space-y-3">
                   <p className="text-sm text-center text-gray-600 dark:text-gray-400">Delete "{destination.name}"?</p>
                   <div className="flex gap-2">
-                    <button type="button" onClick={() => setShowDeleteConfirm(false)} className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm">
+                    <button type="button" onClick={() => setShowDeleteConfirm(false)} className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm">
                       Cancel
                     </button>
-                    <button type="button" onClick={handleDelete} disabled={isDeleting} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-full text-sm">
+                    <button type="button" onClick={handleDelete} disabled={isDeleting} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg text-sm">
                       {isDeleting ? 'Deleting...' : 'Delete'}
                     </button>
                   </div>
                 </div>
               ) : (
-                <button type="button" onClick={handleDelete} className="w-full px-4 py-2 border border-red-300 text-red-600 rounded-full text-sm flex items-center justify-center gap-2">
+                <button type="button" onClick={handleDelete} className="w-full px-4 py-2 border border-red-300 text-red-600 rounded-lg text-sm flex items-center justify-center gap-2">
                   <Trash2 className="h-4 w-4" /> Delete Destination
                 </button>
               )}
@@ -391,7 +391,7 @@ export default function POIEditorDrawer({ destination, initialCity, onSave }: PO
       {/* Fixed bottom action bar */}
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800">
         <div className="flex gap-3">
-          <button type="button" onClick={closeDrawer} className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-full text-sm">
+          <button type="button" onClick={closeDrawer} className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-lg text-sm">
             Cancel
           </button>
           <button

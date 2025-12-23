@@ -377,7 +377,7 @@ export default function CitiesPageClient({
                 <div className="mt-8 flex justify-center">
                   <button
                     onClick={() => setDisplayCount(prev => prev + itemsPerPage)}
-                    className="px-6 py-3 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-60 transition-all duration-200 ease-out text-gray-900 dark:text-white"
+                    className="px-6 py-3 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-lg hover:opacity-60 transition-all duration-200 ease-out text-gray-900 dark:text-white"
                   >
                     Show More ({filteredCities.length - displayCount} remaining)
                   </button>
@@ -387,7 +387,7 @@ export default function CitiesPageClient({
               {/* Horizontal Ad below pagination */}
               {filteredCities.length > 0 && (
                 <div className="mt-8 w-full">
-                  <div className="max-w-4xl mx-auto border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-white dark:bg-gray-900">
+                  <div className="max-w-4xl mx-auto border border-gray-200 dark:border-gray-800 rounded-lg p-4 bg-white dark:bg-gray-900">
                     <div className="text-xs text-gray-400 dark:text-gray-500 mb-2 text-center uppercase tracking-wide">Sponsored</div>
                     <ins
                       className="adsbygoogle"
@@ -455,7 +455,7 @@ function CityEditDrawer({ city, isOpen, isSaving, onClose, onSave }: CityEditDra
             onClick={() => {
               if (!isSaving) onClose();
             }}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             aria-label="Close city edit drawer"
           >
             <X className="h-5 w-5" />
@@ -472,7 +472,7 @@ function CityEditDrawer({ city, isOpen, isSaving, onClose, onSave }: CityEditDra
               value={countryInput}
               onChange={(event) => setCountryInput(event.target.value)}
               placeholder="e.g., Japan"
-              className="w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10"
+              className="w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10"
             />
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
               This updates the country for all destinations within this city.
@@ -484,7 +484,7 @@ function CityEditDrawer({ city, isOpen, isSaving, onClose, onSave }: CityEditDra
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-800 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className="flex-1 px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-800 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             disabled={isSaving}
           >
             Cancel
@@ -493,7 +493,7 @@ function CityEditDrawer({ city, isOpen, isSaving, onClose, onSave }: CityEditDra
             type="button"
             onClick={handleSave}
             disabled={isSaving || !countryInput.trim()}
-            className="flex-1 px-4 py-3 rounded-2xl bg-black dark:bg-white text-white dark:text-black text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-3 rounded-lg bg-black dark:bg-white text-white dark:text-black text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? (
               <>

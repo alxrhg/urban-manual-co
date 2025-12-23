@@ -24,7 +24,7 @@ const TripFloatingBar = memo(function TripFloatingBar() {
         exit={{ y: 80, opacity: 0 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
         onClick={openPanel}
-        className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 px-4 py-2.5 bg-gray-900 dark:bg-white rounded-full shadow-lg active:scale-[0.97] transition-transform"
+        className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 px-4 py-2.5 bg-gray-900 dark:bg-white rounded-lg shadow-lg active:scale-[0.97] transition-transform"
       >
         <span className="text-[13px] font-medium text-white dark:text-gray-900">
           {activeTrip.title || activeTrip.city || 'Trip'} · {totalItems}

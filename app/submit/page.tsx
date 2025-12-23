@@ -16,7 +16,7 @@ export default function SubmitPage() {
           Help us grow our collection by suggesting amazing places to visit.
         </p>
 
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-8 mb-8">
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 mb-8">
           <h2 className="text-2xl font-semibold mb-4">How to Submit</h2>
           <p className="text-gray-700 dark:text-gray-300 mb-6">
             We're always looking to add new destinations to our guide. To submit a place:
@@ -35,7 +35,7 @@ export default function SubmitPage() {
           </ol>
         </div>
 
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-8 mb-8">
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 mb-8">
           <h2 className="text-2xl font-semibold mb-4">What We're Looking For</h2>
           <ul className="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
             <li>Restaurants, cafes, bars, and dining experiences</li>
@@ -47,7 +47,7 @@ export default function SubmitPage() {
           </ul>
         </div>
 
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-8">
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-8">
           <h2 className="text-2xl font-semibold mb-4">Get in Touch</h2>
           <p className="text-gray-700 dark:text-gray-300 mb-4">
             Ready to submit a place? Contact us with the details:

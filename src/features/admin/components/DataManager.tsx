@@ -455,7 +455,7 @@ export function DataManager({ type }: DataManagerProps) {
           {/* Column Toggle */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="rounded-full flex-1 sm:flex-none">
+              <Button variant="outline" className="rounded-lg flex-1 sm:flex-none">
                 <Settings2 className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Columns</span>
               </Button>
@@ -513,13 +513,13 @@ export function DataManager({ type }: DataManagerProps) {
             variant="outline"
             onClick={handleSync}
             disabled={syncing}
-            className="rounded-full flex-1 sm:flex-none"
+            className="rounded-lg flex-1 sm:flex-none"
             title={`Sync ${type} from existing destinations`}
           >
             <RefreshCw className={cn("w-4 h-4 sm:mr-2", syncing && "animate-spin")} />
             <span className="hidden sm:inline">{syncing ? 'Syncing...' : 'Sync'}</span>
           </Button>
-          <Button onClick={openCreateDrawer} className="rounded-full flex-1 sm:flex-none">
+          <Button onClick={openCreateDrawer} className="rounded-lg flex-1 sm:flex-none">
             <Plus className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">Add New</span>
           </Button>

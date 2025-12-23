@@ -173,7 +173,7 @@ export default function OfflinePage() {
                   </div>
 
                   <span
-                    className={`px-2 py-1 text-xs font-medium rounded-full capitalize flex-shrink-0 ${getStatusColor(
+                    className={`px-2 py-1 text-xs font-medium rounded-md capitalize flex-shrink-0 ${getStatusColor(
                       trip.status
                     )}`}
                   >

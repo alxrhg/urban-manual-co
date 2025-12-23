@@ -101,7 +101,7 @@ export function Onboarding({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div
         className={cn(
-          'relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl',
+          'relative bg-white dark:bg-gray-900 rounded-lg shadow-2xl',
           'w-full max-w-lg mx-4 overflow-hidden'
         )}
       >
@@ -136,7 +136,7 @@ export function Onboarding({
           {/* Step content with animation */}
           <div className="text-center">
             {/* Icon */}
-            <div className="inline-flex items-center justify-center w-16 h-16 mb-6 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+            <div className="inline-flex items-center justify-center w-16 h-16 mb-6 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
               {step.icon}
             </div>
 

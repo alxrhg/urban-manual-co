@@ -144,14 +144,14 @@ export default function DiscoverPage() {
             {!user ? (
               <button
                 onClick={() => router.push('/auth/login')}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl text-xs font-medium"
+                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-medium"
               >
                 Sign In
               </button>
             ) : (
               <button
                 onClick={() => router.push('/account')}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl text-xs font-medium"
+                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-medium"
               >
                 Go to Account
               </button>
@@ -480,7 +480,7 @@ export default function DiscoverPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search collections..."
-              className="w-full pl-11 pr-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white text-sm"
+              className="w-full pl-11 pr-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:border-black dark:focus:border-white text-sm"
             />
           </div>
 
@@ -488,7 +488,7 @@ export default function DiscoverPage() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white text-sm"
+            className="px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:border-black dark:focus:border-white text-sm"
           >
             <option value="recent">Most Recent</option>
             <option value="popular">Most Popular</option>
@@ -508,7 +508,7 @@ export default function DiscoverPage() {
               <button
                 key={collection.id}
                 onClick={() => router.push(`/collection/${collection.id}`)}
-                className="text-left p-6 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
+                className="text-left p-6 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
               >
                 {/* Collection Header */}
                 <div className="flex items-start gap-3 mb-4">

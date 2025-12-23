@@ -52,7 +52,7 @@ function BrandsSkeleton() {
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="flex-shrink-0 w-[280px] h-[200px] bg-gray-100 dark:bg-gray-900 rounded-2xl animate-pulse"
+              className="flex-shrink-0 w-[280px] h-[200px] bg-gray-100 dark:bg-gray-900 rounded-lg animate-pulse"
             />
           ))}
         </div>
