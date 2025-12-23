@@ -1628,9 +1628,6 @@ const DestinationContent = memo(function DestinationContent({
 
   // Get hours information
   const hours = enrichedData?.opening_hours?.weekday_text;
-  const hoursAnalysis = hours ? analyzeHours(hours, enrichedData?.utc_offset, destination.city) : { isOpen: null, status: '', category: 'unknown' as const, timeUntilChange: null };
-  const rating = destination.rating || enrichedData?.rating;
-  const reviewCount = enrichedData?.user_ratings_total;
 
   return (
     <div className="bg-[var(--editorial-bg)]">
