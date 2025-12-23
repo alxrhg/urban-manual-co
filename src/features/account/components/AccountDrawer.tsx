@@ -114,7 +114,7 @@ function CompactProfileHeader({
   );
 }
 
-// Next Trip Hero Card - More prominent, actionable
+// Next Trip - Plain text, no card container
 function NextTripHeroCard({
   trip,
   onClick,
@@ -131,61 +131,39 @@ function NextTripHeroCard({
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+  const daysText = trip.days_until === 0
+    ? 'Today'
+    : trip.days_until === 1
+    ? 'Tomorrow'
+    : `in ${trip.days_until} days`;
+
   return (
-    <motion.button
+    <button
       onClick={onClick}
-      whileTap={{ scale: 0.98 }}
-      className="w-full text-left"
+      className="w-full text-left group"
     >
-      <div className="bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg p-4 hover:bg-[var(--editorial-border-subtle)] transition-colors">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--editorial-text-tertiary)]">
-              Next Trip
-            </span>
-          </div>
-          <span className="text-xs font-semibold text-[var(--editorial-text-primary)] bg-[var(--editorial-bg)] border border-[var(--editorial-border)] px-2.5 py-1 rounded-md">
-            {trip.days_until === 0
-              ? 'Today'
-              : trip.days_until === 1
-              ? 'Tomorrow'
-              : `${trip.days_until} days`}
+      <p className="text-[10px] uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-1">
+        Next Trip · {daysText}
+      </p>
+      <p
+        className="text-[15px] text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors"
+        style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+      >
+        {trip.title || destination}
+        {trip.start_date && (
+          <span className="text-[var(--editorial-text-secondary)]">
+            {' · '}{formatDate(trip.start_date)}
+            {trip.end_date && trip.end_date !== trip.start_date && (
+              <> – {formatDate(trip.end_date)}</>
+            )}
           </span>
-        </div>
-
-        {/* Trip Details */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-[var(--editorial-text-primary)] truncate mb-1">
-              {trip.title || destination}
-            </h4>
-            <p className="text-sm text-[var(--editorial-text-secondary)]">
-              {destination}
-              {trip.start_date && (
-                <>
-                  {' · '}
-                  {formatDate(trip.start_date)}
-                  {trip.end_date && trip.end_date !== trip.start_date && (
-                    <> - {formatDate(trip.end_date)}</>
-                  )}
-                </>
-              )}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-1 text-[var(--editorial-text-secondary)] flex-shrink-0">
-            <span className="text-xs font-medium">View</span>
-            <ChevronRight className="w-4 h-4" />
-          </div>
-        </div>
-      </div>
-    </motion.button>
+        )}
+      </p>
+    </button>
   );
 }
 
-// Library Stats Grid - Compact, clickable tiles
+// Library Stats - Inline text, no cards
 function LibraryStatsGrid({
   stats,
   onSavedClick,
@@ -197,50 +175,27 @@ function LibraryStatsGrid({
   onVisitedClick: () => void;
   onTripsClick: () => void;
 }) {
-  const tiles = [
-    {
-      icon: Bookmark,
-      count: stats.saved,
-      label: 'Saved',
-      onClick: onSavedClick,
-    },
-    {
-      icon: MapPin,
-      count: stats.visited,
-      label: 'Visited',
-      onClick: onVisitedClick,
-    },
-    {
-      icon: Map,
-      count: stats.trips,
-      label: 'Trips',
-      onClick: onTripsClick,
-    },
-  ];
+  const serifStyle = { fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" };
+  const linkClass = "text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors";
 
   return (
-    <div className="grid grid-cols-3 gap-2">
-      {tiles.map((tile) => (
-        <motion.button
-          key={tile.label}
-          onClick={tile.onClick}
-          whileTap={{ scale: 0.95 }}
-          className="flex flex-col items-center justify-center gap-1 p-3 border border-[var(--editorial-border)] rounded-xl hover:bg-[var(--editorial-border-subtle)] transition-colors"
-        >
-          <tile.icon className="w-5 h-5 text-[var(--editorial-text-secondary)]" />
-          <span className="text-lg font-bold text-[var(--editorial-text-primary)]">
-            {tile.count}
-          </span>
-          <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--editorial-text-tertiary)]">
-            {tile.label}
-          </span>
-        </motion.button>
-      ))}
+    <div className="flex items-center gap-4" style={serifStyle}>
+      <button onClick={onSavedClick} className={linkClass}>
+        <span className="font-medium text-[var(--editorial-text-primary)]">{stats.saved}</span> saved
+      </button>
+      <span className="text-[var(--editorial-text-tertiary)]">·</span>
+      <button onClick={onVisitedClick} className={linkClass}>
+        <span className="font-medium text-[var(--editorial-text-primary)]">{stats.visited}</span> visited
+      </button>
+      <span className="text-[var(--editorial-text-tertiary)]">·</span>
+      <button onClick={onTripsClick} className={linkClass}>
+        <span className="font-medium text-[var(--editorial-text-primary)]">{stats.trips}</span> trips
+      </button>
     </div>
   );
 }
 
-// Journey Progress Bar - Compact milestone tracker
+// Journey Progress - Plain text with minimal progress bar
 function JourneyProgress({
   visited,
   countries,
@@ -252,37 +207,34 @@ function JourneyProgress({
   percentage: number;
   message: string;
 }) {
+  const serifStyle = { fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" };
+
   return (
-    <div className="p-3 border border-[var(--editorial-border)] rounded-xl">
-      <p className="text-sm text-[var(--editorial-text-secondary)] mb-2">
-        <span className="font-semibold text-[var(--editorial-text-primary)]">
-          {visited}
-        </span>{' '}
-        places
+    <div>
+      <p className="text-[13px] text-[var(--editorial-text-secondary)] mb-2" style={serifStyle}>
+        <span className="text-[var(--editorial-text-primary)]">{visited}</span> places
         {countries > 0 && (
           <>
             {' · '}
-            <span className="font-semibold text-[var(--editorial-text-primary)]">
-              {countries}
-            </span>{' '}
-            {countries === 1 ? 'country' : 'countries'}
+            <span className="text-[var(--editorial-text-primary)]">{countries}</span>
+            {' '}{countries === 1 ? 'country' : 'countries'}
           </>
         )}
       </p>
-      <div className="h-1 bg-[var(--editorial-border)] rounded-lg overflow-hidden mb-2">
+      <div className="h-px bg-[var(--editorial-border)] overflow-hidden mb-2">
         <motion.div
-          className="h-full rounded-lg bg-[var(--editorial-accent)]"
+          className="h-full bg-[var(--editorial-accent)]"
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
         />
       </div>
-      <p className="text-xs text-[var(--editorial-text-tertiary)]">{message}</p>
+      <p className="text-[11px] text-[var(--editorial-text-tertiary)] italic" style={serifStyle}>{message}</p>
     </div>
   );
 }
 
-// Quick Actions Menu - Settings and navigation
+// Quick Actions Menu - Simple text links
 function QuickActionsMenu({
   onSettingsClick,
   onHelpClick,
@@ -290,44 +242,25 @@ function QuickActionsMenu({
   onSettingsClick: () => void;
   onHelpClick: () => void;
 }) {
+  const serifStyle = { fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" };
+  const linkClass = "text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors";
+
   return (
-    <div className="space-y-1">
-      <button
-        onClick={onSettingsClick}
-        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-[var(--editorial-border-subtle)] transition-colors group"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[var(--editorial-border)] flex items-center justify-center">
-            <Settings className="h-4 w-4 text-[var(--editorial-text-secondary)]" />
-          </div>
-          <span className="text-sm font-medium text-[var(--editorial-text-primary)]">
-            Settings
-          </span>
-        </div>
-        <ChevronRight className="h-4 w-4 text-[var(--editorial-text-tertiary)] group-hover:text-[var(--editorial-text-secondary)] transition-colors" />
+    <div className="flex items-center gap-4" style={serifStyle}>
+      <button onClick={onSettingsClick} className={linkClass}>
+        Settings
       </button>
-
-      <DarkModeRow />
-
-      <button
-        onClick={onHelpClick}
-        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-[var(--editorial-border-subtle)] transition-colors group"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[var(--editorial-border)] flex items-center justify-center">
-            <HelpCircle className="h-4 w-4 text-[var(--editorial-text-secondary)]" />
-          </div>
-          <span className="text-sm font-medium text-[var(--editorial-text-primary)]">
-            Help & Support
-          </span>
-        </div>
-        <ChevronRight className="h-4 w-4 text-[var(--editorial-text-tertiary)] group-hover:text-[var(--editorial-text-secondary)] transition-colors" />
+      <span className="text-[var(--editorial-text-tertiary)]">·</span>
+      <DarkModeToggle />
+      <span className="text-[var(--editorial-text-tertiary)]">·</span>
+      <button onClick={onHelpClick} className={linkClass}>
+        Help
       </button>
     </div>
   );
 }
 
-// Dark Mode Toggle Row
+// Dark Mode Toggle Row - kept for drawer layout
 function DarkModeRow() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -371,14 +304,38 @@ function DarkModeRow() {
   );
 }
 
-// Sign Out Button - Clean, understated
+// Dark Mode Toggle - Inline text toggle for Quick Actions
+function DarkModeToggle() {
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const currentTheme = resolvedTheme || theme || 'light';
+  const isDark = currentTheme === 'dark';
+
+  if (!mounted) return <span className="text-[13px] text-[var(--editorial-text-tertiary)]">Dark</span>;
+
+  return (
+    <button
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      className="text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+    >
+      {isDark ? 'Light' : 'Dark'}
+    </button>
+  );
+}
+
+// Sign Out - Plain text link
 function SignOutButton({ onSignOut }: { onSignOut: () => void }) {
   return (
     <button
       onClick={onSignOut}
-      className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-[var(--editorial-border)] text-sm font-medium text-[var(--editorial-text-secondary)] hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-colors"
+      className="text-[13px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-accent)] transition-colors"
+      style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
     >
-      <LogOut className="w-4 h-4" />
       Sign Out
     </button>
   );

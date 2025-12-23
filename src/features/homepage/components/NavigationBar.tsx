@@ -107,13 +107,12 @@ export default function NavigationBar() {
 
         {/* Right side - Minimal actions */}
         <div className="flex items-center gap-6">
-          {/* Create Trip - Text link style */}
+          {/* Create Trip - Primary button with terracotta accent */}
           <button
             onClick={handleCreateTrip}
             disabled={creatingTrip}
-            className="text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)]
-                       disabled:opacity-50 transition-colors"
-            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+            className="px-4 py-1.5 text-[13px] font-medium text-white bg-[var(--editorial-accent)]
+                       hover:opacity-90 disabled:opacity-50 transition-opacity rounded-md"
           >
             {creatingTrip ? (
               <span className="flex items-center gap-2">

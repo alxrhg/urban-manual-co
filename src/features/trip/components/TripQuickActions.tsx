@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Share2, Calendar, Printer, Copy, Check, ExternalLink, X } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface TripQuickActionsProps {
@@ -95,20 +95,23 @@ export default function TripQuickActions({
     }
   };
 
+  // Plain text links - no buttons, no borders
+  const textLinkClass = "text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors";
+  const serifStyle = { fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" };
+
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      {/* Share Button */}
+    <div className={`flex items-center gap-4 ${className}`}>
+      {/* Share - text link */}
       <div className="relative">
         <button
           onClick={handleNativeShare}
-          className="flex items-center gap-1.5 px-4 py-1.5 text-[12px] font-medium text-[var(--editorial-text-secondary)] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-full hover:border-[var(--editorial-accent)] hover:text-[var(--editorial-accent)] transition-colors"
-          title="Share trip"
+          className={textLinkClass}
+          style={serifStyle}
         >
-          <Share2 className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Share</span>
+          {copied ? 'Copied!' : 'Share'}
         </button>
 
-        {/* Share Menu Dropdown */}
+        {/* Share Menu Dropdown - minimal styling */}
         <AnimatePresence>
           {showShareMenu && (
             <>
@@ -120,83 +123,57 @@ export default function TripQuickActions({
                 onClick={() => setShowShareMenu(false)}
               />
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                className="absolute right-0 top-full mt-2 w-64 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-2xl shadow-lg overflow-hidden z-50"
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                className="absolute right-0 top-full mt-2 w-56 bg-[var(--editorial-bg)] border border-[var(--editorial-border)] z-50 py-2"
               >
-                <div className="flex items-center justify-between px-3 pt-3 pb-2">
-                  <p className="text-[11px] font-medium text-[var(--editorial-text-tertiary)] uppercase tracking-wider">
-                    Share Link
-                  </p>
-                  <button
-                    onClick={() => setShowShareMenu(false)}
-                    className="p-1 text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <div className="px-3 pb-3">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      readOnly
-                      value={shareUrl}
-                      className="flex-1 px-2 py-1.5 text-[12px] bg-[var(--editorial-bg)] border border-[var(--editorial-border)] rounded-lg text-[var(--editorial-text-secondary)] truncate"
-                    />
-                    <button
-                      onClick={handleCopyLink}
-                      className="p-1.5 text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-accent)] transition-colors"
-                      title={copied ? 'Copied!' : 'Copy link'}
-                    >
-                      {copied ? (
-                        <Check className="w-4 h-4 text-green-500" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="border-t border-[var(--editorial-border)] p-2">
-                  <button
-                    onClick={() => {
-                      window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(`Check out my trip${destination ? ` to ${destination}` : ''}!`)}`, '_blank');
-                      setShowShareMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] rounded-lg transition-colors text-left"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Share on X (Twitter)
-                  </button>
-                </div>
+                <button
+                  onClick={handleCopyLink}
+                  className="w-full px-4 py-2 text-left text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+                  style={serifStyle}
+                >
+                  Copy Link
+                </button>
+                <button
+                  onClick={() => {
+                    window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(`Check out my trip${destination ? ` to ${destination}` : ''}!`)}`, '_blank');
+                    setShowShareMenu(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+                  style={serifStyle}
+                >
+                  Share on X
+                </button>
               </motion.div>
             </>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Export to Calendar */}
+      {/* Export - text link */}
       {startDate && (
-        <button
-          onClick={handleExportCalendar}
-          disabled={exporting}
-          className="flex items-center gap-1.5 px-4 py-1.5 text-[12px] font-medium text-[var(--editorial-text-secondary)] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-full hover:border-[var(--editorial-accent)] hover:text-[var(--editorial-accent)] transition-colors disabled:opacity-50"
-          title="Add to Google Calendar"
-        >
-          <Calendar className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Export</span>
-        </button>
+        <>
+          <span className="text-[var(--editorial-text-tertiary)]">·</span>
+          <button
+            onClick={handleExportCalendar}
+            disabled={exporting}
+            className={`${textLinkClass} disabled:opacity-50`}
+            style={serifStyle}
+          >
+            Export
+          </button>
+        </>
       )}
 
-      {/* Print */}
+      {/* Print - text link */}
+      <span className="text-[var(--editorial-text-tertiary)]">·</span>
       <button
         onClick={handlePrint}
-        className="flex items-center gap-1.5 px-4 py-1.5 text-[12px] font-medium text-[var(--editorial-text-secondary)] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-full hover:border-[var(--editorial-accent)] hover:text-[var(--editorial-accent)] transition-colors print:hidden"
-        title="Print itinerary"
+        className={`${textLinkClass} print:hidden`}
+        style={serifStyle}
       >
-        <Printer className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline">Print</span>
+        Print
       </button>
     </div>
   );
