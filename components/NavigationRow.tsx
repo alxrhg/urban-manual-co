@@ -222,7 +222,7 @@ export function NavigationRow({
                 value={searchTerm}
                 onChange={(e) => onSearchChange(e.target.value)}
                 placeholder="Search destinations..."
-                className="w-full pl-10 pr-10 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-950 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent transition-all"
+                className="w-full pl-10 pr-10 py-2.5 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-950 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-gray-900 dark:focus:border-white transition-all"
               />
               {searchTerm && (
                 <button
@@ -240,14 +240,14 @@ export function NavigationRow({
           <div className="relative" ref={citiesDropdownRef}>
             <button
               onClick={handleToggleCitiesDropdown}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-full text-sm font-medium text-gray-900 dark:text-white hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-180 whitespace-nowrap"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-900 dark:text-white hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-180 whitespace-nowrap"
             >
               <span>{selectedCity ? capitalizeCity(selectedCity) : 'All Cities'}</span>
               <ChevronDown className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${isCitiesDropdownOpen ? 'rotate-180' : ''}`} strokeWidth={1.5} />
             </button>
             
             {isCitiesDropdownOpen && (
-              <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg z-50 max-h-64 overflow-y-auto">
+              <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
                 <button
                   onClick={() => {
                     onCityChange('');
@@ -285,7 +285,7 @@ export function NavigationRow({
           <div className="relative">
             <button
               onClick={handleToggleFiltersOpen}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-full text-sm font-medium text-gray-900 dark:text-white hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-180"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-900 dark:text-white hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-180"
               aria-label={isFiltersOpen ? 'Close filters' : 'Open filters'}
               aria-expanded={isFiltersOpen}
             >
@@ -313,7 +313,7 @@ export function NavigationRow({
           >
             <button
               onClick={handleClearAllCategories}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-180 ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all duration-180 ${
                 !selectedCategory && !advancedFilters.michelin
                   ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -325,7 +325,7 @@ export function NavigationRow({
             {/* Michelin chip */}
             <button
               onClick={handleToggleMichelin}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-180 ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all duration-180 ${
                 advancedFilters.michelin
                   ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -355,7 +355,7 @@ export function NavigationRow({
                       michelin: undefined,
                     });
                   }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-180 ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all duration-180 ${
                     selectedCategory === category && !advancedFilters.michelin
                       ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                       : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -371,10 +371,10 @@ export function NavigationRow({
           </div>
 
           {/* 5. View Toggle - Segmented control */}
-          <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 flex-shrink-0">
+          <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1 flex-shrink-0">
             <button
               onClick={handleSetGridView}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
+              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-md ${
                 viewMode === 'grid'
                   ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -386,7 +386,7 @@ export function NavigationRow({
             </button>
             <button
               onClick={handleSetMapView}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
+              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-md ${
                 viewMode === 'map'
                   ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -401,7 +401,7 @@ export function NavigationRow({
           {/* 6. Create Trip Button - Icon button */}
           <button
             onClick={onCreateTrip}
-            className="flex items-center justify-center w-10 h-10 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full hover:opacity-90 transition-all duration-180 flex-shrink-0"
+            className="flex items-center justify-center w-10 h-10 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 flex-shrink-0"
             aria-label={user ? "Create Trip" : "Sign in to create trip"}
           >
             <Plus className="h-5 w-5" />
@@ -419,7 +419,7 @@ export function NavigationRow({
         }}
       >
         <div className="w-full px-6 md:px-10 lg:px-12 pt-5 pb-6 mb-6">
-          <div className="w-full bg-gray-50 dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 px-8 pt-6 pb-8">
+          <div className="w-full bg-gray-50 dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 px-8 pt-6 pb-8">
             <div className="flex flex-col space-y-12">
               {/* Heading */}
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -463,7 +463,7 @@ export function NavigationRow({
                         updateFilter('michelin', true);
                       }
                     }}
-                    className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-180 ${
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-180 ${
                       filters.michelin
                         ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -481,7 +481,7 @@ export function NavigationRow({
                         updateFilter('openNow', true);
                       }
                     }}
-                    className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-180 ${
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-180 ${
                       filters.openNow
                         ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -517,7 +517,7 @@ export function NavigationRow({
                             }
                           }
                         }}
-                        className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-180 ${
+                        className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-180 ${
                           isSelected
                             ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                             : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -558,7 +558,7 @@ export function NavigationRow({
                             }
                           }
                         }}
-                        className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-180 ${
+                        className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-180 ${
                           isSelected
                             ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                             : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -637,7 +637,7 @@ export function NavigationRow({
               <div className="pt-2">
                 <button
                   onClick={handleCloseFilters}
-                  className="w-full py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
+                  className="w-full py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
                 >
                   Apply Filters
                 </button>

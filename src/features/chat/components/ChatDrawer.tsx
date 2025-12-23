@@ -180,7 +180,7 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                 <button
                   key={suggestion}
                   onClick={() => handleSuggestionClick(suggestion)}
-                  className="px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                  className="px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                 >
                   {suggestion}
                 </button>
@@ -211,13 +211,13 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about restaurants, hotels..."
-            className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-full text-sm focus:outline-none focus:border-black dark:focus:border-white transition-colors"
+            className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:border-black dark:focus:border-white transition-colors"
             disabled={isLoading || isStreaming}
           />
           <button
             type="submit"
             disabled={!input.trim() || isLoading || isStreaming}
-            className="px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             <Send className="h-4 w-4" />
           </button>
