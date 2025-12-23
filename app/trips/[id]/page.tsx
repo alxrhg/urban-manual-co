@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal, Trash2 } from 'lucide-react';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal, Trash2, Calendar as CalendarIcon } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import {
   DndContext,
@@ -342,11 +342,11 @@ export default function TripPage() {
               onDelete={handleDelete}
             />
 
-            {/* Action bar: Edit toggle + Settings */}
+            {/* Action bar: Edit toggle + Settings - pill-shaped buttons */}
             <div className="flex items-center justify-between mt-4 mb-2">
               <button
                 onClick={() => setIsEditMode(!isEditMode)}
-                className={`flex items-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 text-[12px] sm:text-[11px] font-medium rounded-lg transition-colors ${
+                className={`flex items-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 text-[12px] sm:text-[11px] font-medium rounded-full transition-colors ${
                   isEditMode
                     ? 'bg-[var(--editorial-accent)] text-white'
                     : 'text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] border border-[var(--editorial-border)]'
@@ -367,7 +367,7 @@ export default function TripPage() {
 
               <button
                 onClick={() => { setShowTripSettings(true); setSelectedItem(null); }}
-                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors rounded-full"
               >
                 <Settings className="w-3.5 h-3.5" />
                 Settings
@@ -425,18 +425,21 @@ export default function TripPage() {
                   <button
                     key={day.dayNumber}
                     onClick={() => setSelectedDayNumber(day.dayNumber)}
-                    className={`flex-shrink-0 flex flex-col items-center px-4 py-2 rounded-lg text-[13px] font-medium whitespace-nowrap transition-all ${
+                    className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-all ${
                       isSelected
                         ? 'bg-[var(--editorial-accent)] text-white'
                         : 'bg-[var(--editorial-bg-elevated)] text-[var(--editorial-text-secondary)] hover:bg-[var(--editorial-border-subtle)] border border-[var(--editorial-border)]'
                     }`}
                   >
-                    <span>{dayDate || `Day ${day.dayNumber}`}</span>
-                    {dayWeather && (
-                      <span className={`text-[11px] mt-0.5 ${isSelected ? 'text-white/80' : 'text-[var(--editorial-text-tertiary)]'}`}>
-                        {dayWeather.tempMax}° {dayWeather.description.split(' ')[0]}
-                      </span>
-                    )}
+                    {isSelected && <CalendarIcon className="w-3.5 h-3.5" />}
+                    <div className="flex flex-col items-center">
+                      <span>{dayDate || `Day ${day.dayNumber}`}</span>
+                      {dayWeather && (
+                        <span className={`text-[11px] mt-0.5 ${isSelected ? 'text-white/80' : 'text-[var(--editorial-text-tertiary)]'}`}>
+                          {dayWeather.tempMax}° {dayWeather.description.split(' ')[0]}
+                        </span>
+                      )}
+                    </div>
                   </button>
                 );
               })}
@@ -1144,16 +1147,16 @@ function DaySection({
           : ''
       }`}
     >
-      {/* Day header - editorial style with serif */}
-      <div className="flex items-center justify-between mb-4">
+      {/* Section Header - bold title left, pill button right, clean separation */}
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-[var(--editorial-border-subtle)]">
         <div className="flex items-center gap-3">
           <h3
-            className="text-[16px] font-normal text-[var(--editorial-text-primary)]"
+            className="text-[16px] font-bold text-[var(--editorial-text-primary)]"
             style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
           >
             Day {dayNumber}{longDateDisplay && `: ${longDateDisplay}`}
           </h3>
-          {/* Weather badge - warm styling */}
+          {/* Weather badge - pill-shaped */}
           {weather && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-full">
               <WeatherIcon code={weather.weatherCode} className="w-3.5 h-3.5 text-[var(--editorial-accent)]" />
@@ -1187,19 +1190,19 @@ function DaySection({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Optimize prompt */}
+          {/* Optimize prompt - pill-shaped action button */}
           {canOptimize && (
             <button
               onClick={optimizeRoute}
               disabled={isOptimizing}
-              className="flex items-center gap-1.5 text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)] transition-colors px-2 py-1 rounded-lg hover:bg-[var(--editorial-border-subtle)]"
+              className="flex items-center gap-1.5 text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)] transition-colors px-3 py-1.5 rounded-full hover:bg-[var(--editorial-border-subtle)] border border-transparent hover:border-[var(--editorial-border)]"
             >
               {isOptimizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Route className="w-3.5 h-3.5" />}
               <span className="hidden sm:inline">Optimize</span>
             </button>
           )}
 
-          {/* Plus button */}
+          {/* Plus button - pill-shaped */}
           <div className="relative">
             <button
               onClick={() => {
@@ -1214,7 +1217,7 @@ function DaySection({
                   setShowTransportForm(null);
                 }
               }}
-              className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center rounded-lg bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] hover:bg-[var(--editorial-border-subtle)] transition-colors"
+              className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] hover:bg-[var(--editorial-border-subtle)] transition-colors"
             >
               <Plus className={`w-4 h-4 sm:w-3.5 sm:h-3.5 text-[var(--editorial-text-secondary)] transition-transform ${showAddMenu || showSearch || showTransportForm ? 'rotate-45' : ''}`} />
             </button>
@@ -1352,7 +1355,7 @@ function DaySection({
                           disabled={isAdding}
                           className="w-full flex items-center gap-3 px-3 py-3 hover:bg-[var(--editorial-border-subtle)] rounded-xl transition-colors text-left active:bg-gray-100 dark:active:bg-gray-700"
                         >
-                          <div className="w-12 h-12 rounded-xl overflow-hidden bg-[var(--editorial-bg-elevated)] flex-shrink-0">
+                          <div className="w-12 h-12 rounded-full overflow-hidden bg-[#F5F2ED] dark:bg-gray-700 flex-shrink-0">
                             {destination.image_thumbnail || destination.image ? (
                               <Image src={destination.image_thumbnail || destination.image || ''} alt="" width={48} height={48} className="w-full h-full object-cover" />
                             ) : (
@@ -1374,7 +1377,7 @@ function DaySection({
                           disabled={isAdding}
                           className="w-full flex items-center gap-3 px-3 py-3 hover:bg-[var(--editorial-border-subtle)] rounded-xl transition-colors text-left active:bg-gray-100 dark:active:bg-gray-700"
                         >
-                          <div className="w-12 h-12 rounded-xl bg-[var(--editorial-bg-elevated)] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          <div className="w-12 h-12 rounded-full bg-[#F5F2ED] dark:bg-gray-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
                             {place.image ? (
                               <Image src={place.image} alt="" width={48} height={48} className="w-full h-full object-cover" />
                             ) : (

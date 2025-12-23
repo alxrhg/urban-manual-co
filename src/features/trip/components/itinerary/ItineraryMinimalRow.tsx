@@ -128,54 +128,59 @@ export default function ItineraryMinimalRow({
         ${className}
       `}
     >
-      {/* Map marker badge or Emoji */}
-      {mapIndex ? (
-        <div
-          className={`
-            w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0
-            ${isActive
-              ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-              : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-900 dark:border-gray-600'
-            }
-          `}
-          title={`Stop ${mapIndex} on map`}
-        >
-          {mapIndex}
-        </div>
-      ) : (
-        <span className="text-base flex-shrink-0 w-6 text-center">
-          {emoji}
-        </span>
-      )}
+      {/* Circular thumbnail - 48px with cream background */}
+      <div
+        className={`
+          w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-[#F5F2ED] dark:bg-gray-800
+          ${isActive ? 'ring-2 ring-[var(--editorial-accent,#B45309)]' : ''}
+        `}
+      >
+        {mapIndex ? (
+          <div
+            className={`
+              w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold
+              ${isActive
+                ? 'bg-[var(--editorial-accent,#B45309)] text-white'
+                : 'bg-stone-900 dark:bg-white text-white dark:text-gray-900'
+              }
+            `}
+            title={`Stop ${mapIndex} on map`}
+          >
+            {mapIndex}
+          </div>
+        ) : (
+          <span className="text-xl">
+            {emoji}
+          </span>
+        )}
+      </div>
 
-      {/* Content */}
+      {/* Content - follows hierarchy: time → title → subtitle */}
       <div className="flex-1 min-w-0">
+        {/* Time — prominent, left-aligned */}
+        {formattedTime && (
+          <span className="text-sm font-semibold text-[var(--editorial-accent,#B45309)] dark:text-amber-400">
+            {formattedTime}
+          </span>
+        )}
+        {/* Venue name — bold */}
         <div className="flex items-baseline gap-2">
-          <span className="text-sm font-medium text-stone-900 dark:text-white truncate">
+          <span className="text-sm font-bold text-stone-900 dark:text-white truncate">
             {item.title}
           </span>
-          {locationText && (
-            <span className="text-xs text-stone-400 dark:text-gray-500 truncate">
-              {locationText}
-            </span>
-          )}
         </div>
-        {notes?.raw && (
-          <p className="text-xs text-stone-500 dark:text-gray-400 truncate mt-0.5">
-            {notes.raw}
+        {/* Category/subtitle — lighter weight, warm gray */}
+        {(locationText || notes?.raw) && (
+          <p className="text-xs font-normal text-stone-400 dark:text-gray-500 truncate mt-0.5">
+            {locationText}{locationText && notes?.raw && ' · '}{notes?.raw}
           </p>
         )}
       </div>
 
-      {/* Time & Duration */}
-      <div className="flex items-center gap-2 flex-shrink-0 text-right">
-        {formattedTime && (
-          <span className="text-xs text-stone-500 dark:text-gray-400">
-            {formattedTime}
-          </span>
-        )}
+      {/* Duration — pill badge */}
+      <div className="flex items-center gap-2 flex-shrink-0">
         {formattedDuration && (
-          <span className="text-xs text-stone-400 dark:text-gray-500 px-1.5 py-0.5 rounded bg-stone-100 dark:bg-gray-800">
+          <span className="text-xs text-stone-400 dark:text-gray-500 px-2 py-0.5 rounded-full bg-stone-100 dark:bg-gray-800">
             {formattedDuration}
           </span>
         )}

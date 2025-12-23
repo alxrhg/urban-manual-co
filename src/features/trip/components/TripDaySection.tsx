@@ -245,14 +245,14 @@ export default function TripDaySection({
           </div>
         </button>
 
-        {/* Edit Mode Toggle */}
+        {/* Edit Mode Toggle - pill-shaped */}
         {day.items.length > 0 && (
           <button
             onClick={() => setIsEditMode(!isEditMode)}
-            className={`mr-2 p-2 rounded-lg transition-colors ${
+            className={`mr-2 p-2 rounded-full transition-colors ${
               isEditMode
-                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400'
+                ? 'bg-[var(--editorial-accent,#B45309)] text-white'
+                : 'hover:bg-stone-100 dark:hover:bg-gray-800 text-stone-500 dark:text-gray-400'
             }`}
             title={isEditMode ? 'Done editing' : 'Edit day'}
           >
@@ -284,29 +284,29 @@ export default function TripDaySection({
                 No stops planned for this day
               </p>
 
-              {/* Quick Add Suggestions */}
+              {/* Quick Add Suggestions - pill-shaped buttons */}
               <div className="flex flex-wrap justify-center gap-2 mb-4">
                 <button
                   onClick={() => onAddItem?.(day.dayNumber, 'cafe')}
-                  className="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="px-4 py-1.5 text-xs text-stone-600 dark:text-gray-400 bg-[#F5F2ED] dark:bg-gray-800 rounded-full hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors"
                 >
                   + Breakfast
                 </button>
                 <button
                   onClick={() => onAddItem?.(day.dayNumber, 'museum')}
-                  className="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="px-4 py-1.5 text-xs text-stone-600 dark:text-gray-400 bg-[#F5F2ED] dark:bg-gray-800 rounded-full hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors"
                 >
                   + Museum
                 </button>
                 <button
                   onClick={() => onAddItem?.(day.dayNumber, 'restaurant')}
-                  className="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="px-4 py-1.5 text-xs text-stone-600 dark:text-gray-400 bg-[#F5F2ED] dark:bg-gray-800 rounded-full hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors"
                 >
                   + Lunch
                 </button>
                 <button
                   onClick={() => onAddItem?.(day.dayNumber, 'bar')}
-                  className="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="px-4 py-1.5 text-xs text-stone-600 dark:text-gray-400 bg-[#F5F2ED] dark:bg-gray-800 rounded-full hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors"
                 >
                   + Drinks
                 </button>
@@ -315,7 +315,7 @@ export default function TripDaySection({
               <div className="text-center">
                 <button
                   onClick={() => onAddItem?.(day.dayNumber)}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white active:text-gray-900 transition-colors bg-gray-100 dark:bg-gray-800 sm:bg-transparent rounded-xl sm:rounded-none"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm sm:text-xs font-medium text-stone-600 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors bg-[#F5F2ED] dark:bg-gray-800 rounded-full"
                 >
                   <Plus className="w-4 h-4 sm:w-3 sm:h-3" />
                   Browse all
@@ -355,12 +355,12 @@ export default function TripDaySection({
             </div>
           )}
 
-          {/* Add Stop Button (when items exist) - Larger touch target */}
+          {/* Add Stop Button (when items exist) - pill-shaped */}
           {day.items.length > 0 && (
             <div className="px-3 sm:px-4 pb-3 sm:pb-4">
               <button
                 onClick={() => onAddItem?.(day.dayNumber)}
-                className="w-full flex items-center justify-center gap-2 py-3 sm:py-2.5 text-sm sm:text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white active:text-gray-900 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl hover:border-gray-300 dark:hover:border-gray-700 active:border-gray-400 active:bg-gray-50 dark:active:bg-gray-800/50 transition-colors min-h-[48px] sm:min-h-0"
+                className="w-full flex items-center justify-center gap-2 py-3 sm:py-2.5 text-sm sm:text-xs font-medium text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white active:text-stone-900 border border-dashed border-stone-200 dark:border-gray-700 rounded-full hover:border-stone-300 dark:hover:border-gray-600 active:border-stone-400 active:bg-stone-50 dark:active:bg-gray-800/50 transition-colors min-h-[48px] sm:min-h-0"
               >
                 <Plus className="w-4 h-4 sm:w-3 sm:h-3" />
                 Add stop

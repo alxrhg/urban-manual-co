@@ -51,72 +51,70 @@ export default function PlaceCard({
 
   return (
     <div className="p-4 rounded-lg bg-stone-100 dark:bg-gray-800/50 flex gap-4">
-      {/* Thumbnail */}
-      {image && (
-        <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-stone-200 dark:bg-gray-700">
+      {/* Circular Thumbnail - 48px with cream background */}
+      <div className="relative w-12 h-12 flex-shrink-0 rounded-full overflow-hidden bg-[#F5F2ED] dark:bg-gray-700">
+        {image ? (
           <Image
             src={image}
             alt={name}
             fill
             className="object-cover"
-            sizes="64px"
+            sizes="48px"
             unoptimized={image.startsWith('/api/')}
           />
-        </div>
-      )}
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <MapPin className="w-5 h-5 text-stone-400 dark:text-gray-500" />
+          </div>
+        )}
+      </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        {/* REGION 1: Place Header (Name & Location) */}
-        <div className="mb-2">
-          <h3 className="text-base font-semibold text-stone-900 dark:text-white leading-tight truncate">
-            {name}
-          </h3>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            {neighborhood && (
-              <p className="text-xs text-stone-500 dark:text-gray-400 flex items-center gap-1">
-                <MapPin className="w-3 h-3" />
-                <span className="truncate">{neighborhood}</span>
-              </p>
-            )}
-            {neighborhood && category && (
-              <span className="text-stone-300 dark:text-gray-600">•</span>
-            )}
-            {category && (
-              <span className="text-xs text-stone-500 dark:text-gray-400 capitalize">
-                {category}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* REGION 2: Time & Duration & Crowd */}
-        {(time || duration) && (
-          <div className="flex items-center gap-2 text-xs text-stone-600 dark:text-gray-300 mb-2">
-            {time && (
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3 text-stone-400" />
-                {formatTime(time)}
-                <CrowdBadge category={category} time={time} />
-              </span>
-            )}
-            {time && duration && (
-              <span className="text-stone-300 dark:text-gray-600">•</span>
-            )}
+        {/* HIERARCHY 1: Time — prominent */}
+        {time && (
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm font-semibold text-[var(--editorial-accent,#B45309)] dark:text-amber-400">
+              {formatTime(time)}
+            </span>
             {duration && (
-              <span className="text-stone-500 dark:text-gray-400">
+              <span className="text-xs text-stone-400 dark:text-gray-500 px-1.5 py-0.5 rounded-full bg-stone-200/50 dark:bg-gray-700/50">
                 {formatDuration(duration)}
               </span>
             )}
+            <CrowdBadge category={category} time={time} />
           </div>
         )}
 
-        {/* REGION 3: Rating & Actions */}
-        <div className="flex items-center justify-between">
+        {/* HIERARCHY 2: Venue name — bold */}
+        <h3 className="text-base font-bold text-stone-900 dark:text-white leading-tight truncate">
+          {name}
+        </h3>
+
+        {/* HIERARCHY 3: Category/subtitle — lighter weight, warm gray */}
+        <div className="flex items-center gap-1.5 mt-0.5">
+          {category && (
+            <span className="text-xs font-normal text-stone-400 dark:text-gray-500 capitalize">
+              {category}
+            </span>
+          )}
+          {category && neighborhood && (
+            <span className="text-stone-300 dark:text-gray-600">·</span>
+          )}
+          {neighborhood && (
+            <p className="text-xs font-normal text-stone-400 dark:text-gray-500 flex items-center gap-1">
+              <MapPin className="w-3 h-3" />
+              <span className="truncate">{neighborhood}</span>
+            </p>
+          )}
+        </div>
+
+        {/* HIERARCHY 4: Status — small colored indicator (rating) */}
+        <div className="flex items-center justify-between mt-2">
           {rating ? (
             <div className="flex items-center gap-1">
               <img src="/google-logo.svg" alt="Google" className="w-3 h-3" />
-              <span className="text-xs font-medium text-stone-600 dark:text-gray-300">
+              <span className="text-[11px] font-medium text-stone-500 dark:text-gray-400">
                 {rating.toFixed(1)}
               </span>
             </div>

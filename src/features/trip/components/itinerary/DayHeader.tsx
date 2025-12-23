@@ -62,10 +62,10 @@ export default function DayHeader({
   const dayOfWeek = getDayOfWeek(date);
 
   return (
-    <div className={`flex items-center gap-3 mb-6 ${className}`}>
-      {/* Date Badge */}
+    <div className={`flex items-center gap-3 mb-6 pb-3 border-b border-stone-200 dark:border-gray-800 ${className}`}>
+      {/* Date Badge - circular */}
       {date && (
-        <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-stone-100 dark:bg-gray-900 flex flex-col items-center justify-center">
+        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[#F5F2ED] dark:bg-gray-900 flex flex-col items-center justify-center">
           <span className="text-[9px] font-medium text-stone-400 dark:text-gray-500 tracking-wider uppercase">
             {month}
           </span>
@@ -75,25 +75,25 @@ export default function DayHeader({
         </div>
       )}
 
-      {/* Day Info */}
+      {/* Day Info - bold title left */}
       <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-medium text-stone-900 dark:text-white">
+        <h3 className="text-sm font-bold text-stone-900 dark:text-white">
           Day {dayNumber}
           {cityName && <span className="text-stone-400 dark:text-gray-500 font-normal"> · {cityName}</span>}
         </h3>
-        <p className="text-xs text-stone-400 dark:text-gray-500">
+        <p className="text-xs font-normal text-stone-400 dark:text-gray-500">
           {dayOfWeek && `${dayOfWeek} · `}
           {itemCount !== undefined && `${itemCount} ${itemCount === 1 ? 'stop' : 'stops'}`}
         </p>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-1">
+      {/* Actions - pill-shaped buttons right */}
+      <div className="flex items-center gap-2">
         {onOptimize && (
           <button
             onClick={onOptimize}
             disabled={isOptimizing}
-            className="flex-shrink-0 text-xs text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white transition-colors disabled:opacity-50"
+            className="flex-shrink-0 text-xs text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white transition-colors disabled:opacity-50 p-2 rounded-full hover:bg-stone-100 dark:hover:bg-gray-800"
           >
             {isOptimizing ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -105,7 +105,7 @@ export default function DayHeader({
         {onMore && (
           <button
             onClick={onMore}
-            className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-stone-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-2 rounded-full text-stone-400 hover:text-stone-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-stone-100 dark:hover:bg-gray-800 transition-colors"
           >
             <MoreHorizontal className="w-4 h-4" />
           </button>
@@ -163,9 +163,9 @@ export function CompactDayHeader({
     <button
       onClick={onClick}
       className={`
-        flex flex-col items-center px-3 py-2 rounded-xl transition-all min-w-[56px]
+        flex flex-col items-center px-3 py-2 rounded-full transition-all min-w-[56px]
         ${isSelected
-          ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900'
+          ? 'bg-[var(--editorial-accent,#B45309)] text-white'
           : 'bg-stone-100 dark:bg-gray-800 text-stone-600 dark:text-gray-400 hover:bg-stone-200 dark:hover:bg-gray-700'
         }
         ${className}
