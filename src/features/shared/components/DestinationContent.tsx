@@ -1703,38 +1703,45 @@ const DestinationContent = memo(function DestinationContent({
 
         {/* Action Buttons */}
         <div className="flex gap-2 mb-6">
-          {/* Primary: Add to Trip or Save */}
-          {activeTrip ? (
-            <button
-              onClick={() => handleAddToTrip(tripContext?.day || activeTrip?.days[0]?.dayNumber || 1)}
-              disabled={isAddingToTrip}
-              className="flex-1 h-10 flex items-center justify-center gap-2 text-[13px] font-medium bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)] hover:opacity-90 transition-opacity disabled:opacity-50"
-            >
-              {isAddingToTrip ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              Add to Trip
-            </button>
-          ) : (
-            <button
-              onClick={user ? handleSave : undefined}
-              className={`flex-1 h-10 flex items-center justify-center gap-2 text-[13px] font-medium border transition-all ${
-                isSaved
-                  ? 'border-[var(--editorial-text-primary)] bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)]'
-                  : 'border-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-primary)] hover:text-[var(--editorial-text-primary)]'
-              }`}
-            >
-              <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
-              {isSaved ? 'Saved' : 'Save'}
-            </button>
-          )}
+          {/* Add to Trip - Always visible */}
+          <button
+            onClick={() => {
+              if (activeTrip) {
+                handleAddToTrip(tripContext?.day || activeTrip?.days[0]?.dayNumber || 1);
+              } else {
+                startTrip(destination.city || 'New Trip', 3);
+                handleAddToTrip(1);
+              }
+            }}
+            disabled={isAddingToTrip}
+            className="flex-1 h-10 flex items-center justify-center gap-2 text-[13px] font-medium bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)] hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {isAddingToTrip ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            {activeTrip ? 'Add to Trip' : 'Start Trip'}
+          </button>
+          {/* Save Button */}
+          <button
+            onClick={user ? handleSave : undefined}
+            className={`h-10 w-10 flex items-center justify-center border transition-all ${
+              isSaved
+                ? 'border-[var(--editorial-text-primary)] bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)]'
+                : 'border-[var(--editorial-border)] text-[var(--editorial-text-tertiary)] hover:border-[var(--editorial-text-primary)] hover:text-[var(--editorial-text-primary)]'
+            }`}
+            title={isSaved ? 'Saved' : 'Save'}
+          >
+            <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+          </button>
           <button
             onClick={handleShare}
             className="h-10 w-10 flex items-center justify-center border border-[var(--editorial-border)] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] hover:border-[var(--editorial-text-primary)] transition-all"
+            title="Share"
           >
             <Share2 className="h-4 w-4" />
           </button>
           <button
             onClick={handleDirections}
             className="h-10 w-10 flex items-center justify-center border border-[var(--editorial-border)] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] hover:border-[var(--editorial-text-primary)] transition-all"
+            title="Directions"
           >
             <Navigation className="h-4 w-4" />
           </button>
