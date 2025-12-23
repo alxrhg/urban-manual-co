@@ -67,10 +67,10 @@ function CompactProfileHeader({
       <div
         className="relative w-14 h-14 rounded-full p-0.5 flex-shrink-0"
         style={{
-          background: `conic-gradient(#000 ${progressDegrees}deg, #e5e7eb ${progressDegrees}deg)`,
+          background: `conic-gradient(var(--editorial-accent) ${progressDegrees}deg, var(--editorial-border) ${progressDegrees}deg)`,
         }}
       >
-        <div className="w-full h-full rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+        <div className="w-full h-full rounded-full overflow-hidden bg-[var(--editorial-border)] flex items-center justify-center">
           {avatarUrl ? (
             <Image
               src={avatarUrl}
@@ -80,7 +80,7 @@ function CompactProfileHeader({
               sizes="56px"
             />
           ) : (
-            <span className="text-lg font-semibold text-gray-500 dark:text-gray-400">
+            <span className="text-lg font-semibold text-[var(--editorial-text-secondary)]">
               {displayUsername.charAt(0).toUpperCase()}
             </span>
           )}
@@ -90,14 +90,14 @@ function CompactProfileHeader({
       {/* Profile Info */}
       <div className="flex-1 min-w-0 pt-0.5">
         <div className="flex items-center gap-2 mb-0.5">
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">
+          <h3 className="text-base font-semibold text-[var(--editorial-text-primary)] truncate">
             {displayUsername}
           </h3>
-          <span className="flex-shrink-0 px-2 py-0.5 border border-gray-200 dark:border-gray-800 rounded-md text-[10px] font-medium text-gray-500 dark:text-gray-400">
+          <span className="flex-shrink-0 px-2 py-0.5 border border-[var(--editorial-border)] rounded-md text-[10px] font-medium text-[var(--editorial-text-tertiary)]">
             {badge.name}
           </span>
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+        <p className="text-xs text-[var(--editorial-text-secondary)] truncate">
           {email}
         </p>
       </div>
@@ -105,10 +105,10 @@ function CompactProfileHeader({
       {/* Edit Button */}
       <button
         onClick={onEditClick}
-        className="flex-shrink-0 p-2 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-lg transition-colors"
+        className="flex-shrink-0 p-2 hover:bg-[var(--editorial-border-subtle)] rounded-lg transition-colors"
         title="Edit profile"
       >
-        <ChevronRight className="h-5 w-5 text-gray-400" />
+        <ChevronRight className="h-5 w-5 text-[var(--editorial-text-tertiary)]" />
       </button>
     </div>
   );
@@ -137,16 +137,16 @@ function NextTripHeroCard({
       whileTap={{ scale: 0.98 }}
       className="w-full text-left"
     >
-      <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-800/80 transition-colors">
+      <div className="bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg p-4 hover:bg-[var(--editorial-border-subtle)] transition-colors">
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+            <Calendar className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--editorial-text-tertiary)]">
               Next Trip
             </span>
           </div>
-          <span className="text-xs font-semibold text-gray-900 dark:text-white bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-2.5 py-1 rounded-md">
+          <span className="text-xs font-semibold text-[var(--editorial-text-primary)] bg-[var(--editorial-bg)] border border-[var(--editorial-border)] px-2.5 py-1 rounded-md">
             {trip.days_until === 0
               ? 'Today'
               : trip.days_until === 1
@@ -158,10 +158,10 @@ function NextTripHeroCard({
         {/* Trip Details */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-gray-900 dark:text-white truncate mb-1">
+            <h4 className="font-semibold text-[var(--editorial-text-primary)] truncate mb-1">
               {trip.title || destination}
             </h4>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-[var(--editorial-text-secondary)]">
               {destination}
               {trip.start_date && (
                 <>
@@ -175,7 +175,7 @@ function NextTripHeroCard({
             </p>
           </div>
 
-          <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400 flex-shrink-0">
+          <div className="flex items-center gap-1 text-[var(--editorial-text-secondary)] flex-shrink-0">
             <span className="text-xs font-medium">View</span>
             <ChevronRight className="w-4 h-4" />
           </div>
@@ -225,13 +225,13 @@ function LibraryStatsGrid({
           key={tile.label}
           onClick={tile.onClick}
           whileTap={{ scale: 0.95 }}
-          className="flex flex-col items-center justify-center gap-1 p-3 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+          className="flex flex-col items-center justify-center gap-1 p-3 border border-[var(--editorial-border)] rounded-xl hover:bg-[var(--editorial-border-subtle)] transition-colors"
         >
-          <tile.icon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-          <span className="text-lg font-bold text-gray-900 dark:text-white">
+          <tile.icon className="w-5 h-5 text-[var(--editorial-text-secondary)]" />
+          <span className="text-lg font-bold text-[var(--editorial-text-primary)]">
             {tile.count}
           </span>
-          <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-500">
+          <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--editorial-text-tertiary)]">
             {tile.label}
           </span>
         </motion.button>
@@ -253,31 +253,31 @@ function JourneyProgress({
   message: string;
 }) {
   return (
-    <div className="p-3 border border-gray-200 dark:border-gray-800 rounded-xl">
-      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-        <span className="font-semibold text-gray-900 dark:text-white">
+    <div className="p-3 border border-[var(--editorial-border)] rounded-xl">
+      <p className="text-sm text-[var(--editorial-text-secondary)] mb-2">
+        <span className="font-semibold text-[var(--editorial-text-primary)]">
           {visited}
         </span>{' '}
         places
         {countries > 0 && (
           <>
             {' · '}
-            <span className="font-semibold text-gray-900 dark:text-white">
+            <span className="font-semibold text-[var(--editorial-text-primary)]">
               {countries}
             </span>{' '}
             {countries === 1 ? 'country' : 'countries'}
           </>
         )}
       </p>
-      <div className="h-1 bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden mb-2">
+      <div className="h-1 bg-[var(--editorial-border)] rounded-lg overflow-hidden mb-2">
         <motion.div
-          className="h-full rounded-lg bg-black dark:bg-white"
+          className="h-full rounded-lg bg-[var(--editorial-accent)]"
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
         />
       </div>
-      <p className="text-xs text-gray-500 dark:text-gray-500">{message}</p>
+      <p className="text-xs text-[var(--editorial-text-tertiary)]">{message}</p>
     </div>
   );
 }
@@ -294,34 +294,34 @@ function QuickActionsMenu({
     <div className="space-y-1">
       <button
         onClick={onSettingsClick}
-        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors group"
+        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-[var(--editorial-border-subtle)] transition-colors group"
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-            <Settings className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+          <div className="w-8 h-8 rounded-lg bg-[var(--editorial-border)] flex items-center justify-center">
+            <Settings className="h-4 w-4 text-[var(--editorial-text-secondary)]" />
           </div>
-          <span className="text-sm font-medium text-gray-900 dark:text-white">
+          <span className="text-sm font-medium text-[var(--editorial-text-primary)]">
             Settings
           </span>
         </div>
-        <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
+        <ChevronRight className="h-4 w-4 text-[var(--editorial-text-tertiary)] group-hover:text-[var(--editorial-text-secondary)] transition-colors" />
       </button>
 
       <DarkModeRow />
 
       <button
         onClick={onHelpClick}
-        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors group"
+        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-[var(--editorial-border-subtle)] transition-colors group"
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-            <HelpCircle className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+          <div className="w-8 h-8 rounded-lg bg-[var(--editorial-border)] flex items-center justify-center">
+            <HelpCircle className="h-4 w-4 text-[var(--editorial-text-secondary)]" />
           </div>
-          <span className="text-sm font-medium text-gray-900 dark:text-white">
+          <span className="text-sm font-medium text-[var(--editorial-text-primary)]">
             Help & Support
           </span>
         </div>
-        <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
+        <ChevronRight className="h-4 w-4 text-[var(--editorial-text-tertiary)] group-hover:text-[var(--editorial-text-secondary)] transition-colors" />
       </button>
     </div>
   );
@@ -342,17 +342,17 @@ function DarkModeRow() {
   return (
     <div className="w-full flex items-center justify-between p-3 rounded-xl">
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-          <Moon className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+        <div className="w-8 h-8 rounded-lg bg-[var(--editorial-border)] flex items-center justify-center">
+          <Moon className="h-4 w-4 text-[var(--editorial-text-secondary)]" />
         </div>
-        <span className="text-sm font-medium text-gray-900 dark:text-white">
+        <span className="text-sm font-medium text-[var(--editorial-text-primary)]">
           Dark Mode
         </span>
       </div>
       {mounted ? (
         <div className="flex items-center gap-2">
           <Sun
-            className={`w-3.5 h-3.5 ${isDark ? 'text-gray-500' : 'text-gray-900 dark:text-white'}`}
+            className={`w-3.5 h-3.5 ${isDark ? 'text-[var(--editorial-text-tertiary)]' : 'text-[var(--editorial-text-primary)]'}`}
           />
           <Switch
             checked={isDark}
@@ -361,7 +361,7 @@ function DarkModeRow() {
             aria-label="Toggle dark mode"
           />
           <Moon
-            className={`w-3.5 h-3.5 ${isDark ? 'text-white' : 'text-gray-400'}`}
+            className={`w-3.5 h-3.5 ${isDark ? 'text-[var(--editorial-text-primary)]' : 'text-[var(--editorial-text-tertiary)]'}`}
           />
         </div>
       ) : (
@@ -376,7 +376,7 @@ function SignOutButton({ onSignOut }: { onSignOut: () => void }) {
   return (
     <button
       onClick={onSignOut}
-      className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-gray-200 dark:border-gray-800 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+      className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-[var(--editorial-border)] text-sm font-medium text-[var(--editorial-text-secondary)] hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-colors"
     >
       <LogOut className="w-4 h-4" />
       Sign Out
@@ -535,12 +535,12 @@ export function AccountDrawer() {
   if (!user) {
     return (
       <Drawer isOpen={isOpen} onClose={closeLegacyDrawer} position="right">
-        <div className="h-full flex flex-col bg-white dark:bg-gray-950">
+        <div className="h-full flex flex-col bg-[var(--editorial-bg-elevated)]">
           {/* Close button */}
           <div className="flex justify-end p-4">
             <button
               onClick={closeLegacyDrawer}
-              className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="p-2 text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
             >
               <span className="sr-only">Close</span>
               <svg
@@ -561,25 +561,25 @@ export function AccountDrawer() {
 
           {/* Welcome content */}
           <div className="flex-1 flex flex-col items-center justify-center px-8 pb-8 text-center">
-            <div className="w-20 h-20 rounded-lg bg-gray-100 dark:bg-gray-900 flex items-center justify-center mb-6">
-              <User className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+            <div className="w-20 h-20 rounded-lg bg-[var(--editorial-border)] flex items-center justify-center mb-6">
+              <User className="h-8 w-8 text-[var(--editorial-text-tertiary)]" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            <h3 className="text-xl font-semibold text-[var(--editorial-text-primary)] mb-2">
               Start Your Journey
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-8 max-w-xs mx-auto">
+            <p className="text-sm text-[var(--editorial-text-secondary)] mb-8 max-w-xs mx-auto">
               Sign in to track your travels and unlock your personal travel
               achievements.
             </p>
 
             <button
               onClick={() => openLegacyDrawer('login')}
-              className="w-full max-w-[280px] py-3 rounded-lg bg-black dark:bg-white text-white dark:text-black text-sm font-medium hover:opacity-80 transition-opacity"
+              className="w-full max-w-[280px] py-3 rounded-lg bg-[var(--editorial-accent)] text-white text-sm font-medium hover:bg-[var(--editorial-accent-hover)] transition-colors"
             >
               Get Started
             </button>
 
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">
+            <p className="text-xs text-[var(--editorial-text-tertiary)] mt-4">
               Free to use, no credit card required
             </p>
           </div>
@@ -591,15 +591,15 @@ export function AccountDrawer() {
   // Logged in state - Redesigned mobile-first layout
   return (
     <Drawer isOpen={isOpen} onClose={closeLegacyDrawer} position="right">
-      <div className="h-full flex flex-col bg-white dark:bg-gray-950">
+      <div className="h-full flex flex-col bg-[var(--editorial-bg-elevated)]">
         {/* Close button */}
         <div className="flex items-center justify-between px-4 pt-4">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+          <h2 className="text-lg font-bold text-[var(--editorial-text-primary)]">
             Account
           </h2>
           <button
             onClick={closeLegacyDrawer}
-            className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900"
+            className="p-2 text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors rounded-lg hover:bg-[var(--editorial-border-subtle)]"
           >
             <span className="sr-only">Close</span>
             <svg
@@ -631,7 +631,7 @@ export function AccountDrawer() {
           />
 
           {/* Divider */}
-          <div className="h-px bg-gray-100 dark:bg-gray-800 mx-4" />
+          <div className="h-px bg-[var(--editorial-border)] mx-4" />
 
           {/* 2. Next Trip Hero (if exists) */}
           <AnimatePresence>
@@ -652,7 +652,7 @@ export function AccountDrawer() {
 
           {/* 3. Library Stats */}
           <div className="px-4 py-4">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--editorial-text-tertiary)] mb-3">
               Your Library
             </p>
             <LibraryStatsGrid
@@ -676,11 +676,11 @@ export function AccountDrawer() {
           </div>
 
           {/* Divider */}
-          <div className="h-px bg-gray-100 dark:bg-gray-800 mx-4" />
+          <div className="h-px bg-[var(--editorial-border)] mx-4" />
 
           {/* 5. Quick Actions */}
           <div className="px-4 py-4">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--editorial-text-tertiary)] mb-2">
               Quick Access
             </p>
             <QuickActionsMenu
@@ -691,7 +691,7 @@ export function AccountDrawer() {
         </div>
 
         {/* Sign Out Footer */}
-        <div className="px-4 pb-5 pt-3 border-t border-gray-100 dark:border-gray-800">
+        <div className="px-4 pb-5 pt-3 border-t border-[var(--editorial-border)]">
           <SignOutButton onSignOut={handleSignOut} />
         </div>
       </div>
