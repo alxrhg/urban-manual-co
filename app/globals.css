@@ -122,27 +122,27 @@
   --editorial-charcoal: #2C2825;
 }
 
-/* Dark Mode Colors */
+/* Dark Mode Colors - Warmer tone for print aesthetic */
 .dark {
-  /* Background: Warm deep charcoal (not pure black) */
-  --editorial-bg: #1E1C1A;
-  --editorial-bg-elevated: #252320;
+  /* Background: Warm charcoal with brown undertone */
+  --editorial-bg: #211F1C;
+  --editorial-bg-elevated: #2A2723;
 
-  /* Primary text: Warm off-white */
-  --editorial-text-primary: #F0EDE8;
+  /* Primary text: Warm cream/off-white */
+  --editorial-text-primary: #F2EDE6;
 
   /* Secondary text: Muted warm gray */
-  --editorial-text-secondary: #9A948C;
-  --editorial-text-tertiary: #6B6560;
+  --editorial-text-secondary: #A09891;
+  --editorial-text-tertiary: #6D6660;
 
-  /* Accent: Muted amber/terracotta */
+  /* Accent: Muted terracotta */
   --editorial-accent: #C4907A;
   --editorial-accent-hover: #D4A088;
   --editorial-accent-muted: #A87A66;
 
-  /* Subtle borders */
-  --editorial-border: #2E2A27;
-  --editorial-border-subtle: #3A3633;
+  /* Borders - more visible for framed card effect */
+  --editorial-border: #3D3832;
+  --editorial-border-subtle: #4A443D;
 }
 
 /* Editorial Typography */

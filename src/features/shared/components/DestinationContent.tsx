@@ -1624,10 +1624,10 @@ const DestinationContent = memo(function DestinationContent({
   }
 
   return (
-    <div className="min-h-full bg-[var(--editorial-bg)]">
-      {/* Hero Image - Square, inset with subtle border (print collateral style) */}
-      <div className="px-8 sm:px-10 pt-16 pb-6">
-        <div className="relative aspect-square bg-[var(--editorial-border)] border border-[var(--editorial-text-tertiary)]/30">
+    <div className="min-h-full bg-[var(--editorial-bg)] flex flex-col">
+      {/* Single Square Image - No carousel, just one image */}
+      <div className="px-6 sm:px-8 pt-14 pb-0">
+        <div className="relative aspect-square bg-[var(--editorial-border)]">
           {imageUrl ? (
             <Image src={imageUrl} alt={destination.name} fill className="object-cover" priority />
           ) : (
@@ -1635,28 +1635,11 @@ const DestinationContent = memo(function DestinationContent({
               <MapPin className="w-12 h-12 text-[var(--editorial-text-tertiary)]" />
             </div>
           )}
-
-          {/* Minimal badges */}
-          {(destination.michelin_stars || destination.crown) && (
-            <div className="absolute bottom-4 left-4 flex gap-2">
-              {destination.michelin_stars && destination.michelin_stars > 0 && (
-                <span className="px-3 py-1.5 bg-white/95 text-[10px] font-medium tracking-[0.1em] uppercase flex items-center gap-1.5">
-                  <img src="/michelin-star.svg" alt="Michelin" className="w-3 h-3" />
-                  {destination.michelin_stars} Star
-                </span>
-              )}
-              {destination.crown && (
-                <span className="px-3 py-1.5 bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)] text-[10px] font-medium tracking-[0.1em] uppercase">
-                  Curated
-                </span>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Content - Generous spacing, editorial typography */}
-      <div className="px-8 sm:px-10 pb-10 sm:pb-12">
+      {/* Content - Minimal, single column, print-like */}
+      <div className="px-6 sm:px-8 pt-8 pb-6 flex-1 flex flex-col">
         {/* Category Label - Small caps */}
         <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-4">
           {destination.category && capitalizeCategory(destination.category)}
@@ -1664,178 +1647,39 @@ const DestinationContent = memo(function DestinationContent({
         </p>
 
         {/* Title - Serif, editorial */}
-        <h1 className="font-editorial-serif text-[28px] sm:text-[34px] font-medium tracking-[-0.02em] leading-[1.1] text-[var(--editorial-text-primary)] mb-5">
+        <h1 className="font-editorial-serif text-[26px] sm:text-[32px] font-medium tracking-[-0.02em] leading-[1.15] text-[var(--editorial-text-primary)] mb-6">
           {destination.name}
         </h1>
 
-        {/* Meta row - Subtle */}
-        <div className="flex items-center gap-4 text-[13px] text-[var(--editorial-text-secondary)] mb-8">
-          {rating && (
-            <span className="flex items-center gap-1.5">
-              <Star className="w-3.5 h-3.5 text-[var(--editorial-accent)]" />
-              {rating.toFixed(1)}
-            </span>
-          )}
-          {enrichedData?.price_level && (
-            <span className="text-[var(--editorial-text-tertiary)]">{'·'}</span>
-          )}
-          {enrichedData?.price_level && (
-            <span>{'$'.repeat(enrichedData.price_level)}</span>
-          )}
-          {hoursAnalysis.status && (
-            <>
-              <span className="text-[var(--editorial-text-tertiary)]">{'·'}</span>
-              <span className={`${
-                hoursAnalysis.category === 'open' ? 'text-[#4A7C59]' :
-                hoursAnalysis.category === 'closing-soon' ? 'text-[var(--editorial-accent)]' : ''
-              }`}>
-                {hoursAnalysis.status}
-              </span>
-            </>
-          )}
-        </div>
-
-        {/* Description - Editorial body, serif */}
+        {/* Description - Serif body text, generous line height */}
         {(destination.micro_description || destination.description) && (
-          <div className="mb-10">
-            <p className="font-editorial-serif text-[15px] leading-[1.8] text-[var(--editorial-text-secondary)]">
-              {showFullDescription
-                ? (destination.description || destination.micro_description)
-                : (destination.micro_description || destination.description || '').slice(0, 220)}
-              {(destination.description || destination.micro_description || '').length > 220 && !showFullDescription && '...'}
-            </p>
-            {(destination.description || destination.micro_description || '').length > 220 && (
-              <button
-                onClick={() => setShowFullDescription(!showFullDescription)}
-                className="mt-3 text-[13px] text-[var(--editorial-accent)] hover:underline"
-              >
-                {showFullDescription ? 'Show less' : 'Continue reading'}
-              </button>
-            )}
-          </div>
+          <p className="font-editorial-serif text-[15px] leading-[1.75] text-[var(--editorial-text-secondary)] mb-8">
+            {(destination.micro_description || destination.description || '').slice(0, 180)}
+            {(destination.micro_description || destination.description || '').length > 180 && '...'}
+          </p>
         )}
 
-        {/* Actions - Minimal, outlined buttons */}
-        <div className="flex flex-wrap gap-3 mb-12">
-          {/* Primary Action - Outlined */}
-          {activeTrip ? (
-            <button
-              onClick={() => handleAddToTrip(tripContext?.day || activeTrip.days[0]?.dayNumber || 1)}
-              disabled={isAddingToTrip}
-              className="flex-1 min-w-[140px] h-[52px] flex items-center justify-center gap-2 border border-[var(--editorial-text-primary)] text-[var(--editorial-text-primary)] text-[13px] font-medium tracking-[0.02em] transition-all hover:bg-[var(--editorial-text-primary)] hover:text-[var(--editorial-bg)] disabled:opacity-50"
-            >
-              {isAddingToTrip ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  <Plus className="h-4 w-4" />
-                  Add to Trip
-                </>
-              )}
-            </button>
-          ) : (
-            <button
-              onClick={user ? handleSave : undefined}
-              className={`flex-1 min-w-[140px] h-[52px] flex items-center justify-center gap-2 text-[13px] font-medium tracking-[0.02em] transition-all ${
-                isSaved
-                  ? 'bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)] border border-[var(--editorial-text-primary)]'
-                  : 'border border-[var(--editorial-text-primary)] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-text-primary)] hover:text-[var(--editorial-bg)]'
-              }`}
-            >
-              <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
-              {isSaved ? 'Saved' : 'Save'}
-            </button>
-          )}
+        {/* Spacer to push URL to bottom */}
+        <div className="flex-1 min-h-[40px]" />
 
-          {/* Ghost buttons */}
-          <button
-            onClick={handleShare}
-            className="h-[52px] w-[52px] flex items-center justify-center border border-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-all"
+        {/* Website URL - Anchored at bottom, the only "action" */}
+        {enrichedData?.website ? (
+          <a
+            href={enrichedData.website}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[13px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-accent)] transition-colors"
           >
-            <Share2 className="h-4 w-4" />
-          </button>
-          <button
-            onClick={handleDirections}
-            className="h-[52px] w-[52px] flex items-center justify-center border border-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-all"
-          >
-            <Navigation className="h-4 w-4" />
-          </button>
-          {isAdmin && (
-            <button
-              onClick={() => setIsEditMode(!isEditMode)}
-              className={`h-[52px] w-[52px] flex items-center justify-center border transition-all ${
-                isEditMode
-                  ? 'bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)] border-[var(--editorial-text-primary)]'
-                  : 'border-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)]'
-              }`}
-            >
-              <Edit className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        {/* Been Here - Subtle */}
-        {user && (
-          <button
-            onClick={handleVisit}
-            className={`w-full h-[48px] flex items-center justify-center gap-2 text-[13px] font-medium tracking-[0.01em] transition-all mb-12 ${
-              isVisited
-                ? 'bg-[#4A7C59] text-white'
-                : 'border border-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-secondary)]'
-            }`}
-          >
-            <Check className="h-4 w-4" />
-            {isVisited ? 'Visited' : 'Mark as visited'}
-          </button>
-        )}
-      </div>
-
-      {/* Detail Sections - Clean dividers, generous spacing */}
-      <div className="bg-[var(--editorial-bg)] px-8 sm:px-10 pb-12">
-        {/* Smart Sections */}
-        {sortedSections
-          .filter(({ key }) => key !== 'description') // Description is already shown above
-          .map(({ key }, index) => {
-            const isVisible = visibleSections.has(key);
-            const isDataLoaded = !loading || key === 'trip';
-
-            if (!isVisible && index < 3) {
-              return <SectionSkeleton key={`skeleton-${key}`} type={key} />;
-            }
-
-            if (!isVisible) return null;
-
-            return (
-              <div
-                key={key}
-                className="transition-all duration-300 ease-out"
-                style={{
-                  opacity: isVisible ? 1 : 0,
-                  transform: isVisible ? 'translateY(0)' : 'translateY(8px)',
-                }}
-              >
-                {isDataLoaded ? renderSection(key) : <SectionSkeleton type={key} />}
-              </div>
-            );
-          })}
-
-        {/* View Full Page - Editorial link */}
-        <div className="mt-16 pt-8 border-t border-[var(--editorial-border)]">
+            {(() => { try { return new URL(enrichedData.website).hostname.replace('www.', ''); } catch { return enrichedData.website; } })()}
+          </a>
+        ) : (
           <Link
             href={`/destination/${destination.slug}`}
-            className="group flex items-center justify-between py-2"
+            className="text-[13px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-accent)] transition-colors"
           >
-            <div>
-              <span className="text-[13px] text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors block">
-                View full page
-              </span>
-              <span className="text-[11px] text-[var(--editorial-text-tertiary)] tracking-wide">
-                urbanmanual.co
-              </span>
-            </div>
-            <ExternalLink className="h-4 w-4 text-[var(--editorial-accent)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            urbanmanual.co/{destination.slug}
           </Link>
-        </div>
+        )}
       </div>
     </div>
   );

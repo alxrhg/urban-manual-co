@@ -250,25 +250,25 @@ const DrawerShell = memo(function DrawerShell({
               </div>
             )}
 
-            {/* Navigation Controls - Minimal, just icons */}
-            <div className="absolute top-6 left-8 right-8 z-20 flex items-center justify-between pointer-events-none">
+            {/* Navigation Controls - Minimal, just icons, inside card padding */}
+            <div className="absolute top-4 left-6 right-6 z-20 flex items-center justify-between pointer-events-none sm:left-8 sm:right-8">
               {canGoBack && handleBack ? (
                 <button
                   onClick={handleBack}
-                  className="pointer-events-auto p-1 text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+                  className="pointer-events-auto p-1.5 text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
                   aria-label="Go back"
                 >
-                  <ChevronLeft className="w-5 h-5" />
+                  <ChevronLeft className="w-4 h-4" />
                 </button>
               ) : (
                 <div />
               )}
               <button
                 onClick={onClose}
-                className="pointer-events-auto p-1 text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+                className="pointer-events-auto p-1.5 text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
                 aria-label="Close"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
