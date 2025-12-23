@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 
-import { AccountDrawer } from '@/features/account/components/AccountDrawer';
 // DestinationDrawer removed - now using IntelligentDrawer from app/layout.tsx
+// AccountDrawer removed - now using AccountDropdown in Header
 import { SavedPlacesDrawer } from '@/features/lists/components/SavedPlacesDrawer';
 import { VisitedPlacesDrawer } from '@/features/lists/components/VisitedPlacesDrawer';
 import { TripsDrawer } from '@/features/trip/components/TripsDrawer';
@@ -18,12 +18,11 @@ import TripOverviewDrawer from '@/features/trip/components/TripOverviewDrawer';
 import TripOverviewQuickDrawer from '@/features/trip/components/TripOverviewQuickDrawer';
 import PlaceSelectorDrawer from '@/features/trip/components/PlaceSelectorDrawer';
 import TripSettingsDrawer from '@/features/trip/components/TripSettingsDrawer';
-import { AccountDrawer as AccountDrawerNew } from '@/features/account/components/AccountDrawer';
 import { Drawer } from '@/ui/Drawer';
 import { useDrawerStyle } from '@/ui/UseDrawerStyle';
 
 // Types that are handled by inline PanelLayout on desktop
-const INLINE_TYPES = ['account-new', 'trip-list', 'trip-settings', 'place-selector', 'trip-add-hotel', 'add-flight', 'trip-ai'];
+const INLINE_TYPES = ['trip-list', 'trip-settings', 'place-selector', 'trip-add-hotel', 'add-flight', 'trip-ai'];
 
 export default function DrawerMount() {
   const { open, type, props, closeDrawer, displayMode } = useDrawerStore();
@@ -47,24 +46,10 @@ export default function DrawerMount() {
   return (
     <>
       {/* Legacy drawers that use their own drawer context */}
-      <AccountDrawer />
+      {/* AccountDrawer removed - now using AccountDropdown in Header */}
       <SavedPlacesDrawer />
       <VisitedPlacesDrawer />
       <TripsDrawer />
-
-      {/* New drawers that use the global drawer store */}
-      {/* Only render as overlay if not in inline mode on desktop */}
-      {open && type === 'account-new' && !shouldSkipOverlay('account-new') && (
-        <Drawer
-          isOpen={open}
-          onClose={closeDrawer}
-          desktopWidth="420px"
-          style={drawerStyle}
-          position="right"
-        >
-          <AccountDrawerNew />
-        </Drawer>
-      )}
 
       {/* DestinationDrawer removed - now using IntelligentDrawer from app/layout.tsx */}
 

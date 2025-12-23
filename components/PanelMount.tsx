@@ -19,12 +19,11 @@ import AISuggestionsDrawer from '@/features/trip/components/AISuggestionsDrawer'
 import TripListDrawer from '@/features/trip/components/TripListDrawer';
 import PlaceSelectorDrawer from '@/features/trip/components/PlaceSelectorDrawer';
 import TripSettingsDrawer from '@/features/trip/components/TripSettingsDrawer';
-import { AccountDrawer as AccountDrawerNew } from '@/features/account/components/AccountDrawer';
 // DestinationDrawer removed - now using IntelligentDrawer
+// AccountDrawer removed - now using AccountDropdown in Header
 
 // Map of drawer types to their titles
 const DRAWER_TITLES: Record<string, string> = {
-  'account-new': 'Account',
   'trip-list': 'Your Trips',
   'trip-settings': 'Trip Settings',
   'place-selector': 'Add Place',
@@ -72,8 +71,7 @@ export function PanelLayout({
 
     switch (type) {
       // 'destination' type now handled by IntelligentDrawer
-      case 'account-new':
-        return <AccountDrawerNew />;
+      // 'account-new' type removed - now using AccountDropdown in Header
       case 'trip-list':
         return <TripListDrawer {...props} />;
       case 'trip-settings':
@@ -202,9 +200,7 @@ export function InlinePanelContent() {
 
   switch (type) {
     // 'destination' type now handled by IntelligentDrawer
-    case 'account-new':
-      content = <AccountDrawerNew />;
-      break;
+    // 'account-new' type removed - now using AccountDropdown in Header
     case 'trip-list':
       content = <TripListDrawer {...props} />;
       break;
