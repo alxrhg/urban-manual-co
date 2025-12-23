@@ -63,31 +63,31 @@ export function ForecastInfo({ destinationId, compact = false }: ForecastInfoPro
   }
 
   return (
-    <div className="border border-gray-200 dark:border-gray-800 rounded-xl p-4 space-y-3">
-      <div className="flex items-center gap-2">
-        <Calendar className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-        <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+    <div className="bg-white dark:bg-[#161b22] border border-gray-200 dark:border-[#30363d] rounded-xl p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <Calendar className="h-4 w-4 text-gray-500 dark:text-[#8b949e]" />
+        <h3 className="text-[14px] font-medium text-gray-900 dark:text-white">
           Demand Forecast
         </h3>
       </div>
 
-      <div className="space-y-2 text-sm">
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-gray-600 dark:text-gray-400">Best time to visit:</span>
-          <span className="font-medium text-gray-900 dark:text-white">
+          <span className="text-[13px] text-gray-600 dark:text-[#8b949e]">Best time to visit:</span>
+          <span className="text-[13px] font-medium text-gray-900 dark:text-white">
             {formatDate(forecast.low_date)}
           </span>
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-gray-600 dark:text-gray-400">Peak demand:</span>
-          <span className="font-medium text-gray-900 dark:text-white">
+          <span className="text-[13px] text-gray-600 dark:text-[#8b949e]">Peak demand:</span>
+          <span className="text-[13px] font-medium text-gray-900 dark:text-white">
             {formatDate(forecast.peak_date)}
           </span>
         </div>
 
         {forecast.recommendation && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-gray-800">
+          <p className="text-[12px] text-gray-500 dark:text-[#8b949e] pt-3 mt-1 border-t border-gray-100 dark:border-[#30363d]">
             {forecast.recommendation}
           </p>
         )}
