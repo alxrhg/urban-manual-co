@@ -121,8 +121,7 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
   }, [userId, router]);
 
   return (
-    <main className="w-full px-6 md:px-10 py-20 min-h-screen bg-[var(--editorial-bg)]">
-      <div className="max-w-[1400px] mx-auto">
+    <main className="w-full px-4 sm:px-6 md:px-10 py-20 min-h-screen bg-[var(--editorial-bg)]">
         {/* Header - Editorial style */}
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
@@ -194,7 +193,6 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
             ))}
           </div>
         )}
-      </div>
 
       {/* Trip Setup Wizard */}
       <TripSetupWizard
