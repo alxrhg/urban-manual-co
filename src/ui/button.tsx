@@ -9,22 +9,22 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-200",
+        default: "bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)] hover:bg-[#3D3835] dark:bg-[var(--editorial-bg)] dark:text-[var(--editorial-text-primary)] dark:hover:bg-[#E8E4DF]",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
-          "border border-gray-200 dark:border-gray-800 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-900 text-gray-800 dark:text-white",
+          "border border-[var(--editorial-border)] bg-transparent hover:bg-[var(--editorial-border-subtle)] text-[var(--editorial-text-primary)]",
         secondary:
-          "border border-gray-200 bg-white text-gray-800 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:hover:bg-gray-800",
+          "border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)]",
         ghost:
-          "hover:bg-gray-100 dark:hover:bg-gray-800",
+          "hover:bg-[var(--editorial-border-subtle)] text-[var(--editorial-text-primary)]",
         muted:
-          "border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-800 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
+          "border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)]",
         subtle:
-          "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
+          "text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)]",
         pill:
-          "rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs font-medium text-gray-800 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
-        link: "text-primary underline-offset-4 hover:underline",
+          "rounded-lg border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)] text-xs font-medium text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)]",
+        link: "text-[var(--editorial-accent)] underline-offset-4 hover:underline",
       },
       size: {
         default: "h-11 px-5 py-2 has-[>svg]:px-4",
