@@ -1623,6 +1623,14 @@ const DestinationContent = memo(function DestinationContent({
     );
   }
 
+  // Tab state for organized information
+  const [activeTab, setActiveTab] = useState<'overview' | 'info' | 'map'>('overview');
+
+  // Get hours information
+  const hours = enrichedData?.opening_hours?.weekday_text;
+  const todayHours = hours ? getTodayHours(hours, enrichedData?.utc_offset, destination.city) : null;
+  const isOpen = hours ? checkIfOpen(hours, enrichedData?.utc_offset, destination.city) : null;
+
   return (
     <div className="bg-[var(--editorial-bg)]">
       {/* Single Square Image - 1:1 aspect ratio */}
@@ -1638,7 +1646,7 @@ const DestinationContent = memo(function DestinationContent({
         </div>
       </div>
 
-      {/* Content - Minimal, single column, print-like */}
+      {/* Content */}
       <div className="px-6 sm:px-8 pt-8 pb-10">
         {/* Category Label - Small caps */}
         <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-4">
@@ -1647,39 +1655,174 @@ const DestinationContent = memo(function DestinationContent({
         </p>
 
         {/* Title - Serif, editorial */}
-        <h1 className="font-editorial-serif text-[26px] sm:text-[32px] font-medium tracking-[-0.02em] leading-[1.15] text-[var(--editorial-text-primary)] mb-6">
+        <h1 className="font-editorial-serif text-[26px] sm:text-[32px] font-medium tracking-[-0.02em] leading-[1.15] text-[var(--editorial-text-primary)] mb-4">
           {destination.name}
         </h1>
 
-        {/* Description - Serif body text, generous line height */}
-        {(destination.micro_description || destination.description) && (
-          <p
-            className="text-[15px] leading-[1.75] text-[var(--editorial-text-secondary)] mb-8"
-            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+        {/* Quick Info Row */}
+        <div className="flex items-center gap-4 text-[13px] text-[var(--editorial-text-secondary)] mb-6">
+          {isOpen !== null && (
+            <span className={isOpen ? 'text-green-600 dark:text-green-400' : 'text-[var(--editorial-text-tertiary)]'}>
+              {isOpen ? 'Open now' : 'Closed'}
+            </span>
+          )}
+          {destination.rating && (
+            <span className="flex items-center gap-1">
+              <Star className="w-3.5 h-3.5 fill-current" />
+              {destination.rating.toFixed(1)}
+            </span>
+          )}
+          {destination.michelin_stars && destination.michelin_stars > 0 && (
+            <span className="flex items-center gap-1">
+              <img src="/michelin-star.svg" alt="Michelin" className="w-3.5 h-3.5" />
+              {destination.michelin_stars} Star{destination.michelin_stars > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex gap-6 border-b border-[var(--editorial-border)] mb-6">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`pb-3 text-[13px] font-medium transition-colors ${
+              activeTab === 'overview'
+                ? 'text-[var(--editorial-text-primary)] border-b-2 border-[var(--editorial-text-primary)]'
+                : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)]'
+            }`}
           >
-            {(destination.micro_description || destination.description || '').slice(0, 180)}
-            {(destination.micro_description || destination.description || '').length > 180 && '...'}
-          </p>
+            Overview
+          </button>
+          <button
+            onClick={() => setActiveTab('info')}
+            className={`pb-3 text-[13px] font-medium transition-colors ${
+              activeTab === 'info'
+                ? 'text-[var(--editorial-text-primary)] border-b-2 border-[var(--editorial-text-primary)]'
+                : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)]'
+            }`}
+          >
+            Info
+          </button>
+          {destination.latitude && destination.longitude && (
+            <button
+              onClick={() => setActiveTab('map')}
+              className={`pb-3 text-[13px] font-medium transition-colors ${
+                activeTab === 'map'
+                  ? 'text-[var(--editorial-text-primary)] border-b-2 border-[var(--editorial-text-primary)]'
+                  : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)]'
+              }`}
+            >
+              Map
+            </button>
+          )}
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'overview' && (
+          <div>
+            {/* Description */}
+            {(destination.micro_description || destination.description) && (
+              <p
+                className="text-[15px] leading-[1.75] text-[var(--editorial-text-secondary)] mb-6"
+                style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+              >
+                {destination.micro_description || destination.description}
+              </p>
+            )}
+
+            {/* Website URL */}
+            {enrichedData?.website && (
+              <a
+                href={enrichedData.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-[13px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-accent)] transition-colors"
+              >
+                <Globe className="w-4 h-4" />
+                {(() => { try { return new URL(enrichedData.website).hostname.replace('www.', ''); } catch { return enrichedData.website; } })()}
+              </a>
+            )}
+          </div>
         )}
 
-        {/* Website URL */}
-        {enrichedData?.website ? (
-          <a
-            href={enrichedData.website}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[13px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-accent)] transition-colors"
-          >
-            {(() => { try { return new URL(enrichedData.website).hostname.replace('www.', ''); } catch { return enrichedData.website; } })()}
-          </a>
-        ) : (
+        {activeTab === 'info' && (
+          <div className="space-y-5">
+            {/* Hours */}
+            {hours && hours.length > 0 && (
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-2">Hours</p>
+                <div className="space-y-1">
+                  {hours.map((h, i) => (
+                    <p key={i} className="text-[13px] text-[var(--editorial-text-secondary)]">{h}</p>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Address */}
+            {enrichedData?.formatted_address && (
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-2">Address</p>
+                <p className="text-[13px] text-[var(--editorial-text-secondary)]">{enrichedData.formatted_address}</p>
+              </div>
+            )}
+
+            {/* Phone */}
+            {enrichedData?.international_phone_number && (
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-2">Phone</p>
+                <a
+                  href={`tel:${enrichedData.international_phone_number}`}
+                  className="text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-accent)] transition-colors"
+                >
+                  {enrichedData.international_phone_number}
+                </a>
+              </div>
+            )}
+
+            {/* Website */}
+            {enrichedData?.website && (
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-2">Website</p>
+                <a
+                  href={enrichedData.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-accent)] transition-colors"
+                >
+                  {(() => { try { return new URL(enrichedData.website).hostname.replace('www.', ''); } catch { return enrichedData.website; } })()}
+                </a>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'map' && destination.latitude && destination.longitude && (
+          <div>
+            <div className="aspect-[4/3] rounded-lg overflow-hidden mb-4">
+              <GoogleStaticMap
+                latitude={destination.latitude}
+                longitude={destination.longitude}
+                zoom={15}
+                width={400}
+                height={300}
+              />
+            </div>
+            {enrichedData?.formatted_address && (
+              <p className="text-[13px] text-[var(--editorial-text-secondary)]">{enrichedData.formatted_address}</p>
+            )}
+          </div>
+        )}
+
+        {/* View Full Page Link */}
+        <div className="mt-8 pt-6 border-t border-[var(--editorial-border)]">
           <Link
             href={`/destination/${destination.slug}`}
-            className="text-[13px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-accent)] transition-colors"
+            className="inline-flex items-center gap-2 text-[13px] font-medium text-[var(--editorial-text-primary)] hover:text-[var(--editorial-accent)] transition-colors"
           >
-            urbanmanual.co/{destination.slug}
+            View full page
+            <ExternalLink className="w-4 h-4" />
           </Link>
-        )}
+        </div>
       </div>
     </div>
   );
