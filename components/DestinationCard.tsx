@@ -86,10 +86,10 @@ export const DestinationCard = memo(function DestinationCard({
       `}
       aria-label={`View ${destination.name} in ${capitalizeCity(destination.city)}`}
     >
-        {/* Image Container with Progressive Loading - Square, no border-radius */}
+        {/* Image Container with Progressive Loading - Square with soft radius */}
         <div
           className={`
-            relative aspect-square overflow-hidden
+            relative aspect-square overflow-hidden rounded-lg
             bg-gray-100 dark:bg-gray-800
             transition-all duration-300 ease-out
             mb-3

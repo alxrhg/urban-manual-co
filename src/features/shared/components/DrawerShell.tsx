@@ -271,10 +271,11 @@ const DrawerShell = memo(function DrawerShell({
               </button>
             </div>
 
-            {/* Content - min-h-0 is critical for flex overflow to work */}
+            {/* Content - Fixed height with scroll */}
             <main
               ref={contentRef}
-              className="flex-1 min-h-0 overflow-y-auto overscroll-contain"
+              className="flex-1 min-h-0 h-full overflow-y-scroll overscroll-contain"
+              style={{ WebkitOverflowScrolling: 'touch' }}
             >
               {children}
             </main>

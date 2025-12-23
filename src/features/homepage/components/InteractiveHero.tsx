@@ -652,7 +652,7 @@ export default function InteractiveHero() {
                 onBlur={() => setTimeout(() => setIsFocused(false), 150)}
                 onKeyDown={handleInputKeyDown}
                 placeholder={showChatResults ? 'Ask a follow-up question...' : AI_PLACEHOLDERS[placeholderIndex]}
-                className="w-full h-12 pl-11 pr-14 text-[15px] bg-transparent
+                className="w-full h-12 pl-11 pr-14 text-[15px] bg-transparent rounded-lg
                            border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white
                            placeholder:text-gray-400 dark:placeholder:text-gray-500
                            focus:outline-none focus:border-gray-900 dark:focus:border-white
@@ -662,7 +662,7 @@ export default function InteractiveHero() {
                 type="submit"
                 disabled={isSearching || !localSearchTerm.trim()}
                 className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center
-                           bg-gray-900 dark:bg-white
+                           rounded-md bg-gray-900 dark:bg-white
                            text-white dark:text-gray-900
                            hover:bg-gray-800 dark:hover:bg-gray-100
                            active:bg-gray-700 dark:active:bg-gray-200
@@ -681,7 +681,7 @@ export default function InteractiveHero() {
                 <div
                   ref={dropdownRef}
                   className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900
-                             shadow-xl border border-gray-200 dark:border-gray-700
+                             rounded-lg shadow-xl border border-gray-200 dark:border-gray-700
                              max-h-[400px] overflow-y-auto z-50 animate-in fade-in slide-in-from-top-2 duration-200"
                 >
                   {/* Results */}

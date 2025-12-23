@@ -1624,9 +1624,9 @@ const DestinationContent = memo(function DestinationContent({
   }
 
   return (
-    <div className="min-h-full bg-[var(--editorial-bg)] flex flex-col">
+    <div className="bg-[var(--editorial-bg)]">
       {/* Single Square Image - 1:1 aspect ratio */}
-      <div className="flex-shrink-0 px-6 sm:px-8 pt-14 pb-0">
+      <div className="px-6 sm:px-8 pt-14 pb-0">
         <div className="relative w-full bg-[var(--editorial-border)]" style={{ aspectRatio: '1/1' }}>
           {imageUrl ? (
             <Image src={imageUrl} alt={destination.name} fill className="object-cover" priority />
@@ -1639,7 +1639,7 @@ const DestinationContent = memo(function DestinationContent({
       </div>
 
       {/* Content - Minimal, single column, print-like */}
-      <div className="px-6 sm:px-8 pt-8 pb-6 flex-1 flex flex-col">
+      <div className="px-6 sm:px-8 pt-8 pb-10">
         {/* Category Label - Small caps */}
         <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-4">
           {destination.category && capitalizeCategory(destination.category)}
@@ -1662,10 +1662,7 @@ const DestinationContent = memo(function DestinationContent({
           </p>
         )}
 
-        {/* Spacer to push URL to bottom */}
-        <div className="flex-1 min-h-[40px]" />
-
-        {/* Website URL - Anchored at bottom, the only "action" */}
+        {/* Website URL */}
         {enrichedData?.website ? (
           <a
             href={enrichedData.website}
