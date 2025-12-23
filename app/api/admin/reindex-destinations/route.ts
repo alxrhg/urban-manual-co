@@ -52,7 +52,7 @@ export const POST = withAdminAuth(async (request: NextRequest, { user, serviceCl
   // Step 1: Fetch destinations to reindex
   let query = supabase
     .from('destinations')
-    .select('id, name, city, country, category, price_range, popularity_score, michelin_stars, slug, description, ai_description, tags, updated_at');
+    .select('id, name, city, country, category, price_range, popularity_score, michelin_stars, slug, description, ai_description, tags, reviews_json, updated_at');
 
   if (mode === 'changed') {
     // Only destinations that have been updated since last indexing
@@ -94,6 +94,7 @@ export const POST = withAdminAuth(async (request: NextRequest, { user, serviceCl
             description: dest.description || undefined,
             tags: dest.tags || undefined,
             ai_description: dest.ai_description || undefined,
+            reviews_json: dest.reviews_json || undefined,
           });
 
           return {

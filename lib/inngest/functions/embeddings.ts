@@ -40,7 +40,7 @@ export const generateEmbedding = inngest.createFunction(
       const { data, error } = await supabase
         .from("destinations")
         .select(
-          "id, name, city, country, category, description, ai_description, tags, slug, price_level, michelin_stars, popularity_score"
+          "id, name, city, country, category, description, ai_description, tags, slug, price_level, michelin_stars, popularity_score, reviews_json"
         )
         .eq("id", destinationId)
         .single();
@@ -60,6 +60,7 @@ export const generateEmbedding = inngest.createFunction(
         description: destination.description,
         ai_description: destination.ai_description,
         tags: destination.tags,
+        reviews_json: destination.reviews_json,
       });
     });
 
@@ -141,7 +142,7 @@ export const generateEmbeddingsBatch = inngest.createFunction(
         const { data: destinations, error } = await supabase
           .from("destinations")
           .select(
-            "id, name, city, country, category, description, ai_description, tags, slug, price_level, michelin_stars, popularity_score"
+            "id, name, city, country, category, description, ai_description, tags, slug, price_level, michelin_stars, popularity_score, reviews_json"
           )
           .in("id", chunk);
 
@@ -167,6 +168,7 @@ export const generateEmbeddingsBatch = inngest.createFunction(
               description: dest.description,
               ai_description: dest.ai_description,
               tags: dest.tags,
+              reviews_json: dest.reviews_json,
             });
 
             embeddings.push({

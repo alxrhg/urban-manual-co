@@ -47,6 +47,14 @@ const RATE_LIMIT_MS = parseInt(process.env.EMBEDDING_WORKER_RATE_LIMIT_MS || '25
 const POLL_INTERVAL_MS = parseInt(process.env.EMBEDDING_WORKER_POLL_INTERVAL_MS || '15000', 10);
 const RUN_ONCE = process.argv.includes('--once');
 
+// Type for Google Places review
+interface GooglePlacesReview {
+  text?: string;
+  author_name?: string;
+  rating?: number;
+  [key: string]: unknown;
+}
+
 type DestinationRecord = {
   id: number;
   slug: string;
@@ -56,13 +64,14 @@ type DestinationRecord = {
   content?: string | null;
   description?: string | null;
   tags?: string[] | null;
+  reviews_json?: GooglePlacesReview[] | null;
   embedding_version?: string | null;
 };
 
 async function fetchDestinationsNeedingEmbeddings(limit: number) {
   const { data, error } = await supabase
     .from('destinations')
-    .select('id, slug, name, city, category, content, description, tags, embedding_version')
+    .select('id, slug, name, city, category, content, description, tags, reviews_json, embedding_version')
     .or('embedding.is.null,embedding_needs_update.eq.true')
     .order('embedding_generated_at', { ascending: true, nullsFirst: true })
     .limit(limit);
@@ -94,7 +103,8 @@ async function processBatch() {
         category: dest.category || '',
         content: dest.content || undefined,
         description: dest.description || undefined,
-        tags: dest.tags || []
+        tags: dest.tags || [],
+        reviews_json: dest.reviews_json || undefined
       });
 
       if (!embedding) {
