@@ -161,7 +161,7 @@ export function Header() {
               variant="secondary"
               size="sm"
               onClick={() => openDrawer('account')}
-              className="pl-1.5 pr-4"
+              className="pl-1.5 pr-4 flex items-center gap-2"
               aria-label="Open account drawer"
             >
               {avatarUrl ? (
