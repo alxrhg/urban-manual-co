@@ -244,11 +244,11 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
+      <body className="antialiased bg-[var(--editorial-bg)] text-[var(--editorial-text-primary)]">
         <MyStatsig>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
+            defaultTheme="light"
             enableSystem={true}
             storageKey="urban-manual-theme"
           >
