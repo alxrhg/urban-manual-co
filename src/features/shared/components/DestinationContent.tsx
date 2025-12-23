@@ -1628,7 +1628,9 @@ const DestinationContent = memo(function DestinationContent({
 
   // Get hours information
   const hours = enrichedData?.opening_hours?.weekday_text;
-  const isOpen = hours ? checkIfOpen(hours, enrichedData?.utc_offset, destination.city) : null;
+  const hoursAnalysis = hours ? analyzeHours(hours, enrichedData?.utc_offset, destination.city) : { isOpen: null, status: '', category: 'unknown' as const, timeUntilChange: null };
+  const rating = destination.rating || enrichedData?.rating;
+  const reviewCount = enrichedData?.user_ratings_total;
 
   return (
     <div className="bg-[var(--editorial-bg)]">
@@ -1642,34 +1644,57 @@ const DestinationContent = memo(function DestinationContent({
               <MapPin className="w-12 h-12 text-[var(--editorial-text-tertiary)]" />
             </div>
           )}
+          {/* Hours Status Badge */}
+          {hoursAnalysis.status && (
+            <div className="absolute bottom-3 left-3">
+              <span className={`px-2.5 py-1 text-[11px] font-medium ${
+                hoursAnalysis.category === 'open' ? 'bg-green-600 text-white' :
+                hoursAnalysis.category === 'opening-soon' ? 'bg-blue-600 text-white' :
+                hoursAnalysis.category === 'closing-soon' ? 'bg-amber-500 text-white' :
+                'bg-gray-800 text-white'
+              }`}>
+                {hoursAnalysis.status}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Content */}
-      <div className="px-6 sm:px-8 pt-8 pb-10">
+      <div className="px-6 sm:px-8 pt-6 pb-10">
         {/* Category Label - Small caps */}
-        <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-4">
+        <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-3">
           {destination.category && capitalizeCategory(destination.category)}
           {destination.city && ` · ${capitalizeCity(destination.city)}`}
         </p>
 
         {/* Title - Serif, editorial */}
-        <h1 className="font-editorial-serif text-[26px] sm:text-[32px] font-medium tracking-[-0.02em] leading-[1.15] text-[var(--editorial-text-primary)] mb-4">
+        <h1 className="font-editorial-serif text-[26px] sm:text-[32px] font-medium tracking-[-0.02em] leading-[1.15] text-[var(--editorial-text-primary)] mb-2">
           {destination.name}
         </h1>
 
-        {/* Quick Info Row */}
-        <div className="flex items-center gap-4 text-[13px] text-[var(--editorial-text-secondary)] mb-6">
-          {isOpen !== null && (
-            <span className={isOpen ? 'text-green-600 dark:text-green-400' : 'text-[var(--editorial-text-tertiary)]'}>
-              {isOpen ? 'Open now' : 'Closed'}
+        {/* Brand Link */}
+        {destination.brand && (
+          <Link
+            href={`/brand/${encodeURIComponent(destination.brand)}`}
+            className="inline-flex items-center gap-1.5 text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-accent)] transition-colors mb-3"
+          >
+            <Building2 className="h-3 w-3" />
+            {destination.brand}
+          </Link>
+        )}
+
+        {/* Rating & Meta Row */}
+        <div className="flex items-center gap-3 text-[13px] text-[var(--editorial-text-secondary)] mb-5 flex-wrap">
+          {rating && (
+            <span className="flex items-center gap-1.5">
+              <img src="/google-logo.svg" alt="Google" className="h-3.5 w-3.5" />
+              <span className="font-medium text-[var(--editorial-text-primary)]">{rating.toFixed(1)}</span>
+              {reviewCount && <span className="text-[var(--editorial-text-tertiary)]">({reviewCount.toLocaleString()})</span>}
             </span>
           )}
-          {destination.rating && (
-            <span className="flex items-center gap-1">
-              <Star className="w-3.5 h-3.5 fill-current" />
-              {destination.rating.toFixed(1)}
-            </span>
+          {enrichedData?.price_level && (
+            <span className="text-[var(--editorial-text-tertiary)]">{'$'.repeat(enrichedData.price_level)}</span>
           )}
           {destination.michelin_stars && destination.michelin_stars > 0 && (
             <span className="flex items-center gap-1">
@@ -1678,6 +1703,72 @@ const DestinationContent = memo(function DestinationContent({
             </span>
           )}
         </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2 mb-6">
+          {/* Primary: Add to Trip or Save */}
+          {activeTrip ? (
+            <button
+              onClick={() => handleAddToTrip(tripContext?.day || activeTrip?.days[0]?.dayNumber || 1)}
+              disabled={isAddingToTrip}
+              className="flex-1 h-10 flex items-center justify-center gap-2 text-[13px] font-medium bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)] hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {isAddingToTrip ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              Add to Trip
+            </button>
+          ) : (
+            <button
+              onClick={user ? handleSave : undefined}
+              className={`flex-1 h-10 flex items-center justify-center gap-2 text-[13px] font-medium border transition-all ${
+                isSaved
+                  ? 'border-[var(--editorial-text-primary)] bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)]'
+                  : 'border-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-primary)] hover:text-[var(--editorial-text-primary)]'
+              }`}
+            >
+              <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+              {isSaved ? 'Saved' : 'Save'}
+            </button>
+          )}
+          <button
+            onClick={handleShare}
+            className="h-10 w-10 flex items-center justify-center border border-[var(--editorial-border)] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] hover:border-[var(--editorial-text-primary)] transition-all"
+          >
+            <Share2 className="h-4 w-4" />
+          </button>
+          <button
+            onClick={handleDirections}
+            className="h-10 w-10 flex items-center justify-center border border-[var(--editorial-border)] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] hover:border-[var(--editorial-text-primary)] transition-all"
+          >
+            <Navigation className="h-4 w-4" />
+          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setIsEditMode(!isEditMode)}
+              className={`h-10 w-10 flex items-center justify-center border transition-all ${
+                isEditMode
+                  ? 'border-[var(--editorial-text-primary)] bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)]'
+                  : 'border-[var(--editorial-border)] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] hover:border-[var(--editorial-text-primary)]'
+              }`}
+            >
+              <Edit className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Been Here Button */}
+        {user && (
+          <button
+            onClick={handleVisit}
+            className={`w-full h-10 flex items-center justify-center gap-2 text-[13px] font-medium border transition-all mb-6 ${
+              isVisited
+                ? 'border-green-600 bg-green-600 text-white'
+                : 'border-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-primary)] hover:text-[var(--editorial-text-primary)]'
+            }`}
+          >
+            <Check className="h-4 w-4" />
+            {isVisited ? 'Visited' : 'Been Here'}
+          </button>
+        )}
 
         {/* Tab Navigation */}
         <div className="flex gap-6 border-b border-[var(--editorial-border)] mb-6">
@@ -1726,6 +1817,108 @@ const DestinationContent = memo(function DestinationContent({
               >
                 {destination.micro_description || destination.description}
               </p>
+            )}
+
+            {/* Architecture / Design Info */}
+            {(enrichedData?.architect_obj || enrichedData?.interior_designer_obj || enrichedData?.design_firm_obj || enrichedData?.architectural_style) && (
+              <div className="mb-6 pt-4 border-t border-[var(--editorial-border)]">
+                <p className="text-[11px] uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-3">Design</p>
+                {enrichedData?.architect_obj && (
+                  <Link
+                    href={`/architect/${enrichedData.architect_obj.slug}`}
+                    className="flex items-center gap-3 py-2 group"
+                  >
+                    {enrichedData.architect_obj.image_url ? (
+                      <Image src={enrichedData.architect_obj.image_url} alt={enrichedData.architect_obj.name} width={40} height={40} className="rounded-full object-cover" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-[var(--editorial-border)] flex items-center justify-center">
+                        <Building2 className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-[11px] text-[var(--editorial-text-tertiary)]">Architect</p>
+                      <p className="text-[14px] text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors">{enrichedData.architect_obj.name}</p>
+                    </div>
+                  </Link>
+                )}
+                {enrichedData?.architectural_style && (
+                  <p className="text-[13px] text-[var(--editorial-text-secondary)] mt-2">{enrichedData.architectural_style}</p>
+                )}
+              </div>
+            )}
+
+            {/* Similar Places */}
+            {similarPlaces.length > 0 && (
+              <div className="mb-6 pt-4 border-t border-[var(--editorial-border)]">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[11px] uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)]">Similar Places</p>
+                  <button onClick={onShowSimilar} className="text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-accent)] transition-colors">
+                    See all
+                  </button>
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-2 -mx-6 px-6 sm:-mx-8 sm:px-8">
+                  {similarPlaces.slice(0, 4).map((place) => (
+                    <button
+                      key={place.id}
+                      onClick={() => onOpenRelated(place)}
+                      className="flex-shrink-0 w-24 text-left group"
+                    >
+                      <div className="relative aspect-square mb-2 rounded-lg overflow-hidden bg-[var(--editorial-border)]">
+                        {place.image && (
+                          <Image src={place.image} alt={place.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                        )}
+                      </div>
+                      <p className="text-[12px] text-[var(--editorial-text-primary)] line-clamp-1">{place.name}</p>
+                      <p className="text-[11px] text-[var(--editorial-text-tertiary)]">{place.city && capitalizeCity(place.city)}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Nested Destinations (venues inside hotels, etc) */}
+            {nestedDestinations.length > 0 && (
+              <div className="mb-6 pt-4 border-t border-[var(--editorial-border)]">
+                <p className="text-[11px] uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-3">Inside {destination.name}</p>
+                <div className="space-y-2">
+                  {nestedDestinations.map((nested) => (
+                    <button
+                      key={nested.id}
+                      onClick={() => onOpenRelated(nested)}
+                      className="w-full flex items-center gap-3 py-2 text-left group"
+                    >
+                      <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-[var(--editorial-border)] flex-shrink-0">
+                        {nested.image && <Image src={nested.image} alt={nested.name} fill className="object-cover" />}
+                      </div>
+                      <div>
+                        <p className="text-[14px] text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors">{nested.name}</p>
+                        <p className="text-[12px] text-[var(--editorial-text-tertiary)]">{nested.category && capitalizeCategory(nested.category)}</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-[var(--editorial-text-tertiary)] ml-auto" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Parent Destination */}
+            {parentDestination && (
+              <div className="mb-6 pt-4 border-t border-[var(--editorial-border)]">
+                <p className="text-[11px] uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-3">Located Inside</p>
+                <button
+                  onClick={() => onOpenRelated(parentDestination)}
+                  className="w-full flex items-center gap-3 py-2 text-left group"
+                >
+                  <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-[var(--editorial-border)] flex-shrink-0">
+                    {parentDestination.image && <Image src={parentDestination.image} alt={parentDestination.name} fill className="object-cover" />}
+                  </div>
+                  <div>
+                    <p className="text-[14px] text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors">{parentDestination.name}</p>
+                    <p className="text-[12px] text-[var(--editorial-text-tertiary)]">{parentDestination.category && capitalizeCategory(parentDestination.category)}</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-[var(--editorial-text-tertiary)] ml-auto" />
+                </button>
+              </div>
             )}
 
             {/* Website URL */}
