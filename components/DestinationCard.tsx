@@ -37,7 +37,7 @@ export const DestinationCard = memo(function DestinationCard({
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const cardRef = useRef<HTMLButtonElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   // Intersection Observer for progressive loading
   useEffect(() => {
@@ -73,30 +73,36 @@ export const DestinationCard = memo(function DestinationCard({
   };
 
   return (
-    <button
+    <div
       ref={cardRef}
-      onClick={handleClick}
-      type="button"
       className={`
         group relative w-full flex flex-col transition-all duration-300 ease-out
-        cursor-pointer text-left focus-ring
+        text-left
         hover:scale-[1.01]
         active:scale-[0.98]
         ${className}
       `}
-      aria-label={`View ${destination.name} in ${capitalizeCity(destination.city)}`}
     >
-        {/* Image Container with Progressive Loading */}
-        <div
-          className={`
+      {/* Main Action Overlay Button */}
+      <button
+        type="button"
+        onClick={handleClick}
+        className="absolute inset-0 z-10 w-full h-full rounded-2xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+        aria-label={`View ${destination.name} in ${capitalizeCity(destination.city)}`}
+      />
+
+      {/* Image Container with Progressive Loading */}
+      <div
+        className={`
             relative aspect-video overflow-hidden rounded-2xl
             bg-gray-100 dark:bg-gray-800
             border border-gray-200 dark:border-gray-800
             transition-all duration-300 ease-out
             mb-3
             ${isLoaded ? 'opacity-100' : 'opacity-0'}
+            pointer-events-none
           `}
-        >
+      >
         {/* Skeleton while loading */}
         {!isLoaded && isInView && (
           <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700" />
@@ -146,9 +152,10 @@ export const DestinationCard = memo(function DestinationCard({
           <div
             className={`
               absolute top-2 right-2 z-20
-              opacity-0 group-hover:opacity-100
-              translate-y-1 group-hover:translate-y-0
+              opacity-0 group-hover:opacity-100 group-focus-within:opacity-100
+              translate-y-1 group-hover:translate-y-0 group-focus-within:translate-y-0
               transition-all duration-200
+              pointer-events-auto
             `}
           >
             <QuickActions
@@ -257,17 +264,8 @@ export const DestinationCard = memo(function DestinationCard({
         </div>
       </div>
 
-      {/* Focus Ring for Accessibility */}
-      <div
-        className={`
-          absolute inset-0 rounded-2xl
-          ring-2 ring-offset-2 ring-black dark:ring-white
-          opacity-0 focus-within:opacity-100
-          transition-opacity duration-200
-          pointer-events-none
-        `}
-      />
-    </button>
+      {/* Focus Ring for Accessibility - Handled by Overlay Button now */}
+    </div>
   );
 });
 
