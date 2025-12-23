@@ -49,6 +49,8 @@ import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 import { Drawer } from '@/ui/Drawer';
 import { architectNameToSlug } from '@/lib/architect-utils';
 import { DestinationCard } from '@/components/DestinationCard';
+import { InlineAddToTrip } from './InlineAddToTrip';
+import { SimilarPlacesGrid } from './SimilarPlacesGrid';
 
 
 // Dynamically import GoogleStaticMap for small map in drawer
@@ -202,6 +204,41 @@ function parseTime(timeStr: string): number {
   return hours * 60 + minutes;
 }
 
+function getLocalTimeString(city: string, timezoneId?: string | null, utcOffset?: number | null): string {
+  try {
+    let now: Date;
+    let timeZone: string | undefined;
+
+    if (timezoneId) {
+      timeZone = timezoneId;
+      now = new Date();
+    } else if (CITY_TIMEZONES[city]) {
+      timeZone = CITY_TIMEZONES[city];
+      now = new Date();
+    } else if (utcOffset !== null && utcOffset !== undefined) {
+      const utcNow = new Date();
+      now = new Date(utcNow.getTime() + (utcOffset * 60 * 1000));
+      // Format without timezone (already adjusted)
+      return now.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      }).replace(' ', ' ');
+    } else {
+      return '';
+    }
+
+    return now.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone,
+    }).replace(' ', ' ');
+  } catch {
+    return '';
+  }
+}
+
 export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle, onDestinationClick, onEdit, onDestinationUpdate, renderMode = 'drawer' }: DestinationDrawerProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isReviewersExpanded, setIsReviewersExpanded] = useState(false);
@@ -215,6 +252,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showVisitedModal, setShowVisitedModal] = useState(false);
   const [showAddToTripModal, setShowAddToTripModal] = useState(false);
+  const [showInlineAddToTrip, setShowInlineAddToTrip] = useState(false);
   const [addToTripError, setAddToTripError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [showSaveDropdown, setShowSaveDropdown] = useState(false);
@@ -1504,45 +1542,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           >
             <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`} strokeWidth={1.5} />
           </button>
-          {/* Trip Action */}
+          {/* Trip Action - toggles inline panel in footer */}
           <button
-            onClick={async () => {
+            onClick={() => {
               if (!user) {
                 router.push('/auth/login');
                 return;
               }
               if (isAddedToTrip) return;
-              
-              // Try to add directly to most recent trip, or show modal if multiple trips
-              try {
-                const supabaseClient = createClient();
-                if (!supabaseClient) return;
-                
-                const { data: trips, error } = await supabaseClient
-                  .from('trips')
-                  .select('id')
-                  .eq('user_id', user.id)
-                  .order('created_at', { ascending: false })
-                  .limit(2);
-                
-                if (error) throw error;
-                
-                if (trips && trips.length === 1) {
-                  // Only one trip - add directly
-                  const tripId = trips[0].id;
-                  await addDestinationToTrip(tripId);
-                } else if (trips && trips.length > 1) {
-                  // Multiple trips - show modal to select
-                  setShowAddToTripModal(true);
-                } else {
-                  // No trips - show modal to create a new trip
-                  setShowAddToTripModal(true);
-                }
-              } catch (error) {
-                console.error('Error checking trips:', error);
-                // Fallback to showing modal
-                setShowAddToTripModal(true);
-              }
+              // Toggle the inline Add to Trip panel
+              setShowInlineAddToTrip(!showInlineAddToTrip);
             }}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             aria-label="Add to trip"
@@ -1559,134 +1568,48 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     </div>
   );
 
-  // Create mobile footer content
-  const mobileFooterContent = (
-    <div className="px-6 py-4">
-      <div className="flex gap-3">
-        {destination.slug && (
-          <Link
-            href={`/destination/${destination.slug}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            className="flex-1 rounded-lg bg-gray-900 py-3.5 text-center text-sm font-semibold text-white transition-opacity hover:opacity-90 dark:bg-white dark:text-gray-900"
-          >
-            View Full Details
-          </Link>
-        )}
-
-        <button
-          onClick={async () => {
-            if (!user) {
-              router.push('/auth/login');
-              return;
-            }
-            if (isAddedToTrip) return;
-
-            // Try to add directly to most recent trip, or show modal if multiple trips
-            try {
-              const supabaseClient = createClient();
-              if (!supabaseClient) return;
-
-              const { data: trips, error } = await supabaseClient
-                .from('trips')
-                .select('id')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false })
-                .limit(2);
-
-              if (error) throw error;
-
-              if (trips && trips.length === 1) {
-                // Only one trip - add directly
-                const tripId = trips[0].id;
-                await addDestinationToTrip(tripId);
-              } else if (trips && trips.length > 1) {
-                // Multiple trips - show modal to select
-                setShowAddToTripModal(true);
-              } else {
-                // No trips - open trip planner with this destination pre-filled
-                onClose();
-                router.push(`/trips?prefill=${encodeURIComponent(destination?.slug || '')}`);
-              }
-            } catch (error) {
-              console.error('Error checking trips:', error);
-              // Fallback to showing modal
-              setShowAddToTripModal(true);
-            }
+  // Shared footer content renderer to reduce duplication
+  const renderFooterContent = (isMobile: boolean) => (
+    <div className="px-6 py-4 space-y-3">
+      {/* View Full Details button */}
+      {destination.slug && (
+        <Link
+          href={`/destination/${destination.slug}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
           }}
-          className={`flex items-center justify-center gap-2 rounded-lg px-4 py-3.5 text-sm font-semibold transition-colors ${
-            isAddedToTrip
-              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-              : 'bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-100'
-          }`}
-          disabled={isAddedToTrip}
+          className={isMobile
+            ? "block w-full rounded-lg bg-gray-900 py-3.5 text-center text-sm font-semibold text-white transition-opacity hover:opacity-90 dark:bg-white dark:text-gray-900"
+            : "block w-full bg-black dark:bg-white text-white dark:text-black text-center py-3 px-4 rounded-lg font-medium text-sm transition-opacity hover:opacity-90"
+          }
         >
-          {isAddedToTrip ? (
-            <>
-              <Check className="h-4 w-4" />
-              Added
-            </>
-          ) : (
-            <>
-              <Plus className="h-4 w-4" />
-              Plan trip
-            </>
-          )}
-        </button>
-      </div>
+          View Full Details
+        </Link>
+      )}
+
+      {/* Inline Add to Trip Panel */}
+      <InlineAddToTrip
+        destinationSlug={destination.slug}
+        destinationName={destination.name}
+        isExpanded={showInlineAddToTrip}
+        onExpandedChange={setShowInlineAddToTrip}
+        onSuccess={(tripTitle, day) => {
+          setIsAddedToTrip(true);
+          const daySuffix = day ? ` · Day ${day}` : '';
+          toast.success(`Added to ${tripTitle}${daySuffix}`);
+        }}
+        onError={(message) => {
+          setAddToTripError(message);
+          toast.error(message);
+        }}
+        isAddedToTrip={isAddedToTrip}
+      />
     </div>
   );
 
-  // Create desktop footer content
-  const desktopFooterContent = (
-    <div className="px-6 py-4">
-      <div className="flex gap-3">
-        {destination.slug && (
-          <Link
-            href={`/destination/${destination.slug}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            className="flex-1 bg-black dark:bg-white text-white dark:text-black text-center py-3 px-4 rounded-xl font-medium text-sm transition-opacity hover:opacity-90"
-          >
-            View Full Details
-          </Link>
-        )}
-        
-        <button
-          onClick={() => {
-            if (!user) {
-              router.push('/auth/login');
-              return;
-            }
-            if (isAddedToTrip) return;
-            setShowAddToTripModal(true);
-          }}
-          className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-            isAddedToTrip
-              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-default'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
-          }`}
-          disabled={isAddedToTrip}
-        >
-          {isAddedToTrip ? (
-            <>
-              <Check className="h-4 w-4" />
-              <span>Added</span>
-            </>
-          ) : (
-            <>
-              <Plus className="h-4 w-4" />
-              <span>Add to Trip</span>
-            </>
-          )}
-        </button>
-      </div>
-    </div>
-  );
+  const mobileFooterContent = renderFooterContent(true);
+  const desktopFooterContent = renderFooterContent(false);
 
   // Main content that can be rendered in drawer or inline
   const mainContent = (
@@ -2433,20 +2356,29 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
             )}
 
-            {/* Opening Hours */}
+            {/* Hours & Contact Section with Local Time */}
             {(() => {
               const hours = enrichedData?.current_opening_hours || enrichedData?.opening_hours || (destination as any).opening_hours_json;
-              if (!hours || !hours.weekday_text || !Array.isArray(hours.weekday_text) || hours.weekday_text.length === 0) {
+              const hasHours = hours && hours.weekday_text && Array.isArray(hours.weekday_text) && hours.weekday_text.length > 0;
+              const hasContact = enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url || destination.opentable_url || destination.resy_url || destination.booking_url;
+
+              if (!hasHours && !hasContact) {
                 return null;
               }
-              
-              const openStatus = getOpenStatus(
-                hours, 
-                destination.city, 
-                enrichedData?.timezone_id, 
+
+              const localTime = getLocalTimeString(
+                destination.city,
+                enrichedData?.timezone_id,
                 enrichedData?.utc_offset
               );
-              
+
+              const openStatus = hasHours ? getOpenStatus(
+                hours,
+                destination.city,
+                enrichedData?.timezone_id,
+                enrichedData?.utc_offset
+              ) : null;
+
               let now: Date;
               if (enrichedData?.timezone_id) {
                 now = new Date(new Date().toLocaleString('en-US', { timeZone: enrichedData.timezone_id }));
@@ -2458,54 +2390,139 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               } else {
                 now = new Date();
               }
-              
+
               return (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                      {openStatus.todayHours && (
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`inline-flex items-center px-2.5 h-6 rounded-lg text-xs font-medium ${
-                            openStatus.isOpen 
-                              ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-200 dark:border-green-800' 
-                              : 'bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
-                          }`}>
-                            {openStatus.isOpen ? 'Open now' : 'Closed'}
-                          </span>
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            {openStatus.todayHours}
-                          </span>
+                <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
+                  {/* Section Header with Local Time */}
+                  <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                    Hours & Contact
+                    {localTime && (
+                      <span className="font-normal text-gray-400 dark:text-gray-500">
+                        · {localTime} local
+                      </span>
+                    )}
+                  </h3>
+
+                  {/* Opening Hours */}
+                  {hasHours && openStatus && (
+                    <div className="space-y-3 mb-4">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                          {openStatus.todayHours && (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className={`inline-flex items-center px-2.5 h-6 rounded-lg text-xs font-medium ${
+                                openStatus.isOpen
+                                  ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-200 dark:border-green-800'
+                                  : 'bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
+                              }`}>
+                                {openStatus.isOpen ? 'Open now' : 'Closed'}
+                              </span>
+                              <span className="text-sm text-gray-600 dark:text-gray-400">
+                                {openStatus.todayHours}
+                              </span>
+                            </div>
+                          )}
                         </div>
+                      </div>
+                      {hours.weekday_text && (
+                        <details className="group">
+                          <summary className="cursor-pointer inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+                            <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
+                            View all hours
+                          </summary>
+                          <div className="mt-3 space-y-2 pl-5">
+                            {hours.weekday_text.map((day: string, index: number) => {
+                              const [dayName, hoursText] = day.split(': ');
+                              const dayOfWeek = now.getDay();
+                              const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                              const isToday = index === googleDayIndex;
+
+                              return (
+                                <div key={index} className={`flex justify-between items-center text-sm ${
+                                  isToday
+                                    ? 'font-medium text-black dark:text-white'
+                                    : 'text-gray-600 dark:text-gray-400'
+                                }`}>
+                                  <span className={isToday ? 'text-black dark:text-white' : ''}>{dayName}</span>
+                                  <span className={isToday ? 'text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}>{hoursText}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </details>
                       )}
                     </div>
-                  </div>
-                  {hours.weekday_text && (
-                    <details className="group">
-                      <summary className="cursor-pointer inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
-                        <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
-                        View all hours
-                      </summary>
-                      <div className="mt-3 space-y-2 pl-5">
-                        {hours.weekday_text.map((day: string, index: number) => {
-                          const [dayName, hoursText] = day.split(': ');
-                          const dayOfWeek = now.getDay();
-                          const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-                          const isToday = index === googleDayIndex;
+                  )}
 
-                          return (
-                            <div key={index} className={`flex justify-between items-center text-sm ${
-                              isToday 
-                                ? 'font-medium text-black dark:text-white' 
-                                : 'text-gray-600 dark:text-gray-400'
-                            }`}>
-                              <span className={isToday ? 'text-black dark:text-white' : ''}>{dayName}</span>
-                              <span className={isToday ? 'text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}>{hoursText}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </details>
+                  {/* Contact Links */}
+                  {hasContact && (
+                    <div className="flex flex-wrap gap-2">
+                      {(enrichedData?.website || destination.website) && (() => {
+                        const websiteUrl = (enrichedData?.website || destination.website) || '';
+                        const fullUrl = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
+                        const domain = extractDomain(websiteUrl);
+                        return (
+                          <a
+                            href={fullUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            <span>{domain}</span>
+                            <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
+                          </a>
+                        );
+                      })()}
+                      {(enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone) && (
+                        <a
+                          href={`tel:${enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone}`}
+                          className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          {enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone}
+                        </a>
+                      )}
+                      {destination.instagram_url && (
+                        <a
+                          href={destination.instagram_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          Instagram
+                        </a>
+                      )}
+                      {destination.opentable_url && (
+                        <a
+                          href={destination.opentable_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          OpenTable
+                        </a>
+                      )}
+                      {destination.resy_url && (
+                        <a
+                          href={destination.resy_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          Resy
+                        </a>
+                      )}
+                      {destination.booking_url && (
+                        <a
+                          href={destination.booking_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          Book Now
+                        </a>
+                      )}
+                    </div>
                   )}
                 </div>
               );
@@ -2617,79 +2634,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {/* Architecture & Design */}
           {enhancedDestination && <ArchitectDesignInfo destination={enhancedDestination} />}
 
-          {/* Contact & Links */}
-          {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url || destination.opentable_url || destination.resy_url || destination.booking_url) && (
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
-              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Contact & Booking</h3>
-              <div className="flex flex-wrap gap-2">
-                {(enrichedData?.website || destination.website) && (() => {
-                  const websiteUrl = (enrichedData?.website || destination.website) || '';
-                  const fullUrl = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
-                  const domain = extractDomain(websiteUrl);
-                  return (
-                    <a
-                      href={fullUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      <span>{domain}</span>
-                      <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
-                    </a>
-                  );
-                })()}
-                {(enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone) && (
-                  <a
-                    href={`tel:${enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone}`}
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    {enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone}
-                  </a>
-                )}
-                {destination.instagram_url && (
-                  <a
-                    href={destination.instagram_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    Instagram
-                  </a>
-                )}
-                {destination.opentable_url && (
-                  <a
-                    href={destination.opentable_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    OpenTable
-                  </a>
-                )}
-                {destination.resy_url && (
-                  <a
-                    href={destination.resy_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    Resy
-                  </a>
-                )}
-                {destination.booking_url && (
-                  <a
-                    href={destination.booking_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    Book Now
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* AI Review Summary */}
           {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
             <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
@@ -2726,79 +2670,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           )}
 
-          {/* AI Recommendations */}
-          {(loadingRecommendations || recommendations.length > 0) && (
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
-              <div className="mb-4">
-                <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">
-                  You might also like
-                </h3>
-              </div>
-
-              {loadingRecommendations ? (
-                <div className="flex gap-4 overflow-x-auto pb-2">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="flex-shrink-0 w-32">
-                      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-lg mb-2 animate-pulse" />
-                      <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded mb-1 animate-pulse" />
-                      <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-2/3 animate-pulse" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide -mx-6 px-6">
-                  {recommendations.map(rec => (
-                    <button
-                      key={rec.slug}
-                      onClick={() => {
-                        if (rec.slug && rec.slug.trim()) {
-                          if (onDestinationClick) {
-                            onDestinationClick(rec.slug);
-                          } else {
-                            router.push(`/destination/${rec.slug}`);
-                          }
-                        }
-                      }}
-                      className="group text-left flex-shrink-0 w-32 flex flex-col"
-                    >
-                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2 border border-gray-200 dark:border-gray-800">
-                        {rec.image ? (
-                          <Image
-                            src={rec.image}
-                            alt={rec.name}
-                            fill
-                            sizes="(max-width: 640px) 50vw, 200px"
-                            className="object-cover group-hover:opacity-90 transition-opacity"
-                            quality={85}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <MapPin className="h-8 w-8 opacity-20" />
-                          </div>
-                        )}
-                        {rec.michelin_stars && rec.michelin_stars > 0 && (
-                          <div className="absolute bottom-2 left-2 px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1">
-                            <img
-                              src="/michelin-star.svg"
-                              alt="Michelin star"
-                              className="h-3 w-3"
-                            />
-                            <span>{rec.michelin_stars}</span>
-                          </div>
-                        )}
-                      </div>
-                      <h4 className="font-medium text-xs leading-tight line-clamp-2 mb-1 text-black dark:text-white">
-                        {rec.name}
-                      </h4>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {capitalizeCity(rec.city)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+          {/* Similar Places - Single Row, Max 4 Cards */}
+          <SimilarPlacesGrid
+            recommendations={recommendations}
+            loading={loadingRecommendations}
+            destinationSlug={destination.slug}
+            onDestinationClick={onDestinationClick}
+            onClose={onClose}
+          />
 
           </div>
           </div>
@@ -3180,20 +3059,29 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
             )}
 
-            {/* Opening Hours */}
+            {/* Hours & Contact Section with Local Time */}
             {(() => {
               const hours = enrichedData?.current_opening_hours || enrichedData?.opening_hours || (destination as any).opening_hours_json;
-              if (!hours || !hours.weekday_text || !Array.isArray(hours.weekday_text) || hours.weekday_text.length === 0) {
+              const hasHours = hours && hours.weekday_text && Array.isArray(hours.weekday_text) && hours.weekday_text.length > 0;
+              const hasContact = enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url || destination.opentable_url || destination.resy_url || destination.booking_url;
+
+              if (!hasHours && !hasContact) {
                 return null;
               }
-              
-              const openStatus = getOpenStatus(
-                hours, 
-                destination.city, 
-                enrichedData?.timezone_id, 
+
+              const localTime = getLocalTimeString(
+                destination.city,
+                enrichedData?.timezone_id,
                 enrichedData?.utc_offset
               );
-              
+
+              const openStatus = hasHours ? getOpenStatus(
+                hours,
+                destination.city,
+                enrichedData?.timezone_id,
+                enrichedData?.utc_offset
+              ) : null;
+
               let now: Date;
               if (enrichedData?.timezone_id) {
                 now = new Date(new Date().toLocaleString('en-US', { timeZone: enrichedData.timezone_id }));
@@ -3205,54 +3093,139 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               } else {
                 now = new Date();
               }
-              
+
               return (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                      {openStatus.todayHours && (
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`inline-flex items-center px-2.5 h-6 rounded-lg text-xs font-medium ${
-                            openStatus.isOpen 
-                              ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-200 dark:border-green-800' 
-                              : 'bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
-                          }`}>
-                            {openStatus.isOpen ? 'Open now' : 'Closed'}
-                          </span>
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            {openStatus.todayHours}
-                          </span>
+                <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
+                  {/* Section Header with Local Time */}
+                  <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                    Hours & Contact
+                    {localTime && (
+                      <span className="font-normal text-gray-400 dark:text-gray-500">
+                        · {localTime} local
+                      </span>
+                    )}
+                  </h3>
+
+                  {/* Opening Hours */}
+                  {hasHours && openStatus && (
+                    <div className="space-y-3 mb-4">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                          {openStatus.todayHours && (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className={`inline-flex items-center px-2.5 h-6 rounded-lg text-xs font-medium ${
+                                openStatus.isOpen
+                                  ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-200 dark:border-green-800'
+                                  : 'bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
+                              }`}>
+                                {openStatus.isOpen ? 'Open now' : 'Closed'}
+                              </span>
+                              <span className="text-sm text-gray-600 dark:text-gray-400">
+                                {openStatus.todayHours}
+                              </span>
+                            </div>
+                          )}
                         </div>
+                      </div>
+                      {hours.weekday_text && (
+                        <details className="group">
+                          <summary className="cursor-pointer inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+                            <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
+                            View all hours
+                          </summary>
+                          <div className="mt-3 space-y-2 pl-5">
+                            {hours.weekday_text.map((day: string, index: number) => {
+                              const [dayName, hoursText] = day.split(': ');
+                              const dayOfWeek = now.getDay();
+                              const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                              const isToday = index === googleDayIndex;
+
+                              return (
+                                <div key={index} className={`flex justify-between items-center text-sm ${
+                                  isToday
+                                    ? 'font-medium text-black dark:text-white'
+                                    : 'text-gray-600 dark:text-gray-400'
+                                }`}>
+                                  <span className={isToday ? 'text-black dark:text-white' : ''}>{dayName}</span>
+                                  <span className={isToday ? 'text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}>{hoursText}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </details>
                       )}
                     </div>
-                  </div>
-                  {hours.weekday_text && (
-                    <details className="group">
-                      <summary className="cursor-pointer inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
-                        <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
-                        View all hours
-                      </summary>
-                      <div className="mt-3 space-y-2 pl-5">
-                        {hours.weekday_text.map((day: string, index: number) => {
-                          const [dayName, hoursText] = day.split(': ');
-                          const dayOfWeek = now.getDay();
-                          const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-                          const isToday = index === googleDayIndex;
+                  )}
 
-                          return (
-                            <div key={index} className={`flex justify-between items-center text-sm ${
-                              isToday 
-                                ? 'font-medium text-black dark:text-white' 
-                                : 'text-gray-600 dark:text-gray-400'
-                            }`}>
-                              <span className={isToday ? 'text-black dark:text-white' : ''}>{dayName}</span>
-                              <span className={isToday ? 'text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}>{hoursText}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </details>
+                  {/* Contact Links */}
+                  {hasContact && (
+                    <div className="flex flex-wrap gap-2">
+                      {(enrichedData?.website || destination.website) && (() => {
+                        const websiteUrl = (enrichedData?.website || destination.website) || '';
+                        const fullUrl = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
+                        const domain = extractDomain(websiteUrl);
+                        return (
+                          <a
+                            href={fullUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            <span>{domain}</span>
+                            <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
+                          </a>
+                        );
+                      })()}
+                      {(enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone) && (
+                        <a
+                          href={`tel:${enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone}`}
+                          className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          {enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone}
+                        </a>
+                      )}
+                      {destination.instagram_url && (
+                        <a
+                          href={destination.instagram_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          Instagram
+                        </a>
+                      )}
+                      {destination.opentable_url && (
+                        <a
+                          href={destination.opentable_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          OpenTable
+                        </a>
+                      )}
+                      {destination.resy_url && (
+                        <a
+                          href={destination.resy_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          Resy
+                        </a>
+                      )}
+                      {destination.booking_url && (
+                        <a
+                          href={destination.booking_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          Book Now
+                        </a>
+                      )}
+                    </div>
                   )}
                 </div>
               );
@@ -3365,79 +3338,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {/* Architecture & Design */}
           {enhancedDestination && <ArchitectDesignInfo destination={enhancedDestination} />}
 
-          {/* Contact & Links */}
-          {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url || destination.opentable_url || destination.resy_url || destination.booking_url) && (
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
-              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Contact & Booking</h3>
-              <div className="flex flex-wrap gap-2">
-                {(enrichedData?.website || destination.website) && (() => {
-                  const websiteUrl = (enrichedData?.website || destination.website) || '';
-                  const fullUrl = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
-                  const domain = extractDomain(websiteUrl);
-                  return (
-                    <a
-                      href={fullUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      <span>{domain}</span>
-                      <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
-                    </a>
-                  );
-                })()}
-                {(enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone) && (
-                  <a
-                    href={`tel:${enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone}`}
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    {enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone}
-                  </a>
-                )}
-                {destination.instagram_url && (
-                  <a
-                    href={destination.instagram_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    Instagram
-                  </a>
-                )}
-                {destination.opentable_url && (
-                  <a
-                    href={destination.opentable_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    OpenTable
-                  </a>
-                )}
-                {destination.resy_url && (
-                  <a
-                    href={destination.resy_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    Resy
-                  </a>
-                )}
-                {destination.booking_url && (
-                  <a
-                    href={destination.booking_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    Book Now
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* AI Review Summary */}
           {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
             <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
@@ -3474,79 +3374,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           )}
 
-          {/* AI Recommendations */}
-          {(loadingRecommendations || recommendations.length > 0) && (
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
-              <div className="mb-4">
-                <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">
-                  You might also like
-                </h3>
-              </div>
-
-              {loadingRecommendations ? (
-                <div className="flex gap-4 overflow-x-auto pb-2">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="flex-shrink-0 w-32">
-                      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-lg mb-2 animate-pulse" />
-                      <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded mb-1 animate-pulse" />
-                      <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-2/3 animate-pulse" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide -mx-6 px-6">
-                  {recommendations.map(rec => (
-                    <button
-                      key={rec.slug}
-                      onClick={() => {
-                        if (rec.slug && rec.slug.trim()) {
-                          if (onDestinationClick) {
-                            onDestinationClick(rec.slug);
-                          } else {
-                            router.push(`/destination/${rec.slug}`);
-                          }
-                        }
-                      }}
-                      className="group text-left flex-shrink-0 w-32 flex flex-col"
-                    >
-                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2 border border-gray-200 dark:border-gray-800">
-                        {rec.image ? (
-                          <Image
-                            src={rec.image}
-                            alt={rec.name}
-                            fill
-                            sizes="(max-width: 640px) 50vw, 200px"
-                            className="object-cover group-hover:opacity-90 transition-opacity"
-                            quality={85}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <MapPin className="h-8 w-8 opacity-20" />
-                          </div>
-                        )}
-                        {rec.michelin_stars && rec.michelin_stars > 0 && (
-                          <div className="absolute bottom-2 left-2 px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1">
-                            <img
-                              src="/michelin-star.svg"
-                              alt="Michelin star"
-                              className="h-3 w-3"
-                            />
-                            <span>{rec.michelin_stars}</span>
-                          </div>
-                        )}
-                      </div>
-                      <h4 className="font-medium text-xs leading-tight line-clamp-2 mb-1 text-black dark:text-white">
-                        {rec.name}
-                      </h4>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {capitalizeCity(rec.city)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+          {/* Similar Places - Single Row, Max 4 Cards (Desktop) */}
+          <SimilarPlacesGrid
+            recommendations={recommendations}
+            loading={loadingRecommendations}
+            destinationSlug={destination.slug}
+            onDestinationClick={onDestinationClick}
+            onClose={onClose}
+          />
 
           </div>
           </>
