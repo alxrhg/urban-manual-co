@@ -1345,7 +1345,7 @@ const DestinationContent = memo(function DestinationContent({
                   handleAddToTrip(1);
                 }}
                 disabled={isAddingToTrip}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3.5 border border-[var(--editorial-text-primary)] text-[var(--editorial-text-primary)] text-[13px] font-medium tracking-[0.02em] transition-all hover:bg-[var(--editorial-text-primary)] hover:text-[var(--editorial-bg)] active:scale-[0.98] disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-lg border border-[var(--editorial-text-primary)] text-[var(--editorial-text-primary)] text-[13px] font-medium tracking-[0.02em] transition-all hover:bg-[var(--editorial-text-primary)] hover:text-[var(--editorial-bg)] active:scale-[0.98] disabled:opacity-50"
               >
                 <Plus className="w-4 h-4" />
                 Start {destination.city ? `${destination.city} Trip` : 'New Trip'}
@@ -1370,7 +1370,7 @@ const DestinationContent = memo(function DestinationContent({
                   key={day.dayNumber}
                   onClick={() => handleAddToTrip(day.dayNumber)}
                   disabled={isAddingToTrip}
-                  className={`px-4 py-2.5 text-[13px] font-medium transition-colors disabled:opacity-50 ${
+                  className={`px-4 py-2.5 rounded-lg text-[13px] font-medium transition-colors disabled:opacity-50 ${
                     tripContext?.day === day.dayNumber
                       ? 'border border-[var(--editorial-text-primary)] bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)]'
                       : 'border border-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-secondary)]'
@@ -1382,7 +1382,7 @@ const DestinationContent = memo(function DestinationContent({
               <button
                 onClick={() => handleAddToTrip()}
                 disabled={isAddingToTrip}
-                className="px-4 py-2.5 border border-dashed border-[var(--editorial-text-tertiary)] text-[13px] font-medium text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-secondary)] transition-colors"
+                className="px-4 py-2.5 rounded-lg border border-dashed border-[var(--editorial-text-tertiary)] text-[13px] font-medium text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-secondary)] transition-colors"
               >
                 <Plus className="h-4 w-4 inline mr-1" />
                 New Day
@@ -1633,7 +1633,7 @@ const DestinationContent = memo(function DestinationContent({
     <div className="bg-[var(--editorial-bg)]">
       {/* Single Square Image - 1:1 aspect ratio */}
       <div className="px-6 sm:px-8 pt-14 pb-0">
-        <div className="relative w-full bg-[var(--editorial-border)]" style={{ aspectRatio: '1/1' }}>
+        <div className="relative w-full bg-[var(--editorial-border)] rounded-lg overflow-hidden" style={{ aspectRatio: '1/1' }}>
           {imageUrl ? (
             <Image src={imageUrl} alt={destination.name} fill className="object-cover" priority />
           ) : (
@@ -1644,7 +1644,7 @@ const DestinationContent = memo(function DestinationContent({
           {/* Hours Status Badge */}
           {hoursAnalysis.status && (
             <div className="absolute bottom-3 left-3">
-              <span className={`px-2.5 py-1 text-[11px] font-medium ${
+              <span className={`px-2.5 py-1 text-[11px] font-medium rounded-md ${
                 hoursAnalysis.category === 'open' ? 'bg-green-600 text-white' :
                 hoursAnalysis.category === 'opening-soon' ? 'bg-blue-600 text-white' :
                 hoursAnalysis.category === 'closing-soon' ? 'bg-amber-500 text-white' :
@@ -1714,7 +1714,7 @@ const DestinationContent = memo(function DestinationContent({
               }
             }}
             disabled={isAddingToTrip}
-            className="flex-1 h-10 flex items-center justify-center gap-2 text-[13px] font-medium bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)] hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="flex-1 h-10 flex items-center justify-center gap-2 text-[13px] font-medium rounded-lg bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)] hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {isAddingToTrip ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             {activeTrip ? 'Add to Trip' : 'Start Trip'}
@@ -1722,7 +1722,7 @@ const DestinationContent = memo(function DestinationContent({
           {/* Save Button */}
           <button
             onClick={user ? handleSave : undefined}
-            className={`h-10 w-10 flex items-center justify-center border transition-all ${
+            className={`h-10 w-10 flex items-center justify-center rounded-lg border transition-all ${
               isSaved
                 ? 'border-[var(--editorial-text-primary)] bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)]'
                 : 'border-[var(--editorial-border)] text-[var(--editorial-text-tertiary)] hover:border-[var(--editorial-text-primary)] hover:text-[var(--editorial-text-primary)]'
@@ -1733,14 +1733,14 @@ const DestinationContent = memo(function DestinationContent({
           </button>
           <button
             onClick={handleShare}
-            className="h-10 w-10 flex items-center justify-center border border-[var(--editorial-border)] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] hover:border-[var(--editorial-text-primary)] transition-all"
+            className="h-10 w-10 flex items-center justify-center rounded-lg border border-[var(--editorial-border)] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] hover:border-[var(--editorial-text-primary)] transition-all"
             title="Share"
           >
             <Share2 className="h-4 w-4" />
           </button>
           <button
             onClick={handleDirections}
-            className="h-10 w-10 flex items-center justify-center border border-[var(--editorial-border)] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] hover:border-[var(--editorial-text-primary)] transition-all"
+            className="h-10 w-10 flex items-center justify-center rounded-lg border border-[var(--editorial-border)] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] hover:border-[var(--editorial-text-primary)] transition-all"
             title="Directions"
           >
             <Navigation className="h-4 w-4" />
@@ -1748,7 +1748,7 @@ const DestinationContent = memo(function DestinationContent({
           {isAdmin && (
             <button
               onClick={() => setIsEditMode(!isEditMode)}
-              className={`h-10 w-10 flex items-center justify-center border transition-all ${
+              className={`h-10 w-10 flex items-center justify-center rounded-lg border transition-all ${
                 isEditMode
                   ? 'border-[var(--editorial-text-primary)] bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)]'
                   : 'border-[var(--editorial-border)] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] hover:border-[var(--editorial-text-primary)]'
@@ -1763,7 +1763,7 @@ const DestinationContent = memo(function DestinationContent({
         {user && (
           <button
             onClick={handleVisit}
-            className={`w-full h-10 flex items-center justify-center gap-2 text-[13px] font-medium border transition-all mb-6 ${
+            className={`w-full h-10 flex items-center justify-center gap-2 text-[13px] font-medium rounded-lg border transition-all mb-6 ${
               isVisited
                 ? 'border-green-600 bg-green-600 text-white'
                 : 'border-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-primary)] hover:text-[var(--editorial-text-primary)]'
