@@ -104,21 +104,21 @@ export default function NavigationBar() {
         </div>
 
         {/* Right side - Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {/* Create Trip */}
           <button
             onClick={handleCreateTrip}
             disabled={creatingTrip}
-            className="flex h-[42px] sm:h-[38px] flex-shrink-0 items-center justify-center gap-2 rounded-lg
-                       bg-[var(--editorial-accent)] px-3 sm:px-4 text-[14px] sm:text-[13px] font-medium
+            className="flex h-10 flex-shrink-0 items-center justify-center gap-2 rounded-lg
+                       bg-[var(--editorial-accent)] px-4 text-[13px] font-medium
                        text-white
                        disabled:opacity-50 hover:bg-[var(--editorial-accent-hover)]
                        active:scale-[0.98] transition-all duration-200"
           >
             {creatingTrip ? (
-              <Loader2 className="h-4 w-4 sm:h-[15px] sm:w-[15px] animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Plus className="h-4 w-4 sm:h-[15px] sm:w-[15px]" />
+              <Plus className="h-4 w-4" />
             )}
             <span className="hidden sm:inline">
               {creatingTrip ? 'Creating...' : 'Create Trip'}
@@ -138,13 +138,13 @@ export default function NavigationBar() {
           {/* Discover by Cities */}
           <Link
             href="/cities"
-            className="hidden sm:flex h-[38px] flex-shrink-0 items-center justify-center gap-2 rounded-lg
+            className="hidden sm:flex h-10 flex-shrink-0 items-center justify-center gap-2 rounded-lg
                        border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)]
                        px-4 text-[13px] font-medium text-[var(--editorial-text-primary)]
                        hover:bg-[var(--editorial-border-subtle)]
                        active:scale-[0.98] transition-all duration-200"
           >
-            <Globe className="h-[15px] w-[15px]" />
+            <Globe className="h-4 w-4" />
             <span>Discover by Cities</span>
           </Link>
         </div>
