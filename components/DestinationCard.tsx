@@ -193,26 +193,6 @@ export const DestinationCard = memo(function DestinationCard({
                 </div>
               )}
 
-            {/* Google Rating - Bottom Right */}
-            {typeof destination.rating === 'number' &&
-              destination.rating > 0 && (
-                <div
-                  className={`
-                    absolute bottom-2 right-2 z-10
-                    px-2.5 py-1 text-[var(--editorial-text-secondary)] text-xs
-                    bg-[var(--editorial-bg-primary)]/90 backdrop-blur-sm
-                    flex items-center gap-1.5
-                    transition-transform duration-300
-                  `}
-                >
-                  <img
-                    src="/google-logo.svg"
-                    alt="Google rating"
-                    className="h-3 w-3"
-                  />
-                  <span>{destination.rating.toFixed(1)}</span>
-                </div>
-              )}
           </>
         )}
       </div>
