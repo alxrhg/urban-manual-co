@@ -203,6 +203,7 @@ export function InlineAddToTrip({
   if (!isExpanded) {
     return (
       <button
+        type="button"
         onClick={() => {
           if (!user) {
             router.push('/auth/login');
@@ -210,7 +211,7 @@ export function InlineAddToTrip({
           }
           onExpandedChange(true);
         }}
-        className="w-full flex items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800"
+        className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-3.5 text-sm font-semibold transition-colors bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800"
       >
         <Plus className="h-4 w-4" />
         Add to Trip
@@ -227,6 +228,7 @@ export function InlineAddToTrip({
           Select Trip
         </span>
         <button
+          type="button"
           onClick={() => onExpandedChange(false)}
           className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           aria-label="Close"
@@ -263,6 +265,7 @@ export function InlineAddToTrip({
 
                   return (
                     <button
+                      type="button"
                       key={trip.id}
                       onClick={() => {
                         setSelectedTrip(trip);
@@ -296,6 +299,7 @@ export function InlineAddToTrip({
 
             {/* Create New Trip */}
             <button
+              type="button"
               onClick={handleCreateNewTrip}
               className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-colors"
             >
@@ -314,6 +318,7 @@ export function InlineAddToTrip({
                   <div className="flex flex-wrap gap-2">
                     {Array.from({ length: selectedTrip._days }, (_, i) => i + 1).map(day => (
                       <button
+                        type="button"
                         key={day}
                         onClick={() => setSelectedDay(day)}
                         className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
@@ -336,12 +341,14 @@ export function InlineAddToTrip({
                 <div className="border-t border-gray-100 dark:border-gray-800 my-3" />
                 <div className="flex gap-2">
                   <button
+                    type="button"
                     onClick={() => onExpandedChange(false)}
                     className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
+                    type="button"
                     onClick={handleAddToTrip}
                     disabled={adding}
                     className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-[#C4704B] text-white hover:bg-[#B3603B] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"

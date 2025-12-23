@@ -50,6 +50,7 @@ import { Drawer } from '@/ui/Drawer';
 import { architectNameToSlug } from '@/lib/architect-utils';
 import { DestinationCard } from '@/components/DestinationCard';
 import { InlineAddToTrip } from './InlineAddToTrip';
+import { SimilarPlacesGrid } from './SimilarPlacesGrid';
 
 
 // Dynamically import GoogleStaticMap for small map in drawer
@@ -1567,8 +1568,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     </div>
   );
 
-  // Create mobile footer content with inline Add to Trip
-  const mobileFooterContent = (
+  // Shared footer content renderer to reduce duplication
+  const renderFooterContent = (isMobile: boolean) => (
     <div className="px-6 py-4 space-y-3">
       {/* View Full Details button */}
       {destination.slug && (
@@ -1578,7 +1579,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             e.stopPropagation();
             onClose();
           }}
-          className="block w-full rounded-lg bg-gray-900 py-3.5 text-center text-sm font-semibold text-white transition-opacity hover:opacity-90 dark:bg-white dark:text-gray-900"
+          className={isMobile
+            ? "block w-full rounded-lg bg-gray-900 py-3.5 text-center text-sm font-semibold text-white transition-opacity hover:opacity-90 dark:bg-white dark:text-gray-900"
+            : "block w-full bg-black dark:bg-white text-white dark:text-black text-center py-3 px-4 rounded-lg font-medium text-sm transition-opacity hover:opacity-90"
+          }
         >
           View Full Details
         </Link>
@@ -1604,42 +1608,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     </div>
   );
 
-  // Create desktop footer content with inline Add to Trip
-  const desktopFooterContent = (
-    <div className="px-6 py-4 space-y-3">
-      {/* View Full Details button */}
-      {destination.slug && (
-        <Link
-          href={`/destination/${destination.slug}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onClose();
-          }}
-          className="block w-full bg-black dark:bg-white text-white dark:text-black text-center py-3 px-4 rounded-lg font-medium text-sm transition-opacity hover:opacity-90"
-        >
-          View Full Details
-        </Link>
-      )}
-
-      {/* Inline Add to Trip Panel */}
-      <InlineAddToTrip
-        destinationSlug={destination.slug}
-        destinationName={destination.name}
-        isExpanded={showInlineAddToTrip}
-        onExpandedChange={setShowInlineAddToTrip}
-        onSuccess={(tripTitle, day) => {
-          setIsAddedToTrip(true);
-          const daySuffix = day ? ` · Day ${day}` : '';
-          toast.success(`Added to ${tripTitle}${daySuffix}`);
-        }}
-        onError={(message) => {
-          setAddToTripError(message);
-          toast.error(message);
-        }}
-        isAddedToTrip={isAddedToTrip}
-      />
-    </div>
-  );
+  const mobileFooterContent = renderFooterContent(true);
+  const desktopFooterContent = renderFooterContent(false);
 
   // Main content that can be rendered in drawer or inline
   const mainContent = (
@@ -2701,90 +2671,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
           {/* Similar Places - Single Row, Max 4 Cards */}
-          {(loadingRecommendations || recommendations.length > 0) && (
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">
-                  You might also like
-                </h3>
-                {recommendations.length > 4 && destination.slug && (
-                  <Link
-                    href={`/destination/${destination.slug}#similar`}
-                    className="text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onClose();
-                    }}
-                  >
-                    See all →
-                  </Link>
-                )}
-              </div>
-
-              {loadingRecommendations ? (
-                <div className="grid grid-cols-4 gap-3">
-                  {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="flex flex-col">
-                      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-lg mb-2 animate-pulse" />
-                      <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded mb-1 animate-pulse" />
-                      <div className="h-2.5 bg-gray-200 dark:bg-gray-800 rounded w-2/3 animate-pulse" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-4 gap-3">
-                  {recommendations.slice(0, 4).map(rec => (
-                    <button
-                      key={rec.slug}
-                      onClick={() => {
-                        if (rec.slug && rec.slug.trim()) {
-                          if (onDestinationClick) {
-                            onDestinationClick(rec.slug);
-                          } else {
-                            router.push(`/destination/${rec.slug}`);
-                          }
-                        }
-                      }}
-                      className="group text-left flex flex-col"
-                    >
-                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2 border border-gray-200 dark:border-gray-800">
-                        {rec.image ? (
-                          <Image
-                            src={rec.image}
-                            alt={rec.name}
-                            fill
-                            sizes="(max-width: 640px) 25vw, 100px"
-                            className="object-cover group-hover:opacity-90 transition-opacity"
-                            quality={85}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <MapPin className="h-6 w-6 opacity-20" />
-                          </div>
-                        )}
-                        {rec.michelin_stars && rec.michelin_stars > 0 && (
-                          <div className="absolute bottom-1 left-1 px-1.5 py-0.5 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-600 dark:text-gray-400 text-[10px] bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-0.5">
-                            <img
-                              src="/michelin-star.svg"
-                              alt="Michelin star"
-                              className="h-2.5 w-2.5"
-                            />
-                            <span>{rec.michelin_stars}</span>
-                          </div>
-                        )}
-                      </div>
-                      <h4 className="font-medium text-[11px] leading-tight line-clamp-2 mb-0.5 text-black dark:text-white">
-                        {rec.name}
-                      </h4>
-                      <span className="text-[10px] text-gray-500 dark:text-gray-400">
-                        {capitalizeCity(rec.city)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+          <SimilarPlacesGrid
+            recommendations={recommendations}
+            loading={loadingRecommendations}
+            destinationSlug={destination.slug}
+            onDestinationClick={onDestinationClick}
+            onClose={onClose}
+          />
 
           </div>
           </div>
@@ -3482,90 +3375,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
           {/* Similar Places - Single Row, Max 4 Cards (Desktop) */}
-          {(loadingRecommendations || recommendations.length > 0) && (
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">
-                  You might also like
-                </h3>
-                {recommendations.length > 4 && destination.slug && (
-                  <Link
-                    href={`/destination/${destination.slug}#similar`}
-                    className="text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onClose();
-                    }}
-                  >
-                    See all →
-                  </Link>
-                )}
-              </div>
-
-              {loadingRecommendations ? (
-                <div className="grid grid-cols-4 gap-3">
-                  {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="flex flex-col">
-                      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-lg mb-2 animate-pulse" />
-                      <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded mb-1 animate-pulse" />
-                      <div className="h-2.5 bg-gray-200 dark:bg-gray-800 rounded w-2/3 animate-pulse" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-4 gap-3">
-                  {recommendations.slice(0, 4).map(rec => (
-                    <button
-                      key={rec.slug}
-                      onClick={() => {
-                        if (rec.slug && rec.slug.trim()) {
-                          if (onDestinationClick) {
-                            onDestinationClick(rec.slug);
-                          } else {
-                            router.push(`/destination/${rec.slug}`);
-                          }
-                        }
-                      }}
-                      className="group text-left flex flex-col"
-                    >
-                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2 border border-gray-200 dark:border-gray-800">
-                        {rec.image ? (
-                          <Image
-                            src={rec.image}
-                            alt={rec.name}
-                            fill
-                            sizes="(max-width: 640px) 25vw, 100px"
-                            className="object-cover group-hover:opacity-90 transition-opacity"
-                            quality={85}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <MapPin className="h-6 w-6 opacity-20" />
-                          </div>
-                        )}
-                        {rec.michelin_stars && rec.michelin_stars > 0 && (
-                          <div className="absolute bottom-1 left-1 px-1.5 py-0.5 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-600 dark:text-gray-400 text-[10px] bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-0.5">
-                            <img
-                              src="/michelin-star.svg"
-                              alt="Michelin star"
-                              className="h-2.5 w-2.5"
-                            />
-                            <span>{rec.michelin_stars}</span>
-                          </div>
-                        )}
-                      </div>
-                      <h4 className="font-medium text-[11px] leading-tight line-clamp-2 mb-0.5 text-black dark:text-white">
-                        {rec.name}
-                      </h4>
-                      <span className="text-[10px] text-gray-500 dark:text-gray-400">
-                        {capitalizeCity(rec.city)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+          <SimilarPlacesGrid
+            recommendations={recommendations}
+            loading={loadingRecommendations}
+            destinationSlug={destination.slug}
+            onDestinationClick={onDestinationClick}
+            onClose={onClose}
+          />
 
           </div>
           </>
