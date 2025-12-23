@@ -6,19 +6,19 @@ export function DestinationCardSkeleton() {
   return (
     <div className="group animate-pulse w-full">
       {/* Image skeleton */}
-      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-lg mb-3 relative overflow-hidden">
+      <div className="aspect-video bg-[var(--editorial-border)] rounded-2xl mb-3 relative overflow-hidden">
         {/* Shimmer effect */}
         <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       </div>
 
       {/* Title skeleton */}
       <div className="space-y-0.5">
-        <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-3/4 mb-2 relative overflow-hidden min-h-[2.5rem]">
+        <div className="h-4 bg-[var(--editorial-border)] rounded w-3/4 mb-2 relative overflow-hidden min-h-[2.5rem]">
           <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
         </div>
 
         {/* Micro description skeleton */}
-        <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-2/3 relative overflow-hidden">
+        <div className="h-3 bg-[var(--editorial-border)] rounded w-2/3 relative overflow-hidden">
           <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
         </div>
       </div>
