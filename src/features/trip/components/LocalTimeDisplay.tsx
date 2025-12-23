@@ -140,7 +140,7 @@ export default function LocalTimeDisplay({
   }
 
   return (
-    <div className={`flex items-center gap-2 px-3 py-2 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg ${className}`}>
+    <div className={`flex items-center gap-2 px-3 py-2 bg-[var(--editorial-bg-elevated)] rounded-full ${className}`}>
       <div className="flex items-center gap-1.5">
         <Globe className="w-3.5 h-3.5 text-[var(--editorial-text-tertiary)]" />
         <span className="text-[12px] text-[var(--editorial-text-secondary)]">

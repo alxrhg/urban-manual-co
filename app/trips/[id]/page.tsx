@@ -363,7 +363,7 @@ export default function TripPage() {
                 className={`flex items-center gap-1.5 px-4 py-2 sm:px-4 sm:py-1.5 text-[12px] sm:text-[11px] font-medium rounded-full transition-colors ${
                   isEditMode
                     ? 'bg-[var(--editorial-accent)] text-white'
-                    : 'text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] border border-[var(--editorial-border)]'
+                    : 'text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] bg-[var(--editorial-bg-elevated)]'
                 }`}
               >
                 {isEditMode ? (
