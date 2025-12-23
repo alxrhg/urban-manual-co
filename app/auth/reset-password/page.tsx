@@ -85,28 +85,33 @@ function ResetPasswordContent() {
 
   if (!sessionReady && !error) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--editorial-bg)] flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
-          <p className="text-sm text-gray-500 mt-2">Verifying reset link...</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-[var(--editorial-text-tertiary)]" />
+          <p className="text-sm text-[var(--editorial-text-secondary)] mt-2">Verifying reset link...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[var(--editorial-bg)] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight mb-1">Reset password</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+        <h1
+          className="text-xl font-normal text-[var(--editorial-text-primary)] tracking-tight mb-1"
+          style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+        >
+          Reset password
+        </h1>
+        <p className="text-sm text-[var(--editorial-text-secondary)] mb-6">
           Enter your new password below
         </p>
 
         {success ? (
-          <Alert variant="default" className="rounded-xl bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-            <AlertTitle className="text-green-800 dark:text-green-300">Password Updated</AlertTitle>
-            <AlertDescription className="text-green-700 dark:text-green-400">
+          <Alert variant="default" className="rounded-xl bg-[var(--editorial-accent)]/10 border-[var(--editorial-accent)]/30">
+            <CheckCircle2 className="h-4 w-4 text-[var(--editorial-accent)]" />
+            <AlertTitle className="text-[var(--editorial-accent)]">Password Updated</AlertTitle>
+            <AlertDescription className="text-[var(--editorial-text-secondary)]">
               Your password has been reset successfully. Redirecting to your account...
             </AlertDescription>
           </Alert>
@@ -179,8 +184,8 @@ export default function ResetPasswordPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        <div className="min-h-screen bg-[var(--editorial-bg)] flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-[var(--editorial-text-tertiary)]" />
         </div>
       }
     >

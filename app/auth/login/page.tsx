@@ -32,8 +32,8 @@ function LoginPageContent() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-transparent flex items-center justify-center">
-        <div className="text-gray-500 text-sm">Loading...</div>
+      <div className="min-h-screen bg-[var(--editorial-bg)] flex items-center justify-center">
+        <div className="text-[var(--editorial-text-secondary)] text-sm">Loading...</div>
       </div>
     }>
       <LoginPageContent />

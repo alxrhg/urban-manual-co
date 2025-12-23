@@ -43,27 +43,32 @@ function ForgotPasswordContent() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[var(--editorial-bg)] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white mb-8 transition-colors group"
+          className="flex items-center gap-2 text-sm text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] mb-8 transition-colors group"
         >
           <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
           Back
         </button>
 
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight mb-1">Forgot password?</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+        <h1
+          className="text-xl font-normal text-[var(--editorial-text-primary)] tracking-tight mb-1"
+          style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+        >
+          Forgot password?
+        </h1>
+        <p className="text-sm text-[var(--editorial-text-secondary)] mb-6">
           No worries, we&apos;ll send you a reset link
         </p>
 
         {success ? (
           <div className="space-y-4">
-            <Alert variant="default" className="rounded-xl bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-              <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-              <AlertTitle className="text-green-800 dark:text-green-300">Email Sent</AlertTitle>
-              <AlertDescription className="text-green-700 dark:text-green-400">
+            <Alert variant="default" className="rounded-xl bg-[var(--editorial-accent)]/10 border-[var(--editorial-accent)]/30">
+              <CheckCircle2 className="h-4 w-4 text-[var(--editorial-accent)]" />
+              <AlertTitle className="text-[var(--editorial-accent)]">Email Sent</AlertTitle>
+              <AlertDescription className="text-[var(--editorial-text-secondary)]">
                 If an account exists with this email, you&apos;ll receive a password reset link shortly.
               </AlertDescription>
             </Alert>
@@ -113,8 +118,8 @@ export default function ForgotPasswordPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        <div className="min-h-screen bg-[var(--editorial-bg)] flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-[var(--editorial-text-tertiary)]" />
         </div>
       }
     >

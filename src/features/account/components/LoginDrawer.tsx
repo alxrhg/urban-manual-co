@@ -87,12 +87,15 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
     <div className="flex items-center justify-between w-full">
       <button
         onClick={onClose}
-        className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 active:bg-gray-300 dark:active:bg-gray-600 transition-all duration-150 active:scale-95"
+        className="w-9 h-9 flex items-center justify-center rounded-lg bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] hover:bg-[var(--editorial-border-subtle)] transition-all duration-150 active:scale-95"
         aria-label="Close"
       >
-        <X className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+        <X className="h-4 w-4 text-[var(--editorial-text-secondary)]" />
       </button>
-      <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white tracking-tight">
+      <h2
+        className="text-[15px] font-normal text-[var(--editorial-text-primary)] tracking-tight"
+        style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+      >
         {isSignUp ? 'Create Account' : 'Sign In'}
       </h2>
       <div className="w-9" /> {/* Spacer for balance */}
@@ -101,13 +104,16 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
 
   return (
     <Drawer isOpen={isOpen} onClose={onClose} headerContent={customHeader}>
-      <div className="flex flex-col h-full bg-white dark:bg-gray-900">
+      <div className="flex flex-col h-full bg-[var(--editorial-bg)]">
         {/* Welcome text */}
         <div className="flex-shrink-0 px-5 sm:px-6 pt-4 sm:pt-6 pb-5">
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight">
+          <h1
+            className="text-xl font-normal text-[var(--editorial-text-primary)] tracking-tight"
+            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+          >
             {isSignUp ? 'Begin your journey' : 'Welcome back'}
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-[var(--editorial-text-secondary)] mt-1">
             {isSignUp ? 'Create an account to save your favorite places' : 'Sign in to access your saved places'}
           </p>
         </div>
@@ -176,7 +182,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
                 <div className="mt-2 text-right">
                   <a
                     href="/auth/forgot-password"
-                    className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+                    className="text-xs text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
                     onClick={(e) => {
                       e.preventDefault();
                       onClose();
@@ -200,10 +206,10 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
 
             {/* Success Alert */}
             {success && (
-              <Alert variant="default" className="rounded-xl bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                <AlertTitle className="text-green-800 dark:text-green-300">Success</AlertTitle>
-                <AlertDescription className="text-green-700 dark:text-green-400">{success}</AlertDescription>
+              <Alert variant="default" className="rounded-xl bg-[var(--editorial-accent)]/10 border-[var(--editorial-accent)]/30">
+                <CheckCircle2 className="h-4 w-4 text-[var(--editorial-accent)]" />
+                <AlertTitle className="text-[var(--editorial-accent)]">Success</AlertTitle>
+                <AlertDescription className="text-[var(--editorial-text-secondary)]">{success}</AlertDescription>
               </Alert>
             )}
 
@@ -227,7 +233,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
                 setError('');
                 setSuccess('');
               }}
-              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors py-2 min-h-[44px]"
+              className="text-sm text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors py-2 min-h-[44px]"
             >
               {isSignUp ? (
                 <>Already have an account? <span className="font-medium">Sign in</span></>
@@ -239,10 +245,10 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
         </div>
 
         {/* Footer */}
-        <div className="flex-shrink-0 px-5 sm:px-6 py-4 border-t border-gray-100 dark:border-gray-800/50 pb-safe bg-gray-50/50 dark:bg-gray-900">
-          <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
+        <div className="flex-shrink-0 px-5 sm:px-6 py-4 border-t border-[var(--editorial-border)] pb-safe bg-[var(--editorial-bg-elevated)]">
+          <p className="text-xs text-[var(--editorial-text-tertiary)] text-center">
             By continuing, you agree to our{' '}
-            <a href="/privacy" className="hover:text-gray-900 dark:hover:text-white underline underline-offset-2 transition-colors">
+            <a href="/privacy" className="hover:text-[var(--editorial-text-primary)] underline underline-offset-2 transition-colors">
               Privacy Policy
             </a>
           </p>

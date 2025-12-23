@@ -108,10 +108,10 @@ function AuthCallbackContent() {
   }, [searchParams, router]);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
+    <div className="min-h-screen bg-[var(--editorial-bg)] flex items-center justify-center">
       <div className="text-center">
-        <div className="text-gray-500 text-sm mb-2">Completing sign in...</div>
-        <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin mx-auto"></div>
+        <div className="text-[var(--editorial-text-secondary)] text-sm mb-2">Completing sign in...</div>
+        <div className="w-8 h-8 border-2 border-[var(--editorial-border)] border-t-[var(--editorial-accent)] rounded-full animate-spin mx-auto"></div>
       </div>
     </div>
   );
@@ -120,10 +120,10 @@ function AuthCallbackContent() {
 export default function AuthCallback() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--editorial-bg)] flex items-center justify-center">
         <div className="text-center">
-          <div className="text-gray-500 text-sm mb-2">Loading...</div>
-          <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin mx-auto"></div>
+          <div className="text-[var(--editorial-text-secondary)] text-sm mb-2">Loading...</div>
+          <div className="w-8 h-8 border-2 border-[var(--editorial-border)] border-t-[var(--editorial-accent)] rounded-full animate-spin mx-auto"></div>
         </div>
       </div>
     }>
