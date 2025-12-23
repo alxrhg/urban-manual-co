@@ -1625,16 +1625,18 @@ const DestinationContent = memo(function DestinationContent({
 
   return (
     <div className="min-h-full bg-[var(--editorial-bg)] flex flex-col">
-      {/* Single Square Image - No carousel, just one image */}
-      <div className="px-6 sm:px-8 pt-14 pb-0">
-        <div className="relative aspect-square bg-[var(--editorial-border)]">
-          {imageUrl ? (
-            <Image src={imageUrl} alt={destination.name} fill className="object-cover" priority />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <MapPin className="w-12 h-12 text-[var(--editorial-text-tertiary)]" />
-            </div>
-          )}
+      {/* Single Square Image - 1:1 aspect ratio enforced */}
+      <div className="flex-shrink-0 px-6 sm:px-8 pt-14 pb-0">
+        <div className="relative w-full" style={{ paddingBottom: '100%' }}>
+          <div className="absolute inset-0 bg-[var(--editorial-border)]">
+            {imageUrl ? (
+              <Image src={imageUrl} alt={destination.name} fill className="object-cover" priority />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <MapPin className="w-12 h-12 text-[var(--editorial-text-tertiary)]" />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1653,7 +1655,10 @@ const DestinationContent = memo(function DestinationContent({
 
         {/* Description - Serif body text, generous line height */}
         {(destination.micro_description || destination.description) && (
-          <p className="font-editorial-serif text-[15px] leading-[1.75] text-[var(--editorial-text-secondary)] mb-8">
+          <p
+            className="text-[15px] leading-[1.75] text-[var(--editorial-text-secondary)] mb-8"
+            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+          >
             {(destination.micro_description || destination.description || '').slice(0, 180)}
             {(destination.micro_description || destination.description || '').length > 180 && '...'}
           </p>

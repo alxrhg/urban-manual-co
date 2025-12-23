@@ -227,7 +227,7 @@ const DrawerShell = memo(function DrawerShell({
             className={`
               fixed z-50 flex flex-col overflow-hidden
               bg-[var(--editorial-bg)]
-              border-[2px] border-[var(--editorial-text-primary)]
+              border-[2px] border-[#2C2825] dark:border-[#F2EDE6]
               ${position === 'bottom'
                 ? 'inset-x-0 bottom-0 md:right-5 md:left-auto md:top-5 md:bottom-5'
                 : 'right-0 top-0 bottom-0 md:right-5 md:top-5 md:bottom-5'
@@ -272,10 +272,10 @@ const DrawerShell = memo(function DrawerShell({
               </button>
             </div>
 
-            {/* Content */}
+            {/* Content - min-h-0 is critical for flex overflow to work */}
             <main
               ref={contentRef}
-              className="flex-1 overflow-y-auto overscroll-contain"
+              className="flex-1 min-h-0 overflow-y-auto overscroll-contain"
             >
               {children}
             </main>
