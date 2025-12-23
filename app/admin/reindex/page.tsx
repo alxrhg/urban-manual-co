@@ -11,7 +11,7 @@ export default function AdminReindexPage() {
           Sync destinations with external indexes and keep downstream search pipelines current.
         </p>
       </div>
-      <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 shadow-sm">
+      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 shadow-sm">
         <ReindexTab />
       </div>
     </section>

@@ -149,7 +149,7 @@ export default function GapSuggestion({
         <div className="flex-1 border-t border-dashed border-stone-200 dark:border-gray-700" />
 
         {/* Gap indicator */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-stone-100/80 dark:bg-gray-800/80 border border-stone-200 dark:border-gray-700 transition-all group-hover:bg-stone-200/80 dark:group-hover:bg-gray-700/80">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-stone-100/80 dark:bg-gray-800/80 border border-stone-200 dark:border-gray-700 transition-all group-hover:bg-stone-200/80 dark:group-hover:bg-gray-700/80">
           <span className="text-sm">{primarySuggestion?.emoji || '☀️'}</span>
           <span className="text-xs font-medium text-stone-600 dark:text-gray-300">
             {formatGap(gapMinutes)} free
@@ -184,7 +184,7 @@ export default function GapSuggestion({
                 }
                 setIsExpanded(false);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-gray-800 border border-stone-200 dark:border-gray-700 hover:border-stone-300 dark:hover:border-gray-600 transition-colors text-xs"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white dark:bg-gray-800 border border-stone-200 dark:border-gray-700 hover:border-stone-300 dark:hover:border-gray-600 transition-colors text-xs"
             >
               <span>{suggestion.emoji}</span>
               <span className="text-stone-700 dark:text-gray-300">{suggestion.label}</span>
@@ -198,7 +198,7 @@ export default function GapSuggestion({
                 onAddCustom();
                 setIsExpanded(false);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-gray-800 border border-dashed border-stone-300 dark:border-gray-600 hover:border-stone-400 dark:hover:border-gray-500 transition-colors text-xs text-stone-500 dark:text-gray-400"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white dark:bg-gray-800 border border-dashed border-stone-300 dark:border-gray-600 hover:border-stone-400 dark:hover:border-gray-500 transition-colors text-xs text-stone-500 dark:text-gray-400"
             >
               <Plus className="w-3 h-3" />
               <span>Custom</span>

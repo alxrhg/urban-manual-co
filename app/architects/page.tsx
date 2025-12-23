@@ -132,7 +132,7 @@ export default function ArchitectsPage() {
                       onClick={() => router.push(`/architect/${slug}`)}
                       className="text-left group"
                     >
-                      <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3 border border-gray-200 dark:border-gray-800">
+                      <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3 border border-gray-200 dark:border-gray-800">
                         {featuredImage ? (
                           <Image
                             src={featuredImage}
@@ -181,7 +181,7 @@ export default function ArchitectsPage() {
                       className="text-left group"
                     >
                       {/* Square Image Container */}
-                      <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3 border border-gray-200 dark:border-gray-800 group-hover:opacity-80 transition-opacity">
+                      <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3 border border-gray-200 dark:border-gray-800 group-hover:opacity-80 transition-opacity">
                         {featuredImage ? (
                           <Image
                             src={featuredImage}
@@ -201,7 +201,7 @@ export default function ArchitectsPage() {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                         
                         {/* Count badge */}
-                        <div className="absolute bottom-2 right-2 bg-white/90 dark:bg-black/90 backdrop-blur-sm text-gray-700 dark:text-gray-300 px-2 py-1 rounded-2xl text-xs font-medium border border-gray-200/50 dark:border-gray-700/50">
+                        <div className="absolute bottom-2 right-2 bg-white/90 dark:bg-black/90 backdrop-blur-sm text-gray-700 dark:text-gray-300 px-2 py-1 rounded-md text-xs font-medium border border-gray-200/50 dark:border-gray-700/50">
                           {count}
                         </div>
                       </div>
@@ -225,7 +225,7 @@ export default function ArchitectsPage() {
                 <div className="mt-8 flex justify-center">
                   <button
                     onClick={() => setDisplayCount(prev => prev + itemsPerPage)}
-                    className="px-6 py-3 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-60 transition-all duration-200 ease-out text-gray-900 dark:text-white"
+                    className="px-6 py-3 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-lg hover:opacity-60 transition-all duration-200 ease-out text-gray-900 dark:text-white"
                   >
                     Show More ({architectStats.length - displayCount} remaining)
                   </button>

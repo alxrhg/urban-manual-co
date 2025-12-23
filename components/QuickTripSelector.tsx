@@ -175,7 +175,7 @@ export const QuickTripSelector = memo(function QuickTripSelector({
 
       {/* Modal */}
       <div
-        className="relative w-full sm:max-w-md bg-white dark:bg-stone-900 sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[80vh] overflow-hidden animate-slide-up"
+        className="relative w-full sm:max-w-md bg-white dark:bg-stone-900 sm:rounded-lg rounded-t-2xl shadow-2xl max-h-[80vh] overflow-hidden animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

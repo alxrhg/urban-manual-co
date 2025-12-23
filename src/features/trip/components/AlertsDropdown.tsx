@@ -84,7 +84,7 @@ export default function AlertsDropdown({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white dark:bg-gray-900 rounded-2xl shadow-lg shadow-black/8 border border-gray-200 dark:border-gray-800 z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white dark:bg-gray-900 rounded-lg shadow-lg shadow-black/8 border border-gray-200 dark:border-gray-800 z-50 overflow-hidden">
           {/* Header */}
           <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
             <h3 className="text-sm font-medium text-gray-900 dark:text-white">

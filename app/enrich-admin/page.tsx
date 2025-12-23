@@ -162,12 +162,12 @@ export default function EnrichmentAdminPage() {
         {/* Stats Grid */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6">
               <div className="text-3xl font-bold mb-1">{stats.total}</div>
               <div className="text-sm text-gray-600 dark:text-gray-400">Total Destinations</div>
             </div>
 
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6">
               <div className="flex items-center gap-2 mb-1">
                 <div className="text-3xl font-bold text-green-600 dark:text-green-400">{stats.enriched}</div>
                 <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
@@ -175,7 +175,7 @@ export default function EnrichmentAdminPage() {
               <div className="text-sm text-gray-600 dark:text-gray-400">Enriched</div>
             </div>
 
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6">
               <div className="flex items-center gap-2 mb-1">
                 <div className="text-3xl font-bold text-gray-400">{stats.unenriched}</div>
                 <Clock className="h-5 w-5 text-gray-400" />
@@ -183,7 +183,7 @@ export default function EnrichmentAdminPage() {
               <div className="text-sm text-gray-600 dark:text-gray-400">Pending</div>
             </div>
 
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6">
               <div className="flex items-center gap-2 mb-1">
                 <div className="text-3xl font-bold text-gray-900 dark:text-white">{stats.withTags}</div>
                 <Sparkles className="h-5 w-5 text-gray-600 dark:text-gray-400" />
@@ -191,7 +191,7 @@ export default function EnrichmentAdminPage() {
               <div className="text-sm text-gray-600 dark:text-gray-400">With AI Tags</div>
             </div>
 
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6">
               <div className="flex items-center gap-2 mb-1">
                 <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{stats.withRating}</div>
                 <span className="text-xl">⭐</span>
@@ -199,7 +199,7 @@ export default function EnrichmentAdminPage() {
               <div className="text-sm text-gray-600 dark:text-gray-400">With Google Ratings</div>
             </div>
 
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6">
               <div className="text-3xl font-bold mb-1">
                 {stats.total > 0 ? Math.round((stats.enriched / stats.total) * 100) : 0}%
               </div>
@@ -210,7 +210,7 @@ export default function EnrichmentAdminPage() {
 
         {/* Progress Bar */}
         {enriching && (
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 mb-8">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6 mb-8">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Enriching destinations...</span>
               <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -227,7 +227,7 @@ export default function EnrichmentAdminPage() {
         )}
 
         {/* Actions */}
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6">
           <h2 className="text-xl font-bold mb-4">Actions</h2>
 
           <div className="space-y-4">
@@ -303,7 +303,7 @@ export default function EnrichmentAdminPage() {
         </div>
 
         {/* Info Box */}
-        <div className="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6">
+        <div className="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
           <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">What does enrichment do?</h3>
           <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
             <li>• Fetches real ratings, hours, and photos from Google Places API</li>

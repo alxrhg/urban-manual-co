@@ -1098,7 +1098,7 @@ export function DestinationForm({
             Cancel
           </button>
           <button type="submit" disabled={isSaving}
-            className="px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 disabled:opacity-50 flex items-center gap-2">
+            className="px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-sm font-medium hover:opacity-80 disabled:opacity-50 flex items-center gap-2">
             {isSaving ? <><Loader2 className="h-4 w-4 animate-spin" /><span>Saving...</span></> : destination ? 'Save Changes' : 'Create Destination'}
           </button>
         </div>

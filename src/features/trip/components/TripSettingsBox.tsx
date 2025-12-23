@@ -254,13 +254,13 @@ export default function TripSettingsBox({
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingImage}
-                  className="px-3 py-1.5 bg-white/90 text-gray-900 text-xs font-medium rounded-full hover:bg-white transition-colors"
+                  className="px-3 py-1.5 bg-white/90 text-gray-900 text-xs font-medium rounded-md hover:bg-white transition-colors"
                 >
                   Change
                 </button>
                 <button
                   onClick={handleRemoveCover}
-                  className="px-3 py-1.5 bg-gray-900/90 text-white text-xs font-medium rounded-full hover:bg-gray-900 transition-colors"
+                  className="px-3 py-1.5 bg-gray-900/90 text-white text-xs font-medium rounded-md hover:bg-gray-900 transition-colors"
                 >
                   Remove
                 </button>

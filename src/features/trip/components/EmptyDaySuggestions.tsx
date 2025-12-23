@@ -96,7 +96,7 @@ export default function EmptyDaySuggestions({
             <button
               key={slot.label}
               onClick={() => onAddPlace(dayNumber, slot.category)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
             >
               <Icon className="w-3 h-3" />
               {slot.label}
@@ -120,7 +120,7 @@ export default function EmptyDaySuggestions({
                 key={s.id}
                 onClick={() => handleAddSuggestion(s)}
                 disabled={addingId === s.id}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-full hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-md hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors disabled:opacity-50"
               >
                 {addingId === s.id ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -144,7 +144,7 @@ export default function EmptyDaySuggestions({
       {/* Fallback add button */}
       <button
         onClick={() => onAddPlace(dayNumber)}
-        className="mt-4 px-4 py-2 text-xs font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-full hover:opacity-80 transition-opacity"
+        className="mt-4 px-4 py-2 text-xs font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-md hover:opacity-80 transition-opacity"
       >
         Browse all places
       </button>

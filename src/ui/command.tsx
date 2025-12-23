@@ -14,7 +14,7 @@ const Command = React.forwardRef<
   <CommandPrimitive
     ref={ref}
     className={cn(
-      "flex h-full w-full flex-col overflow-hidden rounded-2xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white",
+      "flex h-full w-full flex-col overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white",
       className
     )}
     {...props}
@@ -113,7 +113,7 @@ const CommandItem = React.forwardRef<
   <CommandPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-pointer gap-2 select-none items-center rounded-xl px-3 py-2 text-sm outline-none transition-colors data-[disabled=true]:pointer-events-none data-[selected=true]:bg-gray-100 dark:data-[selected=true]:bg-gray-800 data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-gray-500 dark:[&_svg]:text-gray-400",
+      "relative flex cursor-pointer gap-2 select-none items-center rounded-lg px-3 py-2 text-sm outline-none transition-colors data-[disabled=true]:pointer-events-none data-[selected=true]:bg-gray-100 dark:data-[selected=true]:bg-gray-800 data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-gray-500 dark:[&_svg]:text-gray-400",
       className
     )}
     {...props}

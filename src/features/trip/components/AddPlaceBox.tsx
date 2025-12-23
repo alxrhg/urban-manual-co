@@ -742,18 +742,18 @@ export default function AddPlaceBox({
                       )}
                       <div className="flex flex-wrap gap-1.5 text-xs">
                         {googlePlace.category && (
-                          <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-full">
+                          <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-md">
                             {googlePlace.category}
                           </span>
                         )}
                         {googlePlace.rating && (
-                          <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-full flex items-center gap-1">
+                          <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-md flex items-center gap-1">
                             <img src="/google-logo.svg" alt="Google" className="h-3 w-3" />
                             {googlePlace.rating}
                           </span>
                         )}
                         {googlePlace.price_level && (
-                          <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-full">
+                          <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-md">
                             {'$'.repeat(googlePlace.price_level)}
                           </span>
                         )}

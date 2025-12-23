@@ -279,7 +279,7 @@ function SearchPageContent() {
         )}
 
         {editModeActive && (
-          <div className="mb-6 rounded-2xl border border-gray-200/70 dark:border-gray-700/30 bg-gray-50/80 dark:bg-gray-800/10 px-4 py-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="mb-6 rounded-lg border border-gray-200/70 dark:border-gray-700/30 bg-gray-50/80 dark:bg-gray-800/10 px-4 py-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-50">
                 Edit mode is active in search
@@ -290,7 +290,7 @@ function SearchPageContent() {
             </div>
             <button
               onClick={() => disableEditMode()}
-              className="px-3 py-1.5 text-[11px] font-semibold rounded-full bg-gray-900 text-white hover:bg-gray-800 transition-all dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
+              className="px-3 py-1.5 text-[11px] font-semibold rounded-md bg-gray-900 text-white hover:bg-gray-800 transition-all dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
             >
               Exit Edit Mode
             </button>
@@ -350,7 +350,7 @@ function SearchPageContent() {
                     <button
                       onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                       disabled={currentPage === 1}
-                      className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                       aria-label="Previous page"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -377,7 +377,7 @@ function SearchPageContent() {
                           <button
                             key={pageNum}
                             onClick={() => setCurrentPage(pageNum)}
-                            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm transition-all duration-200 ${
                               isActive
                                 ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium'
                                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
@@ -394,7 +394,7 @@ function SearchPageContent() {
                     <button
                       onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                       disabled={currentPage === totalPages}
-                      className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                       aria-label="Next page"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -433,7 +433,7 @@ export default function SearchPage() {
         <Skeleton className="h-5 w-80 rounded mb-8" />
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
       {Array.from({ length: 10 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-square rounded-2xl" />
+            <Skeleton key={i} className="aspect-square rounded-lg" />
       ))}
         </div>
       </div>

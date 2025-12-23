@@ -239,7 +239,7 @@ export function EnhancedAchievementsTab({
         {achievements.milestones.map((milestone) => (
           <div
             key={milestone.id}
-            className={`aspect-square rounded-xl flex items-center justify-center text-xl border transition-all cursor-default ${
+            className={`aspect-square rounded-lg flex items-center justify-center text-xl border transition-all cursor-default ${
               milestone.done
                 ? 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 shadow-sm'
                 : 'bg-gray-50/50 dark:bg-gray-900/30 border-gray-100 dark:border-gray-800 opacity-30 grayscale'
@@ -274,7 +274,7 @@ export function EnhancedAchievementsTab({
               {categoryMilestones.map((milestone) => (
                 <div
                   key={milestone.id}
-                  className={`p-4 rounded-2xl border transition-all ${
+                  className={`p-4 rounded-lg border transition-all ${
                     milestone.done
                       ? 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700'
                       : 'border-gray-100 dark:border-gray-800'
@@ -283,7 +283,7 @@ export function EnhancedAchievementsTab({
                   <div className="flex items-start gap-4">
                     {/* Badge */}
                     <div
-                      className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 ${
+                      className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl flex-shrink-0 ${
                         milestone.done
                           ? 'bg-white dark:bg-gray-800'
                           : 'bg-gray-100 dark:bg-gray-800/50 opacity-50 grayscale'
@@ -347,7 +347,7 @@ export function EnhancedAchievementsTab({
 
       {/* Tips section */}
       {achievements.inProgress.length > 0 && (
-        <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+        <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
           <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
             Next Up
           </h4>

@@ -42,7 +42,7 @@ export function EmptyState({
       {actionLabel && (
         <button
           onClick={handleAction}
-          className="mt-6 px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
+          className="mt-6 px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-lg hover:opacity-80 transition-opacity"
         >
           {actionLabel}
         </button>
@@ -90,7 +90,7 @@ export function NoSavedPlacesEmptyState() {
 
       <button
         onClick={() => router.push('/')}
-        className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
+        className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-lg hover:opacity-80 transition-opacity"
       >
         Explore Destinations
       </button>
@@ -131,7 +131,7 @@ export function NoCollectionsEmptyState({ onCreateCollection }: { onCreateCollec
         {COLLECTION_IDEAS.map((idea) => (
           <div
             key={idea.name}
-            className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800"
+            className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800"
           >
             <span className="text-lg">{idea.emoji}</span>
             <div>
@@ -144,7 +144,7 @@ export function NoCollectionsEmptyState({ onCreateCollection }: { onCreateCollec
 
       <button
         onClick={onCreateCollection}
-        className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
+        className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-lg hover:opacity-80 transition-opacity"
       >
         Create Your First Collection
       </button>

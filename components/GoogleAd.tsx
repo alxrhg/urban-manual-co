@@ -221,7 +221,7 @@ export function DisplayAd({ slot, className = '' }: { slot: string; className?: 
   }
 
   return (
-    <div className={`border border-gray-200 dark:border-gray-800 rounded-2xl p-4 ${className}`}>
+    <div className={`border border-gray-200 dark:border-gray-800 rounded-lg p-4 ${className}`}>
       <div className="text-xs text-gray-400 mb-2 text-center">Advertisement</div>
       <div className="overflow-hidden">
         <ins
@@ -359,7 +359,7 @@ export function MultiplexAd({ slot, className = '' }: { slot: string; className?
 
   return (
     <div className={`col-span-full ${className}`}>
-      <div className="w-full max-w-4xl mx-auto border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50/50 dark:bg-gray-900/50">
+      <div className="w-full max-w-4xl mx-auto border border-gray-200 dark:border-gray-800 rounded-lg p-4 bg-gray-50/50 dark:bg-gray-900/50">
         <div className="text-xs text-gray-400 mb-3 text-center">Sponsored</div>
         <ins
           ref={adRef}
@@ -388,7 +388,7 @@ export function InFeedAd({ slot }: { slot: string }) {
 
   return (
     <div className="relative">
-      <div className="aspect-square overflow-hidden rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 mb-2">
+      <div className="aspect-square overflow-hidden rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 mb-2">
         <GoogleAd slot={slot} format="fluid" style={{ height: '100%' }} responsive={false} />
       </div>
       <div className="text-xs text-gray-400">Sponsored</div>

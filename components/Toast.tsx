@@ -68,7 +68,7 @@ export function Toast({ message, type = 'info', duration = 3000, onClose }: Toas
       aria-live="polite"
     >
       <div
-        className={`${colors[type]} ${textColors[type]} rounded-2xl shadow-2xl px-4 py-3 flex items-center gap-3 min-w-[280px] max-w-md`}
+        className={`${colors[type]} ${textColors[type]} rounded-lg shadow-2xl px-4 py-3 flex items-center gap-3 min-w-[280px] max-w-md`}
       >
         {icons[type]}
         <span className="flex-1 text-sm font-medium">{message}</span>

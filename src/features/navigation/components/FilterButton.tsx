@@ -37,7 +37,7 @@ export function FilterButton({
       className={cn(
         'flex items-center gap-2 px-4 py-2.5',
         'bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800',
-        'rounded-full text-sm font-medium text-gray-900 dark:text-white',
+        'rounded-lg text-sm font-medium text-gray-900 dark:text-white',
         'hover:border-gray-300 dark:hover:border-gray-700',
         'transition-all duration-180',
         className

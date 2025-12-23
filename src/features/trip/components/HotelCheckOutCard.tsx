@@ -67,7 +67,7 @@ export default function HotelCheckOutCard({
 
   if (compact) {
     return (
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-stone-100 to-stone-50 dark:from-gray-800/50 dark:to-gray-800/30 border-r-4 border-rose-300 dark:border-rose-400/50">
+      <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-stone-100 to-stone-50 dark:from-gray-800/50 dark:to-gray-800/30 border-r-4 border-rose-300 dark:border-rose-400/50">
         <div className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -107,7 +107,7 @@ export default function HotelCheckOutCard({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-stone-100 via-stone-50 to-white dark:from-gray-800/50 dark:via-gray-800/30 dark:to-gray-900/30">
+    <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-stone-100 via-stone-50 to-white dark:from-gray-800/50 dark:via-gray-800/30 dark:to-gray-900/30">
       {/* Subtle departure pattern */}
       <div className="absolute top-0 right-0 w-32 h-32 opacity-5 dark:opacity-10">
         <Luggage className="w-full h-full text-stone-600" />

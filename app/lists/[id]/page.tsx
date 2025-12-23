@@ -270,7 +270,7 @@ export default function ListDetailPage() {
         <div className="mb-8">
           <button
             onClick={() => router.push('/lists')}
-            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors mb-4"
+            className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors mb-4"
             aria-label="Back to Lists"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -302,7 +302,7 @@ export default function ListDetailPage() {
               {list.is_public && (
                 <button
                   onClick={() => setShowShareModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm"
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm"
                 >
                   <Share2 className="h-4 w-4" />
                   <span className="hidden sm:inline">Share</span>
@@ -312,14 +312,14 @@ export default function ListDetailPage() {
                 <>
                   <button
                     onClick={() => setShowEditModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm"
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm"
                   >
                     <Edit2 className="h-4 w-4" />
                     <span className="hidden sm:inline">Edit</span>
                   </button>
                   <button
                     onClick={deleteList}
-                    className="group relative flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-red-100 dark:hover:bg-red-900/20 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 rounded-2xl transition-colors text-sm"
+                    className="group relative flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-red-100 dark:hover:bg-red-900/20 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors text-sm"
                   >
                     <Trash2 className="h-4 w-4" />
                     <span className="hidden sm:inline">Delete</span>
@@ -336,7 +336,7 @@ export default function ListDetailPage() {
             <button
               onClick={() => setShowAddModal(true)}
               disabled={addingDestination}
-              className="flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {addingDestination ? (
                 <>
@@ -355,13 +355,13 @@ export default function ListDetailPage() {
 
         {/* Destinations Grid */}
         {destinations.length === 0 ? (
-          <div className="text-center py-20 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
+          <div className="text-center py-20 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-lg">
             <MapPin className="h-16 w-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
             <span className="text-xl text-gray-400 dark:text-gray-500 mb-6 block">No places in this list yet</span>
             {user?.id === list.user_id && (
               <button
                 onClick={() => setShowAddModal(true)}
-                className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity font-medium"
+                className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity font-medium"
               >
                 Add Your First Place
               </button>
@@ -422,7 +422,7 @@ export default function ListDetailPage() {
       {/* Edit List Modal */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md">
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold">Edit List</h2>
               <button
@@ -440,7 +440,7 @@ export default function ListDetailPage() {
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                 />
               </div>
 
@@ -450,7 +450,7 @@ export default function ListDetailPage() {
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
                   rows={3}
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
                 />
               </div>
 
@@ -470,14 +470,14 @@ export default function ListDetailPage() {
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={() => setShowEditModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-colors"
+                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={updateList}
                   disabled={!editName.trim() || isUpdating}
-                  className="flex-1 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
                 >
                   {isUpdating ? (
                     <>
@@ -497,7 +497,7 @@ export default function ListDetailPage() {
       {/* Add Destination Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold">Add Place to List</h2>
               <button
@@ -523,7 +523,7 @@ export default function ListDetailPage() {
                     searchDestinations(e.target.value);
                   }}
                   placeholder="Search destinations..."
-                  className="w-full pl-10 pr-4 py-3 bg-gray-100 dark:bg-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                  className="w-full pl-10 pr-4 py-3 bg-gray-100 dark:bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                   autoFocus
                 />
               </div>
@@ -545,9 +545,9 @@ export default function ListDetailPage() {
                       key={destination.slug}
                       onClick={() => addDestinationToList(destination)}
                       disabled={addingDestination}
-                      className="text-left hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-2xl p-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="text-left hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-lg p-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800 rounded-2xl mb-2">
+                      <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800 rounded-lg mb-2">
                         {destination.image && (
                           <Image
                             src={destination.image}
@@ -576,7 +576,7 @@ export default function ListDetailPage() {
       {/* Share Modal */}
       {showShareModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md">
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold">Share List</h2>
               <button
@@ -596,11 +596,11 @@ export default function ListDetailPage() {
                 type="text"
                 value={`${window.location.origin}/lists/${list.id}`}
                 readOnly
-                className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-2xl text-sm"
+                className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm"
               />
               <button
                 onClick={copyShareLink}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity font-medium"
+                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity font-medium"
               >
                 Copy
               </button>

@@ -17,7 +17,7 @@ export default function ContactPage() {
           </p>
 
           <div className="space-y-4">
-            <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <section className="border border-gray-200 dark:border-gray-800 rounded-lg p-6">
               <h2 className="text-lg font-semibold mb-3 text-black dark:text-white">General Inquiries</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                 For general questions, feedback, or support:
@@ -30,7 +30,7 @@ export default function ContactPage() {
               </a>
             </section>
 
-            <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <section className="border border-gray-200 dark:border-gray-800 rounded-lg p-6">
               <h2 className="text-lg font-semibold mb-3 text-black dark:text-white">Submit a Place</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                 Have a great place you'd like to see in our guide?
@@ -46,7 +46,7 @@ export default function ContactPage() {
               </p>
             </section>
 
-            <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <section className="border border-gray-200 dark:border-gray-800 rounded-lg p-6">
               <h2 className="text-lg font-semibold mb-3 text-black dark:text-white">Privacy & Data</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                 For privacy-related questions or data requests:
@@ -62,7 +62,7 @@ export default function ContactPage() {
               </p>
             </section>
 
-            <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <section className="border border-gray-200 dark:border-gray-800 rounded-lg p-6">
               <h2 className="text-lg font-semibold mb-3 text-black dark:text-white">Response Time</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 We aim to respond to all inquiries within 48 hours. For urgent matters, please include "URGENT" in your subject line.

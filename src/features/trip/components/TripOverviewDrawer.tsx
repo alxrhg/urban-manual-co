@@ -299,7 +299,7 @@ export default function TripOverviewDrawer({ isOpen, onClose, trip: initialTrip 
         {displayTrip.id && (
           <div className="pt-4">
             <Button
-              className="w-full py-4 rounded-2xl"
+              className="w-full py-4 rounded-lg"
               onClick={handleViewTrip}
             >
               View Full Trip →

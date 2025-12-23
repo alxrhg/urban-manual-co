@@ -81,7 +81,7 @@ export function UndoToast({
         className
       )}
     >
-      <div className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-2xl shadow-xl overflow-hidden min-w-[300px]">
+      <div className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-lg shadow-xl overflow-hidden min-w-[300px]">
         {/* Progress bar */}
         <div
           className="h-1 bg-white/30 dark:bg-gray-900/30"

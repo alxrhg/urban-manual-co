@@ -169,8 +169,8 @@ export function EnhancedProfileTab({
   if (loading) {
     return (
       <div className="max-w-2xl animate-pulse space-y-6">
-        <div className="h-24 bg-gray-100 dark:bg-gray-800 rounded-2xl" />
-        <div className="h-32 bg-gray-100 dark:bg-gray-800 rounded-2xl" />
+        <div className="h-24 bg-gray-100 dark:bg-gray-800 rounded-lg" />
+        <div className="h-32 bg-gray-100 dark:bg-gray-800 rounded-lg" />
       </div>
     );
   }
@@ -257,14 +257,14 @@ export function EnhancedProfileTab({
       {(profile?.travel_style || (profile?.interests && profile.interests.length > 0)) && (
         <div className="flex flex-wrap gap-2">
           {profile.travel_style && (
-            <span className="px-3 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full">
+            <span className="px-3 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-md">
               {profile.travel_style}
             </span>
           )}
           {profile.interests?.slice(0, 4).map(interest => (
             <span
               key={interest}
-              className="px-3 py-1 text-xs bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400 rounded-full border border-gray-200 dark:border-gray-800"
+              className="px-3 py-1 text-xs bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400 rounded-md border border-gray-200 dark:border-gray-800"
             >
               {interest}
             </span>
@@ -274,19 +274,19 @@ export function EnhancedProfileTab({
 
       {/* Travel Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
+        <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
           <p className="text-2xl font-medium">{stats.visitedCount}</p>
           <p className="text-xs text-gray-500 mt-1">Places Visited</p>
         </div>
-        <div className="p-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
+        <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
           <p className="text-2xl font-medium">{stats.savedCount}</p>
           <p className="text-xs text-gray-500 mt-1">Saved for Later</p>
         </div>
-        <div className="p-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
+        <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
           <p className="text-2xl font-medium">{stats.uniqueCities.size}</p>
           <p className="text-xs text-gray-500 mt-1">Cities Explored</p>
         </div>
-        <div className="p-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
+        <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
           <p className="text-2xl font-medium">{stats.uniqueCountries.size}</p>
           <p className="text-xs text-gray-500 mt-1">Countries Visited</p>
         </div>
@@ -300,7 +300,7 @@ export function EnhancedProfileTab({
             {categoryBreakdown.map(([category, count]) => (
               <div
                 key={category}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800"
               >
                 <span className="text-xs capitalize">{category}</span>
                 <span className="text-xs font-medium text-gray-900 dark:text-white">{count}</span>
@@ -363,7 +363,7 @@ export function EnhancedProfileTab({
           {achievements.milestones.map((milestone) => (
             <div
               key={milestone.id}
-              className={`aspect-square rounded-xl flex items-center justify-center text-lg border transition-all ${
+              className={`aspect-square rounded-lg flex items-center justify-center text-lg border transition-all ${
                 milestone.done
                   ? 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700'
                   : 'bg-gray-50/50 dark:bg-gray-900/30 border-gray-100 dark:border-gray-800 opacity-40'

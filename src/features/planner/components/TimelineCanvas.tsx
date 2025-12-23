@@ -417,8 +417,8 @@ export default function TimelineCanvas({
           </DndContext>
         ) : (
           /* Empty State */
-          <div className="text-center py-12 px-6 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-800 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900/50 dark:to-gray-950">
-            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30 flex items-center justify-center">
+          <div className="text-center py-12 px-6 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-800 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900/50 dark:to-gray-950">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-lg bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30 flex items-center justify-center">
               <Sparkles className="w-7 h-7 text-violet-500" />
             </div>
             <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1">

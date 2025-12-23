@@ -105,7 +105,7 @@ export const QuickActions = memo(function QuickActions({
   const iconSize = compact ? 'w-4 h-4' : 'w-[18px] h-[18px]';
 
   return (
-    <div className={`flex items-center gap-1.5 ${className}`}>
+    <div className={`flex items-center gap-2 ${className}`}>
       {/* Save Button */}
       <button
         onClick={handleSave}
@@ -113,10 +113,10 @@ export const QuickActions = memo(function QuickActions({
         className={`
           ${buttonBaseClass}
           ${isSaved
-            ? 'bg-black dark:bg-white text-white dark:text-black'
-            : 'bg-white/90 dark:bg-gray-900/90 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+            ? 'bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)]'
+            : 'bg-white text-[var(--editorial-text-primary)] hover:bg-gray-50'
           }
-          backdrop-blur-sm shadow-sm hover:shadow-md
+          shadow-md
           disabled:opacity-50 disabled:cursor-not-allowed
         `}
         aria-label={isSaved ? `Remove ${destinationName} from saved` : `Save ${destinationName}`}
@@ -137,9 +137,9 @@ export const QuickActions = memo(function QuickActions({
           ${buttonBaseClass}
           ${isVisited
             ? 'bg-emerald-500 text-white'
-            : 'bg-white/90 dark:bg-gray-900/90 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+            : 'bg-white text-[var(--editorial-text-primary)] hover:bg-gray-50'
           }
-          backdrop-blur-sm shadow-sm hover:shadow-md
+          shadow-md
           disabled:opacity-50 disabled:cursor-not-allowed
         `}
         aria-label={isVisited ? `Unmark ${destinationName} as visited` : `Mark ${destinationName} as visited`}
@@ -158,9 +158,9 @@ export const QuickActions = memo(function QuickActions({
           onClick={handleAddToTrip}
           className={`
             ${buttonBaseClass}
-            bg-white/90 dark:bg-gray-900/90 text-gray-700 dark:text-gray-300
-            hover:bg-gray-100 dark:hover:bg-gray-800
-            backdrop-blur-sm shadow-sm hover:shadow-md
+            bg-white text-[var(--editorial-text-primary)]
+            hover:bg-gray-50
+            shadow-md
           `}
           aria-label={`Add ${destinationName} to trip`}
           title="Add to trip"

@@ -227,7 +227,7 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
       {/* TRIP LIST */}
       <div className="space-y-3">
         {trips.length === 0 ? (
-          <div className="text-center py-16 px-6 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl bg-gray-50/50 dark:bg-gray-900/50">
+          <div className="text-center py-16 px-6 border border-dashed border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50/50 dark:bg-gray-900/50">
             <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
               <Plane className="w-6 h-6 text-gray-400 dark:text-gray-500" />
             </div>
@@ -253,7 +253,7 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
               <button
                 key={trip.id}
                 onClick={() => handleSelectTrip(trip)}
-                className="group relative w-full border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden hover:border-gray-300 dark:hover:border-gray-700 transition-all text-left bg-white dark:bg-gray-900"
+                className="group relative w-full border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden hover:border-gray-300 dark:hover:border-gray-700 transition-all text-left bg-white dark:bg-gray-900"
               >
                 <div className="flex">
                   {/* Left: Image */}

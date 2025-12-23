@@ -99,7 +99,7 @@ export function ImageCarousel({
 
   // Check if className includes rounded override
   const hasRoundedOverride = className.includes('rounded');
-  const roundedClass = hasRoundedOverride ? '' : 'rounded-3xl';
+  const roundedClass = hasRoundedOverride ? '' : 'rounded-lg';
 
   if (images.length === 0) {
     return (

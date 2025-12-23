@@ -242,7 +242,7 @@ export default function AISuggestionsDrawer({
                         </p>
                       )}
                       {patch.meta?.source && (
-                        <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500">
+                        <span className="inline-block text-[10px] px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-500">
                           {patch.meta.source === 'ai' ? 'AI' : 'Smart'}
                         </span>
                       )}

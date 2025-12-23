@@ -114,7 +114,7 @@ export function AIAssistant() {
       {/* Chat History - Floating Above */}
       {messages.length > 0 && (
         <div className="w-full max-w-3xl mb-4 px-4 pointer-events-auto">
-          <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-h-[60vh] overflow-y-auto"
+          <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-2xl rounded-lg shadow-2xl border border-white/20 dark:border-white/10 max-h-[60vh] overflow-y-auto"
             style={{
               boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
             }}
@@ -126,7 +126,7 @@ export function AIAssistant() {
                   className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                    className={`max-w-[80%] rounded-lg px-4 py-3 ${
                       message.role === 'user'
                         ? 'bg-black/90 dark:bg-white/90 text-white dark:text-black backdrop-blur-sm'
                         : 'bg-white/60 dark:bg-gray-800/60 text-black dark:text-white backdrop-blur-sm border border-white/20 dark:border-gray-700/50'
@@ -209,7 +209,7 @@ export function AIAssistant() {
               ))}
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 rounded-2xl px-4 py-3">
+                  <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 rounded-lg px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="flex gap-1">
                         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
@@ -228,7 +228,7 @@ export function AIAssistant() {
 
       {/* Input Bar - Bottom Center */}
       <div className="w-full max-w-3xl px-4 pb-6 pointer-events-auto">
-        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 p-4"
+        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-2xl rounded-lg shadow-2xl border border-white/20 dark:border-white/10 p-4"
           style={{
             boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
           }}
@@ -284,7 +284,7 @@ export function AIAssistant() {
                   <button
                     key={index}
                     onClick={() => setInput(suggestion)}
-                    className="px-3 py-1.5 text-xs bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 text-black dark:text-white rounded-full hover:bg-white/60 dark:hover:bg-gray-700/60 transition-all"
+                    className="px-3 py-1.5 text-xs bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 text-black dark:text-white rounded-md hover:bg-white/60 dark:hover:bg-gray-700/60 transition-all"
                   >
                     {suggestion}
                   </button>

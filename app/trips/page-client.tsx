@@ -121,37 +121,41 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
   }, [userId, router]);
 
   return (
-    <main className="w-full px-6 md:px-10 py-20 min-h-screen bg-white dark:bg-gray-950">
-      <div className="w-full">
-        {/* Header - Matches account page style */}
+    <main className="w-full px-4 sm:px-6 md:px-10 py-20 min-h-screen bg-[var(--editorial-bg)]">
+        {/* Header - Editorial style */}
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-light">Trips</h1>
+            <h1
+              className="text-3xl font-normal text-[var(--editorial-text-primary)]"
+              style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+            >
+              Trips
+            </h1>
             <button
               onClick={() => setShowWizard(true)}
-              className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors flex items-center gap-1.5"
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--editorial-accent)] text-white text-sm font-medium rounded-lg hover:bg-[var(--editorial-accent-hover)] transition-colors"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-4 h-4" />
               New Trip
             </button>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-[var(--editorial-text-secondary)]">
             {trips.length} {trips.length === 1 ? 'trip' : 'trips'}
           </p>
         </div>
 
-        {/* Tab Navigation - Minimal, matches account page style */}
+        {/* Tab Navigation - Editorial style */}
         {categorizedTrips.upcoming.length > 0 && categorizedTrips.past.length > 0 && (
           <div className="mb-12">
-            <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+            <div className="flex flex-wrap gap-x-5 gap-y-2 text-[13px]">
               {(['all', 'upcoming', 'past'] as FilterTab[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveFilter(tab)}
-                  className={`transition-all ${
+                  className={`transition-all duration-200 ${
                     activeFilter === tab
-                      ? 'font-medium text-black dark:text-white'
-                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                      ? 'font-medium text-[var(--editorial-text-primary)]'
+                      : 'font-medium text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
                   }`}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -164,12 +168,12 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
         {/* Trip List */}
         {trips.length === 0 ? (
           /* Empty State - No trips at all */
-          <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
-            <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No trips yet</p>
+          <div className="text-center py-16 border border-dashed border-[var(--editorial-border)] rounded-lg bg-[var(--editorial-bg-elevated)]">
+            <MapPin className="h-12 w-12 mx-auto text-[var(--editorial-text-tertiary)] mb-4" />
+            <p className="text-sm text-[var(--editorial-text-secondary)] mb-6">No trips yet</p>
             <button
               onClick={() => setShowWizard(true)}
-              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
+              className="px-5 py-2.5 bg-[var(--editorial-accent)] text-white text-sm font-medium rounded-lg hover:bg-[var(--editorial-accent-hover)] transition-colors"
             >
               Create your first trip
             </button>
@@ -177,19 +181,18 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
         ) : filteredTrips.length === 0 ? (
           /* Empty State - Filter has no results */
           <div className="text-center py-12">
-            <p className="text-xs text-gray-500">
+            <p className="text-sm text-[var(--editorial-text-tertiary)]">
               No {activeFilter === 'upcoming' ? 'upcoming' : 'past'} trips
             </p>
           </div>
         ) : (
           /* Trip Grid */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredTrips.map((trip) => (
               <TripCard key={trip.id} trip={trip} />
             ))}
           </div>
         )}
-      </div>
 
       {/* Trip Setup Wizard */}
       <TripSetupWizard
@@ -202,7 +205,7 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
 }
 
 /**
- * Trip Card - matches account page trip card style
+ * Trip Card - Editorial design style
  */
 function TripCard({ trip }: { trip: TripWithStats }) {
   const state = getTripState(trip.end_date, trip.start_date, trip.stats);
@@ -212,23 +215,23 @@ function TripCard({ trip }: { trip: TripWithStats }) {
   return (
     <Link
       href={`/trips/${trip.id}`}
-      className="flex flex-col border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+      className="flex flex-col border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)] rounded-lg overflow-hidden hover:bg-[var(--editorial-border-subtle)] transition-colors"
     >
-      <div className="text-left p-4 flex-1">
-        <h3 className="font-medium text-sm mb-2 line-clamp-2">{trip.title}</h3>
+      <div className="text-left p-5 flex-1">
+        <h3 className="font-medium text-[15px] text-[var(--editorial-text-primary)] mb-2 line-clamp-2">{trip.title}</h3>
         {trip.description && (
-          <p className="text-xs text-gray-500 line-clamp-2 mb-2">{trip.description}</p>
+          <p className="text-[13px] text-[var(--editorial-text-secondary)] line-clamp-2 mb-3">{trip.description}</p>
         )}
-        <div className="space-y-1 text-xs text-gray-400">
+        <div className="space-y-1.5 text-[12px] text-[var(--editorial-text-tertiary)]">
           {destinations && (
             <div className="flex items-center gap-2">
-              <MapPin className="h-3 w-3" />
+              <MapPin className="h-3.5 w-3.5" />
               <span>{destinations}</span>
             </div>
           )}
           {(trip.start_date || trip.end_date) && (
             <div className="flex items-center gap-2">
-              <Calendar className="h-3 w-3" />
+              <Calendar className="h-3.5 w-3.5" />
               <span>
                 {trip.start_date ? new Date(trip.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
                 {trip.end_date && ` – ${new Date(trip.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
@@ -236,13 +239,17 @@ function TripCard({ trip }: { trip: TripWithStats }) {
             </div>
           )}
           {totalItems > 0 && (
-            <div className="text-xs text-gray-400 pt-1">
+            <div className="text-[12px] text-[var(--editorial-text-tertiary)] pt-1">
               {totalItems} {totalItems === 1 ? 'place' : 'places'}
             </div>
           )}
           {state && (
-            <div className="pt-1">
-              <span className="capitalize text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800">
+            <div className="pt-2">
+              <span className={`capitalize text-[11px] px-2.5 py-1 rounded-md font-medium ${
+                state === 'upcoming'
+                  ? 'bg-[var(--editorial-accent)]/10 text-[var(--editorial-accent)]'
+                  : 'bg-[var(--editorial-border)] text-[var(--editorial-text-secondary)]'
+              }`}>
                 {state}
               </span>
             </div>

@@ -7,19 +7,20 @@ import { cn } from '@/lib/utils';
 /**
  * Shared auth component styles - centralized to ensure consistency across auth surfaces.
  * These components provide mobile-optimized touch targets and responsive sizing.
+ * Updated to use warm editorial design system.
  */
 
-// Shared style constants for auth components
+// Shared style constants for auth components - Editorial Design System
 const AUTH_INPUT_CLASSES =
-  'w-full px-4 py-4 sm:py-3 border border-gray-200 dark:border-gray-700 rounded-2xl bg-gray-50 dark:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 focus:border-gray-300 dark:focus:border-gray-600 focus:bg-white dark:focus:bg-gray-800 transition-all duration-200 text-base sm:text-sm text-gray-900 dark:text-white min-h-[56px] sm:min-h-[48px] placeholder:text-gray-400 dark:placeholder:text-gray-500';
+  'w-full px-4 py-4 sm:py-3 border border-[var(--editorial-border)] rounded-lg bg-[var(--editorial-bg-elevated)] focus:outline-none focus:ring-2 focus:ring-[var(--editorial-accent)]/20 focus:border-[var(--editorial-accent)] transition-all duration-200 text-base sm:text-sm text-[var(--editorial-text-primary)] min-h-[56px] sm:min-h-[48px] placeholder:text-[var(--editorial-text-tertiary)]';
 
 const AUTH_PRIMARY_BUTTON_CLASSES =
-  'w-full px-6 py-4 sm:py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm sm:text-base font-medium disabled:opacity-50 min-h-[56px] sm:min-h-[48px] shadow-sm hover:shadow-md active:shadow-sm transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2';
+  'w-full px-6 py-4 sm:py-3.5 bg-[var(--editorial-accent)] text-white rounded-lg text-sm sm:text-base font-medium disabled:opacity-50 min-h-[56px] sm:min-h-[48px] shadow-sm hover:opacity-90 active:opacity-80 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2';
 
 const AUTH_SECONDARY_BUTTON_CLASSES =
-  'w-full px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium shadow-sm hover:shadow-md active:shadow-sm transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]';
+  'w-full px-6 py-3.5 bg-[var(--editorial-text-primary)] text-white rounded-lg text-sm font-medium shadow-sm hover:opacity-90 active:opacity-80 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]';
 
-const AUTH_LABEL_CLASSES = 'block text-sm font-medium mb-2 text-gray-900 dark:text-white';
+const AUTH_LABEL_CLASSES = 'block text-sm font-medium mb-2 text-[var(--editorial-text-primary)]';
 
 export interface AuthInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -42,7 +43,7 @@ export const AuthInput = React.forwardRef<HTMLInputElement, AuthInputProps>(
           {...props}
         />
         {hint && (
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">{hint}</p>
+          <p className="text-xs text-[var(--editorial-text-tertiary)] mt-1.5">{hint}</p>
         )}
       </div>
     );
@@ -87,7 +88,7 @@ export const AuthPasswordInput = React.forwardRef<HTMLInputElement, AuthPassword
           <button
             type="button"
             onClick={handleToggle}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 active:text-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)] active:text-[var(--editorial-text-primary)] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-[var(--editorial-border-subtle)]"
             aria-label={passwordVisible ? 'Hide password' : 'Show password'}
           >
             {passwordVisible ? (
@@ -98,7 +99,7 @@ export const AuthPasswordInput = React.forwardRef<HTMLInputElement, AuthPassword
           </button>
         </div>
         {hint && (
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">{hint}</p>
+          <p className="text-xs text-[var(--editorial-text-tertiary)] mt-1.5">{hint}</p>
         )}
       </div>
     );
@@ -141,10 +142,10 @@ export function AuthDivider({ children, className }: AuthDividerProps) {
   return (
     <div className={cn('relative my-6 sm:my-5', className)}>
       <div className="absolute inset-0 flex items-center">
-        <div className="w-full border-t border-gray-200/80 dark:border-gray-800/80" />
+        <div className="w-full border-t border-[var(--editorial-border)]" />
       </div>
       <div className="relative flex justify-center text-xs tracking-wider">
-        <span className="px-4 bg-white dark:bg-gray-900 text-gray-400 dark:text-gray-500 font-medium">
+        <span className="px-4 bg-[var(--editorial-bg)] text-[var(--editorial-text-tertiary)] font-medium">
           {children}
         </span>
       </div>

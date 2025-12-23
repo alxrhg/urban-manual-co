@@ -51,7 +51,7 @@ export default function MealCard({
   };
 
   return (
-    <div className="p-4 rounded-2xl bg-stone-100 dark:bg-gray-800/50 flex gap-4">
+    <div className="p-4 rounded-lg bg-stone-100 dark:bg-gray-800/50 flex gap-4">
       {/* Thumbnail or Icon */}
       <div className="relative w-12 h-12 flex-shrink-0 rounded-xl overflow-hidden bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
         {image ? (
@@ -77,7 +77,7 @@ export default function MealCard({
               {name}
             </h3>
             {includedWithHotel && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 font-medium">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 font-medium">
                 Included
               </span>
             )}

@@ -75,7 +75,7 @@ export default function FloatingActionBar({
               `}
             >
               {/* Add Options - Grid layout on mobile */}
-              <div className="grid grid-cols-3 sm:flex sm:items-center gap-1 sm:gap-2 p-2 sm:p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-lg shadow-black/8 border border-gray-200/50 dark:border-gray-700/50">
+              <div className="grid grid-cols-3 sm:flex sm:items-center gap-1 sm:gap-2 p-2 sm:p-2 rounded-lg bg-white dark:bg-gray-900 shadow-lg shadow-black/8 border border-gray-200/50 dark:border-gray-700/50">
                 <button
                   onClick={() => { onAddPlace(); setIsExpanded(false); }}
                   className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
@@ -179,7 +179,7 @@ export default function FloatingActionBar({
 
             {/* Saving/Planning Indicator */}
             {(isSaving || isAIPlanning) && (
-              <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium shadow-lg whitespace-nowrap">
+              <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-lg bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium shadow-lg whitespace-nowrap">
                 {isAIPlanning ? 'Autopilot...' : 'Saving...'}
               </div>
             )}

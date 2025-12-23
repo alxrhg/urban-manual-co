@@ -66,7 +66,7 @@ export default function TripInfoCards({
       {weather && (
         <button
           onClick={onWeatherClick}
-          className="flex-shrink-0 p-4 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 min-w-[120px] text-left hover:border-amber-300 dark:hover:border-amber-500/40 transition-colors"
+          className="flex-shrink-0 p-4 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 min-w-[120px] text-left hover:border-amber-300 dark:hover:border-amber-500/40 transition-colors"
         >
           <div className="mb-3">
             {getWeatherIcon()}
@@ -83,7 +83,7 @@ export default function TripInfoCards({
       {/* Saved Places Card */}
       <button
         onClick={onSavedPlacesClick}
-        className="flex-shrink-0 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 min-w-[120px] text-left hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+        className="flex-shrink-0 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 min-w-[120px] text-left hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
       >
         <div className="mb-3">
           <MapPin className="w-6 h-6 text-gray-500 dark:text-gray-400" />
@@ -99,7 +99,7 @@ export default function TripInfoCards({
       {/* Gallery Card */}
       <button
         onClick={onGalleryClick}
-        className="flex-shrink-0 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 min-w-[120px] text-left hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+        className="flex-shrink-0 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 min-w-[120px] text-left hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
       >
         <div className="mb-3 w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center">
           <ImageIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />

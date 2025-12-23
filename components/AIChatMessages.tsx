@@ -30,7 +30,7 @@ export default function AIChatMessages({ messages, searching = false }: AIChatMe
           <div
             className={`max-w-[85%] ${
               message.role === 'user'
-                ? 'bg-black dark:bg-white text-white dark:text-black rounded-2xl px-4 py-3'
+                ? 'bg-black dark:bg-white text-white dark:text-black rounded-lg px-4 py-3'
                 : 'bg-transparent'
             }`}
           >

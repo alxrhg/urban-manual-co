@@ -207,7 +207,7 @@ export default function TripHeader({
 
       {/* Hero Image */}
       {heroImage && (
-        <div className="relative w-full h-40 sm:h-48 rounded-2xl overflow-hidden mb-6">
+        <div className="relative w-full h-40 sm:h-48 rounded-lg overflow-hidden mb-6">
           <Image
             src={heroImage}
             alt={title}

@@ -3184,7 +3184,7 @@ export default function HomePageClient({
               return (
                   <>
                     {viewMode === "map" ? (
-                      <div className="relative w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl border border-gray-200 dark:border-gray-800" style={{ overflow: 'visible' }}>
+                      <div className="relative w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-lg border border-gray-200 dark:border-gray-800" style={{ overflow: 'visible' }}>
                         <HomeMapSplitView
                           destinations={displayDestinations}
                           selectedDestination={selectedDestination}
@@ -3339,7 +3339,7 @@ export default function HomePageClient({
                               setCurrentPage(prev => Math.max(1, prev - 1))
                             }
                             disabled={currentPage === 1}
-                            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                             aria-label="Previous page"
                           >
                             <svg
@@ -3378,7 +3378,7 @@ export default function HomePageClient({
                                   <button
                                     key={pageNum}
                                     onClick={() => setCurrentPage(pageNum)}
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${
+                                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm transition-all duration-200 ${
                                       isActive
                                         ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium"
                                         : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
@@ -3400,7 +3400,7 @@ export default function HomePageClient({
                               )
                             }
                             disabled={currentPage === totalPages}
-                            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                             aria-label="Next page"
                           >
                             <svg

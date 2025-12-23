@@ -86,12 +86,11 @@ export const DestinationCard = memo(function DestinationCard({
       `}
       aria-label={`View ${destination.name} in ${capitalizeCity(destination.city)}`}
     >
-        {/* Image Container with Progressive Loading */}
+        {/* Image Container with Progressive Loading - 16:9 ratio */}
         <div
           className={`
             relative aspect-video overflow-hidden rounded-2xl
-            bg-gray-100 dark:bg-gray-800
-            border border-gray-200 dark:border-gray-800
+            bg-[var(--editorial-border)]
             transition-all duration-300 ease-out
             mb-3
             ${isLoaded ? 'opacity-100' : 'opacity-0'}
@@ -99,7 +98,7 @@ export const DestinationCard = memo(function DestinationCard({
         >
         {/* Skeleton while loading */}
         {!isLoaded && isInView && (
-          <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700" />
+          <div className="absolute inset-0 animate-pulse bg-[var(--editorial-border)]" />
         )}
 
         {/* Actual Image - Use thumbnail for cards, fallback to full image */}
@@ -125,7 +124,7 @@ export const DestinationCard = memo(function DestinationCard({
             }}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
+          <div className="w-full h-full flex items-center justify-center text-[var(--editorial-text-tertiary)]">
             <MapPin className="h-12 w-12 opacity-20 transition-transform duration-300 group-hover:scale-105" />
           </div>
         )}
@@ -165,8 +164,8 @@ export const DestinationCard = memo(function DestinationCard({
 
         {/* Visited Check Badge - Center */}
         {isVisited && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
-            <Check className="w-5 h-5 text-gray-900 dark:text-white stroke-[3]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
+            <Check className="w-5 h-5 text-[var(--editorial-text-primary)] stroke-[3]" />
           </div>
         )}
 
@@ -179,47 +178,22 @@ export const DestinationCard = memo(function DestinationCard({
                 <div
                   className={`
                     absolute bottom-2 left-2 z-10
-                    px-3 py-1 border border-gray-200 dark:border-gray-800
-                    rounded-2xl text-gray-600 dark:text-gray-400 text-xs
-                    bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm
+                    px-2.5 py-1 text-[var(--editorial-text-primary)] text-xs font-medium
+                    bg-white/95 backdrop-blur-sm rounded-full
                     flex items-center gap-1.5
-                    transform scale-100 group-hover:scale-[1.02]
+                    shadow-sm
                     transition-transform duration-300
-                    shadow-sm group-hover:shadow-md
                   `}
                 >
                   <img
                     src="/michelin-star.svg"
                     alt="Michelin star"
-                    className="h-3 w-3"
+                    className="h-3.5 w-3.5"
                   />
                   <span>{destination.michelin_stars}</span>
                 </div>
               )}
 
-            {/* Google Rating - Bottom Right */}
-            {typeof destination.rating === 'number' &&
-              destination.rating > 0 && (
-                <div
-                  className={`
-                    absolute bottom-2 right-2 z-10
-                    px-3 py-1 border border-gray-200 dark:border-gray-800
-                    rounded-2xl text-gray-600 dark:text-gray-400 text-xs
-                    bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm
-                    flex items-center gap-1.5
-                    transform scale-100 group-hover:scale-[1.02]
-                    transition-transform duration-300
-                    shadow-sm group-hover:shadow-md
-                  `}
-                >
-                  <img
-                    src="/google-logo.svg"
-                    alt="Google rating"
-                    className="h-3 w-3"
-                  />
-                  <span>{destination.rating.toFixed(1)}</span>
-                </div>
-              )}
           </>
         )}
       </div>
@@ -229,17 +203,17 @@ export const DestinationCard = memo(function DestinationCard({
         <div>
         <h3
           className={`
-            text-sm font-medium text-gray-900 dark:text-white
+            text-sm font-medium text-[var(--editorial-text-primary)]
               line-clamp-2
             transition-colors duration-200
-            group-hover:text-gray-700 dark:group-hover:text-gray-200
+            group-hover:text-[var(--editorial-text-secondary)]
           `}
         >
           {destination.name}
         </h3>
 
         {/* Micro Description - Always show with fallback, stuck to title */}
-        <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
+        <div className="text-xs text-[var(--editorial-text-secondary)] line-clamp-1">
           {destination.micro_description ||
            (destination.category && destination.city
              ? `${destination.category} in ${capitalizeCity(destination.city)}`
@@ -260,8 +234,8 @@ export const DestinationCard = memo(function DestinationCard({
       {/* Focus Ring for Accessibility */}
       <div
         className={`
-          absolute inset-0 rounded-2xl
-          ring-2 ring-offset-2 ring-black dark:ring-white
+          absolute inset-0
+          ring-2 ring-offset-2 ring-[var(--editorial-text-primary)]
           opacity-0 focus-within:opacity-100
           transition-opacity duration-200
           pointer-events-none

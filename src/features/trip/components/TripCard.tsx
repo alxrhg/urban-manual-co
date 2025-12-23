@@ -106,7 +106,7 @@ export default function TripCard({ trip, onView, onEdit }: TripCardProps) {
 
         {/* Status Badge */}
         {statusConfig && (
-          <div className={`absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider ${statusConfig.bg} ${statusConfig.text} ring-1 ring-white/10`}>
+          <div className={`absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-medium uppercase tracking-wider ${statusConfig.bg} ${statusConfig.text} ring-1 ring-white/10`}>
             <span className={`w-1 h-1 rounded-full ${statusConfig.dot}`} />
             {statusConfig.label}
           </div>

@@ -38,7 +38,7 @@ export default function GoogleStaticMap({
 
   if (!apiKey) {
     return (
-      <div className={`w-full flex items-center justify-center bg-gray-100 dark:bg-gray-900 rounded-2xl p-4 ${className}`}
+      <div className={`w-full flex items-center justify-center bg-gray-100 dark:bg-gray-900 rounded-lg p-4 ${className}`}
         style={{ height: heightStyle }}
       >
         <div className="text-center">
@@ -54,7 +54,7 @@ export default function GoogleStaticMap({
     : `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${encodeURIComponent(query || 'Tokyo')}`;
 
   return (
-    <div className={`relative w-full rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 ${className}`} style={{ height: heightStyle }}>
+    <div className={`relative w-full rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 ${className}`} style={{ height: heightStyle }}>
       <iframe
         key={`${targetLat}-${targetLng}-${query ?? 'view'}`}
         src={embedUrl}

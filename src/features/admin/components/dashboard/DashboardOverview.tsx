@@ -563,7 +563,7 @@ function ActionLink({
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 hover:text-black dark:hover:text-white transition-colors"
+      className="inline-flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 hover:text-black dark:hover:text-white transition-colors"
     >
       {icon}
       {label}

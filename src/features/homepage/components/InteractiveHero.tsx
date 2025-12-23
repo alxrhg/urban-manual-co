@@ -401,7 +401,7 @@ export default function InteractiveHero() {
       case 'trip':
         return <Map className="w-3.5 h-3.5 text-blue-500" />;
       default:
-        return <Search className="w-3.5 h-3.5 text-gray-400" />;
+        return <Search className="w-3.5 h-3.5 text-[var(--editorial-text-tertiary)]" />;
     }
   };
 
@@ -613,31 +613,48 @@ export default function InteractiveHero() {
   const filteredCount = filteredDestinations.length;
   const hasFilters = selectedCity || selectedCategory || searchTerm || michelinOnly;
 
+  // Get featured destinations for the editorial hero
+  const featuredDestinations = useMemo(() => {
+    return destinations.slice(0, 3);
+  }, [destinations]);
+
   return (
-    <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
-      <div className="flex-1 flex items-center">
-        <div className="w-full">
-          {/* Greeting - Apple-style large typography */}
-          <h2 className="text-[2rem] md:text-[2.5rem] leading-[1.1] font-semibold tracking-tight text-gray-900 dark:text-white mb-3">
-            {userName ? `${getGreeting()}, ${userName}` : 'Discover the world'}
-          </h2>
-          <p className="text-[13px] text-gray-500 dark:text-gray-400 mb-8 tracking-[-0.01em]">
-            {isLoading
-              ? 'Loading destinations...'
-              : hasFilters
-                ? `${filteredCount} of ${destinationCount}+ destinations`
-                : `${destinationCount}+ curated destinations worldwide`}
+    <div className="w-full">
+      {/* Editorial Two-Column Layout - Of Study Inspired */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
+
+        {/* Left Column - Editorial Text */}
+        <div className="flex flex-col justify-center lg:py-12">
+          {/* Small Caps Label */}
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-6">
+            Curated Travel Guide
           </p>
 
-          {/* Search Input - Clean monochrome style */}
-          <form onSubmit={handleSearch} className="mb-6">
-            <div className="relative max-w-xl">
+          {/* Main Headline - Large Serif */}
+          <h2
+            className="text-[2.5rem] md:text-[3.5rem] lg:text-[4rem] leading-[1.05] font-normal tracking-[-0.02em] text-[var(--editorial-text-primary)] mb-6"
+            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+          >
+            {userName ? `${getGreeting()}, ${userName}` : 'Discover the world\'s finest'}
+          </h2>
+
+          {/* Subheadline */}
+          <p
+            className="text-[15px] md:text-[17px] text-[var(--editorial-text-secondary)] mb-10 leading-[1.7] max-w-md"
+            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+          >
+            {destinationCount}+ handpicked hotels, restaurants, and destinations across the globe.
+          </p>
+
+          {/* Search Input - Minimal Editorial Style */}
+          <form onSubmit={handleSearch} className="mb-0">
+            <div className="relative max-w-md">
               {/* AI indicator - Animated thinking/loading */}
               <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none z-10">
                 {isSearching || isLoadingInstant ? (
-                  <Loader2 className={`w-4 h-4 animate-spin ${isFocused || showChatResults ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`} />
+                  <Loader2 className={`w-4 h-4 animate-spin ${isFocused || showChatResults ? 'text-[var(--editorial-text-primary)]' : 'text-[var(--editorial-text-tertiary)]'}`} />
                 ) : (
-                  <Search className={`w-4 h-4 transition-colors duration-200 ${isFocused || showChatResults ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`} />
+                  <Search className={`w-4 h-4 transition-colors duration-200 ${isFocused || showChatResults ? 'text-[var(--editorial-text-primary)]' : 'text-[var(--editorial-text-tertiary)]'}`} />
                 )}
               </div>
               <input
@@ -649,21 +666,20 @@ export default function InteractiveHero() {
                 onBlur={() => setTimeout(() => setIsFocused(false), 150)}
                 onKeyDown={handleInputKeyDown}
                 placeholder={showChatResults ? 'Ask a follow-up question...' : AI_PLACEHOLDERS[placeholderIndex]}
-                className="w-full h-12 pl-11 pr-14 text-[15px] bg-gray-100 dark:bg-white/[0.08]
-                           border-0 rounded-full text-gray-900 dark:text-white
-                           placeholder:text-gray-400 dark:placeholder:text-gray-500
-                           focus:outline-none focus:ring-2 focus:ring-gray-900/20 dark:focus:ring-white/20
-                           focus:bg-white dark:focus:bg-white/[0.12]
+                className="w-full h-12 pl-11 pr-14 text-[15px] bg-[var(--editorial-bg-elevated)] rounded-lg
+                           border border-[var(--editorial-border)] text-[var(--editorial-text-primary)]
+                           placeholder:text-[var(--editorial-text-tertiary)]
+                           focus:outline-none focus:border-[var(--editorial-text-primary)]
                            transition-all duration-200"
               />
               <button
                 type="submit"
                 disabled={isSearching || !localSearchTerm.trim()}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center
-                           rounded-full bg-gray-900 dark:bg-white
-                           text-white dark:text-gray-900
-                           hover:bg-gray-800 dark:hover:bg-gray-100
-                           active:bg-gray-700 dark:active:bg-gray-200
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center
+                           rounded-md bg-[var(--editorial-text-primary)]
+                           text-[var(--editorial-bg)]
+                           hover:opacity-90
+                           active:opacity-80
                            disabled:opacity-50 transition-all duration-200 z-10"
                 aria-label="Search"
               >
@@ -678,8 +694,8 @@ export default function InteractiveHero() {
               {showInstantResults && !showChatResults && (instantResults.length > 0 || instantSuggestions.length > 0) && (
                 <div
                   ref={dropdownRef}
-                  className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900
-                             rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700
+                  className="absolute top-full left-0 right-0 mt-2 bg-[var(--editorial-bg-elevated)]
+                             rounded-lg shadow-xl border border-[var(--editorial-border)]
                              max-h-[400px] overflow-y-auto z-50 animate-in fade-in slide-in-from-top-2 duration-200"
                 >
                   {/* Results */}
@@ -688,7 +704,7 @@ export default function InteractiveHero() {
                       {/* Group results by type */}
                       {instantResults.filter(r => r.type === 'saved' || r.type === 'visited').length > 0 && (
                         <div className="mb-2">
-                          <p className="px-3 py-1 text-[11px] font-medium text-gray-400 uppercase tracking-wider">
+                          <p className="px-3 py-1 text-[11px] font-medium text-[var(--editorial-text-tertiary)] uppercase tracking-wider">
                             Your Places
                           </p>
                           {instantResults
@@ -699,13 +715,13 @@ export default function InteractiveHero() {
                                 <button
                                   key={`${result.type}-${result.id}`}
                                   onClick={() => handleInstantResultClick(result)}
-                                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left
+                                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-left
                                              transition-colors ${selectedIndex === actualIndex
-                                               ? 'bg-gray-100 dark:bg-white/10'
-                                               : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                                               ? 'bg-[var(--editorial-border)]'
+                                               : 'hover:bg-[var(--editorial-border-subtle)]'}`}
                                 >
                                   {result.image ? (
-                                    <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700">
+                                    <div className="w-10 h-10 overflow-hidden flex-shrink-0 bg-[var(--editorial-border)]">
                                       <Image
                                         src={result.image}
                                         alt={result.name}
@@ -715,15 +731,15 @@ export default function InteractiveHero() {
                                       />
                                     </div>
                                   ) : (
-                                    <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                                    <div className="w-10 h-10 rounded-lg bg-[var(--editorial-border)] flex items-center justify-center flex-shrink-0">
                                       {getResultIcon(result.type)}
                                     </div>
                                   )}
                                   <div className="min-w-0 flex-1">
-                                    <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">
+                                    <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] truncate">
                                       {result.name}
                                     </p>
-                                    <p className="text-[12px] text-gray-500 dark:text-gray-400 truncate flex items-center gap-1.5">
+                                    <p className="text-[12px] text-[var(--editorial-text-secondary)] truncate flex items-center gap-1.5">
                                       {getResultIcon(result.type)}
                                       {result.subtitle}
                                     </p>
@@ -737,7 +753,7 @@ export default function InteractiveHero() {
                       {/* Trips */}
                       {instantResults.filter(r => r.type === 'trip').length > 0 && (
                         <div className="mb-2">
-                          <p className="px-3 py-1 text-[11px] font-medium text-gray-400 uppercase tracking-wider">
+                          <p className="px-3 py-1 text-[11px] font-medium text-[var(--editorial-text-tertiary)] uppercase tracking-wider">
                             Your Trips
                           </p>
                           {instantResults
@@ -750,17 +766,17 @@ export default function InteractiveHero() {
                                   onClick={() => handleInstantResultClick(result)}
                                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left
                                              transition-colors ${selectedIndex === actualIndex
-                                               ? 'bg-gray-100 dark:bg-white/10'
-                                               : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                                               ? 'bg-[var(--editorial-border)]'
+                                               : 'hover:bg-[var(--editorial-border-subtle)]'}`}
                                 >
-                                  <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
+                                  <div className="w-10 h-10 rounded-lg bg-[var(--editorial-accent)]/10 flex items-center justify-center flex-shrink-0">
                                     <Map className="w-5 h-5 text-blue-500" />
                                   </div>
                                   <div className="min-w-0 flex-1">
-                                    <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">
+                                    <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] truncate">
                                       {result.name}
                                     </p>
-                                    <p className="text-[12px] text-gray-500 dark:text-gray-400 truncate">
+                                    <p className="text-[12px] text-[var(--editorial-text-secondary)] truncate">
                                       {result.subtitle}
                                     </p>
                                   </div>
@@ -773,7 +789,7 @@ export default function InteractiveHero() {
                       {/* Search Results */}
                       {instantResults.filter(r => r.type === 'destination').length > 0 && (
                         <div>
-                          <p className="px-3 py-1 text-[11px] font-medium text-gray-400 uppercase tracking-wider">
+                          <p className="px-3 py-1 text-[11px] font-medium text-[var(--editorial-text-tertiary)] uppercase tracking-wider">
                             Results
                           </p>
                           {instantResults
@@ -786,11 +802,11 @@ export default function InteractiveHero() {
                                   onClick={() => handleInstantResultClick(result)}
                                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left
                                              transition-colors ${selectedIndex === actualIndex
-                                               ? 'bg-gray-100 dark:bg-white/10'
-                                               : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                                               ? 'bg-[var(--editorial-border)]'
+                                               : 'hover:bg-[var(--editorial-border-subtle)]'}`}
                                 >
                                   {result.image ? (
-                                    <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700">
+                                    <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-[var(--editorial-border)]">
                                       <Image
                                         src={result.image}
                                         alt={result.name}
@@ -800,15 +816,15 @@ export default function InteractiveHero() {
                                       />
                                     </div>
                                   ) : (
-                                    <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                                      <MapPin className="w-5 h-5 text-gray-400" />
+                                    <div className="w-10 h-10 rounded-lg bg-[var(--editorial-border)] flex items-center justify-center flex-shrink-0">
+                                      <MapPin className="w-5 h-5 text-[var(--editorial-text-tertiary)]" />
                                     </div>
                                   )}
                                   <div className="min-w-0 flex-1">
-                                    <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">
+                                    <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] truncate">
                                       {result.name}
                                     </p>
-                                    <p className="text-[12px] text-gray-500 dark:text-gray-400 truncate">
+                                    <p className="text-[12px] text-[var(--editorial-text-secondary)] truncate">
                                       {result.subtitle}
                                     </p>
                                   </div>
@@ -822,8 +838,8 @@ export default function InteractiveHero() {
 
                   {/* Suggestions */}
                   {instantSuggestions.length > 0 && (
-                    <div className="border-t border-gray-100 dark:border-gray-800 p-2">
-                      <p className="px-3 py-1 text-[11px] font-medium text-gray-400 uppercase tracking-wider">
+                    <div className="border-t border-[var(--editorial-border-subtle)] p-2">
+                      <p className="px-3 py-1 text-[11px] font-medium text-[var(--editorial-text-tertiary)] uppercase tracking-wider">
                         Try searching for
                       </p>
                       {instantSuggestions.map((suggestion, idx) => {
@@ -837,11 +853,11 @@ export default function InteractiveHero() {
                             }}
                             className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left
                                        transition-colors ${selectedIndex === actualIndex
-                                         ? 'bg-gray-100 dark:bg-white/10'
-                                         : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                                         ? 'bg-[var(--editorial-border)]'
+                                         : 'hover:bg-[var(--editorial-border-subtle)]'}`}
                           >
-                            <Sparkles className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                            <span className="text-[14px] text-gray-700 dark:text-gray-300">{suggestion}</span>
+                            <Sparkles className="w-4 h-4 text-[var(--editorial-text-tertiary)] flex-shrink-0" />
+                            <span className="text-[14px] text-[var(--editorial-text-secondary)]">{suggestion}</span>
                           </button>
                         );
                       })}
@@ -851,16 +867,16 @@ export default function InteractiveHero() {
                   {/* Loading indicator */}
                   {isLoadingInstant && (
                     <div className="absolute top-2 right-2">
-                      <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                      <Loader2 className="w-4 h-4 animate-spin text-[var(--editorial-text-tertiary)]" />
                     </div>
                   )}
 
                   {/* Press Enter hint */}
-                  <div className="border-t border-gray-100 dark:border-gray-800 px-3 py-2 flex items-center justify-between">
-                    <span className="text-[11px] text-gray-400">
+                  <div className="border-t border-[var(--editorial-border-subtle)] px-3 py-2 flex items-center justify-between">
+                    <span className="text-[11px] text-[var(--editorial-text-tertiary)]">
                       Press Enter for full AI search
                     </span>
-                    <span className="text-[11px] text-gray-400">
+                    <span className="text-[11px] text-[var(--editorial-text-tertiary)]">
                       ↑↓ to navigate
                     </span>
                   </div>
@@ -868,7 +884,7 @@ export default function InteractiveHero() {
               )}
             </div>
             {!showChatResults && !showInstantResults && (
-              <p className="mt-2 text-[10px] text-gray-300 dark:text-gray-600">
+              <p className="mt-2 text-[10px] text-[var(--editorial-text-tertiary)]">
                 Press <kbd className="px-1 py-0.5 rounded bg-gray-100 dark:bg-white/5 font-mono text-[10px]">/</kbd> to focus • Enter to search
               </p>
             )}
@@ -879,22 +895,22 @@ export default function InteractiveHero() {
             <div className="max-w-xl mb-8 animate-in fade-in slide-in-from-top-2 duration-300">
               {/* Response header with close button */}
               <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2 text-[13px] text-gray-500 dark:text-gray-400">
+                <div className="flex items-center gap-2 text-[13px] text-[var(--editorial-text-secondary)]">
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>AI Response for "{lastQuery}"</span>
                 </div>
                 <button
                   onClick={() => handleCloseChatResults(false)}
-                  className="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors"
+                  className="p-1 hover:bg-[var(--editorial-border)] rounded-full transition-colors"
                   aria-label="Close results"
                 >
-                  <X className="w-4 h-4 text-gray-400" />
+                  <X className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
                 </button>
               </div>
 
               {/* AI Response text */}
               {chatResponse && (
-                <p className="text-[15px] text-gray-700 dark:text-gray-300 mb-3 leading-relaxed">
+                <p className="text-[15px] text-[var(--editorial-text-secondary)] mb-3 leading-relaxed">
                   {chatResponse}
                 </p>
               )}
@@ -906,13 +922,13 @@ export default function InteractiveHero() {
                     <span
                       key={chip.key}
                       className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium
-                                 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 rounded-full"
+                                 bg-[var(--editorial-border)] text-[var(--editorial-text-secondary)] rounded-full"
                     >
                       {chip.label}
                       {chip.removable && chip.patch && (
                         <button
                           onClick={() => handleRemoveContextChip(chip.patch!)}
-                          className="ml-0.5 p-0.5 hover:bg-gray-200 dark:hover:bg-white/20 rounded-full transition-colors"
+                          className="ml-0.5 p-0.5 hover:bg-[var(--editorial-border)] rounded-full transition-colors"
                           aria-label={`Remove ${chip.label} filter`}
                         >
                           <X className="w-3 h-3" />
@@ -925,8 +941,8 @@ export default function InteractiveHero() {
 
               {/* Question card - for ambiguous queries */}
               {deterministicUI?.question && (
-                <div className="mb-4 p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
-                  <p className="text-[13px] font-medium text-gray-900 dark:text-white mb-2">
+                <div className="mb-4 p-3 rounded-xl bg-[var(--editorial-border-subtle)] border border-[var(--editorial-border-subtle)]">
+                  <p className="text-[13px] font-medium text-[var(--editorial-text-primary)] mb-2">
                     {deterministicUI.question.prompt}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -934,8 +950,8 @@ export default function InteractiveHero() {
                       <button
                         key={idx}
                         onClick={() => handleQuestionOptionClick(option.patch)}
-                        className="px-3 py-1.5 text-[12px] font-medium text-gray-700 dark:text-gray-200
-                                   bg-white dark:bg-white/10 rounded-full border border-gray-200 dark:border-white/10
+                        className="px-3 py-1.5 text-[12px] font-medium text-[var(--editorial-text-secondary)]
+                                   bg-[var(--editorial-bg-elevated)] rounded-full border border-gray-200 dark:border-white/10
                                    hover:bg-gray-100 dark:hover:bg-white/20 hover:border-gray-300 dark:hover:border-white/20
                                    transition-colors"
                       >
@@ -953,7 +969,7 @@ export default function InteractiveHero() {
                     <div key={index} className="flex items-start gap-3">
                       {/* Time slot indicator */}
                       <div className="flex-shrink-0 w-24">
-                        <span className="text-[13px] font-medium text-gray-900 dark:text-white">
+                        <span className="text-[13px] font-medium text-[var(--editorial-text-primary)]">
                           {slot.label}
                         </span>
                       </div>
@@ -961,11 +977,11 @@ export default function InteractiveHero() {
                       {slot.destination && (
                         <button
                           onClick={() => openDestination(slot.destination as Destination)}
-                          className="flex-1 flex items-center gap-3 p-2 rounded-xl bg-gray-50 dark:bg-white/5
-                                     hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-left group"
+                          className="flex-1 flex items-center gap-3 p-2 rounded-xl bg-[var(--editorial-border-subtle)]
+                                     hover:bg-[var(--editorial-border)] transition-colors text-left group"
                         >
                           {slot.destination.image_thumbnail || slot.destination.image ? (
-                            <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700">
+                            <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-[var(--editorial-border)]">
                               <Image
                                 src={slot.destination.image_thumbnail || slot.destination.image || ''}
                                 alt={slot.destination.name}
@@ -975,19 +991,19 @@ export default function InteractiveHero() {
                               />
                             </div>
                           ) : (
-                            <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                              <MapPin className="w-4 h-4 text-gray-400" />
+                            <div className="w-10 h-10 rounded-lg bg-[var(--editorial-border)] flex items-center justify-center flex-shrink-0">
+                              <MapPin className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
                             </div>
                           )}
                           <div className="min-w-0 flex-1">
-                            <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">
+                            <p className="text-[13px] font-medium text-[var(--editorial-text-primary)] truncate">
                               {slot.destination.name}
                             </p>
-                            <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                            <p className="text-[11px] text-[var(--editorial-text-secondary)] truncate">
                               {capitalizeCategory(slot.destination.category)}
                             </p>
                           </div>
-                          <ArrowRight className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 flex-shrink-0" />
+                          <ArrowRight className="w-4 h-4 text-[var(--editorial-text-tertiary)] group-hover:text-gray-500 flex-shrink-0" />
                         </button>
                       )}
                     </div>
@@ -1001,15 +1017,15 @@ export default function InteractiveHero() {
                   {chatDestinations.slice(0, 4).map((dest) => (
                     <div
                       key={dest.id || dest.slug}
-                      className="relative flex items-center gap-3 p-2 rounded-xl bg-gray-50 dark:bg-white/5
-                                 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors group"
+                      className="relative flex items-center gap-3 p-2 rounded-xl bg-[var(--editorial-border-subtle)]
+                                 hover:bg-[var(--editorial-border)] transition-colors group"
                     >
                       <button
                         onClick={() => openDestination(dest)}
                         className="flex items-center gap-3 flex-1 min-w-0 text-left"
                       >
                         {dest.image_thumbnail || dest.image ? (
-                          <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700">
+                          <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-[var(--editorial-border)]">
                             <Image
                               src={dest.image_thumbnail || dest.image || ''}
                               alt={dest.name}
@@ -1019,15 +1035,15 @@ export default function InteractiveHero() {
                             />
                           </div>
                         ) : (
-                          <div className="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                            <MapPin className="w-5 h-5 text-gray-400" />
+                          <div className="w-12 h-12 rounded-lg bg-[var(--editorial-border)] flex items-center justify-center flex-shrink-0">
+                            <MapPin className="w-5 h-5 text-[var(--editorial-text-tertiary)]" />
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate group-hover:text-gray-700 dark:group-hover:text-gray-200">
+                          <p className="text-[13px] font-medium text-[var(--editorial-text-primary)] truncate group-hover:text-[var(--editorial-text-secondary)]">
                             {dest.name}
                           </p>
-                          <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                          <p className="text-[11px] text-[var(--editorial-text-secondary)] truncate">
                             {dest.city} • {capitalizeCategory(dest.category)}
                           </p>
                           {/* "Why" chips - reasons this result was recommended */}
@@ -1059,7 +1075,7 @@ export default function InteractiveHero() {
               {(lastFilters.city || lastFilters.category) && filteredDestinations.length > 0 && (
                 <button
                   onClick={() => handleCloseChatResults(false)}
-                  className="text-[13px] font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-1.5 hover:underline"
+                  className="text-[13px] font-medium text-[var(--editorial-text-primary)] mb-4 flex items-center gap-1.5 hover:underline"
                 >
                   See all {filteredDestinations.length} results in grid
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -1098,8 +1114,8 @@ export default function InteractiveHero() {
                         key={index}
                         onClick={() => handleFollowUp(suggestion)}
                         className="px-3 py-1.5 text-[12px] font-medium text-gray-600 dark:text-gray-300
-                                   bg-gray-100 dark:bg-white/10 rounded-full
-                                   hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+                                   bg-[var(--editorial-border)] rounded-full
+                                   hover:bg-[var(--editorial-border)] transition-colors"
                       >
                         {label}
                       </button>
@@ -1118,20 +1134,80 @@ export default function InteractiveHero() {
             </div>
           )}
         </div>
+
+        {/* Right Column - Featured Destinations (Of Study Style) */}
+        <div className="hidden lg:flex gap-4 items-stretch">
+          {/* Left Card - Branding/Statement */}
+          <div
+            className="flex-1 flex flex-col justify-between p-8 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)]"
+            style={{ aspectRatio: '3/4' }}
+          >
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-4">
+                Est. 2024
+              </p>
+            </div>
+            <div>
+              <h3
+                className="text-[1.5rem] leading-[1.2] text-[var(--editorial-text-primary)] mb-4"
+                style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+              >
+                Urban Manual
+              </h3>
+              <p className="text-[12px] text-[var(--editorial-text-secondary)] leading-[1.6]">
+                A curated guide for those who appreciate the finer details of travel.
+              </p>
+            </div>
+          </div>
+
+          {/* Right Card - Featured Destination with Terracotta */}
+          {featuredDestinations[0] && (
+            <button
+              onClick={() => openDestination(featuredDestinations[0])}
+              className="flex-1 flex flex-col bg-[var(--editorial-accent)] text-white overflow-hidden group"
+              style={{ aspectRatio: '3/4' }}
+            >
+              <div className="relative flex-1 overflow-hidden">
+                {featuredDestinations[0].image && (
+                  <Image
+                    src={featuredDestinations[0].image}
+                    alt={featuredDestinations[0].name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                )}
+              </div>
+              <div className="p-6">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-white/70 mb-2">
+                  {featuredDestinations[0].category}
+                </p>
+                <h3
+                  className="text-[1.1rem] leading-[1.3] mb-2"
+                  style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+                >
+                  {featuredDestinations[0].name}
+                </h3>
+                <p className="text-[12px] text-white/80">
+                  {capitalizeCity(featuredDestinations[0].city)}
+                </p>
+              </div>
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* City Filters - Apple-style pill buttons (hidden when chat results are shown) */}
+      {/* City/Category Filters - Below the grid */}
       {!showChatResults && (
-        <div className="flex-1 flex items-end">
-          <div className="w-full pt-6">
-            <div className="mb-4">
-              <div className="flex flex-wrap gap-x-1 gap-y-2">
+        <div className="pt-12 lg:pt-16">
+          <div className="w-full">
+            <div className="mb-6">
+              <div className="flex flex-wrap gap-x-4 gap-y-2">
                 <button
                   onClick={() => setSelectedCity('')}
-                  className={`px-3 py-1.5 text-[12px] font-medium rounded-full transition-all duration-200 ${
+                  className={`text-[13px] font-medium transition-colors duration-200 ${
                     !selectedCity
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
+                      ? 'text-[var(--editorial-text-primary)]'
+                      : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
                   }`}
                 >
                   All Cities
@@ -1140,10 +1216,10 @@ export default function InteractiveHero() {
                   <button
                     key={city}
                     onClick={() => handleCityClick(city)}
-                    className={`px-3 py-1.5 text-[12px] font-medium rounded-full transition-all duration-200 ${
+                    className={`text-[13px] font-medium transition-colors duration-200 ${
                       selectedCity.toLowerCase() === city.toLowerCase()
-                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
+                        ? 'text-[var(--editorial-text-primary)]'
+                        : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
                     }`}
                   >
                     {capitalizeCity(city)}
@@ -1152,7 +1228,7 @@ export default function InteractiveHero() {
                 {cities.length > displayedCities.length && !showAllCities && (
                   <button
                     onClick={() => setShowAllCities(true)}
-                    className="px-3 py-1.5 text-[12px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-all duration-200"
+                    className="text-[13px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
                   >
                     +{cities.length - displayedCities.length} more
                   </button>
@@ -1160,7 +1236,7 @@ export default function InteractiveHero() {
                 {showAllCities && (
                   <button
                     onClick={() => setShowAllCities(false)}
-                    className="px-3 py-1.5 text-[12px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-all duration-200"
+                    className="text-[13px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
                   >
                     Show less
                   </button>
@@ -1178,8 +1254,8 @@ export default function InteractiveHero() {
                   }}
                   className={`font-medium transition-colors duration-200 ${
                     !selectedCategory && !michelinOnly
-                      ? 'text-gray-900 dark:text-white'
-                      : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                      ? 'text-[var(--editorial-text-primary)]'
+                      : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
                   }`}
                 >
                   All Categories
@@ -1189,8 +1265,8 @@ export default function InteractiveHero() {
                   onClick={() => setMichelinOnly(!michelinOnly)}
                   className={`flex items-center gap-1.5 font-medium transition-colors duration-200 ${
                     michelinOnly
-                      ? 'text-gray-900 dark:text-white'
-                      : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                      ? 'text-[var(--editorial-text-primary)]'
+                      : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
                   }`}
                 >
                   <img
@@ -1209,8 +1285,8 @@ export default function InteractiveHero() {
                       onClick={() => handleCategoryClick(category)}
                       className={`flex items-center gap-1.5 font-medium transition-colors duration-200 ${
                         selectedCategory.toLowerCase() === category.toLowerCase()
-                          ? 'text-gray-900 dark:text-white'
-                          : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                          ? 'text-[var(--editorial-text-primary)]'
+                          : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
                       }`}
                     >
                       {IconComponent && <IconComponent className="w-4 h-4" />}

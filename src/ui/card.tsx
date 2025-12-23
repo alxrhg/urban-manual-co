@@ -10,7 +10,7 @@ type CardProps = {
 
 function Card({ className, children, onClick }: CardProps) {
   const baseClasses = cn(
-    "rounded-2xl border border-gray-200 dark:border-gray-800",
+    "rounded-lg border border-gray-200 dark:border-gray-800",
     "bg-white dark:bg-gray-900",
     "text-gray-900 dark:text-white",
     "overflow-hidden",

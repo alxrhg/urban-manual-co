@@ -30,7 +30,7 @@ export const HorizontalDestinationCard = memo(function HorizontalDestinationCard
       className={`
         w-full flex items-center gap-4 p-3
         border border-gray-200 dark:border-gray-800 
-        rounded-2xl 
+        rounded-lg 
         bg-white dark:bg-gray-900
         hover:bg-gray-50 dark:hover:bg-gray-800
         transition-all duration-200

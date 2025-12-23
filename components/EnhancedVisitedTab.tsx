@@ -209,7 +209,7 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search places, cities, or categories..."
-            className="w-full pl-10 pr-10 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-transparent text-sm focus:outline-none focus:border-black dark:focus:border-white"
+            className="w-full pl-10 pr-10 py-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-transparent text-sm focus:outline-none focus:border-black dark:focus:border-white"
             autoFocus
           />
           {searchQuery && (
@@ -320,7 +320,7 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
               onClick={() => router.push(`/destination/${place.destination_slug}`)}
               className="group relative text-left"
             >
-              <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 mb-2">
+              <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 mb-2">
                 {place.destination?.image && (
                   <Image
                     src={place.destination.image}
@@ -334,7 +334,7 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
                   <Check className="w-3 h-3" />
                 </div>
                 {place.rating && (
-                  <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
+                  <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
                     <img src="/google-logo.svg" alt="Google" className="h-3 w-3" />
                     {place.rating}
                   </div>
@@ -358,10 +358,10 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
             <button
               key={place.destination_slug}
               onClick={() => router.push(`/destination/${place.destination_slug}`)}
-              className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
+              className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors text-left"
             >
               {place.destination?.image && (
-                <div className="relative w-16 h-16 flex-shrink-0 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
                   <Image
                     src={place.destination.image}
                     alt={place.destination.name || ''}
@@ -390,14 +390,14 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
       {viewMode === 'map' && filteredPlaces.length > 0 && (
         <div className="space-y-4">
           {placesWithCoords.length === 0 ? (
-            <div className="p-8 text-center rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+            <div className="p-8 text-center rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
               <Map className="w-8 h-8 mx-auto text-gray-400 mb-3" />
               <p className="text-sm text-gray-500">No location data available for these places</p>
               <p className="text-xs text-gray-400 mt-1">Try switching to Grid or List view</p>
             </div>
           ) : (
             <>
-              <div className="aspect-video rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900 overflow-hidden relative">
+              <div className="aspect-video rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900 overflow-hidden relative">
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
                     <Map className="w-12 h-12 mx-auto text-gray-400 mb-3" />
@@ -414,7 +414,7 @@ export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisi
                   <button
                     key={place.destination_slug}
                     onClick={() => router.push(`/destination/${place.destination_slug}`)}
-                    className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-colors text-left"
+                    className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors text-left"
                   >
                     <div className="w-2 h-2 rounded-full bg-black dark:bg-white" />
                     <span className="text-sm font-medium">{place.destination?.name}</span>

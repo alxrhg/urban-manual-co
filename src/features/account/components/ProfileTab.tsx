@@ -38,7 +38,7 @@ export default function ProfileTab({ stats, visitedPlaces }: ProfileTabProps) {
 
   return (
     <div className="space-y-12 fade-in">
-      <div className="p-6 border border-gray-200 dark:border-gray-800 rounded-2xl bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+      <div className="p-6 border border-gray-200 dark:border-gray-800 rounded-lg bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
         <div className="flex items-center justify-between mb-4">
           <div>
             <div className="text-4xl font-light mb-1">{stats.curationCompletionPercentage}%</div>
@@ -75,19 +75,19 @@ export default function ProfileTab({ stats, visitedPlaces }: ProfileTabProps) {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg">
           <div className="text-2xl font-light mb-1">{stats.visitedCount}</div>
           <div className="text-xs text-gray-500">Visited</div>
         </div>
-        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg">
           <div className="text-2xl font-light mb-1">{stats.savedCount}</div>
           <div className="text-xs text-gray-500">Saved</div>
         </div>
-        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg">
           <div className="text-2xl font-light mb-1">{stats.citiesCount}</div>
           <div className="text-xs text-gray-500">Cities</div>
         </div>
-        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg">
           <div className="text-2xl font-light mb-1">{stats.countriesCount}</div>
           <div className="text-xs text-gray-500">Countries</div>
         </div>
@@ -120,7 +120,7 @@ export default function ProfileTab({ stats, visitedPlaces }: ProfileTabProps) {
                 <button
                   key={place.destination_slug}
                   onClick={() => router.push(`/destination/${place.destination_slug}`)}
-                  className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
+                  className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors text-left"
                 >
                   {displayImage && (
                     <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">

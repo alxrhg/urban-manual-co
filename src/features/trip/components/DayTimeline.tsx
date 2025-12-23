@@ -220,13 +220,13 @@ export default function DayTimeline({
             Overnight
           </span>
           {nightsInfo && (
-            <span className="text-[11px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+            <span className="text-[11px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
               {nightsInfo}
             </span>
           )}
         </div>
         <div
-          className="p-3 rounded-2xl cursor-pointer bg-gray-50/80 dark:bg-gray-800/50 ring-1 ring-black/[0.04] dark:ring-white/[0.06]"
+          className="p-3 rounded-lg cursor-pointer bg-gray-50/80 dark:bg-gray-800/50 ring-1 ring-black/[0.04] dark:ring-white/[0.06]"
           onClick={() => onEditItem?.(hotelItem)}
         >
           <div className="flex items-center gap-3">
@@ -321,7 +321,7 @@ export default function DayTimeline({
   const isScrollable = timelineHeight > maxHeight;
 
   return (
-    <div className="rounded-2xl overflow-hidden bg-white dark:bg-gray-900 ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
+    <div className="rounded-lg overflow-hidden bg-white dark:bg-gray-900 ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
       {/* Day Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.04] dark:border-white/[0.06]">
         <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2">
@@ -362,7 +362,7 @@ export default function DayTimeline({
                 <button
                   key={category}
                   onClick={() => onAddItem?.(day.dayNumber, category)}
-                  className="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 >
                   + {category === 'cafe' ? 'Breakfast' : category === 'museum' ? 'Museum' : category === 'restaurant' ? 'Lunch' : 'Drinks'}
                 </button>
@@ -380,7 +380,7 @@ export default function DayTimeline({
                 <button
                   onClick={() => onAutoFillDay(day.dayNumber)}
                   disabled={isAutoFilling}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-black dark:bg-white dark:text-black rounded-full hover:opacity-80 disabled:opacity-50 transition-opacity"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-black dark:bg-white dark:text-black rounded-lg hover:opacity-80 disabled:opacity-50 transition-opacity"
                 >
                   {isAutoFilling ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                   Auto-fill day

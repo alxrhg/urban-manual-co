@@ -195,7 +195,7 @@ export default function TripMapView({ places, className = '' }: TripMapViewProps
 
   if (error) {
     return (
-      <div className={`flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl ${className}`}>
+      <div className={`flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg ${className}`}>
         <div className="text-center p-6">
           <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-2" />
           <p className="text-sm text-gray-500">{error}</p>
@@ -205,7 +205,7 @@ export default function TripMapView({ places, className = '' }: TripMapViewProps
   }
 
   return (
-    <div className={`relative rounded-2xl overflow-hidden ${className}`}>
+    <div className={`relative rounded-lg overflow-hidden ${className}`}>
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 z-10">
           <Loader2 className="w-6 h-6 animate-spin text-gray-400" />

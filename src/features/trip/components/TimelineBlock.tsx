@@ -210,7 +210,7 @@ export default function TimelineBlock({
         group relative flex gap-0
         transition-all duration-200
         ${isDragging ? 'z-50 opacity-50 scale-[1.02]' : ''}
-        ${isActive ? 'ring-2 ring-gray-300 dark:ring-gray-600 rounded-2xl' : ''}
+        ${isActive ? 'ring-2 ring-gray-300 dark:ring-gray-600 rounded-lg' : ''}
       `}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -333,7 +333,7 @@ export default function TimelineBlock({
           className={`
             ${onEdit ? 'cursor-pointer' : ''}
             transition-all duration-200
-            ${onEdit ? 'hover:ring-1 hover:ring-gray-200 dark:hover:ring-gray-700 rounded-2xl' : ''}
+            ${onEdit ? 'hover:ring-1 hover:ring-gray-200 dark:hover:ring-gray-700 rounded-lg' : ''}
             ${onEdit ? 'active:scale-[0.99]' : ''}
           `}
         >

@@ -95,7 +95,7 @@ export default function NaturalLanguageInput({
   ];
 
   return (
-    <div className={`border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden ${className}`}>
+    <div className={`border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden ${className}`}>
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center gap-2">
@@ -145,7 +145,7 @@ export default function NaturalLanguageInput({
               <button
                 key={suggestion}
                 onClick={() => setInput(suggestion)}
-                className="px-2.5 py-1 text-[11px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                className="px-2.5 py-1 text-[11px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 {suggestion}
               </button>

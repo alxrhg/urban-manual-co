@@ -15,7 +15,7 @@ function TripCard({ className, variant = "default", ...props }: TripCardProps) {
     <div
       data-slot="trip-card"
       className={cn(
-        "border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-900",
+        "border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden bg-white dark:bg-gray-900",
         variant === "interactive" && "hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer",
         className
       )}

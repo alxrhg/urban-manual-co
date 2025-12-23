@@ -74,7 +74,7 @@ export function SharingCard({ title, subtitle, imageUrl, stats, variant = 'colle
     <>
       <button
         onClick={() => setIsModalOpen(true)}
-        className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm"
+        className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm"
       >
         <Share2 className="h-4 w-4" />
         <span>Share</span>
@@ -87,7 +87,7 @@ export function SharingCard({ title, subtitle, imageUrl, stats, variant = 'colle
           onClick={() => setIsModalOpen(false)}
         >
           <div
-            className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-lg"
+            className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-lg"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -105,7 +105,7 @@ export function SharingCard({ title, subtitle, imageUrl, stats, variant = 'colle
             <div className="mb-6">
               <div
                 id="sharing-card-content"
-                className="relative w-full aspect-[1.91/1] bg-gradient-to-br from-black to-gray-800 rounded-2xl overflow-hidden p-8 flex flex-col justify-between"
+                className="relative w-full aspect-[1.91/1] bg-gradient-to-br from-black to-gray-800 rounded-lg overflow-hidden p-8 flex flex-col justify-between"
               >
                 {/* Background Image */}
                 {imageUrl && (
@@ -160,7 +160,7 @@ export function SharingCard({ title, subtitle, imageUrl, stats, variant = 'colle
               <button
                 onClick={handleGenerateImage}
                 disabled={isGenerating}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-lg hover:opacity-80 transition-opacity disabled:opacity-50"
               >
                 <Download className="h-4 w-4" />
                 <span>{isGenerating ? 'Generating...' : 'Download Image'}</span>
@@ -168,7 +168,7 @@ export function SharingCard({ title, subtitle, imageUrl, stats, variant = 'colle
 
               <button
                 onClick={handleShare}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium"
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium"
               >
                 <Share2 className="h-4 w-4" />
                 <span>Share Link</span>

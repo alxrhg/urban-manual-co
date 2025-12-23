@@ -196,7 +196,7 @@ export default function MapPage() {
           </button>
           <button
             onClick={() => setShowListPanel(!showListPanel)}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-full text-sm font-medium text-gray-900 dark:text-white hover:border-gray-300 dark:hover:border-gray-700 transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-900 dark:text-white hover:border-gray-300 dark:hover:border-gray-700 transition-all"
           >
             <SlidersHorizontal className="w-4 h-4" />
             <span>Filters</span>
@@ -212,7 +212,7 @@ export default function MapPage() {
               {/* 1. Discover by Cities - Pill, Soft Variant */}
               <button
                 onClick={() => router.push('/cities')}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
               >
                 <Globe2 className="w-4 h-4" />
                 <span>Discover by Cities</span>
@@ -221,7 +221,7 @@ export default function MapPage() {
               {/* 2. Filter Button - Pill, Soft Variant */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
               >
                 <Filter className="w-4 h-4" />
                 <span>Filters</span>
@@ -231,14 +231,14 @@ export default function MapPage() {
               <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 flex-shrink-0">
                 <button
                   onClick={() => router.push('/')}
-                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                   aria-label="Grid view"
                 >
                   <LayoutGrid className="h-4 w-4" />
                   <span>Grid</span>
                 </button>
                 <button
-                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
                   aria-label="Map view"
                   disabled
                 >
@@ -257,7 +257,7 @@ export default function MapPage() {
                   router.push('/trips');
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full text-sm font-medium hover:opacity-90 transition-all duration-180 flex-shrink-0"
+              className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm font-medium hover:opacity-90 transition-all duration-180 flex-shrink-0"
               aria-label={user ? "Create Trip" : "Sign in to create trip"}
             >
               <Plus className="w-4 h-4" />
@@ -280,10 +280,10 @@ export default function MapPage() {
               <button
                 key={dest.slug}
                 onClick={() => handleListItemClick(dest)}
-                className="w-full flex items-center gap-3 p-4 rounded-2xl border transition-all duration-200 ease-out text-left bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:opacity-60"
+                className="w-full flex items-center gap-3 p-4 rounded-lg border transition-all duration-200 ease-out text-left bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:opacity-60"
               >
                 {dest.image && (
-                  <div className="relative w-16 h-16 flex-shrink-0 rounded-2xl overflow-hidden bg-gray-200 dark:bg-gray-700 border border-gray-200 dark:border-gray-800">
+                  <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700 border border-gray-200 dark:border-gray-800">
                     <Image
                       src={dest.image}
                       alt={dest.name}
@@ -345,7 +345,7 @@ export default function MapPage() {
               </div>
               <button
                 onClick={() => setShowListPanel(false)}
-                className="p-2 rounded-2xl hover:opacity-60 transition-opacity"
+                className="p-2 rounded-lg hover:opacity-60 transition-opacity"
                 aria-label="Close list"
               >
                 <X className="h-5 w-5 text-gray-600 dark:text-gray-400" />
@@ -361,10 +361,10 @@ export default function MapPage() {
                       handleListItemClick(dest);
                       setShowListPanel(false);
                     }}
-                    className="w-full flex items-center gap-3 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:opacity-60 transition-all duration-200 ease-out text-left min-h-[72px] touch-manipulation"
+                    className="w-full flex items-center gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:opacity-60 transition-all duration-200 ease-out text-left min-h-[72px] touch-manipulation"
                   >
                     {dest.image && (
-                      <div className="relative w-16 h-16 flex-shrink-0 rounded-2xl overflow-hidden bg-gray-200 dark:bg-gray-700 border border-gray-200 dark:border-gray-800">
+                      <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700 border border-gray-200 dark:border-gray-800">
                         <Image
                           src={dest.image}
                           alt={dest.name}

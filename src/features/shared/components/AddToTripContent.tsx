@@ -88,7 +88,7 @@ const AddToTripContent = memo(function AddToTripContent() {
       {fitAnalysis && activeTrip && (
         <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
           <div
-            className={`p-4 rounded-2xl ${
+            className={`p-4 rounded-lg ${
               fitAnalysis.category === 'perfect'
                 ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20'
                 : fitAnalysis.category === 'good'

@@ -30,7 +30,7 @@ export default function InteractiveMapCard({
   className = '',
 }: InteractiveMapCardProps) {
   return (
-    <div className={`rounded-2xl bg-white dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800 overflow-hidden ${className}`}>
+    <div className={`rounded-lg bg-white dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800 overflow-hidden ${className}`}>
       {/* Map Preview Area */}
       <div className="relative h-48 bg-gray-100 dark:bg-gray-800">
         {/* Placeholder map visualization */}

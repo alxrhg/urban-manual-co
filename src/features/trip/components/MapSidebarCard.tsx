@@ -444,7 +444,7 @@ export default function MapSidebarCard({
 
   return (
     <div
-      className={`rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 overflow-hidden ${className}`}
+      className={`rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 overflow-hidden ${className}`}
     >
       {/* Map Preview Area */}
       <div className="relative h-48">

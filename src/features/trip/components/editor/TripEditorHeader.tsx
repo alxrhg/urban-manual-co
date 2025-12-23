@@ -178,13 +178,13 @@ export function TripEditorHeader({
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="px-3 py-1.5 bg-white/90 text-gray-900 text-xs font-medium rounded-full"
+                className="px-3 py-1.5 bg-white/90 text-gray-900 text-xs font-medium rounded-md"
               >
                 Change
               </button>
               <button
                 onClick={() => setCoverImage('')}
-                className="px-3 py-1.5 bg-gray-900/90 text-white text-xs font-medium rounded-full"
+                className="px-3 py-1.5 bg-gray-900/90 text-white text-xs font-medium rounded-md"
               >
                 Remove
               </button>
@@ -194,7 +194,7 @@ export function TripEditorHeader({
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploadingImage}
-            className="w-full aspect-[4/1] border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl flex items-center justify-center gap-2 text-gray-400 hover:border-gray-300 hover:text-gray-500 transition-colors"
+            className="w-full aspect-[4/1] border-2 border-dashed border-[var(--editorial-border)] rounded-xl flex items-center justify-center gap-2 text-[var(--editorial-text-tertiary)] hover:border-gray-300 hover:text-gray-500 transition-colors"
           >
             {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
             <span className="text-xs">Add cover</span>
@@ -208,7 +208,7 @@ export function TripEditorHeader({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-full text-xl font-semibold text-gray-900 dark:text-white bg-transparent border-b border-gray-200 dark:border-gray-700 focus:border-gray-900 dark:focus:border-white outline-none pb-1"
+          className="w-full text-xl font-semibold text-[var(--editorial-text-primary)] bg-transparent border-b border-[var(--editorial-border)] focus:border-gray-900 dark:focus:border-white outline-none pb-1"
           placeholder="Trip name"
         />
 
@@ -218,7 +218,7 @@ export function TripEditorHeader({
           value={destination}
           onChange={(e) => setDestination(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-full text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 outline-none"
+          className="w-full text-sm text-[var(--editorial-text-secondary)] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg px-3 py-2 outline-none"
           placeholder="Destination city"
         />
 
@@ -229,7 +229,7 @@ export function TripEditorHeader({
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1 text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 outline-none"
+            className="flex-1 text-sm text-[var(--editorial-text-secondary)] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg px-3 py-2 outline-none"
           />
           <input
             type="date"
@@ -237,7 +237,7 @@ export function TripEditorHeader({
             onChange={(e) => setEndDate(e.target.value)}
             onKeyDown={handleKeyDown}
             min={startDate}
-            className="flex-1 text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 outline-none"
+            className="flex-1 text-sm text-[var(--editorial-text-secondary)] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg px-3 py-2 outline-none"
           />
         </div>
 
@@ -246,7 +246,7 @@ export function TripEditorHeader({
           <div className="flex gap-2">
             <button
               onClick={handleSave}
-              className="px-4 py-2 text-sm font-medium text-white dark:text-gray-900 bg-gray-900 dark:bg-white rounded-lg hover:opacity-90 transition-opacity"
+              className="px-4 py-2 text-sm font-medium text-white bg-[var(--editorial-accent)] rounded-lg hover:opacity-90 transition-opacity"
             >
               Save
             </button>
@@ -260,7 +260,7 @@ export function TripEditorHeader({
                 setIsEditing(false);
                 setShowDeleteConfirm(false);
               }}
-              className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="px-4 py-2 text-sm text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
             >
               Cancel
             </button>
@@ -269,14 +269,14 @@ export function TripEditorHeader({
           {/* Delete */}
           {showDeleteConfirm ? (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">Delete trip?</span>
+              <span className="text-xs text-[var(--editorial-text-tertiary)]">Delete trip?</span>
               <button onClick={onDelete} className="text-xs text-red-500 font-medium">Yes</button>
               <button onClick={() => setShowDeleteConfirm(false)} className="text-xs text-gray-500">No</button>
             </div>
           ) : (
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+              className="text-xs text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-accent)] transition-colors"
             >
               Delete trip
             </button>
@@ -301,17 +301,17 @@ export function TripEditorHeader({
               onError={() => setMapError(true)}
             />
             {/* City overlay */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-900 rounded-full px-3 py-1.5 shadow-lg flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-red-500" />
-              <span className="text-xs font-medium text-gray-900 dark:text-white">{primaryCity}</span>
-              <span className="text-xs text-gray-400">{totalItems} pinned</span>
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-[var(--editorial-bg-elevated)] rounded-full px-3 py-1.5 shadow-lg flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-[var(--editorial-accent)]" />
+              <span className="text-xs font-medium text-[var(--editorial-text-primary)]">{primaryCity}</span>
+              <span className="text-xs text-[var(--editorial-text-tertiary)]">{totalItems} pinned</span>
             </div>
           </>
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 flex items-center justify-center">
+          <div className="w-full h-full bg-gradient-to-br from-[var(--editorial-border-subtle)] to-[var(--editorial-border)] flex items-center justify-center">
             <div className="text-center">
-              <MapPin className="w-8 h-8 text-blue-400 mx-auto mb-1" />
-              <span className="text-xs text-blue-500 dark:text-blue-400">{primaryCity || 'Add places to see map'}</span>
+              <MapPin className="w-8 h-8 text-[var(--editorial-accent)] mx-auto mb-1" />
+              <span className="text-xs text-[var(--editorial-text-secondary)]">{primaryCity || 'Add places to see map'}</span>
             </div>
           </div>
         )}
@@ -319,10 +319,13 @@ export function TripEditorHeader({
 
       {/* Title and info - click to edit */}
       <div onClick={() => setIsEditing(true)} className="cursor-pointer">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:opacity-70 transition-opacity">
+        <h1
+          className="text-xl font-normal text-[var(--editorial-text-primary)] group-hover:opacity-70 transition-opacity"
+          style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+        >
           {trip.title}
         </h1>
-        <p className="text-sm text-gray-400 group-hover:opacity-70 transition-opacity">
+        <p className="text-sm text-[var(--editorial-text-tertiary)] group-hover:opacity-70 transition-opacity">
           {[primaryCity, dateDisplay, `${totalItems} ${totalItems === 1 ? 'place' : 'places'}`].filter(Boolean).join(' · ')}
         </p>
       </div>

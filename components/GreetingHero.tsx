@@ -209,7 +209,7 @@ export default function GreetingHero({
           
           {/* AI Suggestions Dropdown */}
           {isAIEnabled && showSuggestions && (suggestions.length > 0 || loadingSuggestions) && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden z-50 max-h-[300px] overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden z-50 max-h-[300px] overflow-y-auto">
               {loadingSuggestions ? (
                 <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />

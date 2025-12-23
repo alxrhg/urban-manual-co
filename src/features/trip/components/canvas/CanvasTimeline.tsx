@@ -78,7 +78,7 @@ function DayLane({ dayNumber, date, items, isOver, isOverstuffed, totalTime, tot
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={`
-        relative p-4 rounded-2xl border-2 transition-all duration-300
+        relative p-4 rounded-lg border-2 transition-all duration-300
         ${isHighlighted
           ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20 scale-[1.01] shadow-lg'
           : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50'
@@ -212,9 +212,9 @@ function DayLane({ dayNumber, date, items, isOver, isOverstuffed, totalTime, tot
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="absolute inset-0 rounded-2xl pointer-events-none"
+          className="absolute inset-0 rounded-lg pointer-events-none"
         >
-          <div className="absolute inset-0 rounded-2xl animate-pulse ring-2 ring-blue-400 ring-offset-2 dark:ring-offset-gray-950" />
+          <div className="absolute inset-0 rounded-lg animate-pulse ring-2 ring-blue-400 ring-offset-2 dark:ring-offset-gray-950" />
         </motion.div>
       )}
     </motion.div>
@@ -232,7 +232,7 @@ function EmptyState({ onStart }: { onStart: () => void }) {
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-        className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mb-6"
+        className="w-20 h-20 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mb-6"
       >
         <Calendar className="w-10 h-10 text-white" />
       </motion.div>

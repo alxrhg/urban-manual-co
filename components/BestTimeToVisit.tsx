@@ -146,14 +146,14 @@ export function BestTimeToVisit({
   }
 
   return (
-    <div className={cn('rounded-2xl border border-gray-200 dark:border-gray-800 p-4', className)}>
+    <div className={cn('rounded-lg border border-gray-200 dark:border-gray-800 p-4', className)}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold flex items-center gap-2">
           <Users className="h-4 w-4 text-gray-500" />
           Best Time to Visit
         </h3>
         {isToday && currentCrowd && (
-          <div className={cn('text-xs font-medium px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800', getLevelTextColor(currentCrowd.level))}>
+          <div className={cn('text-xs font-medium px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800', getLevelTextColor(currentCrowd.level))}>
             Now: {currentCrowd.label}
           </div>
         )}
@@ -229,7 +229,7 @@ export function BestTimeToVisit({
             {recommendedSlots.map((slot) => (
               <span
                 key={slot.hour}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-full text-xs font-medium"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-md text-xs font-medium"
               >
                 <Clock className="h-3 w-3" />
                 {formatHour(slot.hour)}

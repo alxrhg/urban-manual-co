@@ -83,13 +83,13 @@ export function TripChecklist({ notes, onSave }: TripChecklistProps) {
       {/* Progress indicator */}
       {totalCheckboxes > 0 && (
         <div className="flex items-center gap-2 text-xs">
-          <div className="flex-1 h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+          <div className="flex-1 h-1 bg-[var(--editorial-border)] rounded-full overflow-hidden">
             <div
-              className="h-full bg-green-500 transition-all duration-300"
+              className="h-full bg-[var(--editorial-accent)] transition-all duration-300"
               style={{ width: `${(completedCount / totalCheckboxes) * 100}%` }}
             />
           </div>
-          <span className={completedCount === totalCheckboxes ? 'text-green-500' : 'text-gray-400'}>
+          <span className={completedCount === totalCheckboxes ? 'text-[var(--editorial-accent)]' : 'text-[var(--editorial-text-tertiary)]'}>
             {completedCount}/{totalCheckboxes} done
           </span>
         </div>
@@ -104,9 +104,9 @@ export function TripChecklist({ notes, onSave }: TripChecklistProps) {
               value={item}
               className="cursor-grab active:cursor-grabbing"
             >
-              <div className="flex items-start gap-2 px-2 py-1.5 bg-gray-50 dark:bg-gray-900/50 rounded-lg group hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors">
+              <div className="flex items-start gap-2 px-2 py-1.5 bg-[var(--editorial-bg-elevated)] rounded-lg group hover:bg-[var(--editorial-border-subtle)] transition-colors">
                 {/* Drag handle */}
-                <GripVertical className="w-3 h-3 text-gray-300 dark:text-gray-600 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                <GripVertical className="w-3 h-3 text-[var(--editorial-border)] mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
 
                 {/* Checkbox or text indicator */}
                 {item.type === 'checkbox' ? (
@@ -115,22 +115,22 @@ export function TripChecklist({ notes, onSave }: TripChecklistProps) {
                     className="flex-shrink-0 mt-0.5"
                   >
                     {item.checked ? (
-                      <CheckSquare className="w-4 h-4 text-green-500" />
+                      <CheckSquare className="w-4 h-4 text-[var(--editorial-accent)]" />
                     ) : (
-                      <Square className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+                      <Square className="w-4 h-4 text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)]" />
                     )}
                   </button>
                 ) : (
                   <div className="w-4 h-4 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--editorial-text-tertiary)]" />
                   </div>
                 )}
 
                 {/* Content */}
                 <span className={`flex-1 text-sm ${
                   item.type === 'checkbox' && item.checked
-                    ? 'text-gray-400 line-through'
-                    : 'text-gray-700 dark:text-gray-300'
+                    ? 'text-[var(--editorial-text-tertiary)] line-through'
+                    : 'text-[var(--editorial-text-primary)]'
                 }`}>
                   {item.content}
                 </span>
@@ -140,7 +140,7 @@ export function TripChecklist({ notes, onSave }: TripChecklistProps) {
                   onClick={() => removeItem(item.id)}
                   className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
                 >
-                  <X className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" />
+                  <X className="w-3.5 h-3.5 text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-accent)]" />
                 </button>
               </div>
             </Reorder.Item>
@@ -157,14 +157,14 @@ export function TripChecklist({ notes, onSave }: TripChecklistProps) {
           onChange={(e) => setNewItemText(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Add checklist item..."
-          className="flex-1 px-3 py-2 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+          className="flex-1 px-3 py-2 text-sm bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg outline-none text-[var(--editorial-text-primary)] placeholder:text-[var(--editorial-text-tertiary)]"
         />
         <button
           onClick={() => addItem('checkbox')}
           disabled={!newItemText.trim()}
-          className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+          className="w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] hover:bg-[var(--editorial-border-subtle)] transition-colors disabled:opacity-50"
         >
-          <Plus className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          <Plus className="w-4 h-4 text-[var(--editorial-text-secondary)]" />
         </button>
       </div>
 
@@ -172,7 +172,7 @@ export function TripChecklist({ notes, onSave }: TripChecklistProps) {
       {hasChanges && (
         <button
           onClick={handleSave}
-          className="text-xs font-medium text-white dark:text-gray-900 bg-gray-900 dark:bg-white px-3 py-1.5 rounded-full flex items-center gap-1"
+          className="text-xs font-medium text-white bg-[var(--editorial-accent)] px-3 py-1.5 rounded-md flex items-center gap-1 hover:opacity-90 transition-opacity"
         >
           <Check className="w-3 h-3" /> Save checklist
         </button>

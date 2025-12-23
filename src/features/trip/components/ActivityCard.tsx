@@ -53,7 +53,7 @@ export default function ActivityCard({
   const displayTitle = title || config.label;
 
   return (
-    <div className={`rounded-2xl ${config.bg} overflow-hidden`}>
+    <div className={`rounded-lg ${config.bg} overflow-hidden`}>
       <div className="p-4">
         {/* Header with icon and title */}
         <div className="flex items-center gap-3">

@@ -332,13 +332,13 @@ export default function HomeMapSplitView({
           onClick={() => {
             onListItemSelect?.(destination);
           }}
-          className={`w-full flex items-center gap-3 rounded-2xl border text-left transition-all duration-200 p-4 min-h-[76px] ${
+          className={`w-full flex items-center gap-3 rounded-lg border text-left transition-all duration-200 p-4 min-h-[76px] ${
             isSelected
               ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm'
               : 'bg-white/95 dark:bg-gray-900/90 border-gray-200 dark:border-gray-800 hover:bg-gray-50/80 dark:hover:bg-gray-800/70'
           } ${isLoading ? 'opacity-50' : ''}`}
         >
-          <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
+          <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
             {destination.image && isVisible ? (
               <Image
                 src={destination.image}
@@ -398,7 +398,7 @@ export default function HomeMapSplitView({
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {/* Image */}
           {selectedDestination.image && (
-            <div className="relative w-full h-48 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+            <div className="relative w-full h-48 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
               <Image
                 src={selectedDestination.image}
                 alt={selectedDestination.name}
@@ -458,7 +458,7 @@ export default function HomeMapSplitView({
                 router.push(`/destination/${selectedDestination.slug}`);
               }
             }}
-            className="w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl text-sm font-medium hover:opacity-80 transition-opacity flex items-center justify-center gap-2"
+            className="w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-sm font-medium hover:opacity-80 transition-opacity flex items-center justify-center gap-2"
           >
             View Full Details
             <ExternalLink className="h-4 w-4" />

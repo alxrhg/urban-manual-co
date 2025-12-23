@@ -277,7 +277,7 @@ export function ContentState({
     return (
       <div
         className={cn(
-          'rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900',
+          'rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900',
           classes.container,
           className
         )}
