@@ -31,6 +31,7 @@ interface SearchFiltersProps {
   fullWidthPanel?: boolean;
   onPanelToggle?: (isOpen: boolean) => void;
   useFunnelIcon?: boolean;
+  textOnly?: boolean;
 }
 
 export function SearchFiltersComponent({
@@ -45,6 +46,7 @@ export function SearchFiltersComponent({
   fullWidthPanel = false,
   onPanelToggle,
   useFunnelIcon = false,
+  textOnly = false,
 }: SearchFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -156,23 +158,39 @@ export function SearchFiltersComponent({
           }
           handleToggle(!isOpen);
         }}
-        className={`flex items-center justify-center gap-2 h-10 px-4 text-[13px] font-medium rounded-lg transition-all duration-200 ease-out
+        className={textOnly
+          ? `text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors`
+          : `flex items-center justify-center gap-2 h-10 px-4 text-[13px] font-medium rounded-lg transition-all duration-200 ease-out
           border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)]
           text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)]
           active:scale-[0.98]`}
+        style={textOnly ? { fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" } : undefined}
         aria-label="Toggle filters"
         aria-expanded={isOpen}
       >
-        {useFunnelIcon ? (
-          <Funnel className="h-4 w-4" />
+        {textOnly ? (
+          <>
+            Filters
+            {hasActiveFilters && (
+              <span className="ml-1 text-[var(--editorial-text-tertiary)]">
+                ({Object.keys(filters).length})
+              </span>
+            )}
+          </>
         ) : (
-          <SlidersHorizontal className="h-4 w-4" />
-        )}
-        <span className="hidden md:inline">Filters</span>
-        {hasActiveFilters && (
-          <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs bg-gray-900 dark:bg-white text-white dark:text-black rounded-full">
-            {Object.keys(filters).length}
-          </span>
+          <>
+            {useFunnelIcon ? (
+              <Funnel className="h-4 w-4" />
+            ) : (
+              <SlidersHorizontal className="h-4 w-4" />
+            )}
+            <span className="hidden md:inline">Filters</span>
+            {hasActiveFilters && (
+              <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs bg-gray-900 dark:bg-white text-white dark:text-black rounded-full">
+                {Object.keys(filters).length}
+              </span>
+            )}
+          </>
         )}
       </button>
       <span aria-live="polite" role="status" className="sr-only">

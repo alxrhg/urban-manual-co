@@ -125,14 +125,14 @@ export default function NavigationBar() {
             )}
           </button>
 
-          {/* Filters - Minimal */}
+          {/* Filters - Text link style */}
           <SearchFiltersComponent
             filters={advancedFilters}
             onFiltersChange={handleFiltersChange}
             availableCities={cities}
             availableCategories={categories}
             fullWidthPanel={true}
-            useFunnelIcon={true}
+            textOnly={true}
           />
 
           {/* Discover by Cities - Text link */}
