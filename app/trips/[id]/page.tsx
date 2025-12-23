@@ -43,6 +43,9 @@ import { TripChecklist } from '@/features/trip/components/editor/TripChecklist';
 import { useWeather, type DayWeather } from '@/lib/hooks/useWeather';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { Settings, Moon } from 'lucide-react';
+import TripOverviewCards from '@/features/trip/components/TripOverviewCards';
+import LocalTimeDisplay from '@/features/trip/components/LocalTimeDisplay';
+import TripQuickActions from '@/features/trip/components/TripQuickActions';
 
 /**
  * TripPage - Completely rethought
@@ -340,6 +343,26 @@ export default function TripPage() {
               days={days}
               onUpdate={updateTrip}
               onDelete={handleDelete}
+            />
+
+            {/* Local Time + Quick Actions */}
+            <div className="flex items-center justify-between mt-4 mb-4">
+              <LocalTimeDisplay city={primaryCity} />
+              <TripQuickActions
+                tripId={tripId}
+                tripTitle={trip.title || 'My Trip'}
+                startDate={trip.start_date}
+                endDate={trip.end_date}
+                destination={primaryCity}
+              />
+            </div>
+
+            {/* Trip Overview Cards - Stats at a glance */}
+            <TripOverviewCards
+              startDate={trip.start_date}
+              endDate={trip.end_date}
+              days={days}
+              className="mb-6"
             />
 
             {/* Action bar: Edit toggle + Settings */}
@@ -2961,23 +2984,45 @@ function TravelTime({
     return null;
   }
 
+  // Format distance
+  const formatDistance = (km: number): string => {
+    if (km < 1) {
+      const meters = Math.round(km * 1000);
+      return `${meters}m`;
+    }
+    const miles = km * 0.621371;
+    if (miles < 10) {
+      return `${miles.toFixed(1)} mi`;
+    }
+    return `${Math.round(miles)} mi`;
+  };
+
+  const distanceDisplay = distanceKm > 0 ? formatDistance(distanceKm) : '';
+
   return (
-    <div className="flex items-center gap-3 py-1.5 pl-3">
-      {/* Vertical line */}
-      <div className="w-6 flex justify-center">
-        <div className="w-px h-4 bg-gray-200 dark:bg-gray-700" />
+    <div className="flex items-center gap-3 py-2 pl-3">
+      {/* Vertical connector line with dot */}
+      <div className="w-6 flex flex-col items-center">
+        <div className="w-px h-2 bg-[var(--editorial-border)]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-[var(--editorial-border)]" />
+        <div className="w-px h-2 bg-[var(--editorial-border)]" />
       </div>
 
       {/* Travel info */}
       <button
         onClick={cycleMode}
-        className="flex items-center gap-1.5 text-[11px] text-[var(--editorial-text-tertiary)] hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-        title={`${duration} by ${getModeLabel()} - click to change`}
+        className="flex items-center gap-2 px-2.5 py-1 text-[11px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)] hover:bg-[var(--editorial-border-subtle)] rounded-md transition-all"
+        title={`${duration} by ${getModeLabel()} - click to change mode`}
       >
-        {getModeIcon()}
-        <span className="tabular-nums">{duration}</span>
+        <span className="p-1 bg-[var(--editorial-bg-elevated)] rounded-md">
+          {getModeIcon()}
+        </span>
+        <span className="font-medium tabular-nums">{duration}</span>
+        {distanceDisplay && (
+          <span className="text-[var(--editorial-text-tertiary)]">({distanceDisplay})</span>
+        )}
         {specialLabel && (
-          <span className="text-gray-300 dark:text-gray-600 ml-1">{specialLabel}</span>
+          <span className="text-[var(--editorial-accent)]">{specialLabel}</span>
         )}
       </button>
     </div>
