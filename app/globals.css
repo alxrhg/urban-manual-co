@@ -590,10 +590,10 @@
 
 @layer base {
   :root {
-    --background: 43 27% 92%; /* PANTONE 11-4201 Cloud Dancer #F0EDE5 */
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --background: 37 29% 94%; /* Matches --editorial-bg #F5F2ED */
+    --foreground: 24 9% 15%; /* Matches --editorial-text-primary #2C2825 */
+    --card: 40 33% 98%;
+    --card-foreground: 24 9% 15%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
     --primary: 0 0% 9%;

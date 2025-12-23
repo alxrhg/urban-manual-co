@@ -71,7 +71,7 @@ export default async function HomePage() {
         serverCities={cities}
         serverCategories={categories}
       >
-        <main className="relative min-h-screen dark:text-white">
+        <main className="relative min-h-screen bg-[var(--editorial-bg)] text-[var(--editorial-text-primary)]">
           <h1 className="sr-only">
             Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual
           </h1>
