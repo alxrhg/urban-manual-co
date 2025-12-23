@@ -78,7 +78,7 @@ export default function TransportCard({
   };
 
   return (
-    <div className="p-4 rounded-2xl bg-stone-100 dark:bg-gray-800/50">
+    <div className="p-4 rounded-lg bg-stone-100 dark:bg-gray-800/50">
       {/* REGION 1: Route Header */}
       <div className="flex items-start gap-3 mb-3">
         {/* Transport Icon */}

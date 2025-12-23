@@ -74,7 +74,7 @@ export function ExplanationPanel({ destinationId, method = 'shap', trigger = 'cl
       </button>
 
       {isOpen && (
-        <div className="mt-2 border border-gray-200 dark:border-gray-800 rounded-xl p-4 space-y-3 bg-gray-50 dark:bg-gray-900/50">
+        <div className="mt-2 border border-gray-200 dark:border-gray-800 rounded-lg p-4 space-y-3 bg-gray-50 dark:bg-gray-900/50">
           {loading && (
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <Loader2 className="h-4 w-4 animate-spin" />

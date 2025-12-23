@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 export function DestinationCardSkeleton() {
   return (
     <div className="space-y-2 animate-pulse">
-      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-2xl mb-2 relative overflow-hidden">
+      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-lg mb-2 relative overflow-hidden">
         <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       </div>
       <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-3/4 relative overflow-hidden">
@@ -59,7 +59,7 @@ export function HorizontalCardSkeleton() {
 // Skeleton loader for list items (e.g., visited places)
 export function ListItemSkeleton() {
   return (
-    <div className="flex items-center gap-4 p-3 rounded-2xl animate-pulse">
+    <div className="flex items-center gap-4 p-3 rounded-lg animate-pulse">
       <Skeleton className="w-16 h-16 flex-shrink-0 rounded-xl" />
       <div className="flex-1 min-w-0 space-y-2">
         <Skeleton className="h-3.5 rounded-full w-2/3" />
@@ -125,7 +125,7 @@ export function UserCardSkeleton() {
 // Skeleton for collection card
 export function CollectionCardSkeleton() {
   return (
-    <div className="p-6 border border-gray-200 dark:border-gray-800 rounded-2xl animate-pulse">
+    <div className="p-6 border border-gray-200 dark:border-gray-800 rounded-lg animate-pulse">
       <div className="flex items-start gap-4 mb-4">
         <Skeleton className="w-12 h-12 rounded-lg flex-shrink-0" />
         <div className="flex-1 min-w-0 space-y-2">
@@ -163,7 +163,7 @@ export function CollectionDetailSkeleton() {
         {/* Collection header */}
         <div className="mb-8 animate-pulse">
           <div className="flex items-start gap-4">
-            <Skeleton className="h-16 w-16 rounded-2xl flex-shrink-0" />
+            <Skeleton className="h-16 w-16 rounded-lg flex-shrink-0" />
             <div className="flex-1 space-y-3">
               <Skeleton className="h-8 w-2/3" />
               <Skeleton className="h-4 w-1/3" />
@@ -190,7 +190,7 @@ export function CollectionDetailSkeleton() {
 // Skeleton for trip card
 export function TripCardSkeleton() {
   return (
-    <div className="border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden animate-pulse">
+    <div className="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden animate-pulse">
       <Skeleton className="h-40 w-full" />
       <div className="p-4 space-y-3">
         <Skeleton className="h-5 w-3/4" />
@@ -224,7 +224,7 @@ export function DetailDrawerSkeleton() {
   return (
     <div className="animate-pulse">
       {/* Image */}
-      <Skeleton className="w-full aspect-[4/3] rounded-2xl mb-4" />
+      <Skeleton className="w-full aspect-[4/3] rounded-lg mb-4" />
 
       {/* Title & badges */}
       <div className="space-y-3 mb-6">
@@ -243,7 +243,7 @@ export function DetailDrawerSkeleton() {
       </div>
 
       {/* Map */}
-      <Skeleton className="h-48 w-full rounded-2xl mb-6" />
+      <Skeleton className="h-48 w-full rounded-lg mb-6" />
 
       {/* Related */}
       <div className="space-y-3">
@@ -265,7 +265,7 @@ export function DetailDrawerSkeleton() {
 // Skeleton loader for stats cards
 export function StatsCardSkeleton() {
   return (
-    <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl space-y-2 animate-pulse">
+    <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg space-y-2 animate-pulse">
       <Skeleton className="h-6 rounded-full w-12" />
       <Skeleton className="h-3 rounded-full w-16" />
     </div>

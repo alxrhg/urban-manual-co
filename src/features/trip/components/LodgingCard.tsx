@@ -63,7 +63,7 @@ export default function LodgingCard({
   const nights = calculateNights();
 
   return (
-    <div className="rounded-2xl bg-stone-100 dark:bg-gray-800/50 overflow-hidden">
+    <div className="rounded-lg bg-stone-100 dark:bg-gray-800/50 overflow-hidden">
       {/* Image Section */}
       {image && (
         <div className="relative h-24 w-full">
@@ -105,7 +105,7 @@ export default function LodgingCard({
             <span className="text-stone-400 px-0.5">→</span>
             <span className="font-medium">{formatDate(checkOut) || 'Check-out'}</span>
             {nights && (
-              <span className="text-stone-400 ml-auto text-[10px] bg-stone-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+              <span className="text-stone-400 ml-auto text-[10px] bg-stone-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
                 {nights} {nights === 1 ? 'night' : 'nights'}
               </span>
             )}

@@ -100,7 +100,7 @@ export default function LocalEvents({
   const displayEvents = expanded ? events : events.slice(0, 3);
 
   return (
-    <div className={`border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden ${className}`}>
+    <div className={`border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden ${className}`}>
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
         <div className="flex items-center gap-2">

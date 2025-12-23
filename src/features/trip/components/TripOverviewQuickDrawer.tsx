@@ -113,7 +113,7 @@ export default function TripOverviewQuickDrawer({ isOpen, onClose, trip }: TripO
       <div className="pb-24">
         {coverImage && (
           <div className="px-4 pb-6">
-            <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
               <Image
                 src={coverImage}
                 alt={tripName}

@@ -157,7 +157,7 @@ export function AdvancedAnalyticsDashboard() {
 
       {/* Primary Stats - Matches account page style */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg">
           {loading ? (
             <div className="h-8 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-1" />
           ) : (
@@ -168,7 +168,7 @@ export function AdvancedAnalyticsDashboard() {
           )}
           <div className="text-xs text-gray-500 mt-1">Page Views</div>
         </div>
-        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg">
           {loading ? (
             <div className="h-8 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-1" />
           ) : (
@@ -179,7 +179,7 @@ export function AdvancedAnalyticsDashboard() {
           )}
           <div className="text-xs text-gray-500 mt-1">Searches</div>
         </div>
-        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg">
           {loading ? (
             <div className="h-8 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-1" />
           ) : (
@@ -190,7 +190,7 @@ export function AdvancedAnalyticsDashboard() {
           )}
           <div className="text-xs text-gray-500 mt-1">Saves</div>
         </div>
-        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg">
           {loading ? (
             <div className="h-8 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-1" />
           ) : (
@@ -207,7 +207,7 @@ export function AdvancedAnalyticsDashboard() {
       <div>
         <h2 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Daily Views</h2>
         {loading ? (
-          <div className="h-32 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse" />
+          <div className="h-32 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
         ) : (
           <div className="flex items-end gap-1 h-32">
             {data?.dailyViews.map((day, i) => (
@@ -288,11 +288,11 @@ export function AdvancedAnalyticsDashboard() {
         <div className="flex flex-wrap gap-4">
           {loading ? (
             Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-12 w-24 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse" />
+              <div key={i} className="h-12 w-24 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
             ))
           ) : (
             data?.categoryBreakdown.map((cat, i) => (
-              <div key={i} className="px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl">
+              <div key={i} className="px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg">
                 <div className="text-lg font-light">{cat.count}</div>
                 <div className="text-xs text-gray-500 capitalize">{cat.category}</div>
               </div>

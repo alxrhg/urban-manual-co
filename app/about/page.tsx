@@ -14,7 +14,7 @@ export default function AboutPage() {
           <h1 id="about-title" className="text-4xl md:text-5xl font-bold mb-12 text-black dark:text-white">About</h1>
 
           <div className="space-y-6">
-            <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-6">
               <h2 className="text-xl font-semibold mb-3 text-black dark:text-white">Our Mission</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                 The Urban Manual helps you discover, save, and organize the best places to visit in cities around the world.
@@ -22,7 +22,7 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-6">
               <h2 className="text-xl font-semibold mb-3 text-black dark:text-white">What We Do</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
                 We build tools that make travel planning easier and more personal:
@@ -51,7 +51,7 @@ export default function AboutPage() {
               </ul>
             </div>
 
-            <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-6">
               <h2 className="text-xl font-semibold mb-3 text-black dark:text-white">Our Approach</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                 We focus on quality over quantity. Every destination in our guide is carefully selected and verified.
@@ -59,7 +59,7 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-6">
               <h2 className="text-xl font-semibold mb-3 text-black dark:text-white">Get Involved</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
                 We're always looking to grow our collection. You can help by:
@@ -80,7 +80,7 @@ export default function AboutPage() {
               </ul>
             </div>
 
-            <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-6">
               <h2 className="text-xl font-semibold mb-3 text-black dark:text-white">Contact</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                 Have questions or want to get in touch? Visit our <Link href="/contact" className="underline hover:text-black dark:hover:text-white transition-colors">contact page</Link> or email us at <a href="mailto:hello@urbanmanual.co" className="underline hover:text-black dark:hover:text-white transition-colors">hello@urbanmanual.co</a>.

@@ -55,7 +55,7 @@ import { DestinationCard } from '@/components/DestinationCard';
 const GoogleStaticMap = dynamic(() => import('@/features/maps/components/GoogleStaticMap'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-48 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl">
+    <div className="w-full h-48 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg">
       <div className="text-center">
         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 dark:border-white mx-auto mb-2"></div>
         <span className="text-xs text-gray-600 dark:text-gray-400">Loading map...</span>
@@ -1570,7 +1570,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               e.stopPropagation();
               onClose();
             }}
-            className="flex-1 rounded-2xl bg-gray-900 py-3.5 text-center text-sm font-semibold text-white transition-opacity hover:opacity-90 dark:bg-white dark:text-gray-900"
+            className="flex-1 rounded-lg bg-gray-900 py-3.5 text-center text-sm font-semibold text-white transition-opacity hover:opacity-90 dark:bg-white dark:text-gray-900"
           >
             View Full Details
           </Link>
@@ -1583,21 +1583,21 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               return;
             }
             if (isAddedToTrip) return;
-            
+
             // Try to add directly to most recent trip, or show modal if multiple trips
             try {
               const supabaseClient = createClient();
               if (!supabaseClient) return;
-              
+
               const { data: trips, error } = await supabaseClient
                 .from('trips')
                 .select('id')
                 .eq('user_id', user.id)
                 .order('created_at', { ascending: false })
                 .limit(2);
-              
+
               if (error) throw error;
-              
+
               if (trips && trips.length === 1) {
                 // Only one trip - add directly
                 const tripId = trips[0].id;
@@ -1616,7 +1616,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               setShowAddToTripModal(true);
             }
           }}
-          className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors ${
+          className={`flex items-center justify-center gap-2 rounded-lg px-4 py-3.5 text-sm font-semibold transition-colors ${
             isAddedToTrip
               ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
               : 'bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-100'
@@ -1665,7 +1665,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             if (isAddedToTrip) return;
             setShowAddToTripModal(true);
           }}
-          className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
+          className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
             isAddedToTrip
               ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-default'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -1995,16 +1995,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   <div className="space-y-3">
                     <p className="text-sm text-center text-gray-600 dark:text-gray-400">Delete "{destination.name}"?</p>
                     <div className="flex gap-2">
-                      <button type="button" onClick={() => setShowDeleteConfirm(false)} className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm">
+                      <button type="button" onClick={() => setShowDeleteConfirm(false)} className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm">
                         Cancel
                       </button>
-                      <button type="button" onClick={handleDelete} disabled={isDeleting} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-full text-sm">
+                      <button type="button" onClick={handleDelete} disabled={isDeleting} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg text-sm">
                         {isDeleting ? 'Deleting...' : 'Delete'}
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <button type="button" onClick={handleDelete} className="w-full px-4 py-2 border border-red-300 text-red-600 rounded-full text-sm flex items-center justify-center gap-2">
+                  <button type="button" onClick={handleDelete} className="w-full px-4 py-2 border border-red-300 text-red-600 rounded-lg text-sm flex items-center justify-center gap-2">
                     <Trash2 className="h-4 w-4" /> Delete Destination
                   </button>
                 )}
@@ -2015,14 +2015,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <button
                   type="button"
                   onClick={() => setIsEditMode(false)}
-                  className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-full text-sm"
+                  className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-lg text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving || !editFormData.name || !editFormData.city || !editFormData.category}
-                  className="flex-1 bg-black dark:bg-white text-white dark:text-black rounded-full px-4 py-2.5 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 bg-black dark:bg-white text-white dark:text-black rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isSaving ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</> : 'Save Changes'}
                 </button>
@@ -2034,7 +2034,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           <div className="md:hidden">
           {/* Hero Image - Full width rounded */}
           {destination.image && (
-            <div className="mt-[18px] rounded-2xl overflow-hidden aspect-[4/3]">
+            <div className="mt-[18px] rounded-lg overflow-hidden aspect-[4/3]">
               <div className="relative w-full h-full bg-gray-100 dark:bg-gray-800">
               <Image
                 src={destination.image}
@@ -2097,7 +2097,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               {destination.tags && Array.isArray(destination.tags) && destination.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {destination.tags.slice(0, 5).map((tag, idx) => (
-                    <span key={idx} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full text-[10px] text-gray-600 dark:text-gray-400">
+                    <span key={idx} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-md text-[10px] text-gray-600 dark:text-gray-400">
                       {formatHighlightTag(tag)}
                     </span>
                   ))}
@@ -2108,20 +2108,20 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               <div className="flex flex-wrap gap-2">
 
                 {destination.brand && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900">
                     <Building2 className="h-3.5 w-3.5" />
                     {destination.brand}
                   </span>
                 )}
 
                 {destination.crown && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400">
+                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400">
                     Crown
                 </span>
               )}
 
               {destination.michelin_stars && destination.michelin_stars > 0 && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                   <img
                     src="/michelin-star.svg"
                     alt="Michelin star"
@@ -2132,7 +2132,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             )}
 
                 {(enrichedData?.rating || destination.rating) && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                   <img
                     src="/google-logo.svg"
                     alt="Google rating"
@@ -2158,7 +2158,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     href={instagramUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Instagram className="h-3 w-3" />
@@ -2181,7 +2181,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               <DropdownMenu open={showSaveDropdown} onOpenChange={setShowSaveDropdown}>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                    className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
                     onClick={async (e) => {
                       if (!user) {
                         e.preventDefault();
@@ -2285,7 +2285,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </DropdownMenu>
 
               <button
-                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
                 onClick={handleShare}
               >
                 <Share2 className="h-3 w-3" />
@@ -2297,7 +2297,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
                   <DropdownMenuTrigger asChild>
                     <button
-                      className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
+                      className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs transition-colors flex items-center gap-1.5 ${
                         isVisited
                           ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
                           : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -2341,7 +2341,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   href={`/destination/${destination.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                  className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
                   onClick={(e) => {
                     e.stopPropagation();
                   }}
@@ -2358,7 +2358,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <div className="mt-6">
               <button
                 onClick={() => router.push('/auth/login')}
-                className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 Sign in to save and track visits
               </button>
@@ -2378,7 +2378,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     onDestinationClick(parentDestination.slug);
                   }
                 }}
-                className="w-full flex items-center gap-3 p-3 -mx-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group text-left"
+                className="w-full flex items-center gap-3 p-3 -mx-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group text-left"
               >
                 {/* Square Image */}
                 <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
@@ -2413,7 +2413,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 {destination.tags.map((tag, index) => (
                     <span
                     key={index}
-                    className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400"
+                    className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400"
                     >
                     {tag}
                     </span>
@@ -2553,14 +2553,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + destination.city)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
               >
                 <Navigation className="h-3 w-3" />
                 Directions
               </a>
               <button
                 onClick={handleShare}
-                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
               >
                 <Share2 className="h-3 w-3" />
                 {copied ? 'Copied!' : 'Share'}
@@ -2631,7 +2631,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       href={fullUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                     >
                       <span>{domain}</span>
                       <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
@@ -2641,7 +2641,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 {(enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone) && (
                   <a
                     href={`tel:${enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone}`}
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     {enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone}
                   </a>
@@ -2651,7 +2651,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     href={destination.instagram_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     Instagram
                   </a>
@@ -2661,7 +2661,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     href={destination.opentable_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     OpenTable
                   </a>
@@ -2671,7 +2671,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     href={destination.resy_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     Resy
                   </a>
@@ -2681,7 +2681,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     href={destination.booking_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     Book Now
                   </a>
@@ -2700,7 +2700,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   <span>Summarizing reviews...</span>
                         </div>
               ) : reviewSummary ? (
-                <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50 dark:bg-gray-900/50">
+                <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
                   <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{reviewSummary}</p>
                       </div>
               ) : null}
@@ -2711,7 +2711,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {((destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude)) && (
             <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Location</h3>
-              <div className="w-full h-48 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
+              <div className="w-full h-48 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
                 <GoogleStaticMap
                   center={{
                     lat: destination.latitude || enrichedData?.latitude || 0,
@@ -2719,7 +2719,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   }}
                   zoom={15}
                   height="192px"
-                  className="rounded-2xl"
+                  className="rounded-lg"
                   showPin={true}
                 />
               </div>
@@ -2739,7 +2739,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <div className="flex gap-4 overflow-x-auto pb-2">
                   {[1, 2, 3].map(i => (
                     <div key={i} className="flex-shrink-0 w-32">
-                      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-2xl mb-2 animate-pulse" />
+                      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-lg mb-2 animate-pulse" />
                       <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded mb-1 animate-pulse" />
                       <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-2/3 animate-pulse" />
                     </div>
@@ -2761,7 +2761,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       }}
                       className="group text-left flex-shrink-0 w-32 flex flex-col"
                     >
-                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden mb-2 border border-gray-200 dark:border-gray-800">
+                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2 border border-gray-200 dark:border-gray-800">
                         {rec.image ? (
                           <Image
                             src={rec.image}
@@ -2777,7 +2777,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                           </div>
                         )}
                         {rec.michelin_stars && rec.michelin_stars > 0 && (
-                          <div className="absolute bottom-2 left-2 px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1">
+                          <div className="absolute bottom-2 left-2 px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1">
                             <img
                               src="/michelin-star.svg"
                               alt="Michelin star"
@@ -2828,7 +2828,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <div>
               <a
                 href={`/city/${destination.city}`}
-                className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -2849,26 +2849,26 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               {/* Pills: Category, Brand, Crown, Michelin, Google Rating */}
               <div className="flex flex-wrap gap-2">
               {destination.category && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 capitalize">
+                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 capitalize">
                     {destination.category}
                     </span>
                 )}
 
                 {destination.brand && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900">
                     <Building2 className="h-3.5 w-3.5" />
                     {destination.brand}
                   </span>
                 )}
 
                 {destination.crown && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400">
+                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400">
                     Crown
                 </span>
               )}
 
               {destination.michelin_stars && destination.michelin_stars > 0 && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                   <img
                     src="/michelin-star.svg"
                     alt="Michelin star"
@@ -2879,7 +2879,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             )}
 
                 {(enrichedData?.rating || destination.rating) && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                   <img
                     src="/google-logo.svg"
                     alt="Google rating"
@@ -2905,7 +2905,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     href={instagramUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Instagram className="h-3 w-3" />
@@ -2928,7 +2928,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               <DropdownMenu open={showSaveDropdown} onOpenChange={setShowSaveDropdown}>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                    className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
                     onClick={async (e) => {
                       if (!user) {
                         e.preventDefault();
@@ -3032,7 +3032,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </DropdownMenu>
 
               <button
-                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
                 onClick={handleShare}
               >
                 <Share2 className="h-3 w-3" />
@@ -3044,7 +3044,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
                   <DropdownMenuTrigger asChild>
                     <button
-                      className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
+                      className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs transition-colors flex items-center gap-1.5 ${
                         isVisited
                           ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
                           : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -3088,7 +3088,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   href={`/destination/${destination.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                  className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
                   onClick={(e) => {
                     e.stopPropagation();
                   }}
@@ -3105,7 +3105,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <div className="mt-6">
               <button
                 onClick={() => router.push('/auth/login')}
-                className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 Sign in to save and track visits
               </button>
@@ -3125,7 +3125,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     onDestinationClick(parentDestination.slug);
                   }
                 }}
-                className="w-full flex items-center gap-3 p-3 -mx-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group text-left"
+                className="w-full flex items-center gap-3 p-3 -mx-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group text-left"
               >
                 {/* Square Image */}
                 <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
@@ -3160,7 +3160,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 {destination.tags.map((tag, index) => (
                     <span
                     key={index}
-                    className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400"
+                    className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400"
                     >
                     {tag}
                     </span>
@@ -3300,14 +3300,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + destination.city)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
               >
                 <Navigation className="h-3 w-3" />
                 Directions
               </a>
               <button
                 onClick={handleShare}
-                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
               >
                 <Share2 className="h-3 w-3" />
                 {copied ? 'Copied!' : 'Share'}
@@ -3379,7 +3379,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       href={fullUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                     >
                       <span>{domain}</span>
                       <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
@@ -3389,7 +3389,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 {(enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone) && (
                   <a
                     href={`tel:${enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone}`}
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     {enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone}
                   </a>
@@ -3399,7 +3399,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     href={destination.instagram_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     Instagram
                   </a>
@@ -3409,7 +3409,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     href={destination.opentable_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     OpenTable
                   </a>
@@ -3419,7 +3419,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     href={destination.resy_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     Resy
                   </a>
@@ -3429,7 +3429,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     href={destination.booking_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     Book Now
                   </a>
@@ -3448,7 +3448,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   <span>Summarizing reviews...</span>
                         </div>
               ) : reviewSummary ? (
-                <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50 dark:bg-gray-900/50">
+                <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
                   <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{reviewSummary}</p>
                       </div>
               ) : null}
@@ -3459,7 +3459,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {((destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude)) && (
             <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Location</h3>
-              <div className="w-full h-48 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
+              <div className="w-full h-48 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
                 <GoogleStaticMap
                   center={{
                     lat: destination.latitude || enrichedData?.latitude || 0,
@@ -3467,7 +3467,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   }}
                   zoom={15}
                   height="192px"
-                  className="rounded-2xl"
+                  className="rounded-lg"
                   showPin={true}
                 />
               </div>
@@ -3487,7 +3487,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <div className="flex gap-4 overflow-x-auto pb-2">
                   {[1, 2, 3].map(i => (
                     <div key={i} className="flex-shrink-0 w-32">
-                      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-2xl mb-2 animate-pulse" />
+                      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-lg mb-2 animate-pulse" />
                       <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded mb-1 animate-pulse" />
                       <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-2/3 animate-pulse" />
                     </div>
@@ -3509,7 +3509,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       }}
                       className="group text-left flex-shrink-0 w-32 flex flex-col"
                     >
-                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden mb-2 border border-gray-200 dark:border-gray-800">
+                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2 border border-gray-200 dark:border-gray-800">
                         {rec.image ? (
                           <Image
                             src={rec.image}
@@ -3525,7 +3525,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                           </div>
                         )}
                         {rec.michelin_stars && rec.michelin_stars > 0 && (
-                          <div className="absolute bottom-2 left-2 px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1">
+                          <div className="absolute bottom-2 left-2 px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1">
                             <img
                               src="/michelin-star.svg"
                               alt="Michelin star"

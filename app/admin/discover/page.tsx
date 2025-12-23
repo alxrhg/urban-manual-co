@@ -11,7 +11,7 @@ export default function AdminDiscoverPage() {
           Manually curate the Discover feed and monitor the AI recommendations powering it.
         </p>
       </div>
-      <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 shadow-sm">
+      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 shadow-sm">
         <DiscoverTab />
       </div>
     </section>

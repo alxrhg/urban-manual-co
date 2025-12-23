@@ -189,7 +189,7 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
               onClick={() => router.push(`/destination/${place.destination_slug}`)}
               className="group relative text-left"
             >
-              <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 mb-2">
+              <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 mb-2">
                 {place.destination?.image && (
                   <Image
                     src={place.destination?.image}
@@ -221,10 +221,10 @@ export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {
             <button
               key={place.destination_slug}
               onClick={() => router.push(`/destination/${place.destination_slug}`)}
-              className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
+              className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors text-left"
             >
               {place.destination?.image && (
-                <div className="relative w-16 h-16 flex-shrink-0 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
                   <Image
                     src={place.destination?.image}
                     alt={place.destination?.name}

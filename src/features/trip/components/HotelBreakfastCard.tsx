@@ -53,7 +53,7 @@ export default function HotelBreakfastCard({
 
   if (compact) {
     return (
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-50 via-amber-50 to-stone-100 dark:from-orange-950/30 dark:via-amber-950/20 dark:to-gray-800/50">
+      <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-orange-50 via-amber-50 to-stone-100 dark:from-orange-950/30 dark:via-amber-950/20 dark:to-gray-800/50">
         {/* Sunrise accent */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-300 via-amber-300 to-yellow-200" />
 
@@ -99,7 +99,7 @@ export default function HotelBreakfastCard({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-50 via-amber-50 to-stone-50 dark:from-orange-950/20 dark:via-amber-950/20 dark:to-gray-800/50">
+    <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-orange-50 via-amber-50 to-stone-50 dark:from-orange-950/20 dark:via-amber-950/20 dark:to-gray-800/50">
       {/* Sunrise gradient header */}
       <div className="h-2 bg-gradient-to-r from-orange-400 via-amber-300 to-yellow-200" />
 
@@ -174,7 +174,7 @@ export default function HotelBreakfastCard({
 
         {/* Dress Code */}
         {dressCode && (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-xs">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-xs">
             Dress code: {dressCode}
           </div>
         )}

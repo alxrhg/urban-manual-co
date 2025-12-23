@@ -124,7 +124,7 @@ export function CategoryAutocompleteInput({
         onFocus={handleInputFocus}
         placeholder={placeholder}
         required={required}
-        className={`w-full px-4 py-3 border rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600 ${
+        className={`w-full px-4 py-3 border rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600 ${
           isNewCategory
             ? 'border-orange-400 dark:border-orange-500 bg-orange-50 dark:bg-orange-950/20'
             : 'border-gray-200 dark:border-gray-800'
@@ -132,7 +132,7 @@ export function CategoryAutocompleteInput({
       />
       
       {isNewCategory && value && (
-        <div className="mt-2 flex items-start gap-2 px-3 py-2 rounded-xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800">
+        <div className="mt-2 flex items-start gap-2 px-3 py-2 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800">
           <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
           <div className="text-xs text-orange-900 dark:text-orange-200">
             <strong>New Category:</strong> &quot;{value}&quot; will be created as a new category.
@@ -143,14 +143,14 @@ export function CategoryAutocompleteInput({
       {showSuggestions && filteredCategories.length > 0 && (
         <div
           ref={suggestionsRef}
-          className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg max-h-60 overflow-y-auto z-50"
+          className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50"
         >
           {filteredCategories.slice(0, 10).map((category, index) => (
             <button
               key={index}
               type="button"
               onClick={() => handleSelectCategory(category)}
-              className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors first:rounded-t-2xl last:rounded-b-2xl focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-800"
+              className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors first:rounded-t-lg last:rounded-b-lg focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-800"
             >
               {category}
             </button>

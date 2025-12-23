@@ -212,7 +212,7 @@ export default function ListsPage() {
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity font-medium"
           >
             <Plus className="h-5 w-5" />
             <span>New List</span>
@@ -223,7 +223,7 @@ export default function ListsPage() {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map(i => (
-              <Skeleton key={i} className="rounded-2xl h-48" />
+              <Skeleton key={i} className="rounded-lg h-48" />
             ))}
           </div>
         ) : lists.length === 0 ? (
@@ -232,7 +232,7 @@ export default function ListsPage() {
             <span className="text-xl text-gray-400 mb-6">No lists yet</span>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity font-medium"
+              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity font-medium"
             >
               Create Your First List
             </button>
@@ -243,7 +243,7 @@ export default function ListsPage() {
               <div
                 key={list.id}
                 onClick={() => router.push(`/lists/${list.id}`)}
-                className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -301,7 +301,7 @@ export default function ListsPage() {
       {/* Create List Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md">
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold">Create New List</h2>
               <button
@@ -320,7 +320,7 @@ export default function ListsPage() {
                   value={newListName}
                   onChange={(e) => setNewListName(e.target.value)}
                   placeholder="e.g., Tokyo Favorites"
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                   autoFocus
                 />
               </div>
@@ -332,7 +332,7 @@ export default function ListsPage() {
                   onChange={(e) => setNewListDescription(e.target.value)}
                   placeholder="Optional description..."
                   rows={3}
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
                 />
               </div>
 
@@ -352,7 +352,7 @@ export default function ListsPage() {
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-colors"
+                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-blue-700 transition-colors"
                   disabled={creating}
                 >
                   Cancel
@@ -360,7 +360,7 @@ export default function ListsPage() {
                 <button
                   onClick={createList}
                   disabled={!newListName.trim() || creating}
-                  className="flex-1 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  className="flex-1 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                 >
                   {creating ? 'Creating...' : 'Create List'}
                 </button>

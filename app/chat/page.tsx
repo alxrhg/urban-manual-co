@@ -259,7 +259,7 @@ export default function ChatPage() {
             </p>
           </div>
 
-          <div className="bg-white dark:bg-[#1A1C1F] rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col h-[calc(100vh-16rem)]">
+          <div className="bg-white dark:bg-[#1A1C1F] rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col h-[calc(100vh-16rem)]">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
               <div className="flex items-center gap-2">

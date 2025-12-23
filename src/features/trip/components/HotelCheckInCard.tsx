@@ -47,7 +47,7 @@ export default function HotelCheckInCard({
 
   if (compact) {
     return (
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-50 to-stone-100 dark:from-amber-950/30 dark:to-gray-800/50 border-l-4 border-amber-400 dark:border-amber-500">
+      <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-amber-50 to-stone-100 dark:from-amber-950/30 dark:to-gray-800/50 border-l-4 border-amber-400 dark:border-amber-500">
         <div className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -90,7 +90,7 @@ export default function HotelCheckInCard({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50 via-stone-50 to-stone-100 dark:from-amber-950/20 dark:via-gray-800/50 dark:to-gray-800/50">
+    <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-amber-50 via-stone-50 to-stone-100 dark:from-amber-950/20 dark:via-gray-800/50 dark:to-gray-800/50">
       {/* Decorative key pattern */}
       <div className="absolute top-0 right-0 w-32 h-32 opacity-5 dark:opacity-10">
         <KeyRound className="w-full h-full text-amber-600" />
@@ -156,7 +156,7 @@ export default function HotelCheckInCard({
 
         {/* Early Check-in Badge */}
         {earlyCheckIn && (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-medium">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-medium">
             <Sparkles className="w-3.5 h-3.5" />
             Early check-in confirmed
           </div>

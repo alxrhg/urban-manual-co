@@ -66,7 +66,7 @@ export function SearchFiltersComponent({
             <Button
               variant="default"
               size="icon"
-              className="relative w-12 h-12 rounded-2xl bg-black dark:bg-white text-white dark:text-black hover:opacity-90"
+              className="relative w-12 h-12 rounded-lg bg-black dark:bg-white text-white dark:text-black hover:opacity-90"
               aria-label={`Open filters${filterCount > 0 ? ` (${filterCount} active)` : ''}`}
             >
               <SlidersHorizontal className="h-5 w-5" />

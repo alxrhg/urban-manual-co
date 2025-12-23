@@ -115,7 +115,7 @@ export default function HotelCard({
 
   if (compact) {
     return (
-      <div className="relative overflow-hidden rounded-2xl bg-stone-100 dark:bg-gray-800/50">
+      <div className="relative overflow-hidden rounded-lg bg-stone-100 dark:bg-gray-800/50">
         {/* Image header */}
         {image && (
           <div className="relative h-20 w-full">
@@ -166,7 +166,7 @@ export default function HotelCard({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 shadow-lg border border-stone-200 dark:border-gray-800">
+    <div className="relative overflow-hidden rounded-lg bg-white dark:bg-gray-900 shadow-lg border border-stone-200 dark:border-gray-800">
       {/* Hero Image */}
       <div className="relative h-40 w-full bg-stone-200 dark:bg-gray-800">
         {image ? (

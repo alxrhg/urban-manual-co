@@ -135,7 +135,7 @@ export function RecentlyViewed({ onCardClick }: RecentlyViewedProps) {
                 </div>
               )}
               {item.michelin_stars && item.michelin_stars > 0 && (
-                <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
+                <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
                   <img
                     src="/michelin-star.svg"
                     alt="Michelin star"

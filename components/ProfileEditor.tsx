@@ -143,7 +143,7 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
           {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="space-y-2">
               <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-10 w-full rounded-2xl" />
+              <Skeleton className="h-10 w-full rounded-lg" />
             </div>
           ))}
         </div>

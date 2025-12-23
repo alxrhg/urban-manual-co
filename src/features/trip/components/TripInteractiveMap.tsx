@@ -822,7 +822,7 @@ export default function TripInteractiveMap({
     <div
       className={`
         relative bg-gray-100 dark:bg-gray-900
-        ${effectiveFullscreen ? 'fixed inset-0 z-50' : 'w-full h-full rounded-2xl overflow-hidden'}
+        ${effectiveFullscreen ? 'fixed inset-0 z-50' : 'w-full h-full rounded-lg overflow-hidden'}
         ${className}
       `}
     >
@@ -981,7 +981,7 @@ export default function TripInteractiveMap({
       {/* No markers fallback */}
       {markers.length === 0 && mapLoaded && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="text-center bg-white/90 dark:bg-gray-900/90 px-6 py-4 rounded-2xl shadow-lg">
+          <div className="text-center bg-white/90 dark:bg-gray-900/90 px-6 py-4 rounded-lg shadow-lg">
             <MapPin className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
             <p className="text-gray-500 dark:text-gray-400 text-sm">
               {filterDay !== null ? `No stops on Day ${filterDay}` : 'Add stops to see them on the map'}

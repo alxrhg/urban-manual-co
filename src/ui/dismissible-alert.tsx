@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 const dismissibleAlertVariants = cva(
-  'relative w-full rounded-2xl border px-4 py-3 text-sm transition-all duration-300',
+  'relative w-full rounded-lg border px-4 py-3 text-sm transition-all duration-300',
   {
     variants: {
       variant: {

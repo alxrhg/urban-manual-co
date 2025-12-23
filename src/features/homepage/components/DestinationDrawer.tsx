@@ -127,7 +127,7 @@ export function DestinationDrawer() {
             {/* Close button */}
             <button
               onClick={closeDrawer}
-              className="absolute top-4 right-4 w-10 h-10 rounded-full
+              className="absolute top-4 right-4 w-10 h-10 rounded-lg
                          bg-black/40 backdrop-blur-md
                          flex items-center justify-center
                          hover:bg-black/60 transition-colors"
@@ -138,7 +138,7 @@ export function DestinationDrawer() {
             {/* Save button on image */}
             <button
               onClick={() => setIsSaved(!isSaved)}
-              className="absolute top-4 right-16 w-10 h-10 rounded-full
+              className="absolute top-4 right-16 w-10 h-10 rounded-lg
                          bg-black/40 backdrop-blur-md
                          flex items-center justify-center
                          hover:bg-black/60 transition-colors"
@@ -275,7 +275,7 @@ export function DestinationDrawer() {
                   {/* Architect */}
                   {architect && (
                     <div className="flex items-center gap-3 py-3 border-b border-white/10">
-                      <div className="w-10 h-10 rounded-full bg-[#2c2c2e] flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 rounded-lg bg-[#2c2c2e] flex items-center justify-center flex-shrink-0">
                         <span className="text-[14px] font-medium text-gray-400">A</span>
                       </div>
                       <div>
@@ -292,7 +292,7 @@ export function DestinationDrawer() {
                   {/* Style */}
                   {designStyle && (
                     <div className="flex items-center gap-3 py-3 border-b border-white/10">
-                      <div className="w-10 h-10 rounded-full bg-[#2c2c2e] flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 rounded-lg bg-[#2c2c2e] flex items-center justify-center flex-shrink-0">
                         <span className="text-[14px] font-medium text-gray-400">S</span>
                       </div>
                       <div>
@@ -312,7 +312,7 @@ export function DestinationDrawer() {
             {/* Map Preview */}
             {(selectedDestination.latitude && selectedDestination.longitude) && (
               <div className="mb-6">
-                <div className="bg-[#2c2c2e] rounded-2xl p-6">
+                <div className="bg-[#2c2c2e] rounded-lg p-6">
                   <div className="flex flex-col items-center justify-center py-8">
                     <MapPin className="w-8 h-8 text-gray-500 mb-2" />
                     <span className="text-[14px] text-gray-400">Map Preview</span>
@@ -332,7 +332,7 @@ export function DestinationDrawer() {
             <Link
               href={`/destination/${selectedDestination.slug}`}
               className="flex items-center justify-center gap-2 w-full py-4 px-6
-                         bg-white rounded-2xl
+                         bg-white rounded-lg
                          hover:bg-gray-100 transition-colors"
             >
               <span className="text-[17px] font-semibold text-gray-900">

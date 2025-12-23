@@ -106,7 +106,7 @@ export function ConfirmationDialog({
         aria-labelledby="dialog-title"
         aria-describedby="dialog-description"
         className={cn(
-          'relative bg-white dark:bg-gray-900 rounded-2xl shadow-xl',
+          'relative bg-white dark:bg-gray-900 rounded-lg shadow-xl',
           'w-full max-w-md mx-4 p-6',
           'animate-in fade-in-0 zoom-in-95 duration-200'
         )}

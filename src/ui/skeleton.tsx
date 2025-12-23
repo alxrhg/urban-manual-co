@@ -15,14 +15,14 @@ function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
  */
 function CardSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn('rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden', className)}>
+    <div className={cn('rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden', className)}>
       <Skeleton className="h-32 w-full rounded-none" />
       <div className="p-4 space-y-3">
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-3 w-1/2" />
         <div className="flex items-center gap-2 pt-2">
-          <Skeleton className="h-6 w-16 rounded-full" />
-          <Skeleton className="h-6 w-20 rounded-full" />
+          <Skeleton className="h-6 w-16 rounded-md" />
+          <Skeleton className="h-6 w-20 rounded-md" />
         </div>
       </div>
     </div>
@@ -50,8 +50,8 @@ function RowSkeleton({ className }: { className?: string }) {
  */
 function DayHeaderSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn('flex items-center gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-gray-900/50', className)}>
-      <Skeleton className="h-12 w-12 rounded-xl" />
+    <div className={cn('flex items-center gap-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-900/50', className)}>
+      <Skeleton className="h-12 w-12 rounded-lg" />
       <div className="flex-1 space-y-2">
         <Skeleton className="h-4 w-20" />
         <Skeleton className="h-3 w-32" />
@@ -65,15 +65,15 @@ function DayHeaderSkeleton({ className }: { className?: string }) {
  */
 function TripCardSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn('rounded-2xl border border-gray-200 dark:border-gray-800 p-4', className)}>
+    <div className={cn('rounded-lg border border-gray-200 dark:border-gray-800 p-4', className)}>
       <div className="flex gap-4">
-        <Skeleton className="h-20 w-20 rounded-xl flex-shrink-0" />
+        <Skeleton className="h-20 w-20 rounded-lg flex-shrink-0" />
         <div className="flex-1 space-y-2">
           <Skeleton className="h-5 w-3/4" />
           <Skeleton className="h-3 w-1/2" />
           <div className="flex items-center gap-2 pt-2">
-            <Skeleton className="h-5 w-14 rounded-full" />
-            <Skeleton className="h-5 w-14 rounded-full" />
+            <Skeleton className="h-5 w-14 rounded-md" />
+            <Skeleton className="h-5 w-14 rounded-md" />
           </div>
         </div>
       </div>
@@ -112,7 +112,7 @@ function GridSkeleton({
     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
       {Array.from({ length: items }).map((_, i) => (
         <div key={i} className="space-y-2">
-          <div className={cn(`${aspect} rounded-2xl bg-gray-200 dark:bg-gray-800`)} />
+          <div className={cn(`${aspect} rounded-lg bg-gray-200 dark:bg-gray-800`)} />
           <Skeleton className="h-3 w-3/4" />
           <Skeleton className="h-3 w-1/2" />
         </div>

@@ -318,7 +318,7 @@ export default function AddPlacePanel({
             <div className="flex items-center gap-1">
               <button
                 onClick={() => { setSearchSource('curated'); setSearchQuery(''); }}
-                className={`px-2.5 py-1 text-[11px] rounded-full transition-colors ${
+                className={`px-2.5 py-1 text-[11px] rounded-md transition-colors ${
                   searchSource === 'curated'
                     ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
                     : 'text-gray-500 hover:text-gray-700'
@@ -328,7 +328,7 @@ export default function AddPlacePanel({
               </button>
               <button
                 onClick={() => { setSearchSource('google'); setSearchQuery(''); }}
-                className={`px-2.5 py-1 text-[11px] rounded-full transition-colors ${
+                className={`px-2.5 py-1 text-[11px] rounded-md transition-colors ${
                   searchSource === 'google'
                     ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
                     : 'text-gray-500 hover:text-gray-700'

@@ -216,7 +216,7 @@ export default function CompanionPanel({
               className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+                className={`max-w-[85%] rounded-lg px-4 py-3 ${
                   message.role === 'user'
                     ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
@@ -260,7 +260,7 @@ export default function CompanionPanel({
           {/* Typing indicator */}
           {isTyping && (
             <div className="flex justify-start">
-              <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-3 flex items-center gap-2">
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-3 flex items-center gap-2">
                 <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
                 <span className="text-sm text-gray-500 dark:text-gray-400">Thinking...</span>
               </div>

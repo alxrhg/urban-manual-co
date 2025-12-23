@@ -227,7 +227,7 @@ export function AppleMapView() {
   // Render loading state
   if (isLoading) {
     return (
-      <div className="w-full h-[70vh] rounded-2xl bg-gray-100 dark:bg-[#1c1c1e] flex items-center justify-center">
+      <div className="w-full h-[70vh] rounded-lg bg-gray-100 dark:bg-[#1c1c1e] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
           <span className="text-[14px] text-gray-500 dark:text-gray-400">Loading Apple Maps...</span>
@@ -240,7 +240,7 @@ export function AppleMapView() {
   if (error) {
     const isCredentialError = error.includes('timeout') || error.includes('authorization');
     return (
-      <div className="w-full h-[70vh] rounded-2xl bg-gray-100 dark:bg-[#1c1c1e] flex items-center justify-center">
+      <div className="w-full h-[70vh] rounded-lg bg-gray-100 dark:bg-[#1c1c1e] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-center px-6">
           <div className="w-14 h-14 rounded-full bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
             <MapPin className="w-7 h-7 text-amber-500" />
@@ -282,7 +282,7 @@ export function AppleMapView() {
   }
 
   return (
-    <div className="relative w-full h-[70vh] rounded-2xl overflow-hidden bg-[#1c1c1e]">
+    <div className="relative w-full h-[70vh] rounded-lg overflow-hidden bg-[#1c1c1e]">
       <div className="flex h-full">
         {/* Map */}
         <div

@@ -274,7 +274,7 @@ export default function BrandsPageClient({
                 <div className="mt-8 flex justify-center">
                   <button
                     onClick={() => setDisplayCount(prev => prev + itemsPerPage)}
-                    className="px-6 py-3 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-60 transition-all duration-200 ease-out text-gray-900 dark:text-white"
+                    className="px-6 py-3 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-lg hover:opacity-60 transition-all duration-200 ease-out text-gray-900 dark:text-white"
                   >
                     Show More ({filteredBrands.length - displayCount} remaining)
                   </button>

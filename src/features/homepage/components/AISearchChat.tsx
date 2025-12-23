@@ -405,7 +405,7 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
 
       {/* Chat Panel */}
       <div className="fixed bottom-0 left-0 right-0 z-50 md:bottom-4 md:left-1/2 md:-translate-x-1/2
-                      md:w-full md:max-w-2xl md:rounded-2xl
+                      md:w-full md:max-w-2xl md:rounded-lg
                       bg-white dark:bg-[#1c1c1e] shadow-2xl
                       flex flex-col max-h-[85vh] md:max-h-[70vh]">
         {/* Header */}
@@ -426,7 +426,7 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full hover:bg-gray-100 dark:hover:bg-white/10
+            className="w-9 h-9 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10
                        flex items-center justify-center transition-colors"
           >
             <X className="w-5 h-5 text-gray-500" />
@@ -438,7 +438,7 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
           {/* Welcome back message */}
           {welcomeMessage && messages.length === 0 && (
             <div className="text-center py-4">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 text-[13px]">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 text-[13px]">
                 <Sparkles className="w-4 h-4" />
                 {welcomeMessage}
               </div>
@@ -455,7 +455,7 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
                   <button
                     key={s}
                     onClick={() => handleSuggestionClick({ text: s, type: 'expand' })}
-                    className="px-4 py-2 rounded-full bg-gray-100 dark:bg-white/10
+                    className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-white/10
                                text-[13px] text-gray-700 dark:text-gray-300
                                hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
                   >
@@ -470,7 +470,7 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
             <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[85%] ${message.role === 'user' ? '' : 'w-full'}`}>
                 {/* Message bubble */}
-                <div className={`rounded-2xl px-4 py-3 ${
+                <div className={`rounded-lg px-4 py-3 ${
                   message.role === 'user'
                     ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                     : 'bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white'
@@ -517,7 +517,7 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
                       </div>
                       <button
                         onClick={() => handleCreateTripFromPlan(message.tripPlan!)}
-                        className="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-medium transition-colors flex items-center gap-2"
+                        className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-medium transition-colors flex items-center gap-2"
                       >
                         <Plus className="w-4 h-4" />
                         Create Trip
@@ -619,7 +619,7 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
                       <button
                         key={i}
                         onClick={() => handleSuggestionClick(s)}
-                        className="px-3 py-1.5 rounded-full border border-gray-200 dark:border-white/10
+                        className="px-3 py-1.5 rounded-md border border-gray-200 dark:border-white/10
                                    text-[12px] text-gray-600 dark:text-gray-400
                                    hover:bg-gray-100 dark:hover:bg-white/10 transition-colors
                                    flex items-center gap-1.5"
@@ -638,7 +638,7 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
                     {message.proactiveActions.map((action, i) => (
                       <button
                         key={i}
-                        className="px-3 py-1.5 rounded-full bg-purple-100 dark:bg-purple-500/20
+                        className="px-3 py-1.5 rounded-md bg-purple-100 dark:bg-purple-500/20
                                    text-[12px] text-purple-700 dark:text-purple-300
                                    hover:bg-purple-200 dark:hover:bg-purple-500/30 transition-colors
                                    flex items-center gap-1.5"
@@ -672,7 +672,7 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Search destinations..."
-              className="flex-1 h-12 px-5 rounded-full bg-gray-100 dark:bg-white/10
+              className="flex-1 h-12 px-5 rounded-lg bg-gray-100 dark:bg-white/10
                          text-[15px] text-gray-900 dark:text-white
                          placeholder:text-gray-500 dark:placeholder:text-gray-400
                          focus:outline-none focus:ring-2 focus:ring-gray-900/20 dark:focus:ring-white/20
@@ -682,7 +682,7 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
-              className="w-12 h-12 rounded-full bg-gray-900 dark:bg-white
+              className="w-12 h-12 rounded-lg bg-gray-900 dark:bg-white
                          flex items-center justify-center
                          disabled:opacity-40
                          hover:bg-gray-800 dark:hover:bg-gray-100

@@ -39,7 +39,7 @@ export function NestedDestinations({ destinations, parentName, onDestinationClic
             onClick={() => handleClick(dest)}
             className="group text-left flex-shrink-0 w-32 flex flex-col"
           >
-            <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden mb-2 border border-gray-200 dark:border-gray-800">
+            <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2 border border-gray-200 dark:border-gray-800">
               {dest.image ? (
                 <Image
                   src={dest.image}
@@ -56,7 +56,7 @@ export function NestedDestinations({ destinations, parentName, onDestinationClic
               )}
               {/* Michelin Stars Badge */}
               {dest.michelin_stars && dest.michelin_stars > 0 && (
-                <div className="absolute bottom-2 left-2 px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1">
+                <div className="absolute bottom-2 left-2 px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1">
                   <img
                     src="/michelin-star.svg"
                     alt="Michelin star"
@@ -98,7 +98,7 @@ export function LocatedInBadge({ parent, onClick }: LocatedInBadgeProps) {
   return (
     <button
       onClick={handleClick}
-      className="inline-flex items-center gap-2 px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-blue-700 transition-colors group"
+      className="inline-flex items-center gap-2 px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-blue-700 transition-colors group"
     >
       <MapPin className="h-3 w-3" />
       <span>Located in</span>

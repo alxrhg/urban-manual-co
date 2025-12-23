@@ -548,7 +548,7 @@ export function ContentManager({ onEditDestination, onCreateNew, refreshTrigger 
             {totalCount.toLocaleString()} destinations
           </p>
         </div>
-        <Button onClick={onCreateNew} className="rounded-full w-full sm:w-auto">
+        <Button onClick={onCreateNew} className="rounded-lg w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />
           Add New
         </Button>
@@ -571,7 +571,7 @@ export function ContentManager({ onEditDestination, onCreateNew, refreshTrigger 
 
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-150 ${
               showFilters || hasActiveFilters
                 ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -591,7 +591,7 @@ export function ContentManager({ onEditDestination, onCreateNew, refreshTrigger 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-150"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-150"
                 >
                   <Columns3 className="w-3 h-3" />
                   <span className="hidden sm:inline">Columns</span>
@@ -660,7 +660,7 @@ export function ContentManager({ onEditDestination, onCreateNew, refreshTrigger 
               <Popover open={showCityDropdown} onOpenChange={setShowCityDropdown}>
                 <PopoverTrigger asChild>
                   <button
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-150 ${
                       selectedCity
                         ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                         : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -716,7 +716,7 @@ export function ContentManager({ onEditDestination, onCreateNew, refreshTrigger 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-150 ${
                       selectedCategory
                         ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                         : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -748,7 +748,7 @@ export function ContentManager({ onEditDestination, onCreateNew, refreshTrigger 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-150 ${
                       enrichedFilter !== 'all'
                         ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                         : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -777,7 +777,7 @@ export function ContentManager({ onEditDestination, onCreateNew, refreshTrigger 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-150 ${
                       missingDataFilter !== 'all'
                         ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                         : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -811,7 +811,7 @@ export function ContentManager({ onEditDestination, onCreateNew, refreshTrigger 
               {/* Quick Filter Toggles */}
               <button
                 onClick={() => setCrownOnly(!crownOnly)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-150 ${
                   crownOnly
                     ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -822,7 +822,7 @@ export function ContentManager({ onEditDestination, onCreateNew, refreshTrigger 
               </button>
               <button
                 onClick={() => setMichelinOnly(!michelinOnly)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-150 ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-150 ${
                   michelinOnly
                     ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -847,7 +847,7 @@ export function ContentManager({ onEditDestination, onCreateNew, refreshTrigger 
                 <span className="text-[10px] text-gray-400 uppercase tracking-wider">Sort</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-150">
+                    <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-150">
                       <span>{getSortLabel(sortField, sortOrder)}</span>
                       <ChevronDown className="w-3 h-3 opacity-50" />
                     </button>
@@ -868,7 +868,7 @@ export function ContentManager({ onEditDestination, onCreateNew, refreshTrigger 
                 <span className="text-[10px] text-gray-400 uppercase tracking-wider">Show</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-150">
+                    <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-150">
                       <span>{itemsPerPage}</span>
                       <ChevronDown className="w-3 h-3 opacity-50" />
                     </button>

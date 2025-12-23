@@ -184,7 +184,7 @@ export default function TransitConnector({
   return (
     <div className={`relative flex items-center justify-end py-1 gap-2 ${className}`}>
       {/* Mode Selector Pills */}
-      <div className="flex items-center gap-0.5 p-0.5 bg-gray-100/80 dark:bg-gray-800/80 rounded-full backdrop-blur-sm">
+      <div className="flex items-center gap-0.5 p-0.5 bg-gray-100/80 dark:bg-gray-800/80 rounded-lg backdrop-blur-sm">
         {(['walking', 'transit', 'driving'] as TransitMode[]).map((m) => {
           const ModeIcon = modeIcons[m];
           const duration = getDuration(m);
@@ -195,7 +195,7 @@ export default function TransitConnector({
               key={m}
               onClick={() => handleModeChange(m)}
               className={`
-                flex items-center gap-1 px-2.5 py-1 rounded-full transition-all text-[10px] font-medium
+                flex items-center gap-1 px-2.5 py-1 rounded-md transition-all text-[10px] font-medium
                 ${isSelected
                   ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
                   : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'

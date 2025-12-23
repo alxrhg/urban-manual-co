@@ -278,7 +278,7 @@ export default function TripPage() {
   // Show loader while auth or trip is loading
   if (authLoading || loading) {
     return (
-      <main className="w-full px-4 sm:px-6 pt-16 pb-24 sm:py-20 min-h-screen bg-white dark:bg-gray-950">
+      <main className="w-full px-4 sm:px-6 pt-16 pb-24 sm:py-20 min-h-screen bg-[var(--editorial-bg)]">
         <div className="max-w-xl mx-auto"><PageLoader /></div>
       </main>
     );
@@ -287,7 +287,7 @@ export default function TripPage() {
   // If not authenticated, the useEffect will redirect - show loader in meantime
   if (!user) {
     return (
-      <main className="w-full px-4 sm:px-6 pt-16 pb-24 sm:py-20 min-h-screen bg-white dark:bg-gray-950">
+      <main className="w-full px-4 sm:px-6 pt-16 pb-24 sm:py-20 min-h-screen bg-[var(--editorial-bg)]">
         <div className="max-w-xl mx-auto"><PageLoader /></div>
       </main>
     );
@@ -295,10 +295,10 @@ export default function TripPage() {
 
   if (!trip) {
     return (
-      <main className="w-full px-4 sm:px-6 pt-16 pb-24 sm:py-20 min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
+      <main className="w-full px-4 sm:px-6 pt-16 pb-24 sm:py-20 min-h-screen bg-[var(--editorial-bg)] flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500 dark:text-gray-400 mb-4">Trip not found</p>
-          <Link href="/trips" className="text-gray-900 dark:text-white hover:opacity-70">Back to trips</Link>
+          <p className="text-[var(--editorial-text-secondary)] mb-4">Trip not found</p>
+          <Link href="/trips" className="text-[var(--editorial-text-primary)] hover:opacity-70">Back to trips</Link>
         </div>
       </main>
     );
@@ -316,12 +316,12 @@ export default function TripPage() {
       onDragEnd={handleDragEnd}
     >
     <UndoProvider>
-    <main className="w-full px-4 sm:px-6 pt-16 pb-24 sm:py-20 min-h-screen bg-white dark:bg-gray-950">
+    <main className="w-full px-4 sm:px-6 pt-16 pb-24 sm:py-20 min-h-screen bg-[var(--editorial-bg)]">
       <div className="max-w-6xl mx-auto">
         {/* Back link */}
         <Link
           href="/trips"
-          className="inline-flex items-center gap-1.5 text-[12px] text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-6"
+          className="inline-flex items-center gap-1.5 text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors mb-6"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Trips
@@ -346,10 +346,10 @@ export default function TripPage() {
             <div className="flex items-center justify-between mt-4 mb-2">
               <button
                 onClick={() => setIsEditMode(!isEditMode)}
-                className={`flex items-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 text-[12px] sm:text-[11px] font-medium rounded-full transition-colors ${
+                className={`flex items-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 text-[12px] sm:text-[11px] font-medium rounded-lg transition-colors ${
                   isEditMode
-                    ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border border-gray-200 dark:border-gray-700'
+                    ? 'bg-[var(--editorial-accent)] text-white'
+                    : 'text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] border border-[var(--editorial-border)]'
                 }`}
               >
                 {isEditMode ? (
@@ -367,7 +367,7 @@ export default function TripPage() {
 
               <button
                 onClick={() => { setShowTripSettings(true); setSelectedItem(null); }}
-                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
               >
                 <Settings className="w-3.5 h-3.5" />
                 Settings
@@ -378,7 +378,7 @@ export default function TripPage() {
         <div className="mt-4 lg:hidden">
           <button
             onClick={() => setShowTripNotes(!showTripNotes)}
-            className="text-[12px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            className="text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)] transition-colors"
           >
             {tripNotes ? 'View checklist' : 'Add checklist'}
             <ChevronDown className={`inline w-3 h-3 ml-1 transition-transform ${showTripNotes ? 'rotate-180' : ''}`} />
@@ -413,24 +413,30 @@ export default function TripPage() {
 
         {/* Day Tabs */}
         {days.length > 0 && (
-          <div className="sticky top-16 z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 py-3 bg-white dark:bg-gray-950 mt-6">
+          <div className="sticky top-16 z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 py-3 bg-[var(--editorial-bg)] mt-6">
             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
               {days.map((day) => {
                 const isSelected = day.dayNumber === selectedDayNumber;
                 const dayDate = day.date
                   ? new Date(day.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                   : null;
+                const dayWeather = day.date ? weatherByDate[day.date] : undefined;
                 return (
                   <button
                     key={day.dayNumber}
                     onClick={() => setSelectedDayNumber(day.dayNumber)}
-                    className={`flex-shrink-0 px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-all ${
+                    className={`flex-shrink-0 flex flex-col items-center px-4 py-2 rounded-lg text-[13px] font-medium whitespace-nowrap transition-all ${
                       isSelected
-                        ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                        ? 'bg-[var(--editorial-accent)] text-white'
+                        : 'bg-[var(--editorial-bg-elevated)] text-[var(--editorial-text-secondary)] hover:bg-[var(--editorial-border-subtle)] border border-[var(--editorial-border)]'
                     }`}
                   >
-                    {dayDate || `Day ${day.dayNumber}`}
+                    <span>{dayDate || `Day ${day.dayNumber}`}</span>
+                    {dayWeather && (
+                      <span className={`text-[11px] mt-0.5 ${isSelected ? 'text-white/80' : 'text-[var(--editorial-text-tertiary)]'}`}>
+                        {dayWeather.tempMax}° {dayWeather.description.split(' ')[0]}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -526,12 +532,12 @@ export default function TripPage() {
         {/* Empty state - context-aware */}
         {totalItems === 0 && days.length > 0 && (
           <div className="text-center py-8 mt-4">
-            <p className="text-[14px] text-gray-500 dark:text-gray-400 mb-2">
+            <p className="text-[14px] text-[var(--editorial-text-secondary)] mb-2">
               {primaryCity
                 ? `Start planning your ${primaryCity} trip`
                 : 'Start planning your trip'}
             </p>
-            <p className="text-[12px] text-gray-400 dark:text-gray-500">
+            <p className="text-[12px] text-[var(--editorial-text-tertiary)]">
               Tap the + button to add places, flights, or hotels
             </p>
           </div>
@@ -633,7 +639,7 @@ export default function TripPage() {
 
               {/* Trip Intelligence */}
               {!sidebarAddDay && (
-                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+                <div className="bg-[var(--editorial-bg-elevated)] rounded-xl border border-[var(--editorial-border)] overflow-hidden">
                   <TripIntelligence
                     days={days}
                     city={primaryCity}
@@ -655,7 +661,7 @@ export default function TripPage() {
 
               {/* Checklist */}
               {!sidebarAddDay && (
-                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+                <div className="bg-[var(--editorial-bg-elevated)] rounded-xl border border-[var(--editorial-border)] p-4">
                   <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-3">Checklist</h3>
                   <TripChecklist
                     notes={tripNotes}
@@ -1134,22 +1140,25 @@ function DaySection({
       id={`day-${dayNumber}`}
       className={`scroll-mt-20 rounded-xl transition-all duration-200 ${
         showDropState
-          ? 'bg-green-50 dark:bg-green-900/20 ring-2 ring-green-500/50 ring-inset p-3 -mx-3'
+          ? 'bg-[var(--editorial-accent)]/10 ring-2 ring-[var(--editorial-accent)]/50 ring-inset p-3 -mx-3'
           : ''
       }`}
     >
-      {/* Day header - reference style */}
+      {/* Day header - editorial style with serif */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <h3 className="text-[16px] font-semibold text-gray-900 dark:text-white">
+          <h3
+            className="text-[16px] font-normal text-[var(--editorial-text-primary)]"
+            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
+          >
             Day {dayNumber}{longDateDisplay && `: ${longDateDisplay}`}
           </h3>
-          {/* Weather badge */}
+          {/* Weather badge - warm styling */}
           {weather && (
-            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">
-              <WeatherIcon code={weather.weatherCode} className="w-3.5 h-3.5" />
-              <span className="text-[12px] text-gray-600 dark:text-gray-300">
-                {weather.tempMax}°
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-full">
+              <WeatherIcon code={weather.weatherCode} className="w-3.5 h-3.5 text-[var(--editorial-accent)]" />
+              <span className="text-[12px] text-[var(--editorial-text-secondary)]">
+                {weather.tempMax}° {weather.description}
               </span>
             </div>
           )}
@@ -1183,7 +1192,7 @@ function DaySection({
             <button
               onClick={optimizeRoute}
               disabled={isOptimizing}
-              className="flex items-center gap-1.5 text-[12px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="flex items-center gap-1.5 text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)] transition-colors px-2 py-1 rounded-lg hover:bg-[var(--editorial-border-subtle)]"
             >
               {isOptimizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Route className="w-3.5 h-3.5" />}
               <span className="hidden sm:inline">Optimize</span>
@@ -1205,9 +1214,9 @@ function DaySection({
                   setShowTransportForm(null);
                 }
               }}
-              className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center rounded-lg bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] hover:bg-[var(--editorial-border-subtle)] transition-colors"
             >
-              <Plus className={`w-4 h-4 sm:w-3.5 sm:h-3.5 text-gray-500 transition-transform ${showAddMenu || showSearch || showTransportForm ? 'rotate-45' : ''}`} />
+              <Plus className={`w-4 h-4 sm:w-3.5 sm:h-3.5 text-[var(--editorial-text-secondary)] transition-transform ${showAddMenu || showSearch || showTransportForm ? 'rotate-45' : ''}`} />
             </button>
 
             {/* Add menu dropdown (mobile only) */}
@@ -1217,48 +1226,48 @@ function DaySection({
                   initial={{ opacity: 0, scale: 0.95, y: -4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  className="absolute right-0 top-full mt-1 w-44 sm:w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl sm:rounded-lg shadow-lg overflow-hidden z-20 lg:hidden"
+                  className="absolute right-0 top-full mt-1 w-44 sm:w-40 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-xl sm:rounded-lg shadow-lg overflow-hidden z-20 lg:hidden"
                 >
                   <button
                     onClick={() => { setShowSearch(true); setSearchSource('curated'); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors text-left"
                   >
                     <Search className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     From curation
                   </button>
                   <button
                     onClick={() => { setShowSearch(true); setSearchSource('google'); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors text-left"
                   >
                     <Globe className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     From Google
                   </button>
-                  <div className="border-t border-gray-100 dark:border-gray-800 my-1" />
+                  <div className="border-t border-[var(--editorial-border)] my-1" />
                   <button
                     onClick={() => setShowTransportForm('flight')}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors text-left"
                   >
                     <Plane className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     Flight
                   </button>
                   <button
                     onClick={() => setShowTransportForm('hotel')}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors text-left"
                   >
                     <Hotel className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     Hotel
                   </button>
                   <button
                     onClick={() => setShowTransportForm('train')}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors text-left"
                   >
                     <TrainIcon className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     Train
                   </button>
-                  <div className="border-t border-gray-100 dark:border-gray-800 my-1" />
+                  <div className="border-t border-[var(--editorial-border)] my-1" />
                   <button
                     onClick={() => setShowTransportForm('activity')}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors text-left"
                   >
                     <Clock className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     Activity
@@ -1283,27 +1292,27 @@ function DaySection({
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 20 }}
-                    className="fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 rounded-t-2xl shadow-2xl p-4 pb-8 lg:hidden"
+                    className="fixed inset-x-0 bottom-0 z-50 bg-[var(--editorial-bg-elevated)] border-t border-[var(--editorial-border)] rounded-t-2xl shadow-2xl p-4 pb-8 lg:hidden"
                     style={{ maxHeight: '70vh' }}
                   >
                   {/* Source toggle */}
                   <div className="flex items-center gap-2 mb-3">
                     <button
                       onClick={() => { setSearchSource('curated'); setSearchQuery(''); setSearchResults([]); setGoogleResults([]); }}
-                      className={`px-3 py-1.5 text-[13px] rounded-full transition-colors ${
+                      className={`px-3 py-1.5 text-[13px] rounded-md transition-colors ${
                         searchSource === 'curated'
-                          ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                          ? 'bg-[var(--editorial-accent)] text-white'
+                          : 'bg-[var(--editorial-bg-elevated)] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                       }`}
                     >
                       Curated
                     </button>
                     <button
                       onClick={() => { setSearchSource('google'); setSearchQuery(''); setSearchResults([]); setGoogleResults([]); }}
-                      className={`px-3 py-1.5 text-[13px] rounded-full transition-colors ${
+                      className={`px-3 py-1.5 text-[13px] rounded-md transition-colors ${
                         searchSource === 'google'
-                          ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                          ? 'bg-[var(--editorial-accent)] text-white'
+                          : 'bg-[var(--editorial-bg-elevated)] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                       }`}
                     >
                       Google
@@ -1314,7 +1323,7 @@ function DaySection({
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-3 px-4 py-3 bg-gray-100 dark:bg-gray-800 rounded-xl">
+                  <div className="flex items-center gap-3 px-4 py-3 bg-[var(--editorial-bg-elevated)] rounded-xl">
                     {isSearching || isAdding ? (
                       <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
                     ) : searchSource === 'google' ? (
@@ -1328,7 +1337,7 @@ function DaySection({
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder={searchSource === 'google' ? 'Search Google...' : 'Search curated places...'}
-                      className="flex-1 bg-transparent text-[16px] text-gray-900 dark:text-white placeholder-gray-400 outline-none"
+                      className="flex-1 bg-transparent text-[16px] text-[var(--editorial-text-primary)] placeholder-gray-400 outline-none"
                       autoFocus
                     />
                   </div>
@@ -1341,9 +1350,9 @@ function DaySection({
                           key={destination.id}
                           onClick={() => addDestination(destination)}
                           disabled={isAdding}
-                          className="w-full flex items-center gap-3 px-3 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-colors text-left active:bg-gray-100 dark:active:bg-gray-700"
+                          className="w-full flex items-center gap-3 px-3 py-3 hover:bg-[var(--editorial-border-subtle)] rounded-xl transition-colors text-left active:bg-gray-100 dark:active:bg-gray-700"
                         >
-                          <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                          <div className="w-12 h-12 rounded-xl overflow-hidden bg-[var(--editorial-bg-elevated)] flex-shrink-0">
                             {destination.image_thumbnail || destination.image ? (
                               <Image src={destination.image_thumbnail || destination.image || ''} alt="" width={48} height={48} className="w-full h-full object-cover" />
                             ) : (
@@ -1353,7 +1362,7 @@ function DaySection({
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[15px] font-medium text-gray-900 dark:text-white truncate">{destination.name}</p>
+                            <p className="text-[15px] font-medium text-[var(--editorial-text-primary)] truncate">{destination.name}</p>
                             <p className="text-[13px] text-gray-400 truncate">{destination.category}</p>
                           </div>
                         </button>
@@ -1363,9 +1372,9 @@ function DaySection({
                           key={place.id}
                           onClick={() => addGooglePlace(place)}
                           disabled={isAdding}
-                          className="w-full flex items-center gap-3 px-3 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-colors text-left active:bg-gray-100 dark:active:bg-gray-700"
+                          className="w-full flex items-center gap-3 px-3 py-3 hover:bg-[var(--editorial-border-subtle)] rounded-xl transition-colors text-left active:bg-gray-100 dark:active:bg-gray-700"
                         >
-                          <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          <div className="w-12 h-12 rounded-xl bg-[var(--editorial-bg-elevated)] flex items-center justify-center flex-shrink-0 overflow-hidden">
                             {place.image ? (
                               <Image src={place.image} alt="" width={48} height={48} className="w-full h-full object-cover" />
                             ) : (
@@ -1373,7 +1382,7 @@ function DaySection({
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[15px] font-medium text-gray-900 dark:text-white truncate">{place.name}</p>
+                            <p className="text-[15px] font-medium text-[var(--editorial-text-primary)] truncate">{place.name}</p>
                             <p className="text-[13px] text-gray-400 truncate">{place.category || place.formatted_address}</p>
                           </div>
                         </button>
@@ -1392,7 +1401,7 @@ function DaySection({
                   initial={{ opacity: 0, scale: 0.95, y: -4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  className="absolute right-0 top-full mt-1 w-72 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20 p-3 lg:hidden"
+                  className="absolute right-0 top-full mt-1 w-72 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg shadow-lg overflow-hidden z-20 p-3 lg:hidden"
                 >
                   <TransportForm
                     type={showTransportForm}
@@ -1412,10 +1421,10 @@ function DaySection({
                   initial={{ opacity: 0, scale: 0.95, y: -4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  className="absolute right-0 top-full mt-1 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20 p-3 lg:hidden"
+                  className="absolute right-0 top-full mt-1 w-80 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg shadow-lg overflow-hidden z-20 p-3 lg:hidden"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-[12px] font-medium text-gray-900 dark:text-white">Add activity</span>
+                    <span className="text-[12px] font-medium text-[var(--editorial-text-primary)]">Add activity</span>
                     <button onClick={closeAllMenus} className="text-gray-400 hover:text-gray-600">
                       <X className="w-4 h-4" />
                     </button>
@@ -1436,10 +1445,10 @@ function DaySection({
                             });
                             closeAllMenus();
                           }}
-                          className="flex items-center gap-2 p-2.5 rounded-lg text-left bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          className="flex items-center gap-2 p-2.5 rounded-lg text-left bg-[var(--editorial-bg-elevated)] hover:bg-[var(--editorial-border-subtle)] transition-colors"
                         >
                           <Icon className="w-3.5 h-3.5 text-gray-500" />
-                          <span className="text-[11px] font-medium text-gray-700 dark:text-gray-300">{option.label}</span>
+                          <span className="text-[11px] font-medium text-[var(--editorial-text-primary)]">{option.label}</span>
                         </button>
                       );
                     })}
@@ -1523,25 +1532,25 @@ function DaySection({
       {nightlyHotel && (
         <button
           onClick={() => onSelectItem?.(nightlyHotel)}
-          className="w-full mt-2 relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-md transition-all text-left"
+          className="w-full mt-2 relative overflow-hidden rounded-lg bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] hover:shadow-md transition-all text-left"
         >
           <div className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
-                  <Moon className="w-4 h-4 text-stone-500 dark:text-gray-400" />
+                <div className="w-9 h-9 rounded-xl bg-[var(--editorial-bg-elevated)] flex items-center justify-center">
+                  <Moon className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-stone-900 dark:text-white">
                     {nightlyHotel.title || 'Hotel'}
                   </p>
-                  <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
+                  <p className="text-xs text-[var(--editorial-text-tertiary)] mt-0.5">
                     Overnight stay
                   </p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-[10px] text-stone-500 dark:text-gray-400 uppercase tracking-wide">
+                <p className="text-[10px] text-[var(--editorial-text-tertiary)] uppercase tracking-wide">
                   Night
                 </p>
               </div>
@@ -1688,7 +1697,7 @@ function TransportForm({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-[12px] font-medium text-gray-900 dark:text-white capitalize">
+        <span className="text-[12px] font-medium text-[var(--editorial-text-primary)] capitalize">
           Add {type}
         </span>
         <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
@@ -1702,9 +1711,9 @@ function TransportForm({
           <div className="flex items-center gap-1 mb-1">
             <button
               onClick={() => { setSearchSource('curated'); setHotelSearch(''); setSearchResults([]); }}
-              className={`px-2 py-0.5 text-[10px] rounded-full transition-colors ${
+              className={`px-2 py-0.5 text-[10px] rounded-md transition-colors ${
                 searchSource === 'curated'
-                  ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                  ? 'bg-[var(--editorial-accent)] text-white'
                   : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
@@ -1712,9 +1721,9 @@ function TransportForm({
             </button>
             <button
               onClick={() => { setSearchSource('google'); setHotelSearch(''); setSearchResults([]); }}
-              className={`px-2 py-0.5 text-[10px] rounded-full transition-colors ${
+              className={`px-2 py-0.5 text-[10px] rounded-md transition-colors ${
                 searchSource === 'google'
-                  ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                  ? 'bg-[var(--editorial-accent)] text-white'
                   : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
@@ -1724,7 +1733,7 @@ function TransportForm({
 
           {/* Hotel search input */}
           <div className="relative">
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div className="flex items-center gap-2 px-3 py-2 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg">
               {isSearching ? (
                 <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
               ) : searchSource === 'google' ? (
@@ -1743,7 +1752,7 @@ function TransportForm({
                   setHotelSearch(e.target.value);
                 }}
                 placeholder={searchSource === 'google' ? 'Search hotels on Google...' : 'Search curated hotels...'}
-                className="flex-1 bg-transparent text-[13px] text-gray-900 dark:text-white placeholder-gray-400 outline-none"
+                className="flex-1 bg-transparent text-[13px] text-[var(--editorial-text-primary)] placeholder-gray-400 outline-none"
                 autoFocus
               />
               {selectedHotel && (
@@ -1755,14 +1764,14 @@ function TransportForm({
 
             {/* Search results dropdown */}
             {searchResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto">
                 {searchResults.map((hotel) => (
                   <button
                     key={hotel.id}
                     onClick={() => selectHotel(hotel)}
-                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 text-left"
+                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[var(--editorial-border-subtle)] text-left"
                   >
-                    <div className="w-6 h-6 rounded bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <div className="w-6 h-6 rounded bg-[var(--editorial-bg-elevated)] flex items-center justify-center overflow-hidden flex-shrink-0">
                       {hotel.image ? (
                         <Image src={hotel.image} alt="" width={24} height={24} className="w-full h-full object-cover" />
                       ) : (
@@ -1770,7 +1779,7 @@ function TransportForm({
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-medium text-gray-900 dark:text-white truncate">{hotel.name}</p>
+                      <p className="text-[12px] font-medium text-[var(--editorial-text-primary)] truncate">{hotel.name}</p>
                       {hotel.category && <p className="text-[10px] text-gray-400 truncate">{hotel.category}</p>}
                     </div>
                   </button>
@@ -1786,7 +1795,7 @@ function TransportForm({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Or type hotel name manually"
-              className="w-full px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+              className="w-full px-3 py-2 text-[13px] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg outline-none"
             />
           )}
 
@@ -1798,7 +1807,7 @@ function TransportForm({
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="e.g., 1435 Brickell Ave, Miami"
-              className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+              className="w-full mt-1 px-3 py-2 text-[13px] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg outline-none"
             />
           </div>
 
@@ -1810,7 +1819,7 @@ function TransportForm({
                 type="date"
                 value={checkInDate}
                 onChange={(e) => setCheckInDate(e.target.value)}
-                className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+                className="w-full mt-1 px-3 py-2 text-[13px] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg outline-none"
               />
             </div>
             <div className="flex-1">
@@ -1818,7 +1827,7 @@ function TransportForm({
               <select
                 value={checkIn}
                 onChange={(e) => setCheckIn(e.target.value)}
-                className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+                className="w-full mt-1 px-3 py-2 text-[13px] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg outline-none"
               >
                 <option value="14:00">2 PM</option>
                 <option value="15:00">3 PM</option>
@@ -1837,7 +1846,7 @@ function TransportForm({
                 type="date"
                 value={checkOutDate}
                 onChange={(e) => setCheckOutDate(e.target.value)}
-                className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+                className="w-full mt-1 px-3 py-2 text-[13px] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg outline-none"
               />
             </div>
             <div className="flex-1">
@@ -1845,7 +1854,7 @@ function TransportForm({
               <select
                 value={checkOut}
                 onChange={(e) => setCheckOut(e.target.value)}
-                className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+                className="w-full mt-1 px-3 py-2 text-[13px] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg outline-none"
               >
                 <option value="10:00">10 AM</option>
                 <option value="11:00">11 AM</option>
@@ -1863,7 +1872,7 @@ function TransportForm({
                 value={roomType}
                 onChange={(e) => setRoomType(e.target.value)}
                 placeholder="e.g., Ocean View Suite"
-                className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+                className="w-full mt-1 px-3 py-2 text-[13px] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg outline-none"
               />
             </div>
             <div className="flex-1">
@@ -1873,7 +1882,7 @@ function TransportForm({
                 value={confirmation}
                 onChange={(e) => setConfirmation(e.target.value)}
                 placeholder="Booking ref"
-                className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+                className="w-full mt-1 px-3 py-2 text-[13px] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg outline-none"
               />
             </div>
           </div>
@@ -1887,7 +1896,7 @@ function TransportForm({
                 onChange={(e) => setBreakfast(e.target.checked ? 'included' : '')}
                 className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-500"
               />
-              <span className="text-[12px] text-gray-600 dark:text-gray-300">Breakfast included</span>
+              <span className="text-[12px] text-[var(--editorial-text-secondary)]">Breakfast included</span>
             </label>
           </div>
         </>
@@ -1899,7 +1908,7 @@ function TransportForm({
               value={from}
               onChange={(e) => setFrom(e.target.value)}
               placeholder="From (e.g. LHR)"
-              className="flex-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+              className="flex-1 px-3 py-2 text-[13px] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg outline-none"
               autoFocus
             />
             <input
@@ -1907,7 +1916,7 @@ function TransportForm({
               value={to}
               onChange={(e) => setTo(e.target.value)}
               placeholder="To (e.g. CDG)"
-              className="flex-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+              className="flex-1 px-3 py-2 text-[13px] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg outline-none"
             />
           </div>
           {type === 'flight' && (
@@ -1917,14 +1926,14 @@ function TransportForm({
                 value={airline}
                 onChange={(e) => setAirline(e.target.value)}
                 placeholder="Airline (e.g. BA)"
-                className="flex-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+                className="flex-1 px-3 py-2 text-[13px] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg outline-none"
               />
               <input
                 type="text"
                 value={flightNumber}
                 onChange={(e) => setFlightNumber(e.target.value)}
                 placeholder="Flight # (e.g. 123)"
-                className="flex-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+                className="flex-1 px-3 py-2 text-[13px] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg outline-none"
               />
             </div>
           )}
@@ -1935,7 +1944,7 @@ function TransportForm({
                 type="time"
                 value={departureTime}
                 onChange={(e) => setDepartureTime(e.target.value)}
-                className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+                className="w-full mt-1 px-3 py-2 text-[13px] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg outline-none"
               />
             </div>
             <div className="flex-1">
@@ -1944,7 +1953,7 @@ function TransportForm({
                 type="time"
                 value={arrivalTime}
                 onChange={(e) => setArrivalTime(e.target.value)}
-                className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+                className="w-full mt-1 px-3 py-2 text-[13px] bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg outline-none"
               />
             </div>
           </div>
@@ -1954,7 +1963,7 @@ function TransportForm({
       <button
         onClick={handleSubmit}
         disabled={!canSubmit || isAdding}
-        className="w-full py-2 text-[13px] font-medium text-white dark:text-gray-900 bg-gray-900 dark:bg-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+        className="w-full py-2 text-[13px] font-medium text-white bg-[var(--editorial-accent)] rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {isAdding ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : `Add ${type}`}
       </button>
@@ -2022,8 +2031,8 @@ function HotelActivityRow({
       <div
         onClick={onSelect}
         className={`
-          relative overflow-hidden rounded-2xl cursor-pointer transition-all
-          bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800
+          relative overflow-hidden rounded-lg cursor-pointer transition-all
+          bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)]
           ${isDragging ? 'shadow-xl ring-2 ring-stone-400 dark:ring-gray-500' : 'hover:shadow-md'}
         `}
       >
@@ -2031,8 +2040,8 @@ function HotelActivityRow({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Icon */}
-              <div className="w-9 h-9 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
-                <span className="text-stone-500 dark:text-gray-400">{style.icon}</span>
+              <div className="w-9 h-9 rounded-xl bg-[var(--editorial-bg-elevated)] flex items-center justify-center">
+                <span className="text-[var(--editorial-text-tertiary)]">{style.icon}</span>
               </div>
 
               {/* Hotel info */}
@@ -2042,7 +2051,7 @@ function HotelActivityRow({
                 </p>
                 <div className="flex items-center gap-2 mt-0.5">
                   {item.parsedNotes?.roomType && activityType === 'checkin' && (
-                    <span className="text-xs text-stone-500 dark:text-gray-400">
+                    <span className="text-xs text-[var(--editorial-text-tertiary)]">
                       {item.parsedNotes.roomType}
                     </span>
                   )}
@@ -2061,7 +2070,7 @@ function HotelActivityRow({
               <p className="text-sm font-semibold text-stone-900 dark:text-white">
                 {style.time}
               </p>
-              <p className="text-[10px] text-stone-500 dark:text-gray-400 uppercase tracking-wide">
+              <p className="text-[10px] text-[var(--editorial-text-tertiary)] uppercase tracking-wide">
                 {style.label}
               </p>
             </div>
@@ -2337,7 +2346,7 @@ function ItemRow({
       >
         <div
           className={`
-            relative rounded-2xl overflow-hidden transition-all cursor-pointer
+            relative rounded-lg overflow-hidden transition-all cursor-pointer
             bg-stone-50 dark:bg-gray-800/60
             ring-1 ring-stone-200/60 dark:ring-gray-700/50
             hover:ring-stone-300 dark:hover:ring-gray-600
@@ -2389,8 +2398,8 @@ function ItemRow({
             {/* Dotted Perforation Line */}
             <div className="relative my-3">
               <div className="w-full border-t border-dashed border-stone-200 dark:border-gray-700" />
-              <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-2 h-4 bg-white dark:bg-gray-900 rounded-r-full" />
-              <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-2 h-4 bg-white dark:bg-gray-900 rounded-l-full" />
+              <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-2 h-4 bg-[var(--editorial-bg-elevated)] rounded-r-full" />
+              <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-2 h-4 bg-[var(--editorial-bg-elevated)] rounded-l-full" />
             </div>
 
             {/* Time Row */}
@@ -2480,8 +2489,8 @@ function ItemRow({
     >
       <div
         className={`
-          relative rounded-2xl overflow-hidden transition-all cursor-pointer
-          bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800
+          relative rounded-lg overflow-hidden transition-all cursor-pointer
+          bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)]
           ${isDragging ? 'shadow-xl ring-2 ring-stone-400 dark:ring-gray-500' : 'hover:shadow-md'}
         `}
         onClick={() => {
@@ -2503,34 +2512,34 @@ function ItemRow({
             )}
 
             {/* Icon */}
-            <div className="w-10 h-10 rounded-xl overflow-hidden bg-stone-100 dark:bg-gray-800 flex-shrink-0 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl overflow-hidden bg-[var(--editorial-bg-elevated)] flex-shrink-0 flex items-center justify-center">
               {iconType === 'hotel' ? (
-                <Hotel className="w-4 h-4 text-stone-500 dark:text-gray-400" />
+                <Hotel className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
               ) : iconType === 'checkin' ? (
-                <DoorOpen className="w-4 h-4 text-stone-500 dark:text-gray-400" />
+                <DoorOpen className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
               ) : iconType === 'checkout' ? (
-                <LogOut className="w-4 h-4 text-stone-500 dark:text-gray-400" />
+                <LogOut className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
               ) : iconType === 'breakfast' ? (
-                <UtensilsCrossed className="w-4 h-4 text-stone-500 dark:text-gray-400" />
+                <UtensilsCrossed className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
               ) : iconType === 'train' ? (
-                <TrainIcon className="w-4 h-4 text-stone-500 dark:text-gray-400" />
+                <TrainIcon className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
               ) : iconType === 'activity' ? (
                 (() => {
                   const aType = (extraData as any).activityType;
                   switch (aType) {
-                    case 'nap': return <BedDouble className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'pool': return <Waves className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'spa': return <Sparkles className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'gym': return <Dumbbell className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'breakfast-at-hotel': return <Coffee className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'getting-ready': return <Shirt className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'packing': case 'checkout-prep': return <Package className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'sunset': return <Sun className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'work': return <Briefcase className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'call': return <Phone className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'shopping-time': return <ShoppingBag className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    case 'photo-walk': return <Camera className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
-                    default: return <Clock className="w-4 h-4 text-stone-500 dark:text-gray-400" />;
+                    case 'nap': return <BedDouble className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
+                    case 'pool': return <Waves className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
+                    case 'spa': return <Sparkles className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
+                    case 'gym': return <Dumbbell className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
+                    case 'breakfast-at-hotel': return <Coffee className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
+                    case 'getting-ready': return <Shirt className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
+                    case 'packing': case 'checkout-prep': return <Package className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
+                    case 'sunset': return <Sun className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
+                    case 'work': return <Briefcase className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
+                    case 'call': return <Phone className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
+                    case 'shopping-time': return <ShoppingBag className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
+                    case 'photo-walk': return <Camera className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
+                    default: return <Clock className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />;
                   }
                 })()
               ) : image && !imageError ? (
@@ -2543,14 +2552,14 @@ function ItemRow({
                   onError={() => setImageError(true)}
                 />
               ) : (
-                <MapPin className="w-4 h-4 text-stone-500 dark:text-gray-400" />
+                <MapPin className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
               )}
             </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-stone-900 dark:text-white truncate">{title}</p>
-              <p className="text-xs text-stone-500 dark:text-gray-400 truncate">
+              <p className="text-xs text-[var(--editorial-text-tertiary)] truncate">
                 {subtitle || (item.destination?.category) || 'Place'}
               </p>
             </div>
@@ -2569,7 +2578,7 @@ function ItemRow({
                   e.stopPropagation();
                   setShowActions(!showActions);
                 }}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
                 <MoreHorizontal className="w-5 h-5 text-gray-400" />
               </button>
@@ -2582,7 +2591,7 @@ function ItemRow({
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: -4 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden min-w-[140px]"
+                    className="absolute right-0 top-full mt-1 z-50 bg-[var(--editorial-bg-elevated)] rounded-lg shadow-lg border border-[var(--editorial-border)] overflow-hidden min-w-[140px]"
                   >
                     <button
                       onClick={(e) => {
@@ -2590,7 +2599,7 @@ function ItemRow({
                         setShowActions(false);
                         onToggle();
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors"
                     >
                       <Pencil className="w-4 h-4" />
                       Edit
@@ -2707,7 +2716,7 @@ function ItemDetails({
   };
 
   return (
-    <div className="px-3 pb-3 pt-2 space-y-3 border-t border-gray-100 dark:border-gray-800 mt-2">
+    <div className="px-3 pb-3 pt-2 space-y-3 border-t border-[var(--editorial-border)] mt-2">
       {/* Hotel: check-in/out times */}
       {itemType === 'hotel' && (
         <div className="flex gap-3">
@@ -2717,7 +2726,7 @@ function ItemDetails({
               type="time"
               value={checkInTime}
               onChange={(e) => setCheckInTime(e.target.value)}
-              className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg"
+              className="w-full px-3 py-2 text-sm bg-[var(--editorial-bg-elevated)] border-0 rounded-lg"
             />
           </div>
           <div className="flex-1">
@@ -2726,7 +2735,7 @@ function ItemDetails({
               type="time"
               value={checkOutTime}
               onChange={(e) => setCheckOutTime(e.target.value)}
-              className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg"
+              className="w-full px-3 py-2 text-sm bg-[var(--editorial-bg-elevated)] border-0 rounded-lg"
             />
           </div>
         </div>
@@ -2741,7 +2750,7 @@ function ItemDetails({
               type="time"
               value={departureTime}
               onChange={(e) => setDepartureTime(e.target.value)}
-              className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg"
+              className="w-full px-3 py-2 text-sm bg-[var(--editorial-bg-elevated)] border-0 rounded-lg"
             />
           </div>
           <div className="flex-1">
@@ -2750,7 +2759,7 @@ function ItemDetails({
               type="time"
               value={arrivalTime}
               onChange={(e) => setArrivalTime(e.target.value)}
-              className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg"
+              className="w-full px-3 py-2 text-sm bg-[var(--editorial-bg-elevated)] border-0 rounded-lg"
             />
           </div>
         </div>
@@ -2764,7 +2773,7 @@ function ItemDetails({
             type="time"
             value={time}
             onChange={(e) => setTime(e.target.value)}
-            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg"
+            className="w-full px-3 py-2 text-sm bg-[var(--editorial-bg-elevated)] border-0 rounded-lg"
           />
         </div>
       )}
@@ -2778,7 +2787,7 @@ function ItemDetails({
             value={confirmationNumber}
             onChange={(e) => setConfirmationNumber(e.target.value)}
             placeholder="Booking reference"
-            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg font-mono"
+            className="w-full px-3 py-2 text-sm bg-[var(--editorial-bg-elevated)] border-0 rounded-lg font-mono"
           />
         </div>
       )}
@@ -2791,7 +2800,7 @@ function ItemDetails({
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Add a note..."
           rows={2}
-          className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg resize-none"
+          className="w-full px-3 py-2 text-sm bg-[var(--editorial-bg-elevated)] border-0 rounded-lg resize-none"
         />
       </div>
 
@@ -2816,7 +2825,7 @@ function ItemDetails({
           </button>
           <button
             onClick={handleSave}
-            className="px-3 py-1.5 text-xs font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-full"
+            className="px-3 py-1.5 text-xs font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-md"
           >
             Save
           </button>
@@ -2962,7 +2971,7 @@ function TravelTime({
       {/* Travel info */}
       <button
         onClick={cycleMode}
-        className="flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        className="flex items-center gap-1.5 text-[11px] text-[var(--editorial-text-tertiary)] hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
         title={`${duration} by ${getModeLabel()} - click to change`}
       >
         {getModeIcon()}
@@ -2996,7 +3005,7 @@ function ItemImage({ src }: { src: string }) {
 
   if (hasError) {
     return (
-      <div className="w-6 h-6 rounded bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+      <div className="w-6 h-6 rounded bg-[var(--editorial-bg-elevated)] flex items-center justify-center flex-shrink-0">
         <MapPin className="w-3 h-3 text-gray-400" />
       </div>
     );
@@ -3214,7 +3223,7 @@ function GapSuggestion({
                       key={place.slug}
                       onClick={() => addSuggestion(place)}
                       disabled={isAdding}
-                      className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600 hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-colors text-left group"
+                      className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] hover:border-amber-300 dark:hover:border-amber-600 hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-colors text-left group"
                     >
                       <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex-shrink-0 overflow-hidden">
                         {place.image ? (
@@ -3226,8 +3235,8 @@ function GapSuggestion({
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-medium text-gray-900 dark:text-white truncate">{place.name}</p>
-                        <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                        <p className="text-[12px] font-medium text-[var(--editorial-text-primary)] truncate">{place.name}</p>
+                        <p className="text-[10px] text-[var(--editorial-text-secondary)] truncate">
                           {place.reason || place.category}
                         </p>
                       </div>
@@ -3288,7 +3297,7 @@ function MealGapSuggestions({
         <button
           key={item}
           onClick={() => onAddSuggestion?.(item)}
-          className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          className="text-[10px] px-2 py-0.5 rounded-md bg-[var(--editorial-bg-elevated)] text-gray-600 dark:text-gray-400 hover:bg-[var(--editorial-border-subtle)] transition-colors"
         >
           + {item}
         </button>
@@ -3539,12 +3548,12 @@ function SidebarDestinationPalette({
   if (!city) return null;
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+    <div className="bg-[var(--editorial-bg-elevated)] rounded-xl border border-[var(--editorial-border)] overflow-hidden">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+      <div className="px-4 py-3 border-b border-[var(--editorial-border)]">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-amber-500" />
-          <h3 className="text-[12px] font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-[12px] font-semibold text-[var(--editorial-text-primary)]">
             Our Curated List in {city}
           </h3>
         </div>
@@ -3606,8 +3615,8 @@ function DraggablePaletteCard({ destination }: { destination: Destination }) {
       {...attributes}
       className={`
         flex items-center gap-2.5 p-2 rounded-lg
-        bg-gray-50 dark:bg-gray-800
-        hover:bg-gray-100 dark:hover:bg-gray-700
+        bg-[var(--editorial-bg-elevated)]
+        hover:bg-[var(--editorial-border-subtle)]
         cursor-grab active:cursor-grabbing
         transition-all duration-150
         ${isDragging ? 'shadow-xl ring-2 ring-gray-900/20 dark:ring-white/20 z-50' : ''}
@@ -3635,7 +3644,7 @@ function DraggablePaletteCard({ destination }: { destination: Destination }) {
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-medium text-gray-900 dark:text-white truncate">
+        <p className="text-[11px] font-medium text-[var(--editorial-text-primary)] truncate">
           {destination.name}
         </p>
         <p className="text-[10px] text-gray-500 truncate capitalize">
@@ -3669,12 +3678,12 @@ function DragPreviewCard({
       <div
         className={`
           flex items-center gap-3 p-3 rounded-xl
-          bg-white dark:bg-gray-800
+          bg-[var(--editorial-bg-elevated)]
           shadow-2xl border-2
           transition-all duration-200
           ${isOverTarget
             ? 'border-green-500 dark:border-green-400 ring-4 ring-green-500/20'
-            : 'border-gray-200 dark:border-gray-700'
+            : 'border-[var(--editorial-border)]'
           }
         `}
         style={{ width: isOverTarget ? 240 : 180 }}
@@ -3704,7 +3713,7 @@ function DragPreviewCard({
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <p className="text-[12px] font-semibold text-gray-900 dark:text-white truncate">
+          <p className="text-[12px] font-semibold text-[var(--editorial-text-primary)] truncate">
             {destination.name}
           </p>
           <p className="text-[10px] text-gray-500 truncate capitalize">

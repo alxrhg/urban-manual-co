@@ -71,27 +71,25 @@ export default async function HomePage() {
         serverCities={cities}
         serverCategories={categories}
       >
-        <main className="relative min-h-screen dark:text-white">
+        <main className="relative min-h-screen bg-[var(--editorial-bg)] text-[var(--editorial-text-primary)]">
           <h1 className="sr-only">
             Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual
           </h1>
 
-          {/* Hero Section - Apple-inspired spacious layout */}
+          {/* Hero Section - Full width layout */}
           <section className="min-h-[50vh] flex flex-col pl-6 md:pl-10 pr-0 py-10 pb-6 md:pb-10">
             <div className="w-full flex md:justify-start flex-1 items-center">
               <InteractiveHero />
             </div>
           </section>
 
-          {/* Content Section */}
+          {/* Content Section - Full width */}
           <div className="w-full px-4 sm:px-6 md:px-10 mt-6 sm:mt-8">
-            <div className="max-w-[1800px] mx-auto">
-              {/* Navigation bar */}
-              <NavigationBar />
+            {/* Navigation bar */}
+            <NavigationBar />
 
-              {/* Grid or Map view - switches based on viewMode */}
-              <HomepageContent />
-            </div>
+            {/* Grid or Map view - switches based on viewMode */}
+            <HomepageContent />
           </div>
         </main>
 

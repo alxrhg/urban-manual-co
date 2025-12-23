@@ -16,7 +16,7 @@ export default function Loading() {
 
         {/* Search bar skeleton */}
         <div className="mb-8">
-          <div className="h-12 w-full max-w-2xl bg-gray-100 dark:bg-gray-900 rounded-2xl animate-pulse" />
+          <div className="h-12 w-full max-w-2xl bg-gray-100 dark:bg-gray-900 rounded-lg animate-pulse" />
         </div>
 
         {/* Filter chips skeleton */}
@@ -33,7 +33,7 @@ export default function Loading() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div key={i} className="animate-pulse">
-              <div className="aspect-[4/3] bg-gray-200 dark:bg-gray-800 rounded-2xl mb-3" />
+              <div className="aspect-[4/3] bg-gray-200 dark:bg-gray-800 rounded-lg mb-3" />
               <div className="h-4 w-3/4 bg-gray-100 dark:bg-gray-900 rounded mb-2" />
               <div className="h-3 w-1/2 bg-gray-100 dark:bg-gray-900 rounded" />
             </div>

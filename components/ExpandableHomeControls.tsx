@@ -330,7 +330,7 @@ export function ExpandableHomeControls({
             </div>
 
             {/* Filters Section - Inline Form */}
-            <div className="bg-gray-50 dark:bg-[rgba(255,255,255,0.04)] rounded-2xl p-4 border border-gray-200 dark:border-[rgba(255,255,255,0.12)]">
+            <div className="bg-gray-50 dark:bg-[rgba(255,255,255,0.04)] rounded-lg p-4 border border-gray-200 dark:border-[rgba(255,255,255,0.12)]">
               <div className="space-y-4">
                 <div className="text-sm font-medium text-gray-900 dark:text-[#F7F7F7] mb-3">
                   Advanced Filters

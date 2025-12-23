@@ -107,7 +107,7 @@ export default function ExplorePage() {
             <div className="h-4 w-64 bg-stone-200 dark:bg-gray-800 rounded mb-12" />
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-32 bg-stone-200 dark:bg-gray-800 rounded-2xl" />
+                <div key={i} className="h-32 bg-stone-200 dark:bg-gray-800 rounded-lg" />
               ))}
             </div>
           </div>
@@ -135,7 +135,7 @@ export default function ExplorePage() {
               <button
                 key={stat.category}
                 onClick={() => router.push(`/?category=${stat.category}`)}
-                className="group p-5 sm:p-6 bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-2xl hover:shadow-lg hover:-translate-y-1 active:scale-[0.98] transition-all duration-200 animate-in fade-in slide-in-from-bottom-4 min-h-[120px] sm:min-h-0"
+                className="group p-5 sm:p-6 bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-lg hover:shadow-lg hover:-translate-y-1 active:scale-[0.98] transition-all duration-200 animate-in fade-in slide-in-from-bottom-4 min-h-[120px] sm:min-h-0"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="text-3xl sm:text-4xl mb-3 group-hover:scale-110 transition-transform">
@@ -166,7 +166,7 @@ export default function ExplorePage() {
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   {/* Image Container */}
-                  <div className="relative aspect-square overflow-hidden bg-stone-100 dark:bg-gray-800 rounded-2xl mb-2 sm:mb-3">
+                  <div className="relative aspect-square overflow-hidden bg-stone-100 dark:bg-gray-800 rounded-lg mb-2 sm:mb-3">
                     {dest.image ? (
                       <img
                         src={dest.image}
@@ -226,7 +226,7 @@ export default function ExplorePage() {
               <button
                 key={city.city}
                 onClick={() => router.push(`/city/${encodeURIComponent(city.city)}`)}
-                className="group p-5 sm:p-4 bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-2xl hover:shadow-lg hover:-translate-y-1 active:scale-[0.98] transition-all duration-200 text-left animate-in fade-in slide-in-from-bottom-4 min-h-[100px] sm:min-h-0"
+                className="group p-5 sm:p-4 bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-lg hover:shadow-lg hover:-translate-y-1 active:scale-[0.98] transition-all duration-200 text-left animate-in fade-in slide-in-from-bottom-4 min-h-[100px] sm:min-h-0"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">

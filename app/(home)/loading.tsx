@@ -66,11 +66,11 @@ export default function HomeLoading() {
             <div className="flex justify-end">
               <div className="flex items-center gap-3">
                 {/* View toggle skeleton */}
-                <div className="h-[44px] w-24 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse" />
+                <div className="h-[44px] w-24 bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse" />
                 {/* Create trip skeleton */}
-                <div className="h-[44px] w-32 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse" />
+                <div className="h-[44px] w-32 bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse" />
                 {/* Filter button skeleton */}
-                <div className="h-[44px] w-[44px] bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse" />
+                <div className="h-[44px] w-[44px] bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse" />
               </div>
             </div>
           </div>

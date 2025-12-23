@@ -16,7 +16,7 @@ interface MapDrawerProps {
 
 /**
  * MapDrawer - Slide-in map overlay matching Destination drawer style
- * Uses: glassy backdrop, rounded-2xl, gray color palette
+ * Uses: glassy backdrop, rounded-lg, gray color palette
  */
 export default function MapDrawer({
   isOpen,
@@ -67,7 +67,7 @@ export default function MapDrawer({
           fixed top-4 right-4 bottom-4 z-50
           w-[calc(100%-2rem)] md:w-[420px]
           bg-white dark:bg-gray-900
-          rounded-2xl
+          rounded-lg
           shadow-2xl shadow-black/20
           transition-all duration-500 ease-out
           ${isOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}

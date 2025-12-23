@@ -156,12 +156,10 @@ export function SearchFiltersComponent({
           }
           handleToggle(!isOpen);
         }}
-        className={`flex items-center justify-center gap-2 h-[44px] px-5 text-sm font-medium rounded-full transition-all duration-200 ease-out ${
-          useFunnelIcon
-            ? "bg-white dark:border-[rgba(255,255,255,0.10)] border border-gray-200 dark:text-[rgba(255,255,255,0.92)] text-gray-900 hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.12)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_4px_14px_rgba(0,0,0,0.4)] dark:[background:linear-gradient(to_bottom,rgba(255,255,255,0.10),rgba(255,255,255,0.04))]"
-            : "bg-gray-100 dark:border-[rgba(255,255,255,0.10)] border border-gray-200 dark:text-[rgba(255,255,255,0.92)] text-gray-900 rounded-full transition-colors hover:bg-gray-200 dark:hover:bg-[rgba(255,255,255,0.12)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_4px_14px_rgba(0,0,0,0.4)] dark:[background:linear-gradient(to_bottom,rgba(255,255,255,0.10),rgba(255,255,255,0.04))]"
-        }`}
-        style={{ borderRadius: '9999px' }}
+        className={`flex items-center justify-center gap-2 h-10 px-4 text-[13px] font-medium rounded-lg transition-all duration-200 ease-out
+          border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)]
+          text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)]
+          active:scale-[0.98]`}
         aria-label="Toggle filters"
         aria-expanded={isOpen}
       >
@@ -395,7 +393,7 @@ export function SearchFiltersComponent({
               />
               {/* Dropdown popover */}
               <div
-                className="fixed z-50 w-[90vw] max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
+                className="fixed z-50 w-[90vw] max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-2xl ring-1 ring-black/5 dark:ring-white/5 overflow-hidden origin-top-right animate-in fade-in slide-in-from-top-2 duration-150"
                 style={{
                   top: `${dropdownPosition.top}px`,
                   right: `${dropdownPosition.right}px`,

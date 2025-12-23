@@ -266,7 +266,7 @@ export function MediaLibrary() {
           <Separator orientation="vertical" className="h-4" />
           <span>{totalCount} files</span>
         </div>
-        <Button asChild className="rounded-full" disabled={uploading}>
+        <Button asChild className="rounded-lg" disabled={uploading}>
           <label className="cursor-pointer">
             {uploading ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -288,7 +288,7 @@ export function MediaLibrary() {
 
       {/* Error Message */}
       {error && (
-        <div className="flex items-center gap-3 p-4 border border-red-200 dark:border-red-900 rounded-2xl bg-red-50 dark:bg-red-900/10">
+        <div className="flex items-center gap-3 p-4 border border-red-200 dark:border-red-900 rounded-lg bg-red-50 dark:bg-red-900/10">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
           <Button
@@ -314,7 +314,7 @@ export function MediaLibrary() {
               setPage(1);
             }}
             placeholder="Search files..."
-            className="pl-10 rounded-full"
+            className="pl-10 rounded-lg"
           />
         </div>
 
@@ -340,7 +340,7 @@ export function MediaLibrary() {
 
       {/* Bulk Actions */}
       {selectedItems.size > 0 && (
-        <div className="flex items-center gap-3 p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+        <div className="flex items-center gap-3 p-4 border border-gray-200 dark:border-gray-800 rounded-lg">
           <Badge variant="secondary">{selectedItems.size} selected</Badge>
           <Separator orientation="vertical" className="h-4" />
           <Button
@@ -369,7 +369,7 @@ export function MediaLibrary() {
           {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
             <Skeleton
               key={i}
-              className={`rounded-2xl ${viewMode === 'grid' ? 'aspect-square' : 'h-16'}`}
+              className={`rounded-lg ${viewMode === 'grid' ? 'aspect-square' : 'h-16'}`}
             />
           ))}
         </div>
@@ -385,7 +385,7 @@ export function MediaLibrary() {
             <div
               key={item.id}
               className={`
-                group relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 border transition-all cursor-pointer
+                group relative aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 border transition-all cursor-pointer
                 ${selectedItems.has(item.id)
                   ? 'ring-1 ring-gray-400 dark:ring-gray-500 bg-black/5 dark:bg-white/5'
                   : 'border-transparent hover:border-gray-200 dark:hover:border-gray-700'}
@@ -425,7 +425,7 @@ export function MediaLibrary() {
 
               {/* Quick Actions */}
               <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
-                <span className="text-[10px] text-white bg-black/50 px-2 py-1 rounded-full truncate max-w-[70%]">
+                <span className="text-[10px] text-white bg-black/50 px-2 py-1 rounded-md truncate max-w-[70%]">
                   {item.name}
                 </span>
                 <button
@@ -554,7 +554,7 @@ export function MediaLibrary() {
                     variant="secondary"
                     size="sm"
                     onClick={() => copyUrl(selectedMedia.url)}
-                    className="rounded-full"
+                    className="rounded-lg"
                   >
                     {copiedUrl === selectedMedia.url ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                     Copy URL
@@ -563,7 +563,7 @@ export function MediaLibrary() {
                     variant="secondary"
                     size="sm"
                     asChild
-                    className="rounded-full"
+                    className="rounded-lg"
                   >
                     <a
                       href={selectedMedia.url}
@@ -580,7 +580,7 @@ export function MediaLibrary() {
                     size="sm"
                     onClick={() => handleDelete(selectedMedia)}
                     disabled={deleting.has(selectedMedia.id)}
-                    className="ml-auto text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-full"
+                    className="ml-auto text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg"
                   >
                     {deleting.has(selectedMedia.id) ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />

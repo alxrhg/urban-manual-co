@@ -119,7 +119,7 @@ export default function TimelineCanvas({
         <div className="flex justify-end px-6 py-3 border-b border-gray-100 dark:border-gray-900">
           <button
             onClick={onOptimize}
-            className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-full transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-md transition-colors"
           >
             <Sparkles className="w-3 h-3" />
             Optimize Route

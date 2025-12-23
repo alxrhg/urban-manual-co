@@ -24,9 +24,9 @@ const tripButtonVariants = cva(
         dangerOutline:
           "border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-full",
         pill:
-          "px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700",
+          "px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700",
         pillActive:
-          "px-2.5 py-1 rounded-full text-xs font-medium bg-gray-900 text-white dark:bg-white dark:text-gray-900",
+          "px-2.5 py-1 rounded-md text-xs font-medium bg-gray-900 text-white dark:bg-white dark:text-gray-900",
         icon:
           "p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors",
       },

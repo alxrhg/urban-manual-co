@@ -109,7 +109,7 @@ export function Header() {
     <>
       {isAdmin && buildVersion && (
         <span
-          className="text-[10px] text-gray-400 font-mono px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded"
+          className="text-[10px] text-[var(--editorial-text-tertiary)] font-mono px-1.5 py-0.5 bg-[var(--editorial-border)] rounded"
           title="Build version"
           aria-label={`Build version ${buildVersion}`}
         >
@@ -165,7 +165,7 @@ export function Header() {
               aria-label="Open account drawer"
             >
               {avatarUrl ? (
-                <span className="relative w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 overflow-visible">
+                <span className="relative w-7 h-7 rounded-full bg-[var(--editorial-border)] overflow-visible">
                   <img
                     src={avatarUrl}
                     alt="Profile"
@@ -192,8 +192,8 @@ export function Header() {
                   )}
                 </span>
               ) : (
-                <span className="relative flex items-center justify-center w-7 h-7 rounded-full bg-gray-300 dark:bg-gray-600">
-                  <User className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                <span className="relative flex items-center justify-center w-7 h-7 rounded-full bg-[var(--editorial-border)]">
+                  <User className="w-4 h-4 text-[var(--editorial-text-secondary)]" />
                   {isChristmasMode && (
                     <svg
                       className="absolute -top-3 -left-2 w-4 h-4 -rotate-12"
@@ -238,7 +238,7 @@ export function Header() {
 
   return (
     <header
-      className="mt-6 md:mt-8 relative z-30 bg-white dark:bg-gray-950 w-full"
+      className="mt-6 md:mt-8 relative z-30 bg-[var(--editorial-bg)] w-full"
       role="banner"
     >
       {/* Primary Nav */}
@@ -249,7 +249,7 @@ export function Header() {
         >
           <button
             onClick={() => navigate("/")}
-            className="font-medium text-sm hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg py-2 shrink-0"
+            className="font-medium text-sm text-[var(--editorial-text-primary)] hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-[var(--editorial-text-primary)] focus:ring-offset-2 rounded-lg py-2 shrink-0"
             aria-label="Go to homepage"
           >
             Urban Manual®

@@ -119,7 +119,7 @@ export function AddPlaceDropdown({ onPlaceAdded }: AddPlaceDropdownProps) {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button className="rounded-full">
+        <Button className="rounded-lg">
           <Plus className="h-4 w-4 mr-2" />
           Add Place
         </Button>

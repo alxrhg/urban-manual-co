@@ -69,7 +69,7 @@ export default function CollectionsTab({ collections, onCreateCollection }: Coll
           <div className="flex justify-end mb-4">
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
+              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-lg hover:opacity-80 transition-opacity"
             >
               + New Collection
             </button>
@@ -79,7 +79,7 @@ export default function CollectionsTab({ collections, onCreateCollection }: Coll
               <button
                 key={collection.id}
                 onClick={() => router.push(`/collection/${collection.id}`)}
-                className="text-left p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="text-left p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-2xl">{collection.emoji || '📚'}</span>
@@ -104,7 +104,7 @@ export default function CollectionsTab({ collections, onCreateCollection }: Coll
           onClick={() => setShowCreateModal(false)}
         >
           <div
-            className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md"
+            className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -124,7 +124,7 @@ export default function CollectionsTab({ collections, onCreateCollection }: Coll
                   value={newCollectionName}
                   onChange={(e) => setNewCollectionName(e.target.value)}
                   placeholder="e.g., Tokyo Favorites"
-                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white text-sm"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:border-black dark:focus:border-white text-sm"
                   autoFocus
                   maxLength={50}
                 />
@@ -136,7 +136,7 @@ export default function CollectionsTab({ collections, onCreateCollection }: Coll
                   onChange={(e) => setNewCollectionDescription(e.target.value)}
                   placeholder="Optional description..."
                   rows={3}
-                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white resize-none text-sm"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:border-black dark:focus:border-white resize-none text-sm"
                   maxLength={200}
                 />
               </div>
@@ -155,7 +155,7 @@ export default function CollectionsTab({ collections, onCreateCollection }: Coll
               <div className="flex gap-2 pt-4">
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium"
+                  className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-lg hover:opacity-80 transition-opacity text-sm font-medium"
                   disabled={creatingCollection}
                 >
                   Cancel
@@ -163,7 +163,7 @@ export default function CollectionsTab({ collections, onCreateCollection }: Coll
                 <button
                   onClick={handleCreateCollection}
                   disabled={!newCollectionName.trim() || creatingCollection}
-                  className="flex-1 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  className="flex-1 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                 >
                   {creatingCollection ? 'Creating...' : 'Create'}
                 </button>

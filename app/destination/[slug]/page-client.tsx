@@ -478,7 +478,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                   {destination.brand && (
                     <Link
                       href={`/brand/${encodeURIComponent(destination.brand)}`}
-                      className="px-3 py-1.5 rounded-full bg-gray-100 dark:bg-[#1c2128] border border-gray-200 dark:border-[#30363d] text-[12px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#262c36] transition-colors flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-lg bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] text-[12px] font-medium text-[var(--editorial-text-secondary)] hover:bg-[var(--editorial-border-subtle)] transition-colors flex items-center gap-1.5"
                     >
                       <Building2 className="w-3.5 h-3.5" />
                       {destination.brand}
@@ -490,14 +490,14 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 <div className="flex items-center gap-2 flex-wrap">
                   <button
                     onClick={handleShare}
-                    className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-[#30363d] rounded-full text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#1c2128] transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 border border-[var(--editorial-border)] rounded-lg text-[13px] font-medium text-[var(--editorial-text-secondary)] hover:bg-[var(--editorial-border-subtle)] transition-colors"
                   >
                     <Share2 className="w-4 h-4" />
                     Share
                   </button>
                   <button
                     onClick={() => user ? (!isSaved && setShowSaveModal(true)) : router.push('/auth/login')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-colors ${
                       isSaved
                         ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                         : 'border border-gray-200 dark:border-[#30363d] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#1c2128]'
@@ -515,7 +515,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                             user ? handleVisitToggle() : router.push('/auth/login');
                           }
                         }}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium transition-colors ${
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-colors ${
                           isVisited
                             ? 'bg-green-600 text-white'
                             : 'border border-gray-200 dark:border-[#30363d] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#1c2128]'
@@ -658,11 +658,11 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                   <h2 className="text-[11px] font-medium text-gray-500 dark:text-[#8b949e] uppercase tracking-wider mb-4">Reviews</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {enrichedData.reviews.slice(0, 4).map((review: any, idx: number) => (
-                      <div key={idx} className="p-4 bg-white dark:bg-[#1c2128] rounded-xl border border-gray-200 dark:border-[#30363d] hover:border-gray-300 dark:hover:border-[#484f58] transition-colors">
+                      <div key={idx} className="p-4 bg-[var(--editorial-bg-elevated)] rounded-xl border border-[var(--editorial-border)] hover:border-[var(--editorial-text-tertiary)] transition-colors">
                         <div className="flex items-center gap-3 mb-3">
                           {/* Avatar with initial */}
-                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-[#30363d] dark:to-[#21262d] flex items-center justify-center flex-shrink-0">
-                            <span className="text-[13px] font-semibold text-gray-600 dark:text-gray-300">
+                          <div className="w-9 h-9 rounded-full bg-[var(--editorial-border)] flex items-center justify-center flex-shrink-0">
+                            <span className="text-[13px] font-semibold text-[var(--editorial-text-secondary)]">
                               {review.author_name?.charAt(0)?.toUpperCase() || '?'}
                             </span>
                           </div>

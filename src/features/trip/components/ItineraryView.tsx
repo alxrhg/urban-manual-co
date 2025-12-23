@@ -270,7 +270,7 @@ export default function ItineraryView({
             {onAddItem && (
               <button
                 onClick={() => onAddItem(selectedDay.dayNumber)}
-                className="px-5 py-2.5 bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded-full hover:opacity-90 transition-opacity"
+                className="px-5 py-2.5 bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded-lg hover:opacity-90 transition-opacity"
               >
                 Add your first stop
               </button>
@@ -541,7 +541,7 @@ function FlightCard({
     <div
       onClick={onClick}
       className={`
-        rounded-2xl bg-white dark:bg-gray-900/80 border overflow-hidden cursor-pointer transition-all
+        rounded-lg bg-white dark:bg-gray-900/80 border overflow-hidden cursor-pointer transition-all
         ${isActive ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10' : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'}
       `}
     >
@@ -649,7 +649,7 @@ function HotelCard({
     <div
       onClick={onClick}
       className={`
-        rounded-2xl bg-stone-50 dark:bg-gray-900 border p-4 cursor-pointer transition-all
+        rounded-lg bg-stone-50 dark:bg-gray-900 border p-4 cursor-pointer transition-all
         ${isActive ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10' : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'}
       `}
     >
@@ -682,7 +682,7 @@ function NightStayCard({
   return (
     <div
       onClick={onClick}
-      className="rounded-2xl bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 p-4 cursor-pointer transition-all hover:border-stone-300 dark:hover:border-gray-700"
+      className="rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 p-4 cursor-pointer transition-all hover:border-stone-300 dark:hover:border-gray-700"
     >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
@@ -713,7 +713,7 @@ function BreakfastCard({
   return (
     <div
       onClick={onClick}
-      className="rounded-2xl bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 p-4 cursor-pointer transition-all hover:border-stone-300 dark:hover:border-gray-700"
+      className="rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 p-4 cursor-pointer transition-all hover:border-stone-300 dark:hover:border-gray-700"
     >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
@@ -751,7 +751,7 @@ function CheckoutCard({
   return (
     <div
       onClick={onClick}
-      className="rounded-2xl bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 p-4 cursor-pointer transition-all hover:border-stone-300 dark:hover:border-gray-700"
+      className="rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 p-4 cursor-pointer transition-all hover:border-stone-300 dark:hover:border-gray-700"
     >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
@@ -795,7 +795,7 @@ function PlaceCard({
     <div
       onClick={onClick}
       className={`
-        rounded-2xl bg-white dark:bg-gray-900/80 border overflow-hidden cursor-pointer transition-all
+        rounded-lg bg-white dark:bg-gray-900/80 border overflow-hidden cursor-pointer transition-all
         ${isActive ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10' : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'}
       `}
     >

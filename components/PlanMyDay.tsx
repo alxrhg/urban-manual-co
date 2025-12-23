@@ -112,7 +112,7 @@ export function PlanMyDay({
   };
 
   return (
-    <div className={cn('rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden', className)}>
+    <div className={cn('rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden', className)}>
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-4 text-white">
         <div className="flex items-center gap-2 mb-1">

@@ -53,7 +53,7 @@ const TripDrawer = memo(function TripDrawer() {
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-        className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-950 rounded-t-2xl shadow-2xl max-h-[70vh] flex flex-col"
+        className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-950 rounded-t-lg shadow-2xl max-h-[70vh] flex flex-col"
       >
         {/* Handle */}
         <div className="flex-shrink-0 pt-3 pb-1">

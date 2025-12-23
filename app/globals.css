@@ -44,10 +44,10 @@
   scrollbar-width: none;
 }
 
-/* Custom scrollbar for editorial views */
+/* Custom scrollbar for editorial views - warm cream/terracotta palette */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -55,20 +55,208 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #e5e5e5;
+  background: #ddd7cf;
   border-radius: 3px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #d4d4d4;
+  background: #c9c1b6;
 }
 
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #404040;
+  background: #484744;
 }
 
 .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #525252;
+  background: #5a5955;
+}
+
+/* Editorial scrollbar - Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #ddd7cf transparent;
+}
+
+.dark .custom-scrollbar {
+  scrollbar-color: #484744 transparent;
+}
+
+/* ============================================
+   EDITORIAL DESIGN SYSTEM
+   Japanese-meets-Scandinavian minimalism
+   Inspired by print magazines and conscious design
+   ============================================ */
+
+/* Import serif font for editorial headlines */
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&display=swap');
+
+/* Editorial color palette CSS variables */
+:root {
+  /* Serif font for headlines */
+  --font-editorial-serif: 'Source Serif 4', 'Georgia', 'Times New Roman', serif;
+
+  /* Light Mode Colors */
+  /* Background: Warm cream/off-white */
+  --editorial-bg: #F5F2ED;
+  --editorial-bg-elevated: #FDFCFA;
+
+  /* Primary text: Deep charcoal */
+  --editorial-text-primary: #2C2825;
+
+  /* Secondary text: Warm gray */
+  --editorial-text-secondary: #6B6560;
+  --editorial-text-tertiary: #9A948C;
+
+  /* Accent: Terracotta/rust */
+  --editorial-accent: #A65D4C;
+  --editorial-accent-hover: #8F503F;
+  --editorial-accent-muted: #C17B5F;
+
+  /* Subtle borders */
+  --editorial-border: #E5E0D8;
+  --editorial-border-subtle: #EBE7E1;
+
+  /* Legacy support - map to new values */
+  --editorial-terracotta: #A65D4C;
+  --editorial-cream: #F5F2ED;
+  --editorial-charcoal: #2C2825;
+}
+
+/* Dark Mode Colors - Warmer tone for print aesthetic */
+.dark {
+  /* Background: Warm charcoal with brown undertone */
+  --editorial-bg: #211F1C;
+  --editorial-bg-elevated: #2A2723;
+
+  /* Primary text: Warm cream/off-white */
+  --editorial-text-primary: #F2EDE6;
+
+  /* Secondary text: Muted warm gray */
+  --editorial-text-secondary: #A09891;
+  --editorial-text-tertiary: #6D6660;
+
+  /* Accent: Muted terracotta */
+  --editorial-accent: #C4907A;
+  --editorial-accent-hover: #D4A088;
+  --editorial-accent-muted: #A87A66;
+
+  /* Borders - more visible for framed card effect */
+  --editorial-border: #3D3832;
+  --editorial-border-subtle: #4A443D;
+}
+
+/* Editorial Typography */
+.font-editorial-serif {
+  font-family: var(--font-editorial-serif);
+}
+
+.text-editorial-headline {
+  font-family: var(--font-editorial-serif);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--editorial-text-primary);
+}
+
+.text-editorial-title {
+  font-family: var(--font-editorial-serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  color: var(--editorial-text-primary);
+}
+
+.text-editorial-body {
+  font-family: inherit;
+  color: var(--editorial-text-secondary);
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+}
+
+/* Small caps labels - key editorial element */
+.text-editorial-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--editorial-text-tertiary);
+}
+
+.text-editorial-meta {
+  font-size: 13px;
+  color: var(--editorial-text-secondary);
+  letter-spacing: 0.01em;
+}
+
+/* Editorial Button Styles - Minimal, restrained */
+.btn-editorial-primary {
+  background-color: transparent;
+  border: 1px solid var(--editorial-text-primary);
+  color: var(--editorial-text-primary);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  padding: 14px 28px;
+  transition: all 0.2s ease;
+}
+
+.btn-editorial-primary:hover {
+  background-color: var(--editorial-text-primary);
+  color: var(--editorial-bg);
+}
+
+.btn-editorial-ghost {
+  background-color: transparent;
+  border: 1px solid var(--editorial-border);
+  color: var(--editorial-text-secondary);
+  font-weight: 400;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  padding: 12px 20px;
+  transition: all 0.2s ease;
+}
+
+.btn-editorial-ghost:hover {
+  border-color: var(--editorial-text-secondary);
+  color: var(--editorial-text-primary);
+}
+
+.btn-editorial-accent {
+  background-color: transparent;
+  border: 1px solid var(--editorial-accent);
+  color: var(--editorial-accent);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  padding: 14px 28px;
+  transition: all 0.2s ease;
+}
+
+.btn-editorial-accent:hover {
+  background-color: var(--editorial-accent);
+  color: white;
+}
+
+/* Editorial Link */
+.link-editorial {
+  color: var(--editorial-accent);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.link-editorial:hover {
+  color: var(--editorial-accent-hover);
+}
+
+/* Editorial Divider */
+.divider-editorial {
+  border-color: var(--editorial-border);
+}
+
+/* Editorial Card */
+.card-editorial {
+  background-color: var(--editorial-bg-elevated);
+  border: 1px solid var(--editorial-border-subtle);
 }
 
 @import "tailwindcss";
@@ -402,10 +590,10 @@
 
 @layer base {
   :root {
-    --background: 43 27% 92%; /* PANTONE 11-4201 Cloud Dancer #F0EDE5 */
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --background: 37 29% 94%; /* Matches --editorial-bg #F5F2ED */
+    --foreground: 24 9% 15%; /* Matches --editorial-text-primary #2C2825 */
+    --card: 40 33% 98%;
+    --card-foreground: 24 9% 15%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
     --primary: 0 0% 9%;
