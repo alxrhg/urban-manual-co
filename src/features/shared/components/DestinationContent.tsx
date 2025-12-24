@@ -28,6 +28,7 @@ import { useTripBuilder } from '@/contexts/TripBuilderContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from '@/ui/sonner';
+import InlineAddToTrip from './InlineAddToTrip';
 
 // ============================================
 // SMART CATEGORY DETECTION
@@ -1332,64 +1333,8 @@ const DestinationContent = memo(function DestinationContent({
         );
 
       case 'trip':
-        // Show "Start Trip" button if no active trip
-        if (!activeTrip) {
-          return (
-            <div key="trip" className="py-8 border-b border-[var(--editorial-border)]">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-4">
-                Add to Trip
-              </p>
-              <button
-                onClick={() => {
-                  startTrip(destination.city || 'New Trip', 3);
-                  handleAddToTrip(1);
-                }}
-                disabled={isAddingToTrip}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-lg border border-[var(--editorial-text-primary)] text-[var(--editorial-text-primary)] text-[13px] font-medium tracking-[0.02em] transition-all hover:bg-[var(--editorial-text-primary)] hover:text-[var(--editorial-bg)] active:scale-[0.98] disabled:opacity-50"
-              >
-                <Plus className="w-4 h-4" />
-                Start {destination.city ? `${destination.city} Trip` : 'New Trip'}
-              </button>
-            </div>
-          );
-        }
-
-        return (
-          <div key="trip" className="py-8 border-b border-[var(--editorial-border)]">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)]">
-                {isFromTrip ? 'Add to Trip' : `Add to ${activeTrip.title}`}
-              </p>
-              {tripContext?.fit && (
-                <span className="text-[11px] text-[#4A7C59] font-medium">{tripContext.fit}</span>
-              )}
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              {activeTrip.days.map((day) => (
-                <button
-                  key={day.dayNumber}
-                  onClick={() => handleAddToTrip(day.dayNumber)}
-                  disabled={isAddingToTrip}
-                  className={`px-4 py-2.5 rounded-lg text-[13px] font-medium transition-colors disabled:opacity-50 ${
-                    tripContext?.day === day.dayNumber
-                      ? 'border border-[var(--editorial-text-primary)] bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)]'
-                      : 'border border-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-secondary)]'
-                  }`}
-                >
-                  {isAddingToTrip ? <Loader2 className="h-4 w-4 animate-spin" /> : `Day ${day.dayNumber}`}
-                </button>
-              ))}
-              <button
-                onClick={() => handleAddToTrip()}
-                disabled={isAddingToTrip}
-                className="px-4 py-2.5 rounded-lg border border-dashed border-[var(--editorial-text-tertiary)] text-[13px] font-medium text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-secondary)] transition-colors"
-              >
-                <Plus className="h-4 w-4 inline mr-1" />
-                New Day
-              </button>
-            </div>
-          </div>
-        );
+        // Use inline trip selector component
+        return <InlineAddToTrip key="trip" destination={destination} />;
 
       case 'similar':
         return (
