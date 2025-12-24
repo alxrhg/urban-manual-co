@@ -140,23 +140,17 @@ export default function LocalTimeDisplay({
   }
 
   return (
-    <div className={`flex items-center gap-2 px-3 py-2 bg-[var(--editorial-bg-elevated)] rounded-full ${className}`}>
-      <div className="flex items-center gap-1.5">
-        <Globe className="w-3.5 h-3.5 text-[var(--editorial-text-tertiary)]" />
-        <span className="text-[12px] text-[var(--editorial-text-secondary)]">
-          {city}
-        </span>
-      </div>
+    <div className={`flex items-center gap-1.5 text-[11px] text-[var(--editorial-text-secondary)] ${className}`}>
+      <Globe className="w-3.5 h-3.5" />
+      <span>{city}</span>
       <span className="text-[var(--editorial-text-tertiary)]">·</span>
-      <div className="flex items-center gap-1.5">
-        <Clock className="w-3.5 h-3.5 text-[var(--editorial-accent)]" />
-        <span className="text-[13px] font-medium text-[var(--editorial-text-primary)]">
-          {currentTime}
-        </span>
-        <span className="text-[11px] text-[var(--editorial-text-tertiary)]">
-          {abbreviation}
-        </span>
-      </div>
+      <Clock className="w-3.5 h-3.5 text-[var(--editorial-accent)]" />
+      <span className="font-medium text-[var(--editorial-text-primary)]">
+        {currentTime}
+      </span>
+      <span className="text-[var(--editorial-text-tertiary)]">
+        {abbreviation}
+      </span>
     </div>
   );
 }

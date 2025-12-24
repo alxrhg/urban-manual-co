@@ -344,9 +344,31 @@ export default function TripPage() {
               onDelete={handleDelete}
             />
 
-            {/* Local Time + Quick Actions */}
-            <div className="flex items-center justify-between mt-4 mb-4">
+            {/* Action bar: Local Time + Edit + Quick Actions + Settings */}
+            <div className="flex items-center flex-wrap gap-x-1 gap-y-2 mt-4 mb-4">
               <LocalTimeDisplay city={primaryCity} />
+
+              <button
+                onClick={() => setIsEditMode(!isEditMode)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] transition-colors ${
+                  isEditMode
+                    ? 'text-[var(--editorial-accent)] font-medium'
+                    : 'text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)]'
+                }`}
+              >
+                {isEditMode ? (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    Done
+                  </>
+                ) : (
+                  <>
+                    <Pencil className="w-3.5 h-3.5" />
+                    Edit
+                  </>
+                )}
+              </button>
+
               <TripQuickActions
                 tripId={tripId}
                 tripTitle={trip.title || 'My Trip'}
@@ -354,30 +376,6 @@ export default function TripPage() {
                 endDate={trip.end_date}
                 destination={primaryCity}
               />
-            </div>
-
-            {/* Action bar: Edit toggle + Settings */}
-            <div className="flex items-center justify-between mt-4 mb-2">
-              <button
-                onClick={() => setIsEditMode(!isEditMode)}
-                className={`flex items-center gap-1.5 px-4 py-2 sm:px-4 sm:py-1.5 text-[12px] sm:text-[11px] font-medium rounded-full transition-colors ${
-                  isEditMode
-                    ? 'bg-[var(--editorial-accent)] text-white'
-                    : 'text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] bg-[var(--editorial-bg-elevated)]'
-                }`}
-              >
-                {isEditMode ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                    Done
-                  </>
-                ) : (
-                  <>
-                    <Pencil className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                    Edit
-                  </>
-                )}
-              </button>
 
               <button
                 onClick={() => { setShowTripSettings(true); setSelectedItem(null); }}

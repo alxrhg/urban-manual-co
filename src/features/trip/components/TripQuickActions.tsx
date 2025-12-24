@@ -101,7 +101,7 @@ export default function TripQuickActions({
       <div className="relative">
         <button
           onClick={handleNativeShare}
-          className="flex items-center gap-1.5 px-4 py-1.5 text-[12px] font-medium text-[var(--editorial-text-secondary)] bg-[var(--editorial-bg-elevated)] rounded-full hover:text-[var(--editorial-accent)] transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
           title="Share trip"
         >
           <Share2 className="w-3.5 h-3.5" />
@@ -181,7 +181,7 @@ export default function TripQuickActions({
         <button
           onClick={handleExportCalendar}
           disabled={exporting}
-          className="flex items-center gap-1.5 px-4 py-1.5 text-[12px] font-medium text-[var(--editorial-text-secondary)] bg-[var(--editorial-bg-elevated)] rounded-full hover:text-[var(--editorial-accent)] transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors disabled:opacity-50"
           title="Add to Google Calendar"
         >
           <Calendar className="w-3.5 h-3.5" />
@@ -192,7 +192,7 @@ export default function TripQuickActions({
       {/* Print */}
       <button
         onClick={handlePrint}
-        className="flex items-center gap-1.5 px-4 py-1.5 text-[12px] font-medium text-[var(--editorial-text-secondary)] bg-[var(--editorial-bg-elevated)] rounded-full hover:text-[var(--editorial-accent)] transition-colors print:hidden"
+        className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors print:hidden"
         title="Print itinerary"
       >
         <Printer className="w-3.5 h-3.5" />
