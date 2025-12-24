@@ -63,7 +63,7 @@
       "name": "Saved Places",
       "short_name": "Saved",
       "description": "View your saved destinations",
-      "url": "/account?tab=saved",
+      "url": "/account/settings?tab=saved",
       "icons": [
         {
           "src": "/icon-192.png",

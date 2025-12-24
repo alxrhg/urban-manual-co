@@ -2168,7 +2168,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => {
-                      router.push('/account?tab=collections');
+                      router.push('/account/settings?tab=collections');
                       setShowSaveDropdown(false);
                     }}>
                       <Plus className="h-3 w-3 mr-2" />
@@ -2871,7 +2871,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => {
-                      router.push('/account?tab=collections');
+                      router.push('/account/settings?tab=collections');
                       setShowSaveDropdown(false);
                     }}>
                       <Plus className="h-3 w-3 mr-2" />

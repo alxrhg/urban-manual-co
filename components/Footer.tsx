@@ -29,9 +29,9 @@ const sitemapSections = [
     title: 'Features',
     links: [
       { label: 'My Trips', href: '/trips' },
-      { label: 'My Collections', href: '/account?tab=collections' },
-      { label: 'Saved Places', href: '/account?tab=saved' },
-      { label: 'Visited Places', href: '/account?tab=visited' },
+      { label: 'My Collections', href: '/account/settings?tab=collections' },
+      { label: 'Saved Places', href: '/account/settings?tab=saved' },
+      { label: 'Visited Places', href: '/account/settings?tab=visited' },
       { label: 'Activity Feed', href: '/feed' },
     ],
   },
@@ -39,7 +39,7 @@ const sitemapSections = [
     title: 'Account & Settings',
     links: [
       { label: 'My Account', href: '/account' },
-      { label: 'Settings', href: '/account?tab=settings' },
+      { label: 'Settings', href: '/account/settings' },
       { label: 'Profile', href: '/profile' },
     ],
   },

@@ -152,19 +152,19 @@ export function SettingsDrawer() {
                 icon={User}
                 label="Profile"
                 description="Edit your profile information"
-                onClick={() => handleNavigate('/account?tab=profile')}
+                onClick={() => handleNavigate('/account/settings?tab=profile')}
               />
               <MenuItem
                 icon={Shield}
                 label="Privacy"
                 description="Manage your data & privacy"
-                onClick={() => handleNavigate('/account?tab=privacy')}
+                onClick={() => handleNavigate('/account/settings?tab=privacy')}
               />
               <MenuItem
                 icon={Bell}
                 label="Notifications"
                 description="Email & push preferences"
-                onClick={() => handleNavigate('/account?tab=notifications')}
+                onClick={() => handleNavigate('/account/settings?tab=preferences')}
               />
             </div>
           </div>
@@ -179,13 +179,13 @@ export function SettingsDrawer() {
                 icon={Palette}
                 label="Appearance"
                 description="Theme & display options"
-                onClick={() => handleNavigate('/account?tab=settings')}
+                onClick={() => handleNavigate('/account/settings?tab=preferences')}
               />
               <MenuItem
                 icon={Globe}
                 label="Language & Region"
                 description="Change language settings"
-                onClick={() => handleNavigate('/account?tab=settings')}
+                onClick={() => handleNavigate('/account/settings?tab=preferences')}
               />
             </div>
           </div>
@@ -194,7 +194,7 @@ export function SettingsDrawer() {
         {/* Footer */}
         <div className="px-5 sm:px-6 py-4 pb-safe border-t border-stone-100 dark:border-gray-900">
           <button
-            onClick={() => handleNavigate('/account?tab=settings')}
+            onClick={() => handleNavigate('/account/settings')}
             className="w-full py-3.5 sm:py-3 rounded-xl bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-base sm:text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all min-h-[52px] sm:min-h-[44px]"
           >
             Open full settings

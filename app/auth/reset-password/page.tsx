@@ -74,7 +74,7 @@ function ResetPasswordContent() {
 
       // Redirect to account after a short delay
       setTimeout(() => {
-        router.push('/account?tab=settings');
+        router.push('/account/settings?tab=security');
       }, 2000);
     } catch (err: any) {
       setError(err.message || 'Failed to reset password');

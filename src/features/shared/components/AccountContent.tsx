@@ -590,13 +590,13 @@ const AccountContent = memo(function AccountContent() {
             icon={Bookmark}
             count={stats.saved}
             label="Saved"
-            onClick={() => handleNavigate('/account?tab=saved')}
+            onClick={() => handleNavigate('/account/settings?tab=saved')}
           />
           <LibraryTile
             icon={MapPin}
             count={stats.visited}
             label="Visited"
-            onClick={() => handleNavigate('/account?tab=visited')}
+            onClick={() => handleNavigate('/account/settings?tab=visited')}
           />
           <LibraryTile
             icon={Compass}
@@ -612,7 +612,7 @@ const AccountContent = memo(function AccountContent() {
         <SettingsRow
           icon={Settings}
           label="Settings"
-          onClick={() => handleNavigate('/account?tab=settings')}
+          onClick={() => handleNavigate('/account/settings')}
         />
         <SettingsRow
           icon={Moon}

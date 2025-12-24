@@ -122,22 +122,22 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/profile',
-        destination: '/account?tab=preferences',
+        destination: '/account/settings?tab=preferences',
         permanent: false,
       },
       {
         source: '/collections',
-        destination: '/account?tab=collections',
+        destination: '/account/settings?tab=collections',
         permanent: false,
       },
       {
         source: '/saved',
-        destination: '/account?tab=saved',
+        destination: '/account/settings?tab=saved',
         permanent: false,
       },
       {
         source: '/recent',
-        destination: '/account?tab=visited',
+        destination: '/account/settings?tab=visited',
         permanent: false,
       },
       {

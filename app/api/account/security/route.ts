@@ -170,7 +170,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       const { data, error } = await supabase.auth.linkIdentity({
         provider,
         options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.urbanmanual.co'}/auth/callback?next=/account?tab=settings`,
+          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.urbanmanual.co'}/auth/callback?next=/account/settings?tab=security`,
         },
       });
 

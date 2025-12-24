@@ -627,7 +627,7 @@ export function AccountDrawer() {
             email={email}
             progress={milestoneProgress.percentage}
             badge={badge}
-            onEditClick={() => handleNavigate('/account?tab=profile')}
+            onEditClick={() => handleNavigate('/account/settings?tab=profile')}
           />
 
           {/* Divider */}
@@ -684,7 +684,7 @@ export function AccountDrawer() {
               Quick Access
             </p>
             <QuickActionsMenu
-              onSettingsClick={() => handleNavigate('/account?tab=settings')}
+              onSettingsClick={() => handleNavigate('/account/settings')}
               onHelpClick={() => handleNavigate('/help')}
             />
           </div>

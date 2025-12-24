@@ -164,7 +164,7 @@ export function VisitedPlacesDrawer() {
             <button
               onClick={() => {
                 closeDrawer();
-                router.push('/account?tab=visited');
+                router.push('/account/settings?tab=visited');
               }}
               className="w-full flex items-center justify-center gap-2 py-3.5 sm:py-3 rounded-xl text-base sm:text-sm font-medium text-stone-600 dark:text-gray-300 hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 transition-colors min-h-[52px] sm:min-h-[44px]"
             >
