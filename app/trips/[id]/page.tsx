@@ -345,45 +345,47 @@ export default function TripPage() {
             />
 
             {/* Action bar: Local Time + Edit + Quick Actions + Settings */}
-            <div className="flex items-center flex-wrap gap-x-1 gap-y-2 mt-4 mb-4">
+            <div className="flex items-center flex-wrap gap-y-2 mt-4 mb-4">
               <LocalTimeDisplay city={primaryCity} />
 
-              <button
-                onClick={() => setIsEditMode(!isEditMode)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] transition-colors ${
-                  isEditMode
-                    ? 'text-[var(--editorial-accent)] font-medium'
-                    : 'text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)]'
-                }`}
-              >
-                {isEditMode ? (
-                  <>
-                    <Check className="w-3.5 h-3.5" />
-                    Done
-                  </>
-                ) : (
-                  <>
-                    <Pencil className="w-3.5 h-3.5" />
-                    Edit
-                  </>
-                )}
-              </button>
+              <div className="flex items-center ml-auto">
+                <button
+                  onClick={() => setIsEditMode(!isEditMode)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] transition-colors ${
+                    isEditMode
+                      ? 'text-[var(--editorial-accent)] font-medium'
+                      : 'text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)]'
+                  }`}
+                >
+                  {isEditMode ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      Done
+                    </>
+                  ) : (
+                    <>
+                      <Pencil className="w-3.5 h-3.5" />
+                      Edit
+                    </>
+                  )}
+                </button>
 
-              <TripQuickActions
-                tripId={tripId}
-                tripTitle={trip.title || 'My Trip'}
-                startDate={trip.start_date}
-                endDate={trip.end_date}
-                destination={primaryCity}
-              />
+                <TripQuickActions
+                  tripId={tripId}
+                  tripTitle={trip.title || 'My Trip'}
+                  startDate={trip.start_date}
+                  endDate={trip.end_date}
+                  destination={primaryCity}
+                />
 
-              <button
-                onClick={() => { setShowTripSettings(true); setSelectedItem(null); }}
-                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
-              >
-                <Settings className="w-3.5 h-3.5" />
-                Settings
-              </button>
+                <button
+                  onClick={() => { setShowTripSettings(true); setSelectedItem(null); }}
+                  className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  Settings
+                </button>
+              </div>
             </div>
 
         {/* Trip Notes - expandable (mobile only, desktop uses sidebar) */}
