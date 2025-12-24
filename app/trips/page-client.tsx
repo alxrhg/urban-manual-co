@@ -3,8 +3,9 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
-import { Plus, MapPin, Calendar } from 'lucide-react';
+import { Plus, ArrowRight } from 'lucide-react';
 import { formatDestinationsFromField } from '@/types/trip';
 import {
   getTripState,
@@ -27,7 +28,10 @@ interface TripsPageClientProps {
 type FilterTab = 'all' | 'upcoming' | 'past';
 
 /**
- * TripsPageClient - Trips list with filter tabs
+ * TripsPageClient - "Of Study" inspired editorial design
+ *
+ * Philosophy: Conscious design, intentional travel planning.
+ * Every trip deserves the same consideration as the spaces we inhabit.
  */
 export default function TripsPageClient({ initialTrips, userId }: TripsPageClientProps) {
   const router = useRouter();
@@ -78,13 +82,6 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
     }
   }, [activeFilter, categorizedTrips]);
 
-  // Tab counts
-  const tabCounts = useMemo(() => ({
-    all: trips.length,
-    upcoming: categorizedTrips.upcoming.length,
-    past: categorizedTrips.past.length,
-  }), [trips.length, categorizedTrips]);
-
   // Create trip with wizard data
   const handleCreateTrip = useCallback(async (data: {
     title: string;
@@ -121,78 +118,109 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
   }, [userId, router]);
 
   return (
-    <main className="w-full px-4 sm:px-6 md:px-10 py-20 min-h-screen bg-[var(--editorial-bg)]">
-        {/* Header - Editorial style */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h1
-              className="text-3xl font-normal text-[var(--editorial-text-primary)]"
-              style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
-            >
-              Trips
-            </h1>
-            <button
-              onClick={() => setShowWizard(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-[var(--editorial-accent)] text-white text-sm font-medium rounded-lg hover:bg-[var(--editorial-accent-hover)] transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              New Trip
-            </button>
-          </div>
-          <p className="text-sm text-[var(--editorial-text-secondary)]">
-            {trips.length} {trips.length === 1 ? 'trip' : 'trips'}
+    <main className="min-h-screen bg-[var(--editorial-bg)]">
+      {/* Hero Section - Two Panel Layout */}
+      <div className="lg:grid lg:grid-cols-2 min-h-[50vh]">
+        {/* Left Panel - Branding */}
+        <div className="flex flex-col justify-center px-8 sm:px-12 lg:px-16 py-16 lg:py-24">
+          <span className="text-editorial-label mb-6">Journeys</span>
+          <h1
+            className="text-4xl sm:text-5xl lg:text-6xl font-normal text-[var(--editorial-text-primary)] mb-6"
+            style={{ fontFamily: "'Source Serif 4', Georgia, serif", letterSpacing: '-0.02em', lineHeight: 1.1 }}
+          >
+            Your Trips
+          </h1>
+          <p className="text-editorial-body max-w-md mb-8">
+            Each journey is created for those who understand that how we travel
+            is expressed through the places we visit. The destinations that
+            punctuate our days warrant the same consideration as the spaces we inhabit.
           </p>
+          <button
+            onClick={() => setShowWizard(true)}
+            className="btn-editorial-accent inline-flex items-center gap-3 w-fit"
+          >
+            <Plus className="w-4 h-4" />
+            Begin New Journey
+          </button>
         </div>
 
-        {/* Tab Navigation - Editorial style */}
-        {categorizedTrips.upcoming.length > 0 && categorizedTrips.past.length > 0 && (
-          <div className="mb-12">
-            <div className="flex flex-wrap gap-x-5 gap-y-2 text-[13px]">
-              {(['all', 'upcoming', 'past'] as FilterTab[]).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveFilter(tab)}
-                  className={`transition-all duration-200 ${
-                    activeFilter === tab
-                      ? 'font-medium text-[var(--editorial-text-primary)]'
-                      : 'font-medium text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
-                  }`}
-                >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                </button>
-              ))}
+        {/* Right Panel - Featured Trip or Illustration */}
+        <div className="hidden lg:flex items-center justify-center bg-[var(--editorial-accent)]/5 p-12">
+          {filteredTrips.length > 0 && filteredTrips[0].cover_image ? (
+            <div className="relative w-full max-w-sm aspect-[3/4] rounded-sm overflow-hidden">
+              <Image
+                src={filteredTrips[0].cover_image}
+                alt={filteredTrips[0].title || 'Featured trip'}
+                fill
+                className="object-cover"
+              />
+            </div>
+          ) : (
+            <div className="text-center max-w-xs">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-[var(--editorial-accent)]/10 flex items-center justify-center">
+                <div className="w-12 h-12 border-2 border-[var(--editorial-accent)]/30 rounded-full" />
+              </div>
+              <p className="text-editorial-label mb-3">Conscious Travel</p>
+              <p className="text-editorial-meta">
+                Transform ordinary moments into something more intentional.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Trip List Section */}
+      <div className="px-8 sm:px-12 lg:px-16 py-16 border-t border-[var(--editorial-border)]">
+        {/* Filter Navigation */}
+        {trips.length > 0 && (
+          <div className="flex items-center justify-between mb-12">
+            <div className="flex gap-8">
+              {(['all', 'upcoming', 'past'] as FilterTab[]).map((tab) => {
+                const count = tab === 'all'
+                  ? trips.length
+                  : tab === 'upcoming'
+                    ? categorizedTrips.upcoming.length
+                    : categorizedTrips.past.length;
+
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveFilter(tab)}
+                    className={`relative pb-2 text-[13px] transition-colors ${
+                      activeFilter === tab
+                        ? 'text-[var(--editorial-text-primary)] font-medium'
+                        : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)]'
+                    }`}
+                  >
+                    <span className="capitalize">{tab}</span>
+                    <span className="ml-2 text-[11px]">({count})</span>
+                    {activeFilter === tab && (
+                      <span className="absolute bottom-0 left-0 right-0 h-px bg-[var(--editorial-accent)]" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* Trip List */}
+        {/* Trip Grid */}
         {trips.length === 0 ? (
-          /* Empty State - No trips at all */
-          <div className="text-center py-16 border border-dashed border-[var(--editorial-border)] rounded-lg bg-[var(--editorial-bg-elevated)]">
-            <MapPin className="h-12 w-12 mx-auto text-[var(--editorial-text-tertiary)] mb-4" />
-            <p className="text-sm text-[var(--editorial-text-secondary)] mb-6">No trips yet</p>
-            <button
-              onClick={() => setShowWizard(true)}
-              className="px-5 py-2.5 bg-[var(--editorial-accent)] text-white text-sm font-medium rounded-lg hover:bg-[var(--editorial-accent-hover)] transition-colors"
-            >
-              Create your first trip
-            </button>
-          </div>
+          <EmptyState onCreateTrip={() => setShowWizard(true)} />
         ) : filteredTrips.length === 0 ? (
-          /* Empty State - Filter has no results */
-          <div className="text-center py-12">
-            <p className="text-sm text-[var(--editorial-text-tertiary)]">
-              No {activeFilter === 'upcoming' ? 'upcoming' : 'past'} trips
+          <div className="text-center py-20">
+            <p className="text-editorial-meta">
+              No {activeFilter === 'upcoming' ? 'upcoming' : 'past'} journeys
             </p>
           </div>
         ) : (
-          /* Trip Grid */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredTrips.map((trip) => (
-              <TripCard key={trip.id} trip={trip} />
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+            {filteredTrips.map((trip, index) => (
+              <TripCard key={trip.id} trip={trip} featured={index === 0 && activeFilter === 'all'} />
             ))}
           </div>
         )}
+      </div>
 
       {/* Trip Setup Wizard */}
       <TripSetupWizard
@@ -205,57 +233,131 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
 }
 
 /**
- * Trip Card - Editorial design style
+ * Empty State - Editorial design
  */
-function TripCard({ trip }: { trip: TripWithStats }) {
+function EmptyState({ onCreateTrip }: { onCreateTrip: () => void }) {
+  return (
+    <div className="max-w-lg mx-auto text-center py-20">
+      <span className="text-editorial-label block mb-6">Begin</span>
+      <h2
+        className="text-2xl sm:text-3xl font-normal text-[var(--editorial-text-primary)] mb-4"
+        style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}
+      >
+        No journeys yet
+      </h2>
+      <p className="text-editorial-body mb-8">
+        Every great journey begins with a single step. Start planning your next
+        adventure with intention and care.
+      </p>
+      <button
+        onClick={onCreateTrip}
+        className="btn-editorial-primary"
+      >
+        Create your first journey
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Trip Card - Editorial magazine style
+ */
+function TripCard({ trip, featured = false }: { trip: TripWithStats; featured?: boolean }) {
   const state = getTripState(trip.end_date, trip.start_date, trip.stats);
   const destinations = formatDestinationsFromField(trip.destination);
   const totalItems = getTotalItems(trip.stats);
 
+  // Format dates
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return null;
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const startFormatted = formatDate(trip.start_date);
+  const endFormatted = formatDate(trip.end_date);
+  const dateRange = startFormatted
+    ? endFormatted && startFormatted !== endFormatted
+      ? `${startFormatted} – ${endFormatted}`
+      : startFormatted
+    : null;
+
+  // Calculate trip duration
+  const duration = trip.start_date && trip.end_date
+    ? Math.ceil((new Date(trip.end_date + 'T00:00:00').getTime() - new Date(trip.start_date + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24)) + 1
+    : null;
+
   return (
     <Link
       href={`/trips/${trip.id}`}
-      className="flex flex-col border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)] rounded-lg overflow-hidden hover:bg-[var(--editorial-border-subtle)] transition-colors"
+      className={`group block ${featured ? 'md:col-span-2 xl:col-span-1' : ''}`}
     >
-      <div className="text-left p-5 flex-1">
-        <h3 className="font-medium text-[15px] text-[var(--editorial-text-primary)] mb-2 line-clamp-2">{trip.title}</h3>
-        {trip.description && (
-          <p className="text-[13px] text-[var(--editorial-text-secondary)] line-clamp-2 mb-3">{trip.description}</p>
+      <article className="h-full flex flex-col border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)] transition-all duration-300 hover:border-[var(--editorial-accent)]/30">
+        {/* Image */}
+        {trip.cover_image && (
+          <div className="relative aspect-[4/3] overflow-hidden bg-[var(--editorial-border-subtle)]">
+            <Image
+              src={trip.cover_image}
+              alt={trip.title || 'Trip cover'}
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            {state === 'upcoming' && (
+              <div className="absolute top-4 left-4">
+                <span className="text-editorial-label bg-[var(--editorial-bg-elevated)]/90 backdrop-blur-sm px-3 py-1.5">
+                  Upcoming
+                </span>
+              </div>
+            )}
+          </div>
         )}
-        <div className="space-y-1.5 text-[12px] text-[var(--editorial-text-tertiary)]">
+
+        {/* Content */}
+        <div className="flex-1 p-6">
+          {/* Location label */}
           {destinations && (
-            <div className="flex items-center gap-2">
-              <MapPin className="h-3.5 w-3.5" />
-              <span>{destinations}</span>
-            </div>
+            <span className="text-editorial-label block mb-3">{destinations}</span>
           )}
-          {(trip.start_date || trip.end_date) && (
-            <div className="flex items-center gap-2">
-              <Calendar className="h-3.5 w-3.5" />
-              <span>
-                {trip.start_date ? new Date(trip.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
-                {trip.end_date && ` – ${new Date(trip.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
-              </span>
-            </div>
+
+          {/* Title */}
+          <h3
+            className="text-xl font-normal text-[var(--editorial-text-primary)] mb-3 group-hover:text-[var(--editorial-accent)] transition-colors"
+            style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}
+          >
+            {trip.title || 'Untitled Journey'}
+          </h3>
+
+          {/* Description */}
+          {trip.description && (
+            <p className="text-editorial-meta line-clamp-2 mb-4">
+              {trip.description}
+            </p>
           )}
-          {totalItems > 0 && (
-            <div className="text-[12px] text-[var(--editorial-text-tertiary)] pt-1">
-              {totalItems} {totalItems === 1 ? 'place' : 'places'}
-            </div>
-          )}
-          {state && (
-            <div className="pt-2">
-              <span className={`capitalize text-[11px] px-2.5 py-1 rounded-md font-medium ${
-                state === 'upcoming'
-                  ? 'bg-[var(--editorial-accent)]/10 text-[var(--editorial-accent)]'
-                  : 'bg-[var(--editorial-border)] text-[var(--editorial-text-secondary)]'
-              }`}>
-                {state}
-              </span>
-            </div>
-          )}
+
+          {/* Meta info */}
+          <div className="flex items-center gap-4 text-[12px] text-[var(--editorial-text-tertiary)]">
+            {dateRange && (
+              <span>{dateRange}</span>
+            )}
+            {duration && (
+              <span>{duration} {duration === 1 ? 'day' : 'days'}</span>
+            )}
+            {totalItems > 0 && (
+              <span>{totalItems} {totalItems === 1 ? 'place' : 'places'}</span>
+            )}
+          </div>
         </div>
-      </div>
+
+        {/* Footer with arrow */}
+        <div className="px-6 py-4 border-t border-[var(--editorial-border-subtle)] flex items-center justify-between">
+          <span className="text-[12px] text-[var(--editorial-text-tertiary)]">
+            View journey
+          </span>
+          <ArrowRight className="w-4 h-4 text-[var(--editorial-text-tertiary)] group-hover:text-[var(--editorial-accent)] group-hover:translate-x-1 transition-all" />
+        </div>
+      </article>
     </Link>
   );
 }

@@ -47,13 +47,11 @@ import LocalTimeDisplay from '@/features/trip/components/LocalTimeDisplay';
 import TripQuickActions from '@/features/trip/components/TripQuickActions';
 
 /**
- * TripPage - Completely rethought
+ * TripPage - "Of Study" Editorial Design
  *
- * Philosophy:
- * - No sidebars - everything inline
- * - No buttons - things just work
- * - No forms - just type and select
- * - No modes - edit is default
+ * Philosophy: Conscious by design. Each journey deserves the same
+ * consideration as the spaces we inhabit and the hours we keep.
+ * Transform ordinary moments into something more intentional.
  */
 export default function TripPage() {
   const params = useParams();
@@ -320,13 +318,13 @@ export default function TripPage() {
     <UndoProvider>
     <main className="w-full px-4 sm:px-6 pt-16 pb-24 sm:py-20 min-h-screen bg-[var(--editorial-bg)]">
       <div className="max-w-6xl mx-auto">
-        {/* Back link */}
+        {/* Back link - Editorial small caps */}
         <Link
           href="/trips"
-          className="inline-flex items-center gap-1.5 text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors mb-6"
+          className="inline-flex items-center gap-2 text-editorial-label hover:text-[var(--editorial-text-secondary)] transition-colors mb-8"
         >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Trips
+          <ArrowLeft className="w-3 h-3" />
+          <span>Journeys</span>
         </Link>
 
         {/* Desktop flex layout with sidebar */}
@@ -425,10 +423,10 @@ export default function TripPage() {
           />
         </div>
 
-        {/* Day Tabs */}
+        {/* Day Tabs - Editorial Navigation */}
         {days.length > 0 && (
-          <div className="sticky top-16 z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 py-3 bg-[var(--editorial-bg)] mt-6">
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+          <div className="sticky top-16 z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 py-4 bg-[var(--editorial-bg)] border-b border-[var(--editorial-border)] mt-8">
+            <div className="flex gap-6 overflow-x-auto no-scrollbar">
               {days.map((day) => {
                 const isSelected = day.dayNumber === selectedDayNumber;
                 const dayDate = day.date
@@ -439,20 +437,24 @@ export default function TripPage() {
                   <button
                     key={day.dayNumber}
                     onClick={() => setSelectedDayNumber(day.dayNumber)}
-                    className={`flex-shrink-0 flex flex-col items-center px-5 py-2.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-all ${
+                    className={`relative flex-shrink-0 pb-3 text-[13px] whitespace-nowrap transition-all ${
                       isSelected
-                        ? 'bg-[var(--editorial-accent)] text-white'
-                        : 'bg-[var(--editorial-bg-elevated)] text-[var(--editorial-text-secondary)] hover:bg-[var(--editorial-border-subtle)] border border-[var(--editorial-border)]'
+                        ? 'text-[var(--editorial-text-primary)] font-medium'
+                        : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)]'
                     }`}
                   >
-                    <span className="flex items-center gap-1.5">
-                      {isSelected && <Clock className="w-3 h-3" />}
-                      {dayDate || `Day ${day.dayNumber}`}
-                    </span>
-                    {dayWeather && (
-                      <span className={`text-[11px] mt-0.5 ${isSelected ? 'text-white/80' : 'text-[var(--editorial-text-tertiary)]'}`}>
-                        {dayWeather.tempMax}° {dayWeather.description.split(' ')[0]}
+                    <span className="flex items-center gap-2">
+                      <span style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}>
+                        {dayDate || `Day ${day.dayNumber}`}
                       </span>
+                      {dayWeather && (
+                        <span className="text-[11px] text-[var(--editorial-text-tertiary)]">
+                          {dayWeather.tempMax}°
+                        </span>
+                      )}
+                    </span>
+                    {isSelected && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--editorial-accent)]" />
                     )}
                   </button>
                 );
@@ -546,16 +548,20 @@ export default function TripPage() {
           })}
         </div>
 
-        {/* Empty state - context-aware */}
+        {/* Empty state - Editorial "Of Study" inspired */}
         {totalItems === 0 && days.length > 0 && (
-          <div className="text-center py-8 mt-4">
-            <p className="text-[14px] text-[var(--editorial-text-secondary)] mb-2">
+          <div className="text-center py-16 mt-8 border border-dashed border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)]">
+            <span className="text-editorial-label block mb-4">Begin Planning</span>
+            <h3
+              className="text-xl font-normal text-[var(--editorial-text-primary)] mb-3"
+              style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}
+            >
               {primaryCity
-                ? `Start planning your ${primaryCity} trip`
-                : 'Start planning your trip'}
-            </p>
-            <p className="text-[12px] text-[var(--editorial-text-tertiary)]">
-              Tap the + button to add places, flights, or hotels
+                ? `Your ${primaryCity} journey awaits`
+                : 'Your journey awaits'}
+            </h3>
+            <p className="text-editorial-meta max-w-xs mx-auto">
+              Each destination you add transforms this journey into something more intentional.
             </p>
           </div>
         )}
@@ -654,9 +660,12 @@ export default function TripPage() {
                 />
               )}
 
-              {/* Trip Intelligence */}
+              {/* Trip Intelligence - Editorial style */}
               {!sidebarAddDay && (
-                <div className="bg-[var(--editorial-bg-elevated)] rounded-xl border border-[var(--editorial-border)] overflow-hidden">
+                <div className="bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] overflow-hidden">
+                  <div className="p-5 pb-0">
+                    <span className="text-editorial-label block mb-2">Insights</span>
+                  </div>
                   <TripIntelligence
                     days={days}
                     city={primaryCity}
@@ -676,10 +685,10 @@ export default function TripPage() {
                 />
               )}
 
-              {/* Checklist */}
+              {/* Checklist - Editorial style */}
               {!sidebarAddDay && (
-                <div className="bg-[var(--editorial-bg-elevated)] rounded-xl border border-[var(--editorial-border)] p-4">
-                  <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-3">Checklist</h3>
+                <div className="bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] p-5">
+                  <span className="text-editorial-label block mb-4">Checklist</span>
                   <TripChecklist
                     notes={tripNotes}
                     onSave={(notes) => updateTrip({ notes })}
@@ -1161,15 +1170,18 @@ function DaySection({
           : ''
       }`}
     >
-      {/* Day header - editorial style with serif */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <h3
-            className="text-[16px] font-normal text-[var(--editorial-text-primary)]"
-            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
-          >
-            Day {dayNumber}{longDateDisplay && `: ${longDateDisplay}`}
-          </h3>
+      {/* Day header - "Of Study" editorial style */}
+      <div className="flex items-center justify-between mb-6 pt-2">
+        <div className="flex items-center gap-4">
+          <div>
+            <span className="text-editorial-label block mb-1">Day {dayNumber}</span>
+            <h3
+              className="text-xl font-normal text-[var(--editorial-text-primary)]"
+              style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}
+            >
+              {longDateDisplay || `Day ${dayNumber}`}
+            </h3>
+          </div>
           {/* Weather badge - warm styling */}
           {weather && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-full">

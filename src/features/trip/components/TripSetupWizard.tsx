@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { X, MapPin, Calendar, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
+import { X, MapPin, Calendar, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface TripSetupWizardProps {
@@ -13,10 +13,10 @@ interface TripSetupWizardProps {
 type Step = 'name' | 'destination' | 'dates';
 
 /**
- * TripSetupWizard - Quick 3-step flow for creating a trip
+ * TripSetupWizard - "Of Study" inspired editorial design
  *
- * Philosophy: Collect essential info upfront so the trip page
- * isn't empty and confusing. Each step is focused and fast.
+ * Philosophy: Conscious by design. Each step of creating a journey
+ * should feel intentional, like curating a meaningful experience.
  */
 export default function TripSetupWizard({ isOpen, onClose, onCreate }: TripSetupWizardProps) {
   const [step, setStep] = useState<Step>('name');
@@ -121,59 +121,73 @@ export default function TripSetupWizard({ isOpen, onClose, onCreate }: TripSetup
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
         onClick={(e) => e.target === e.currentTarget && onClose()}
       >
+        {/* Backdrop */}
+        <div className="absolute inset-0 bg-[var(--editorial-text-primary)]/40 backdrop-blur-sm" />
+
+        {/* Modal */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          initial={{ opacity: 0, scale: 0.98, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ type: 'spring', duration: 0.3 }}
-          className="w-full max-w-md bg-white dark:bg-gray-900 rounded-lg shadow-2xl overflow-hidden"
+          exit={{ opacity: 0, scale: 0.98, y: 10 }}
+          transition={{ type: 'spring', duration: 0.4, bounce: 0.1 }}
+          className="relative w-full max-w-lg bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] shadow-2xl overflow-hidden"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
-            <div className="flex items-center gap-3">
-              {step !== 'name' && (
-                <button
-                  onClick={handleBack}
-                  className="p-1.5 -ml-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          <div className="px-8 pt-8 pb-0">
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="text-editorial-label block mb-2">New Journey</span>
+                <h2
+                  className="text-2xl font-normal text-[var(--editorial-text-primary)]"
+                  style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}
                 >
-                  <ChevronLeft className="w-5 h-5 text-gray-400" />
-                </button>
-              )}
-              <h2 className="text-[17px] font-semibold text-gray-900 dark:text-white">
-                {step === 'name' && 'Name your trip'}
-                {step === 'destination' && 'Where are you going?'}
-                {step === 'dates' && 'When?'}
-              </h2>
+                  {step === 'name' && 'Name your journey'}
+                  {step === 'destination' && 'Where will you go?'}
+                  {step === 'dates' && 'When will you travel?'}
+                </h2>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 -m-2 text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <X className="w-5 h-5 text-gray-400" />
-            </button>
           </div>
 
-          {/* Progress dots */}
-          <div className="flex items-center justify-center gap-2 py-3 bg-gray-50 dark:bg-gray-900/50">
-            {(['name', 'destination', 'dates'] as Step[]).map((s) => (
-              <div
-                key={s}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  s === step
-                    ? 'bg-gray-900 dark:bg-white'
-                    : s === 'name' || (s === 'destination' && step === 'dates')
-                    ? 'bg-gray-300 dark:bg-gray-600'
-                    : 'bg-gray-200 dark:bg-gray-700'
-                }`}
-              />
-            ))}
+          {/* Progress indicator */}
+          <div className="px-8 py-6">
+            <div className="flex items-center gap-2">
+              {(['name', 'destination', 'dates'] as Step[]).map((s, i) => {
+                const isActive = s === step;
+                const isPast = ['name', 'destination', 'dates'].indexOf(s) < ['name', 'destination', 'dates'].indexOf(step);
+                return (
+                  <div key={s} className="flex items-center">
+                    <div
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium transition-all ${
+                        isActive
+                          ? 'bg-[var(--editorial-accent)] text-white'
+                          : isPast
+                            ? 'bg-[var(--editorial-accent)]/20 text-[var(--editorial-accent)]'
+                            : 'bg-[var(--editorial-border)] text-[var(--editorial-text-tertiary)]'
+                      }`}
+                    >
+                      {i + 1}
+                    </div>
+                    {i < 2 && (
+                      <div className={`w-12 h-px mx-2 ${isPast ? 'bg-[var(--editorial-accent)]/30' : 'bg-[var(--editorial-border)]'}`} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Content */}
-          <div className="p-6">
+          <div className="px-8 pb-4">
             <AnimatePresence mode="wait">
               {step === 'name' && (
                 <motion.div
@@ -189,12 +203,13 @@ export default function TripSetupWizard({ isOpen, onClose, onCreate }: TripSetup
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Summer in Paris"
-                    className="w-full px-4 py-3 text-[16px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors"
+                    placeholder="A Week in Kyoto"
+                    className="w-full px-0 py-3 text-xl bg-transparent border-0 border-b border-[var(--editorial-border)] text-[var(--editorial-text-primary)] placeholder:text-[var(--editorial-text-tertiary)] outline-none focus:border-[var(--editorial-accent)] transition-colors"
+                    style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}
                     autoFocus
                   />
-                  <p className="mt-2 text-[13px] text-gray-400">
-                    Give your trip a memorable name
+                  <p className="mt-4 text-editorial-meta">
+                    Give your journey a name that captures its essence.
                   </p>
                 </motion.div>
               )}
@@ -208,19 +223,20 @@ export default function TripSetupWizard({ isOpen, onClose, onCreate }: TripSetup
                   transition={{ duration: 0.2 }}
                 >
                   <div className="relative">
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <MapPin className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--editorial-text-tertiary)]" />
                     <input
                       ref={destinationInputRef}
                       type="text"
                       value={destination}
                       onChange={(e) => setDestination(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      placeholder="Paris, France"
-                      className="w-full pl-12 pr-4 py-3 text-[16px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors"
+                      placeholder="Kyoto, Japan"
+                      className="w-full pl-8 pr-0 py-3 text-xl bg-transparent border-0 border-b border-[var(--editorial-border)] text-[var(--editorial-text-primary)] placeholder:text-[var(--editorial-text-tertiary)] outline-none focus:border-[var(--editorial-accent)] transition-colors"
+                      style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}
                     />
                   </div>
-                  <p className="mt-2 text-[13px] text-gray-400">
-                    City or region you&apos;re visiting (optional)
+                  <p className="mt-4 text-editorial-meta">
+                    The city or region you&apos;ll be exploring.
                   </p>
                 </motion.div>
               )}
@@ -232,57 +248,58 @@ export default function TripSetupWizard({ isOpen, onClose, onCreate }: TripSetup
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.2 }}
-                  className="space-y-4"
+                  className="space-y-6"
                 >
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-[12px] font-medium text-gray-500 mb-1.5">
-                        Start
+                      <label className="text-editorial-label block mb-3">
+                        Departure
                       </label>
                       <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Calendar className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--editorial-text-tertiary)]" />
                         <input
                           ref={startDateRef}
                           type="date"
                           value={startDate}
                           onChange={(e) => {
                             setStartDate(e.target.value);
-                            // Auto-set end date if not set or if before start
                             if (!endDate || e.target.value > endDate) {
                               setEndDate(e.target.value);
                             }
                           }}
                           onKeyDown={handleKeyDown}
-                          className="w-full pl-10 pr-3 py-2.5 text-[14px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors"
+                          className="w-full pl-6 pr-0 py-2 text-[15px] bg-transparent border-0 border-b border-[var(--editorial-border)] text-[var(--editorial-text-primary)] outline-none focus:border-[var(--editorial-accent)] transition-colors"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[12px] font-medium text-gray-500 mb-1.5">
-                        End
+                      <label className="text-editorial-label block mb-3">
+                        Return
                       </label>
                       <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Calendar className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--editorial-text-tertiary)]" />
                         <input
                           type="date"
                           value={endDate}
                           onChange={(e) => setEndDate(e.target.value)}
                           onKeyDown={handleKeyDown}
                           min={startDate}
-                          className="w-full pl-10 pr-3 py-2.5 text-[14px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors"
+                          className="w-full pl-6 pr-0 py-2 text-[15px] bg-transparent border-0 border-b border-[var(--editorial-border)] text-[var(--editorial-text-primary)] outline-none focus:border-[var(--editorial-accent)] transition-colors"
                         />
                       </div>
                     </div>
                   </div>
 
                   {tripDuration && tripDuration > 0 && (
-                    <p className="text-[13px] text-gray-500 text-center">
-                      {tripDuration} {tripDuration === 1 ? 'day' : 'days'}
-                    </p>
+                    <div className="text-center py-3 bg-[var(--editorial-accent)]/5 border border-[var(--editorial-accent)]/10">
+                      <span className="text-[var(--editorial-accent)] text-[15px] font-medium">
+                        {tripDuration} {tripDuration === 1 ? 'day' : 'days'}
+                      </span>
+                    </div>
                   )}
 
-                  <p className="text-[13px] text-gray-400 text-center">
-                    Dates can be changed later (optional)
+                  <p className="text-editorial-meta text-center">
+                    Dates can be adjusted later.
                   </p>
                 </motion.div>
               )}
@@ -290,50 +307,71 @@ export default function TripSetupWizard({ isOpen, onClose, onCreate }: TripSetup
           </div>
 
           {/* Footer */}
-          <div className="px-6 pb-6 pt-2">
-            {step === 'dates' ? (
-              <button
-                onClick={handleCreate}
-                disabled={!canCreate || isCreating}
-                className="w-full py-3 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[15px] font-medium hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-              >
-                {isCreating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  'Create Trip'
-                )}
-              </button>
-            ) : (
-              <button
-                onClick={handleNext}
-                disabled={!canProceed}
-                className="w-full py-3 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[15px] font-medium hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-              >
-                Continue
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            )}
+          <div className="px-8 py-6 bg-[var(--editorial-bg)] border-t border-[var(--editorial-border)]">
+            <div className="flex items-center justify-between">
+              {step !== 'name' ? (
+                <button
+                  onClick={handleBack}
+                  className="flex items-center gap-2 text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back
+                </button>
+              ) : (
+                <div />
+              )}
 
-            {step === 'destination' && (
-              <button
-                onClick={() => setStep('dates')}
-                className="w-full mt-2 py-2 text-[13px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-              >
-                Skip for now
-              </button>
-            )}
+              <div className="flex items-center gap-3">
+                {step === 'destination' && (
+                  <button
+                    onClick={() => setStep('dates')}
+                    className="text-[13px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)] transition-colors"
+                  >
+                    Skip
+                  </button>
+                )}
+
+                {step === 'dates' ? (
+                  <button
+                    onClick={handleCreate}
+                    disabled={!canCreate || isCreating}
+                    className="btn-editorial-accent flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {isCreating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        Begin Journey
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleNext}
+                    disabled={!canProceed}
+                    className="btn-editorial-primary flex items-center gap-2 disabled:opacity-50"
+                  >
+                    Continue
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
 
             {step === 'dates' && (
-              <button
-                onClick={handleCreate}
-                disabled={!canCreate || isCreating}
-                className="w-full mt-2 py-2 text-[13px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-              >
-                Skip dates and create trip
-              </button>
+              <div className="mt-4 text-center">
+                <button
+                  onClick={handleCreate}
+                  disabled={!canCreate || isCreating}
+                  className="text-[13px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)] transition-colors"
+                >
+                  Skip dates and begin
+                </button>
+              </div>
             )}
           </div>
         </motion.div>
