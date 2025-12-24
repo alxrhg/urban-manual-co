@@ -316,152 +316,168 @@ export default function TripPage() {
       onDragEnd={handleDragEnd}
     >
     <UndoProvider>
-    <main className="w-full px-4 sm:px-6 pt-16 pb-24 sm:py-20 min-h-screen bg-[var(--editorial-bg)]">
-      <div className="max-w-6xl mx-auto">
-        {/* Back link - Editorial small caps */}
-        <Link
-          href="/trips"
-          className="inline-flex items-center gap-2 text-editorial-label hover:text-[var(--editorial-text-secondary)] transition-colors mb-8"
-        >
-          <ArrowLeft className="w-3 h-3" />
-          <span>Journeys</span>
-        </Link>
+    <main className="min-h-screen bg-[var(--editorial-bg)]">
+      {/* "Of Study" Two-Panel Hero */}
+      <div className="lg:grid lg:grid-cols-[1fr,400px] min-h-[40vh]">
+        {/* Left Panel - Trip Info */}
+        <div className="px-6 sm:px-10 lg:px-16 py-12 lg:py-16 flex flex-col">
+          {/* Back link */}
+          <Link
+            href="/trips"
+            className="inline-flex items-center gap-2 text-editorial-label hover:text-[var(--editorial-text-secondary)] transition-colors mb-auto w-fit"
+          >
+            <ArrowLeft className="w-3 h-3" />
+            <span>Journeys</span>
+          </Link>
 
-        {/* Desktop flex layout with sidebar */}
-        <div className="lg:flex lg:gap-8">
-          {/* Main content column */}
-          <div className="flex-1 min-w-0 max-w-xl lg:max-w-none">
-            {/* Header - tap to edit */}
-            <TripEditorHeader
-              trip={trip}
-              primaryCity={primaryCity}
-              totalItems={totalItems}
-              userId={user?.id}
-              days={days}
-              onUpdate={updateTrip}
-              onDelete={handleDelete}
-            />
-
-            {/* Local Time + Quick Actions */}
-            <div className="flex items-center justify-between mt-4 mb-4">
-              <LocalTimeDisplay city={primaryCity} />
-              <TripQuickActions
-                tripId={tripId}
-                tripTitle={trip.title || 'My Trip'}
-                startDate={trip.start_date}
-                endDate={trip.end_date}
-                destination={primaryCity}
-              />
-            </div>
-
-            {/* Action bar: Edit toggle + Settings */}
-            <div className="flex items-center justify-between mt-4 mb-2">
+          {/* Trip Title Area */}
+          <div className="my-auto py-8">
+            <span className="text-editorial-label block mb-4">
+              {trip.start_date
+                ? new Date(trip.start_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) +
+                  (trip.end_date ? ` – ${new Date(trip.end_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}` : '')
+                : 'Dates not set'}
+            </span>
+            <h1
+              className="text-4xl sm:text-5xl lg:text-6xl font-normal text-[var(--editorial-text-primary)] mb-4"
+              style={{ fontFamily: "'Source Serif 4', Georgia, serif", letterSpacing: '-0.02em', lineHeight: 1.1 }}
+            >
+              {trip.title || 'Untitled Journey'}
+            </h1>
+            <p className="text-editorial-body max-w-md mb-6">
+              {primaryCity ? (
+                <>A journey to <span className="text-[var(--editorial-accent)]">{primaryCity}</span> with {totalItems} {totalItems === 1 ? 'destination' : 'destinations'} planned.</>
+              ) : (
+                'Begin adding destinations to bring your journey to life.'
+              )}
+            </p>
+            <div className="flex items-center gap-4">
               <button
                 onClick={() => setIsEditMode(!isEditMode)}
-                className={`flex items-center gap-1.5 px-4 py-2 sm:px-4 sm:py-1.5 text-[12px] sm:text-[11px] font-medium rounded-full transition-colors ${
+                className={`inline-flex items-center gap-2 text-[13px] transition-colors ${
                   isEditMode
-                    ? 'bg-[var(--editorial-accent)] text-white'
-                    : 'text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] border border-[var(--editorial-border)]'
+                    ? 'btn-editorial-accent'
+                    : 'btn-editorial-primary'
                 }`}
               >
                 {isEditMode ? (
                   <>
-                    <Check className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                    Done
+                    <Check className="w-4 h-4" />
+                    Done Editing
                   </>
                 ) : (
                   <>
-                    <Pencil className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                    Edit
+                    <Pencil className="w-4 h-4" />
+                    Edit Trip
                   </>
                 )}
               </button>
-
               <button
                 onClick={() => { setShowTripSettings(true); setSelectedItem(null); }}
-                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+                className="text-[13px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)] transition-colors"
               >
-                <Settings className="w-3.5 h-3.5" />
                 Settings
               </button>
             </div>
+          </div>
 
-        {/* Trip Notes - expandable (mobile only, desktop uses sidebar) */}
-        <div className="mt-4 lg:hidden">
-          <button
-            onClick={() => setShowTripNotes(!showTripNotes)}
-            className="text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)] transition-colors"
-          >
-            {tripNotes ? 'View checklist' : 'Add checklist'}
-            <ChevronDown className={`inline w-3 h-3 ml-1 transition-transform ${showTripNotes ? 'rotate-180' : ''}`} />
-          </button>
-
-          <AnimatePresence>
-            {showTripNotes && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
-              >
-                <TripChecklist
-                  notes={tripNotes}
-                  onSave={(notes) => updateTrip({ notes })}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* Local Time */}
+          <div className="mt-auto">
+            <LocalTimeDisplay city={primaryCity} />
+          </div>
         </div>
 
-        {/* Trip Intelligence - Smart Warnings & Suggestions (mobile only) */}
-        <div className="lg:hidden">
-          <TripIntelligence
+        {/* Right Panel - Map/Image */}
+        <div className="hidden lg:flex flex-col bg-[var(--editorial-accent)]/5 border-l border-[var(--editorial-border)]">
+          <TripEditorHeader
+            trip={trip}
+            primaryCity={primaryCity}
+            totalItems={totalItems}
+            userId={user?.id}
             days={days}
-            city={primaryCity}
-            weatherByDate={weatherByDate}
-            onOptimizeRoute={(dayNumber, optimizedItems) => reorderItems(dayNumber, optimizedItems)}
+            onUpdate={updateTrip}
+            onDelete={handleDelete}
           />
         </div>
+      </div>
 
-        {/* Day Tabs - Editorial Navigation */}
-        {days.length > 0 && (
-          <div className="sticky top-16 z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 py-4 bg-[var(--editorial-bg)] border-b border-[var(--editorial-border)] mt-8">
-            <div className="flex gap-6 overflow-x-auto no-scrollbar">
-              {days.map((day) => {
-                const isSelected = day.dayNumber === selectedDayNumber;
-                const dayDate = day.date
-                  ? new Date(day.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                  : null;
-                const dayWeather = day.date ? weatherByDate[day.date] : undefined;
-                return (
-                  <button
-                    key={day.dayNumber}
-                    onClick={() => setSelectedDayNumber(day.dayNumber)}
-                    className={`relative flex-shrink-0 pb-3 text-[13px] whitespace-nowrap transition-all ${
-                      isSelected
-                        ? 'text-[var(--editorial-text-primary)] font-medium'
-                        : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)]'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}>
-                        {dayDate || `Day ${day.dayNumber}`}
-                      </span>
-                      {dayWeather && (
-                        <span className="text-[11px] text-[var(--editorial-text-tertiary)]">
-                          {dayWeather.tempMax}°
-                        </span>
-                      )}
-                    </span>
-                    {isSelected && (
-                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--editorial-accent)]" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+      {/* Main Content Area */}
+      <div className="border-t border-[var(--editorial-border)]">
+        <div className="max-w-7xl mx-auto">
+          <div className="lg:grid lg:grid-cols-[1fr,340px]">
+            {/* Itinerary Column */}
+            <div className="px-6 sm:px-10 lg:px-16 py-10 lg:border-r border-[var(--editorial-border)]">
+              {/* Mobile: Trip Notes */}
+              <div className="lg:hidden mb-8">
+                <button
+                  onClick={() => setShowTripNotes(!showTripNotes)}
+                  className="text-editorial-label hover:text-[var(--editorial-text-secondary)] transition-colors"
+                >
+                  {tripNotes ? 'View Checklist' : 'Add Checklist'}
+                  <ChevronDown className={`inline w-3 h-3 ml-2 transition-transform ${showTripNotes ? 'rotate-180' : ''}`} />
+                </button>
+                <AnimatePresence>
+                  {showTripNotes && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden mt-4"
+                    >
+                      <TripChecklist
+                        notes={tripNotes}
+                        onSave={(notes) => updateTrip({ notes })}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Mobile: Trip Intelligence */}
+              <div className="lg:hidden mb-8">
+                <TripIntelligence
+                  days={days}
+                  city={primaryCity}
+                  weatherByDate={weatherByDate}
+                  onOptimizeRoute={(dayNumber, optimizedItems) => reorderItems(dayNumber, optimizedItems)}
+                />
+              </div>
+
+              {/* Day Navigation - Editorial Style */}
+              {days.length > 0 && (
+                <div className="mb-10">
+                  <span className="text-editorial-label block mb-4">Itinerary</span>
+                  <div className="flex flex-wrap gap-3">
+                    {days.map((day) => {
+                      const isSelected = day.dayNumber === selectedDayNumber;
+                      const dayDate = day.date
+                        ? new Date(day.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                        : `Day ${day.dayNumber}`;
+                      const dayWeather = day.date ? weatherByDate[day.date] : undefined;
+                      return (
+                        <button
+                          key={day.dayNumber}
+                          onClick={() => setSelectedDayNumber(day.dayNumber)}
+                          className={`px-4 py-2 text-[13px] border transition-all ${
+                            isSelected
+                              ? 'bg-[var(--editorial-accent)] text-white border-[var(--editorial-accent)]'
+                              : 'bg-[var(--editorial-bg-elevated)] text-[var(--editorial-text-secondary)] border-[var(--editorial-border)] hover:border-[var(--editorial-accent)]/50'
+                          }`}
+                        >
+                          <span style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}>
+                            {dayDate}
+                          </span>
+                          {dayWeather && (
+                            <span className={`ml-2 text-[11px] ${isSelected ? 'text-white/80' : 'text-[var(--editorial-text-tertiary)]'}`}>
+                              {dayWeather.tempMax}°
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
         {/* Selected Day */}
         <div className="mt-4">
@@ -548,29 +564,30 @@ export default function TripPage() {
           })}
         </div>
 
-        {/* Empty state - Editorial "Of Study" inspired */}
-        {totalItems === 0 && days.length > 0 && (
-          <div className="text-center py-16 mt-8 border border-dashed border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)]">
-            <span className="text-editorial-label block mb-4">Begin Planning</span>
-            <h3
-              className="text-xl font-normal text-[var(--editorial-text-primary)] mb-3"
-              style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}
-            >
-              {primaryCity
-                ? `Your ${primaryCity} journey awaits`
-                : 'Your journey awaits'}
-            </h3>
-            <p className="text-editorial-meta max-w-xs mx-auto">
-              Each destination you add transforms this journey into something more intentional.
-            </p>
-          </div>
-        )}
-          </div>
-          {/* End main content column */}
+              {/* Empty state - Editorial "Of Study" inspired */}
+              {totalItems === 0 && days.length > 0 && (
+                <div className="text-center py-20 border border-dashed border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)]">
+                  <span className="text-editorial-label block mb-4">Begin Planning</span>
+                  <h3
+                    className="text-2xl font-normal text-[var(--editorial-text-primary)] mb-3"
+                    style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}
+                  >
+                    {primaryCity
+                      ? `Your ${primaryCity} journey awaits`
+                      : 'Your journey awaits'}
+                  </h3>
+                  <p className="text-editorial-meta max-w-sm mx-auto">
+                    Each destination you add transforms this journey into something more intentional.
+                    Click the + button on any day to begin.
+                  </p>
+                </div>
+              )}
+            </div>
+            {/* End Itinerary Column */}
 
-          {/* Desktop Sidebar */}
-          <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
-            <div className="sticky top-24 space-y-4 max-h-[calc(100vh-8rem)] overflow-y-auto pb-8">
+            {/* Sidebar Column - Desktop Only */}
+            <div className="hidden lg:block py-10 px-6 bg-[var(--editorial-bg-elevated)]">
+              <div className="sticky top-24 space-y-6 max-h-[calc(100vh-8rem)] overflow-y-auto">
               {/* Add Place Panel */}
               {sidebarAddDay !== null && (
                 <AddPlacePanel
@@ -687,7 +704,7 @@ export default function TripPage() {
 
               {/* Checklist - Editorial style */}
               {!sidebarAddDay && (
-                <div className="bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] p-5">
+                <div className="border border-[var(--editorial-border)] p-5 bg-[var(--editorial-bg)]">
                   <span className="text-editorial-label block mb-4">Checklist</span>
                   <TripChecklist
                     notes={tripNotes}
@@ -695,11 +712,25 @@ export default function TripPage() {
                   />
                 </div>
               )}
+
+              {/* Quick Actions */}
+              <div className="border border-[var(--editorial-border)] p-5 bg-[var(--editorial-bg)]">
+                <span className="text-editorial-label block mb-4">Quick Actions</span>
+                <TripQuickActions
+                  tripId={tripId}
+                  tripTitle={trip.title || 'My Trip'}
+                  startDate={trip.start_date}
+                  endDate={trip.end_date}
+                  destination={primaryCity}
+                />
+              </div>
+              </div>
             </div>
+            {/* End Sidebar Column */}
           </div>
         </div>
-        {/* End desktop flex layout */}
       </div>
+      {/* End Main Content Area */}
 
       {/* Saving feedback indicator */}
       <SavingFeedback status={savingStatus} />
@@ -1171,21 +1202,21 @@ function DaySection({
       }`}
     >
       {/* Day header - "Of Study" editorial style */}
-      <div className="flex items-center justify-between mb-6 pt-2">
-        <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between mb-8 pb-4 border-b border-[var(--editorial-border)]">
+        <div className="flex items-center gap-6">
           <div>
-            <span className="text-editorial-label block mb-1">Day {dayNumber}</span>
+            <span className="text-editorial-label block mb-2">Day {dayNumber}</span>
             <h3
-              className="text-xl font-normal text-[var(--editorial-text-primary)]"
+              className="text-2xl font-normal text-[var(--editorial-text-primary)]"
               style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}
             >
               {longDateDisplay || `Day ${dayNumber}`}
             </h3>
           </div>
-          {/* Weather badge - warm styling */}
+          {/* Weather badge - editorial style */}
           {weather && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-full">
-              <WeatherIcon code={weather.weatherCode} className="w-3.5 h-3.5 text-[var(--editorial-accent)]" />
+            <div className="flex items-center gap-2 px-4 py-2 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)]">
+              <WeatherIcon code={weather.weatherCode} className="w-4 h-4 text-[var(--editorial-accent)]" />
               <span className="text-[12px] text-[var(--editorial-text-secondary)]">
                 {weather.tempMax}° {weather.description}
               </span>
@@ -1228,7 +1259,7 @@ function DaySection({
             </button>
           )}
 
-          {/* Plus button */}
+          {/* Add Button - Editorial Style */}
           <div className="relative">
             <button
               onClick={() => {
@@ -1243,64 +1274,75 @@ function DaySection({
                   setShowTransportForm(null);
                 }
               }}
-              className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center rounded-full bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] hover:bg-[var(--editorial-border-subtle)] transition-colors"
+              className={`flex items-center gap-2 px-4 py-2 text-[12px] border transition-all ${
+                showAddMenu || showSearch || showTransportForm
+                  ? 'bg-[var(--editorial-accent)] text-white border-[var(--editorial-accent)]'
+                  : 'bg-[var(--editorial-bg-elevated)] text-[var(--editorial-text-secondary)] border-[var(--editorial-border)] hover:border-[var(--editorial-accent)]'
+              }`}
             >
-              <Plus className={`w-4 h-4 sm:w-3.5 sm:h-3.5 text-[var(--editorial-text-secondary)] transition-transform ${showAddMenu || showSearch || showTransportForm ? 'rotate-45' : ''}`} />
+              <Plus className={`w-3.5 h-3.5 transition-transform ${showAddMenu || showSearch || showTransportForm ? 'rotate-45' : ''}`} />
+              <span className="hidden sm:inline">Add</span>
             </button>
 
-            {/* Add menu dropdown (mobile only) */}
+            {/* Add menu dropdown (mobile only) - Editorial Style */}
             <AnimatePresence>
               {showAddMenu && !showSearch && !showTransportForm && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  className="absolute right-0 top-full mt-1 w-44 sm:w-40 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-2xl shadow-lg overflow-hidden z-20 lg:hidden"
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  className="absolute right-0 top-full mt-2 w-48 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] shadow-xl z-20 lg:hidden"
                 >
-                  <button
-                    onClick={() => { setShowSearch(true); setSearchSource('curated'); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors text-left"
-                  >
-                    <Search className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-                    From curation
-                  </button>
-                  <button
-                    onClick={() => { setShowSearch(true); setSearchSource('google'); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors text-left"
-                  >
-                    <Globe className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-                    From Google
-                  </button>
-                  <div className="border-t border-[var(--editorial-border)] my-1" />
-                  <button
-                    onClick={() => setShowTransportForm('flight')}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors text-left"
-                  >
-                    <Plane className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-                    Flight
-                  </button>
-                  <button
-                    onClick={() => setShowTransportForm('hotel')}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors text-left"
-                  >
-                    <Hotel className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-                    Hotel
-                  </button>
-                  <button
-                    onClick={() => setShowTransportForm('train')}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors text-left"
-                  >
-                    <TrainIcon className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-                    Train
-                  </button>
-                  <div className="border-t border-[var(--editorial-border)] my-1" />
-                  <button
-                    onClick={() => setShowTransportForm('activity')}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] transition-colors text-left"
-                  >
-                    <Clock className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-                    Activity
-                  </button>
+                  <div className="p-2">
+                    <span className="text-editorial-label block px-3 py-2">Add to Day</span>
+                  </div>
+                  <div className="border-t border-[var(--editorial-border)]">
+                    <button
+                      onClick={() => { setShowSearch(true); setSearchSource('curated'); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-accent)]/5 transition-colors text-left"
+                    >
+                      <Search className="w-4 h-4 text-[var(--editorial-accent)]" />
+                      Curated Places
+                    </button>
+                    <button
+                      onClick={() => { setShowSearch(true); setSearchSource('google'); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-accent)]/5 transition-colors text-left"
+                    >
+                      <Globe className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
+                      Search Google
+                    </button>
+                  </div>
+                  <div className="border-t border-[var(--editorial-border)]">
+                    <span className="text-editorial-label block px-4 py-2">Travel & Stay</span>
+                    <button
+                      onClick={() => setShowTransportForm('flight')}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-accent)]/5 transition-colors text-left"
+                    >
+                      <Plane className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
+                      Flight
+                    </button>
+                    <button
+                      onClick={() => setShowTransportForm('train')}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-accent)]/5 transition-colors text-left"
+                    >
+                      <TrainIcon className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
+                      Train
+                    </button>
+                    <button
+                      onClick={() => setShowTransportForm('hotel')}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-accent)]/5 transition-colors text-left"
+                    >
+                      <Hotel className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
+                      Hotel
+                    </button>
+                    <button
+                      onClick={() => setShowTransportForm('activity')}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-accent)]/5 transition-colors text-left"
+                    >
+                      <Clock className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
+                      Activity
+                    </button>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
