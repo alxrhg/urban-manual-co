@@ -1198,7 +1198,7 @@ export default function InteractiveHero() {
 
       {/* City/Category Filters - Below the grid */}
       {!showChatResults && (
-        <div className="pt-12 lg:pt-16">
+        <div className="pt-12 lg:pt-16 pr-8 md:pr-16">
           <div className="w-full">
             <div className="mb-6">
               <div className="flex flex-wrap gap-x-4 gap-y-2">
