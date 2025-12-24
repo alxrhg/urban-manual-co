@@ -136,9 +136,7 @@ const InlineAddToTrip = memo(function InlineAddToTrip({
     setIsAdding(true);
     try {
       addToTrip(destination, day);
-      const tripName = selectedTrip
-        ? ('title' in selectedTrip ? selectedTrip.title : selectedTrip.title)
-        : activeTrip?.title || 'Trip';
+      const tripName = selectedTrip?.title || activeTrip?.title || 'Trip';
       setSuccessMessage(`Added to ${tripName} · Day ${day}`);
       animateTransition('success');
       onAdded?.();
