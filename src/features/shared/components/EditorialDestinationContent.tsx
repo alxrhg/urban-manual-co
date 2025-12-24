@@ -98,15 +98,17 @@ export function EditorialDestinationContent({
         {/* Expandable "More Info" Section */}
         {showMoreInfo && (
           <div className="mt-8 pt-8 border-t border-[var(--editorial-border)]">
-            {/* Hours placeholder */}
-            {destination.opening_hours && (
+            {/* Hours */}
+            {destination.opening_hours_json && (
               <div className="mb-6">
                 <p className="text-[11px] uppercase tracking-[0.15em] font-medium text-[var(--editorial-text-tertiary)] mb-3">
                   Hours
                 </p>
-                <p className="font-editorial-serif text-[15px] text-[var(--editorial-text-secondary)] leading-relaxed">
-                  {destination.opening_hours}
-                </p>
+                <div className="font-editorial-serif text-[15px] text-[var(--editorial-text-secondary)] leading-relaxed">
+                  {Object.entries(destination.opening_hours_json).map(([day, hours]) => (
+                    <p key={day} className="capitalize">{day}: {String(hours)}</p>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -170,7 +172,7 @@ export function EditorialDestinationContent({
           )}
 
           {/* More Info Toggle */}
-          {(destination.formatted_address || destination.phone_number || destination.opening_hours) && (
+          {(destination.formatted_address || destination.phone_number || destination.opening_hours_json) && (
             <button
               onClick={() => setShowMoreInfo(!showMoreInfo)}
               className="text-[13px] sm:text-[14px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)] transition-colors"

@@ -84,7 +84,7 @@ export function DestinationDrawer() {
 
   const hasMoreInfo = selectedDestination.formatted_address ||
     selectedDestination.phone_number ||
-    selectedDestination.opening_hours ||
+    selectedDestination.opening_hours_json ||
     (selectedDestination.latitude && selectedDestination.longitude);
 
   return (
@@ -162,14 +162,16 @@ export function DestinationDrawer() {
               {showMoreInfo && (
                 <div className="mt-10 pt-8 border-t border-[var(--editorial-border)]">
                   {/* Hours */}
-                  {selectedDestination.opening_hours && (
+                  {selectedDestination.opening_hours_json && (
                     <div className="mb-8">
                       <p className="text-[11px] uppercase tracking-[0.15em] font-medium text-[var(--editorial-text-tertiary)] mb-3">
                         Hours
                       </p>
-                      <p className="font-editorial-serif text-[15px] text-[var(--editorial-text-secondary)] leading-relaxed whitespace-pre-line">
-                        {selectedDestination.opening_hours}
-                      </p>
+                      <div className="font-editorial-serif text-[15px] text-[var(--editorial-text-secondary)] leading-relaxed">
+                        {Object.entries(selectedDestination.opening_hours_json).map(([day, hours]) => (
+                          <p key={day} className="capitalize">{day}: {String(hours)}</p>
+                        ))}
+                      </div>
                     </div>
                   )}
 
