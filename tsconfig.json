@@ -1,21 +1,17 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
-    "module": "esnext",
+    "target": "ES6",
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
+    "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "incremental": true,
     "plugins": [
       {
@@ -23,32 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"],
-      "@/ui": ["./src/ui"],
-      "@/ui/*": ["./src/ui/*"],
-      "@/features": ["./src/features"],
-      "@/features/*": ["./src/features/*"],
-      "@/domain": ["./src/domain"],
-      "@/domain/*": ["./src/domain/*"]
+      "@/*": ["./*"]
     }
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    "**/*.mts",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    ".next",
-    "capacitor.config.ts",
-    "drizzle",
-    "scripts",
-    "vite.config.ts",
-    "vitest.config.ts",
-    "supabase/functions",
-    "mcp-server"
-  ]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }
