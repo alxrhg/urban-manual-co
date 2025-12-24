@@ -2707,7 +2707,7 @@ export default function HomePageClient({
               {/* City and Category Lists - Uses space below greeting, aligned to bottom */}
               {!submittedQuery && (
                 <div className="flex-1 flex items-end">
-                  <div className="w-full pt-6">
+                  <div className="w-full pt-6 pr-8 md:pr-16">
                     {/* City List - Only shows Taipei, Tokyo, New York, and London */}
                     <div className="mb-[50px]">
                       {/* City Buttons */}
