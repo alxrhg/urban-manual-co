@@ -16,8 +16,8 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "OF STUDY — Collections By Design",
-  description: "Curated design objects for thoughtful living",
+  title: "Urban Manual — Curated Travel Guide",
+  description: "909+ handpicked hotels, restaurants, and destinations across the globe",
   generator: "v0.app",
   icons: {
     icon: [
