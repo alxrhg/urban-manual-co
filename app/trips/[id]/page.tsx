@@ -344,48 +344,48 @@ export default function TripPage() {
               onDelete={handleDelete}
             />
 
-            {/* Local Time + Quick Actions */}
-            <div className="flex items-center justify-between mt-4 mb-4">
+            {/* Action bar: Local Time + Edit + Quick Actions + Settings */}
+            <div className="flex items-center flex-wrap gap-y-2 mt-4 mb-4">
               <LocalTimeDisplay city={primaryCity} />
-              <TripQuickActions
-                tripId={tripId}
-                tripTitle={trip.title || 'My Trip'}
-                startDate={trip.start_date}
-                endDate={trip.end_date}
-                destination={primaryCity}
-              />
-            </div>
 
-            {/* Action bar: Edit toggle + Settings */}
-            <div className="flex items-center justify-between mt-4 mb-2">
-              <button
-                onClick={() => setIsEditMode(!isEditMode)}
-                className={`flex items-center gap-1.5 px-4 py-2 sm:px-4 sm:py-1.5 text-[12px] sm:text-[11px] font-medium rounded-full transition-colors ${
-                  isEditMode
-                    ? 'bg-[var(--editorial-accent)] text-white'
-                    : 'text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] border border-[var(--editorial-border)]'
-                }`}
-              >
-                {isEditMode ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                    Done
-                  </>
-                ) : (
-                  <>
-                    <Pencil className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                    Edit
-                  </>
-                )}
-              </button>
+              <div className="flex items-center ml-auto">
+                <button
+                  onClick={() => setIsEditMode(!isEditMode)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] transition-colors ${
+                    isEditMode
+                      ? 'text-[var(--editorial-accent)] font-medium'
+                      : 'text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)]'
+                  }`}
+                >
+                  {isEditMode ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      Done
+                    </>
+                  ) : (
+                    <>
+                      <Pencil className="w-3.5 h-3.5" />
+                      Edit
+                    </>
+                  )}
+                </button>
 
-              <button
-                onClick={() => { setShowTripSettings(true); setSelectedItem(null); }}
-                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
-              >
-                <Settings className="w-3.5 h-3.5" />
-                Settings
-              </button>
+                <TripQuickActions
+                  tripId={tripId}
+                  tripTitle={trip.title || 'My Trip'}
+                  startDate={trip.start_date}
+                  endDate={trip.end_date}
+                  destination={primaryCity}
+                />
+
+                <button
+                  onClick={() => { setShowTripSettings(true); setSelectedItem(null); }}
+                  className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  Settings
+                </button>
+              </div>
             </div>
 
         {/* Trip Notes - expandable (mobile only, desktop uses sidebar) */}
@@ -445,8 +445,7 @@ export default function TripPage() {
                         : 'bg-[var(--editorial-bg-elevated)] text-[var(--editorial-text-secondary)] hover:bg-[var(--editorial-border-subtle)] border border-[var(--editorial-border)]'
                     }`}
                   >
-                    <span className="flex items-center gap-1.5">
-                      {isSelected && <Clock className="w-3 h-3" />}
+                    <span>
                       {dayDate || `Day ${day.dayNumber}`}
                     </span>
                     {dayWeather && (
