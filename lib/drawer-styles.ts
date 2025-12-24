@@ -90,23 +90,51 @@ export const DRAWER_STYLES = {
 } as const;
 
 /**
- * Editorial typography classes
+ * Editorial typography classes - "Of Study" inspired
+ *
+ * Designed for a printed card aesthetic with serif fonts,
+ * extreme whitespace, and minimal UI.
  */
 export const EDITORIAL_TYPOGRAPHY = {
-  // Headings - tighter tracking, warmer colors
-  h1: 'text-[26px] font-semibold tracking-tight text-[#3a3937] dark:text-[#f5f3ef] leading-tight',
-  h2: 'text-[20px] font-semibold tracking-tight text-[#3a3937] dark:text-[#f5f3ef] leading-tight',
-  h3: 'text-[16px] font-medium text-[#3a3937] dark:text-[#f5f3ef]',
+  // Headings - serif, editorial style
+  h1: 'font-editorial-serif text-[28px] sm:text-[32px] font-normal tracking-tight text-[var(--editorial-text-primary)] leading-[1.2]',
+  h2: 'font-editorial-serif text-[24px] font-normal tracking-tight text-[var(--editorial-text-primary)] leading-[1.2]',
+  h3: 'font-editorial-serif text-[18px] font-normal text-[var(--editorial-text-primary)] leading-[1.3]',
 
-  // Body text
-  body: 'text-[15px] text-[#5a5955] dark:text-[#c8c7c4] leading-relaxed',
-  bodySmall: 'text-[13px] text-[#706f6a] dark:text-[#a9a8a4]',
+  // Body text - serif for editorial feel
+  body: 'font-editorial-serif text-[16px] sm:text-[17px] text-[var(--editorial-text-secondary)] leading-[1.7]',
+  bodySmall: 'font-editorial-serif text-[14px] text-[var(--editorial-text-tertiary)] leading-[1.6]',
+
+  // Category label - small caps, sans-serif, spaced
+  categoryLabel: 'text-[11px] sm:text-[12px] uppercase tracking-[0.2em] font-medium text-[var(--editorial-text-tertiary)]',
 
   // Labels - uppercase, editorial style
-  label: 'text-[11px] uppercase tracking-[0.12em] font-medium text-[#a9a8a4] dark:text-[#706f6a]',
+  label: 'text-[11px] uppercase tracking-[0.12em] font-medium text-[var(--editorial-text-tertiary)]',
+
+  // URL at bottom - sans-serif, subtle
+  url: 'text-[13px] sm:text-[14px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)] transition-colors',
 
   // Links
-  link: 'text-[#c4604b] hover:text-[#b54d3a] transition-colors',
+  link: 'text-[var(--editorial-accent)] hover:text-[var(--editorial-accent-hover)] transition-colors',
+} as const;
+
+/**
+ * Editorial spacing constants for the "Of Study" aesthetic
+ */
+export const EDITORIAL_SPACING = {
+  // Generous padding - 32-40px on all sides
+  container: 'px-8 sm:px-10',
+  containerY: 'py-8 sm:py-10',
+
+  // Large gap between image and text
+  afterImage: 'mt-8 sm:mt-10',
+
+  // Breathing room between elements
+  sectionGap: 'mt-6 sm:mt-8',
+  elementGap: 'mt-4',
+
+  // URL pushed to bottom
+  bottomUrl: 'mt-auto pt-12 sm:pt-16',
 } as const;
 
 /**

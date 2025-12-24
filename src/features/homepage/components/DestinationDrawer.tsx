@@ -1,24 +1,34 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { X, MapPin, ExternalLink, Star, Heart, Share2, Navigation, Clock, Phone, Globe, ChevronRight, ArrowUpRight } from 'lucide-react';
+import { X, MapPin, Navigation } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { useHomepageData } from './HomepageDataProvider';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 
 /**
- * Destination Drawer - Portal Design System
+ * Destination Drawer - "Of Study" Editorial Design
  *
- * A slide-over drawer for viewing destination details.
- * Dark theme with structured sections for contact, architecture, and map.
+ * A printed card aesthetic with:
+ * - Single square image at top (1:1 ratio)
+ * - Minimal text - only essential information
+ * - Serif typography - editorial, not UI
+ * - Extreme whitespace - let content breathe
+ * - Almost no UI - no buttons, badges, tabs
+ * - URL anchored at bottom - like a printed card
  */
 
 export function DestinationDrawer() {
-  const { selectedDestination, isDrawerOpen, closeDrawer, openDestination, filteredDestinations } = useHomepageData();
+  const { selectedDestination, isDrawerOpen, closeDrawer } = useHomepageData();
   const drawerRef = useRef<HTMLDivElement>(null);
-  const [isSaved, setIsSaved] = useState(false);
+  const [showMoreInfo, setShowMoreInfo] = useState(false);
+
+  // Reset more info state when destination changes
+  useEffect(() => {
+    setShowMoreInfo(false);
+  }, [selectedDestination?.slug]);
 
   // Handle escape key
   useEffect(() => {
@@ -43,38 +53,22 @@ export function DestinationDrawer() {
     };
   }, [isDrawerOpen]);
 
-  // Handle share
-  const handleShare = async () => {
-    if (!selectedDestination) return;
-    const url = `${window.location.origin}/destination/${selectedDestination.slug}`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: selectedDestination.name,
-          text: selectedDestination.micro_description || `Check out ${selectedDestination.name}`,
-          url,
-        });
-      } catch {
-        // User cancelled or error
-      }
-    } else {
-      // Fallback: copy to clipboard
-      await navigator.clipboard.writeText(url);
-    }
-  };
-
   // Handle directions
-  const handleDirections = () => {
+  const handleDirections = useCallback(() => {
     if (!selectedDestination?.latitude || !selectedDestination?.longitude) return;
     const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedDestination.latitude},${selectedDestination.longitude}`;
     window.open(url, '_blank');
-  };
+  }, [selectedDestination?.latitude, selectedDestination?.longitude]);
 
-  // Get related destinations (same city, different destination)
-  const relatedDestinations = filteredDestinations
-    .filter(d => d.city === selectedDestination?.city && d.slug !== selectedDestination?.slug)
-    .slice(0, 4);
+  // Extract clean domain from website URL
+  const getCleanUrl = (url: string) => {
+    try {
+      const parsed = new URL(url.startsWith('http') ? url : `https://${url}`);
+      return parsed.hostname.replace('www.', '');
+    } catch {
+      return url.replace(/^https?:\/\//, '').replace(/\/$/, '').replace('www.', '');
+    }
+  };
 
   if (!selectedDestination) return null;
 
@@ -82,15 +76,22 @@ export function DestinationDrawer() {
   const cityName = selectedDestination.city ? capitalizeCity(selectedDestination.city) : '';
   const categoryName = selectedDestination.category ? capitalizeCategory(selectedDestination.category) : '';
 
-  // Architecture data
-  const architect = selectedDestination.architect || null;
-  const designStyle = selectedDestination.architectural_style || null;
+  const websiteUrl = selectedDestination.website
+    ? selectedDestination.website.startsWith('http')
+      ? selectedDestination.website
+      : `https://${selectedDestination.website}`
+    : null;
+
+  const hasMoreInfo = selectedDestination.formatted_address ||
+    selectedDestination.phone_number ||
+    selectedDestination.opening_hours ||
+    (selectedDestination.latitude && selectedDestination.longitude);
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`fixed inset-0 z-50 bg-black/40 transition-opacity duration-300 ${
           isDrawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={closeDrawer}
@@ -99,287 +100,154 @@ export function DestinationDrawer() {
       {/* Drawer */}
       <div
         ref={drawerRef}
-        className={`fixed right-0 top-0 z-50 h-full w-full max-w-md bg-[#1c1c1e]
+        className={`fixed right-0 top-0 z-50 h-full w-full max-w-[520px]
+                    bg-[var(--editorial-bg)]
                     shadow-2xl transform transition-transform duration-300 ease-out
                     ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
+        {/* Close Button - Subtle ✕ in corner */}
+        <button
+          onClick={closeDrawer}
+          className="absolute top-5 right-5 sm:top-6 sm:right-6 z-20 p-2
+                     text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]
+                     transition-colors"
+          aria-label="Close"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
         {/* Scroll container */}
         <div className="h-full overflow-y-auto overscroll-contain">
-          {/* Header Image with overlay content */}
-          <div className="relative aspect-[4/3] bg-gray-800">
-            {imageUrl ? (
-              <Image
-                src={imageUrl}
-                alt={selectedDestination.name}
-                fill
-                className="object-cover"
-                priority
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <MapPin className="w-16 h-16 text-gray-600" />
-              </div>
-            )}
-
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-            {/* Close button */}
-            <button
-              onClick={closeDrawer}
-              className="absolute top-4 right-4 w-10 h-10 rounded-lg
-                         bg-black/40 backdrop-blur-md
-                         flex items-center justify-center
-                         hover:bg-black/60 transition-colors"
-            >
-              <X className="w-5 h-5 text-white" />
-            </button>
-
-            {/* Save button on image */}
-            <button
-              onClick={() => setIsSaved(!isSaved)}
-              className="absolute top-4 right-16 w-10 h-10 rounded-lg
-                         bg-black/40 backdrop-blur-md
-                         flex items-center justify-center
-                         hover:bg-black/60 transition-colors"
-            >
-              <Heart className={`w-5 h-5 text-white ${isSaved ? 'fill-white' : ''}`} />
-            </button>
-
-            {/* Title overlay on image */}
-            <div className="absolute bottom-4 left-4 right-4">
-              <h2 className="text-[22px] font-semibold text-white tracking-tight mb-1">
-                {selectedDestination.name}
-              </h2>
-              <p className="text-[14px] text-white/70">
-                {categoryName}{categoryName && cityName && ' · '}{cityName}
-              </p>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="p-5">
-            {/* Rating */}
-            {selectedDestination.rating && (
-              <div className="flex items-center gap-2 mb-5">
-                <img src="/google-logo.svg" alt="Google" className="w-5 h-5" />
-                <span className="text-[17px] font-semibold text-white">
-                  {selectedDestination.rating.toFixed(1)}
-                </span>
-                {selectedDestination.user_ratings_total && (
-                  <span className="text-[14px] text-gray-400">
-                    ({selectedDestination.user_ratings_total} reviews)
-                  </span>
-                )}
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex gap-2 mb-6">
-              <button
-                onClick={() => setIsSaved(!isSaved)}
-                className={`flex-1 h-12 rounded-xl text-[15px] font-medium
-                            flex items-center justify-center gap-2 transition-all
-                            ${isSaved
-                              ? 'bg-white text-gray-900'
-                              : 'bg-[#2c2c2e] text-white hover:bg-[#3c3c3e]'
-                            }`}
-              >
-                <Heart className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
-                Save
-              </button>
-              <button
-                onClick={handleShare}
-                className="w-12 h-12 rounded-xl bg-[#2c2c2e]
-                           flex items-center justify-center
-                           hover:bg-[#3c3c3e] transition-colors"
-              >
-                <Share2 className="w-5 h-5 text-white" />
-              </button>
-              {(selectedDestination.latitude && selectedDestination.longitude) && (
-                <button
-                  onClick={handleDirections}
-                  className="w-12 h-12 rounded-xl bg-[#2c2c2e]
-                             flex items-center justify-center
-                             hover:bg-[#3c3c3e] transition-colors"
-                >
-                  <Navigation className="w-5 h-5 text-white" />
-                </button>
+          <div className="flex flex-col min-h-full">
+            {/* Square Hero Image - The focal point */}
+            <div className="relative aspect-square w-full bg-[var(--editorial-border)]">
+              {imageUrl ? (
+                <Image
+                  src={imageUrl}
+                  alt={selectedDestination.name}
+                  fill
+                  className="object-cover"
+                  priority
+                  sizes="(max-width: 768px) 100vw, 520px"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <MapPin className="w-16 h-16 text-[var(--editorial-text-tertiary)]" />
+                </div>
               )}
             </div>
 
-            {/* Description */}
-            {(selectedDestination.micro_description || selectedDestination.description) && (
-              <div className="mb-6">
-                <p className="text-[15px] leading-relaxed text-gray-300">
+            {/* Content - Editorial Layout with extreme whitespace */}
+            <div className="flex flex-col flex-1 px-8 sm:px-10 pt-8 sm:pt-10 pb-8 sm:pb-10">
+              {/* Category · Location Label - Small caps, spaced */}
+              <p className="text-[11px] sm:text-[12px] uppercase tracking-[0.2em] font-medium text-[var(--editorial-text-tertiary)]">
+                {categoryName}
+                {categoryName && cityName && ' · '}
+                {cityName}
+              </p>
+
+              {/* Venue Name - Large serif, can break to 2 lines */}
+              <h1 className="font-editorial-serif text-[28px] sm:text-[32px] font-normal tracking-tight text-[var(--editorial-text-primary)] leading-[1.15] mt-5 sm:mt-6">
+                {selectedDestination.name}
+              </h1>
+
+              {/* Description - Serif, comfortable reading size, warm gray */}
+              {(selectedDestination.micro_description || selectedDestination.description) && (
+                <p className="font-editorial-serif text-[16px] sm:text-[17px] text-[var(--editorial-text-secondary)] leading-[1.7] mt-6 sm:mt-8">
                   {selectedDestination.micro_description || selectedDestination.description}
                 </p>
-              </div>
-            )}
+              )}
 
-            {/* Contact & Hours Section */}
-            {(selectedDestination.formatted_address || selectedDestination.phone_number || selectedDestination.website) && (
-              <div className="mb-6">
-                <h3 className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-4">
-                  Contact & Hours
-                </h3>
-                <div className="space-y-3">
+              {/* Expandable More Info Section - Revealed on scroll/tap */}
+              {showMoreInfo && (
+                <div className="mt-10 pt-8 border-t border-[var(--editorial-border)]">
+                  {/* Hours */}
+                  {selectedDestination.opening_hours && (
+                    <div className="mb-8">
+                      <p className="text-[11px] uppercase tracking-[0.15em] font-medium text-[var(--editorial-text-tertiary)] mb-3">
+                        Hours
+                      </p>
+                      <p className="font-editorial-serif text-[15px] text-[var(--editorial-text-secondary)] leading-relaxed whitespace-pre-line">
+                        {selectedDestination.opening_hours}
+                      </p>
+                    </div>
+                  )}
+
                   {/* Address */}
                   {selectedDestination.formatted_address && (
-                    <div className="flex items-start gap-3">
-                      <MapPin className="w-5 h-5 text-gray-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-[15px] text-white">
+                    <div className="mb-8">
+                      <p className="text-[11px] uppercase tracking-[0.15em] font-medium text-[var(--editorial-text-tertiary)] mb-3">
+                        Address
+                      </p>
+                      <p className="font-editorial-serif text-[15px] text-[var(--editorial-text-secondary)] leading-relaxed">
                         {selectedDestination.formatted_address}
-                      </span>
+                      </p>
                     </div>
                   )}
 
                   {/* Phone */}
                   {selectedDestination.phone_number && (
-                    <a
-                      href={`tel:${selectedDestination.phone_number}`}
-                      className="flex items-center gap-3 group"
-                    >
-                      <Phone className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                      <span className="text-[15px] text-white group-hover:text-gray-300 transition-colors">
+                    <div className="mb-8">
+                      <p className="text-[11px] uppercase tracking-[0.15em] font-medium text-[var(--editorial-text-tertiary)] mb-3">
+                        Phone
+                      </p>
+                      <a
+                        href={`tel:${selectedDestination.phone_number}`}
+                        className="font-editorial-serif text-[15px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+                      >
                         {selectedDestination.phone_number}
-                      </span>
-                    </a>
-                  )}
-
-                  {/* Website */}
-                  {selectedDestination.website && (
-                    <a
-                      href={selectedDestination.website.startsWith('http') ? selectedDestination.website : `https://${selectedDestination.website}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 group"
-                    >
-                      <Globe className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                      <span className="text-[15px] text-cyan-400 group-hover:text-cyan-300 transition-colors">
-                        {selectedDestination.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-                      </span>
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Design & Architecture Section */}
-            {(architect || designStyle) && (
-              <div className="mb-6">
-                <h3 className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-4">
-                  Design & Architecture
-                </h3>
-                <div className="space-y-4">
-                  {/* Architect */}
-                  {architect && (
-                    <div className="flex items-center gap-3 py-3 border-b border-white/10">
-                      <div className="w-10 h-10 rounded-lg bg-[#2c2c2e] flex items-center justify-center flex-shrink-0">
-                        <span className="text-[14px] font-medium text-gray-400">A</span>
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
-                          Architect
-                        </p>
-                        <p className="text-[15px] text-white">
-                          {architect}
-                        </p>
-                      </div>
+                      </a>
                     </div>
                   )}
 
-                  {/* Style */}
-                  {designStyle && (
-                    <div className="flex items-center gap-3 py-3 border-b border-white/10">
-                      <div className="w-10 h-10 rounded-lg bg-[#2c2c2e] flex items-center justify-center flex-shrink-0">
-                        <span className="text-[14px] font-medium text-gray-400">S</span>
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
-                          Style
-                        </p>
-                        <p className="text-[15px] text-white">
-                          {designStyle}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Map Preview */}
-            {(selectedDestination.latitude && selectedDestination.longitude) && (
-              <div className="mb-6">
-                <div className="bg-[#2c2c2e] rounded-lg p-6">
-                  <div className="flex flex-col items-center justify-center py-8">
-                    <MapPin className="w-8 h-8 text-gray-500 mb-2" />
-                    <span className="text-[14px] text-gray-400">Map Preview</span>
-                  </div>
-                  <button
-                    onClick={handleDirections}
-                    className="w-full py-3 px-4 bg-[#3c3c3e] rounded-xl text-[15px] font-medium text-white
-                               hover:bg-[#4c4c4e] transition-colors"
-                  >
-                    View larger map
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* View Full Details Button */}
-            <Link
-              href={`/destination/${selectedDestination.slug}`}
-              className="flex items-center justify-center gap-2 w-full py-4 px-6
-                         bg-white rounded-lg
-                         hover:bg-gray-100 transition-colors"
-            >
-              <span className="text-[17px] font-semibold text-gray-900">
-                View Full Details
-              </span>
-              <ArrowUpRight className="w-5 h-5 text-gray-900" />
-            </Link>
-
-            {/* Related Destinations */}
-            {relatedDestinations.length > 0 && (
-              <div className="mt-8">
-                <h3 className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-4">
-                  More in {cityName}
-                </h3>
-                <div className="space-y-3">
-                  {relatedDestinations.map((dest) => (
+                  {/* Directions */}
+                  {selectedDestination.latitude && selectedDestination.longitude && (
                     <button
-                      key={dest.slug}
-                      onClick={() => openDestination(dest)}
-                      className="flex items-center gap-3 w-full p-2 -mx-2 rounded-xl
-                                 hover:bg-white/5 transition-colors text-left"
+                      onClick={handleDirections}
+                      className="flex items-center gap-2 text-[14px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)] transition-colors"
                     >
-                      <div className="w-14 h-14 rounded-xl bg-gray-800 overflow-hidden flex-shrink-0">
-                        {(dest.image || dest.image_thumbnail) && (
-                          <Image
-                            src={dest.image_thumbnail || dest.image || ''}
-                            alt={dest.name}
-                            width={56}
-                            height={56}
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[14px] font-medium text-white truncate">
-                          {dest.name}
-                        </p>
-                        <p className="text-[13px] text-gray-400 truncate">
-                          {dest.category && capitalizeCategory(dest.category)}
-                        </p>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                      <Navigation className="w-4 h-4" />
+                      Get directions
                     </button>
-                  ))}
+                  )}
                 </div>
+              )}
+
+              {/* Spacer to push URL to bottom */}
+              <div className="flex-1 min-h-16 sm:min-h-20" />
+
+              {/* Bottom: URL and More Info Toggle - Like a printed card */}
+              <div className="flex items-center justify-between">
+                {/* Website URL - Sans-serif, small, anchored at bottom */}
+                {websiteUrl ? (
+                  <a
+                    href={websiteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[13px] sm:text-[14px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)] transition-colors"
+                  >
+                    {getCleanUrl(selectedDestination.website || '')}
+                  </a>
+                ) : (
+                  <Link
+                    href={`/destination/${selectedDestination.slug}`}
+                    className="text-[13px] sm:text-[14px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)] transition-colors"
+                  >
+                    View details
+                  </Link>
+                )}
+
+                {/* More Info Toggle - Subtle text link */}
+                {hasMoreInfo && (
+                  <button
+                    onClick={() => setShowMoreInfo(!showMoreInfo)}
+                    className="text-[13px] sm:text-[14px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)] transition-colors"
+                  >
+                    {showMoreInfo ? 'Less' : 'More info'}
+                  </button>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>

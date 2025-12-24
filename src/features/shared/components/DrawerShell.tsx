@@ -26,6 +26,10 @@ interface DrawerShellProps {
   restoreScrollPosition?: number;
   /** Editorial variant - uses terracotta background with white text */
   variant?: 'default' | 'editorial';
+  /** Minimal mode - only shows close button, no header/footer chrome */
+  minimal?: boolean;
+  /** Hide close button (for custom close handling) */
+  hideCloseButton?: boolean;
 }
 
 /**
@@ -51,6 +55,8 @@ const DrawerShell = memo(function DrawerShell({
   onSaveScrollPosition,
   restoreScrollPosition,
   variant = 'default',
+  minimal = false,
+  hideCloseButton = false,
 }: DrawerShellProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLElement>(null);
@@ -250,26 +256,28 @@ const DrawerShell = memo(function DrawerShell({
             )}
 
             {/* Navigation Controls - Minimal, just icons, inside card padding */}
-            <div className="absolute top-4 left-6 right-6 z-20 flex items-center justify-between pointer-events-none sm:left-8 sm:right-8">
-              {canGoBack && handleBack ? (
+            {!hideCloseButton && (
+              <div className="absolute top-4 left-6 right-6 z-20 flex items-center justify-between pointer-events-none sm:left-8 sm:right-8">
+                {canGoBack && handleBack && !minimal ? (
+                  <button
+                    onClick={handleBack}
+                    className="pointer-events-auto p-1.5 text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+                    aria-label="Go back"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <div />
+                )}
                 <button
-                  onClick={handleBack}
+                  onClick={onClose}
                   className="pointer-events-auto p-1.5 text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
-                  aria-label="Go back"
+                  aria-label="Close"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <X className="w-4 h-4" />
                 </button>
-              ) : (
-                <div />
-              )}
-              <button
-                onClick={onClose}
-                className="pointer-events-auto p-1.5 text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
-                aria-label="Close"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+              </div>
+            )}
 
             {/* Content - Fixed height with scroll */}
             <main
@@ -280,8 +288,8 @@ const DrawerShell = memo(function DrawerShell({
               {children}
             </main>
 
-            {/* Footer */}
-            {footerContent && (
+            {/* Footer - hidden in minimal mode */}
+            {footerContent && !minimal && (
               <footer className="flex-shrink-0 px-8 py-5 border-t border-[var(--editorial-border)] bg-[var(--editorial-bg)] pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
                 {footerContent}
               </footer>
