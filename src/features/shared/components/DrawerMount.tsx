@@ -8,8 +8,6 @@ import { AccountDrawer } from '@/features/account/components/AccountDrawer';
 import { SavedPlacesDrawer } from '@/features/lists/components/SavedPlacesDrawer';
 import { VisitedPlacesDrawer } from '@/features/lists/components/VisitedPlacesDrawer';
 import { TripsDrawer } from '@/features/trip/components/TripsDrawer';
-import { QuickTripSelector } from '@/components/QuickTripSelector';
-
 import AddHotelDrawer from '@/features/trip/components/AddHotelDrawer';
 import AddFlightDrawer from '@/features/trip/components/AddFlightDrawer';
 import AISuggestionsDrawer from '@/features/trip/components/AISuggestionsDrawer';
@@ -187,14 +185,7 @@ export default function DrawerMount() {
         </Drawer>
       )}
 
-      {/* Quick Trip Selector - for one-click add to trip */}
-      <QuickTripSelector
-        isOpen={open && type === 'quick-trip-selector'}
-        onClose={closeDrawer}
-        destinationSlug={props?.destinationSlug || ''}
-        destinationName={props?.destinationName || ''}
-        destinationCity={props?.destinationCity}
-      />
+      {/* TripModal moved to TripModalMount in layout.tsx for higher z-index */}
     </>
   );
 }

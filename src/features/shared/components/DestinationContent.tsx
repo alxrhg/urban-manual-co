@@ -28,6 +28,7 @@ import { useTripBuilder } from '@/contexts/TripBuilderContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from '@/ui/sonner';
+import { InlineAddToTrip } from '@/features/detail/InlineAddToTrip';
 
 // ============================================
 // SMART CATEGORY DETECTION
@@ -574,6 +575,8 @@ const DestinationContent = memo(function DestinationContent({
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
   const [isAddingToTrip, setIsAddingToTrip] = useState(false);
+  const [isAddToTripExpanded, setIsAddToTripExpanded] = useState(false);
+  const [addedToTripName, setAddedToTripName] = useState<string | null>(null);
   const [enrichedData, setEnrichedData] = useState<EnrichedData | null>(null);
   const [parentDestination, setParentDestination] = useState<Destination | null>(null);
   const [nestedDestinations, setNestedDestinations] = useState<Destination[]>([]);
@@ -1701,24 +1704,24 @@ const DestinationContent = memo(function DestinationContent({
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-2 mb-6">
-          {/* Add to Trip - Always visible */}
-          <button
-            onClick={() => {
-              if (activeTrip) {
-                handleAddToTrip(tripContext?.day || activeTrip?.days[0]?.dayNumber || 1);
-              } else {
-                startTrip(destination.city || 'New Trip', 3);
-                handleAddToTrip(1);
-              }
+        {/* Add to Trip - Inline expandable */}
+        <div className="mb-4">
+          <InlineAddToTrip
+            destinationSlug={destination.slug}
+            destinationName={destination.name}
+            isExpanded={isAddToTripExpanded}
+            onExpandedChange={setIsAddToTripExpanded}
+            onSuccess={(tripTitle, day) => {
+              setAddedToTripName(tripTitle);
+              toast.success(`Added to ${tripTitle}${day ? ` (Day ${day})` : ''}`);
             }}
-            disabled={isAddingToTrip}
-            className="flex-1 h-10 flex items-center justify-center gap-2 text-[13px] font-medium rounded-lg bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)] hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {isAddingToTrip ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            {activeTrip ? 'Add to Trip' : 'Start Trip'}
-          </button>
+            onError={(message) => toast.error(message)}
+            isAddedToTrip={!!addedToTripName}
+          />
+        </div>
+
+        {/* Secondary Action Buttons */}
+        <div className="flex gap-2 mb-6">
           {/* Save Button */}
           <button
             onClick={user ? handleSave : undefined}

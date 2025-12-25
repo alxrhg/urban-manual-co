@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, Plus, Check, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDrawer } from '@/contexts/DrawerContext';
 import { useRouter } from 'next/navigation';
 import type { Trip, ItineraryItemNotes } from '@/domain/types/trip';
 
@@ -32,6 +33,7 @@ export function InlineAddToTrip({
   isAddedToTrip,
 }: InlineAddToTripProps) {
   const { user } = useAuth();
+  const { openDrawer } = useDrawer();
   const router = useRouter();
   const [trips, setTrips] = useState<TripWithDetails[]>([]);
   const [loading, setLoading] = useState(false);
@@ -206,12 +208,12 @@ export function InlineAddToTrip({
         type="button"
         onClick={() => {
           if (!user) {
-            router.push('/auth/login');
+            openDrawer('login-modal');
             return;
           }
           onExpandedChange(true);
         }}
-        className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-3.5 text-sm font-semibold transition-colors bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800"
+        className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-3.5 text-sm font-semibold transition-all bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)] hover:opacity-90 active:scale-[0.98]"
       >
         <Plus className="h-4 w-4" />
         Add to Trip
@@ -221,19 +223,19 @@ export function InlineAddToTrip({
 
   // Expanded state
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden animate-in slide-in-from-bottom-2 duration-200">
+    <div className="rounded-xl border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)] overflow-hidden animate-in slide-in-from-bottom-2 duration-200">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-        <span className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--editorial-border)]">
+        <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)]">
           Select Trip
         </span>
         <button
           type="button"
           onClick={() => onExpandedChange(false)}
-          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          className="p-1 hover:bg-[var(--editorial-border-subtle)] rounded-lg transition-colors"
           aria-label="Close"
         >
-          <X className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+          <X className="h-4 w-4 text-[var(--editorial-text-tertiary)]" />
         </button>
       </div>
 

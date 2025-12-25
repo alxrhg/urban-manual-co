@@ -18,6 +18,7 @@ import { TooltipProvider } from "@/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipNavigation } from "@/components/SkipNavigation";
 import DrawerMount from "@/features/shared/components/DrawerMount";
+import { TripModalMount } from "@/components/TripModalMount";
 import { PanelLayout } from "@/components/PanelMount";
 import MyStatsig from "./my-statsig";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -280,6 +281,7 @@ export default function RootLayout({
                               <DrawerMount />
                               <ResponsiveTripUI />
                               <IntelligentDrawer />
+                              <TripModalMount />
                             </IntelligentDrawerProvider>
                           </TripBuilderProvider>
                       </AdminEditModeProvider>
