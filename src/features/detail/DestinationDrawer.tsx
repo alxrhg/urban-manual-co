@@ -2065,6 +2065,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     </span>
               )}
 
+                {destination.tabelog_rating && (
+                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                    <span className="flex items-center justify-center h-3 w-3 rounded-sm bg-orange-500 text-white text-[7px] font-bold leading-none">T</span>
+                    {destination.tabelog_rating.toFixed(2)}
+                  </span>
+                )}
+
               {/* Instagram Handle */}
               {(destination.instagram_handle || destination.instagram_url) && (() => {
                 const instagramHandle = destination.instagram_handle || 
@@ -2767,6 +2774,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   {(enrichedData?.rating || destination.rating).toFixed(1)}
                     </span>
               )}
+
+                {destination.tabelog_rating && (
+                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                    <span className="flex items-center justify-center h-3 w-3 rounded-sm bg-orange-500 text-white text-[7px] font-bold leading-none">T</span>
+                    {destination.tabelog_rating.toFixed(2)}
+                  </span>
+                )}
 
               {/* Instagram Handle */}
               {(destination.instagram_handle || destination.instagram_url) && (() => {

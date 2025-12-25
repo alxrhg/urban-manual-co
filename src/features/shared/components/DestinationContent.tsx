@@ -1702,6 +1702,12 @@ const DestinationContent = memo(function DestinationContent({
               {destination.michelin_stars} Star{destination.michelin_stars > 1 ? 's' : ''}
             </span>
           )}
+          {destination.tabelog_rating && (
+            <span className="flex items-center gap-1.5">
+              <span className="flex items-center justify-center h-3.5 w-3.5 rounded-sm bg-orange-500 text-white text-[8px] font-bold leading-none">T</span>
+              <span className="font-medium text-[var(--editorial-text-primary)]">{destination.tabelog_rating.toFixed(2)}</span>
+            </span>
+          )}
         </div>
 
         {/* Add to Trip - Inline expandable */}

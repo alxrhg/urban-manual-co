@@ -80,8 +80,8 @@ export const HorizontalDestinationCard = memo(function HorizontalDestinationCard
           )}
         </div>
 
-        {/* Badges - Crown, Michelin, Rating */}
-        {(destination.crown || destination.michelin_stars || destination.rating) && (
+        {/* Badges - Crown, Michelin, Rating, Tabelog */}
+        {(destination.crown || destination.michelin_stars || destination.rating || destination.tabelog_rating) && (
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             {destination.crown && (
               <span className="text-xs px-2 py-0.5 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300">
@@ -98,6 +98,12 @@ export const HorizontalDestinationCard = memo(function HorizontalDestinationCard
               <span className="text-xs px-2 py-0.5 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 flex items-center gap-1">
                 <img src="/google-logo.svg" alt="Google" className="h-3 w-3" />
                 {destination.rating.toFixed(1)}
+              </span>
+            )}
+            {destination.tabelog_rating && (
+              <span className="text-xs px-2 py-0.5 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                <span className="flex items-center justify-center h-3 w-3 rounded-sm bg-orange-500 text-white text-[7px] font-bold leading-none">T</span>
+                {destination.tabelog_rating.toFixed(2)}
               </span>
             )}
           </div>

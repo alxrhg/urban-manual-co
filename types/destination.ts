@@ -82,4 +82,7 @@ export interface Destination {
   resy_url?: string | null;
   booking_url?: string | null;
   reservation_phone?: string | null;
+  // Tabelog rating (Japanese restaurant review site, 1-5 scale)
+  tabelog_rating?: number | null;
+  tabelog_url?: string | null;
 }
