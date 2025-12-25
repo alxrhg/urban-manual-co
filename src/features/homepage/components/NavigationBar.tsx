@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Globe, Loader2, X } from 'lucide-react';
+import { Plus, Globe, Loader2, X, Star, MapPin, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
@@ -49,11 +49,17 @@ export default function NavigationBar() {
       const supabase = createClient();
       if (!supabase) return;
 
+      // Generate a more descriptive default title with date
+      const now = new Date();
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+      const defaultTitle = `${monthNames[now.getMonth()]} ${now.getFullYear()} Trip`;
+
       const { data, error } = await supabase
         .from('trips')
         .insert({
           user_id: user.id,
-          title: 'New Trip',
+          title: defaultTitle,
           status: 'planning',
         })
         .select()
@@ -86,7 +92,8 @@ export default function NavigationBar() {
 
   return (
     <div className="mb-6">
-      <div className="flex justify-between items-center">
+      {/* Mobile: Stacked layout with better spacing, Desktop: Side by side */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
         {/* Left side - Results count and clear filters */}
         <div className="flex items-center gap-3">
           <p className="text-[13px] text-[var(--editorial-text-secondary)]">
@@ -103,14 +110,24 @@ export default function NavigationBar() {
           )}
         </div>
 
-        {/* Right side - Actions */}
-        <div className="flex items-center gap-3">
-          {/* Create Trip */}
+        {/* Right side - Actions (wrapped on mobile, scrollable) */}
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          {/* Filters - Always visible, comes first for quick access */}
+          <SearchFiltersComponent
+            filters={advancedFilters}
+            onFiltersChange={handleFiltersChange}
+            availableCities={cities}
+            availableCategories={categories}
+            fullWidthPanel={true}
+            useFunnelIcon={true}
+          />
+
+          {/* Create Trip - Compact on mobile */}
           <button
             onClick={handleCreateTrip}
             disabled={creatingTrip}
             className="flex h-10 flex-shrink-0 items-center justify-center gap-2 rounded-lg
-                       bg-[var(--editorial-accent)] px-4 text-[13px] font-medium
+                       bg-[var(--editorial-accent)] px-3 sm:px-4 text-[13px] font-medium
                        text-white
                        disabled:opacity-50 hover:bg-[var(--editorial-accent-hover)]
                        active:scale-[0.98] transition-all duration-200"
@@ -125,20 +142,10 @@ export default function NavigationBar() {
             </span>
           </button>
 
-          {/* Filters */}
-          <SearchFiltersComponent
-            filters={advancedFilters}
-            onFiltersChange={handleFiltersChange}
-            availableCities={cities}
-            availableCategories={categories}
-            fullWidthPanel={true}
-            useFunnelIcon={true}
-          />
-
-          {/* Discover by Cities */}
+          {/* Discover by Cities - Hidden on small screens, visible on md+ */}
           <Link
             href="/cities"
-            className="hidden sm:flex h-10 flex-shrink-0 items-center justify-center gap-2 rounded-lg
+            className="hidden md:flex h-10 flex-shrink-0 items-center justify-center gap-2 rounded-lg
                        border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)]
                        px-4 text-[13px] font-medium text-[var(--editorial-text-primary)]
                        hover:bg-[var(--editorial-border-subtle)]
@@ -148,6 +155,60 @@ export default function NavigationBar() {
             <span>Discover by Cities</span>
           </Link>
         </div>
+      </div>
+
+      {/* Quick Filter Chips - Always Visible */}
+      <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1 scrollbar-hide">
+        {/* Active filter badges */}
+        {selectedCity && (
+          <button
+            onClick={() => setSelectedCity('')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--editorial-accent)]/10 border border-[var(--editorial-accent)]/20 rounded-full text-xs font-medium text-[var(--editorial-accent)] whitespace-nowrap hover:bg-[var(--editorial-accent)]/20 transition-colors"
+          >
+            <MapPin className="w-3 h-3" />
+            {selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1).replace(/-/g, ' ')}
+            <X className="w-3 h-3" />
+          </button>
+        )}
+        {michelinOnly && (
+          <button
+            onClick={() => setMichelinOnly(false)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--editorial-accent)]/10 border border-[var(--editorial-accent)]/20 rounded-full text-xs font-medium text-[var(--editorial-accent)] whitespace-nowrap hover:bg-[var(--editorial-accent)]/20 transition-colors"
+          >
+            <Star className="w-3 h-3" />
+            Michelin
+            <X className="w-3 h-3" />
+          </button>
+        )}
+
+        {/* Quick filter suggestions when no filters active */}
+        {!hasFilters && (
+          <>
+            <span className="text-[11px] text-[var(--editorial-text-tertiary)] uppercase tracking-wider font-medium mr-1">
+              Quick filters:
+            </span>
+            <button
+              onClick={() => setMichelinOnly(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-xs font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              <Star className="w-3 h-3" />
+              Michelin
+            </button>
+            <button
+              onClick={() => handleFiltersChange({ ...advancedFilters, openNow: true })}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-xs font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              <Clock className="w-3 h-3" />
+              Open Now
+            </button>
+            <button
+              onClick={() => handleFiltersChange({ ...advancedFilters, minRating: 4.5 })}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-xs font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              4.5+ Rating
+            </button>
+          </>
+        )}
       </div>
 
       {/* Inline filter slot for SearchFiltersComponent */}

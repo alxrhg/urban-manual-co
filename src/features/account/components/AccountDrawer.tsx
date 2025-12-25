@@ -240,18 +240,33 @@ function LibraryStatsGrid({
   );
 }
 
-// Journey Progress Bar - Compact milestone tracker
+// Journey Progress Bar - Compact milestone tracker with badge explanation
 function JourneyProgress({
   visited,
   countries,
   percentage,
   message,
+  currentBadge,
+  nextBadge,
 }: {
   visited: number;
   countries: number;
   percentage: number;
   message: string;
+  currentBadge: { name: string; id: string };
+  nextBadge: { name: string; minPlaces: number } | null;
 }) {
+  const [showBadgeInfo, setShowBadgeInfo] = useState(false);
+
+  // Badge tier descriptions
+  const badgeDescriptions: Record<string, string> = {
+    'newcomer': 'Just getting started on your journey',
+    'explorer': 'Building your travel experience',
+    'adventurer': 'A seasoned traveler with great taste',
+    'globetrotter': 'An expert curator of destinations',
+    'world-traveler': 'A true connoisseur of global travel',
+  };
+
   return (
     <div className="p-3 border border-[var(--editorial-border)] rounded-xl">
       <p className="text-sm text-[var(--editorial-text-secondary)] mb-2">
@@ -277,7 +292,76 @@ function JourneyProgress({
           transition={{ duration: 0.5, ease: 'easeOut' }}
         />
       </div>
-      <p className="text-xs text-[var(--editorial-text-tertiary)]">{message}</p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-[var(--editorial-text-tertiary)]">{message}</p>
+        <button
+          onClick={() => setShowBadgeInfo(!showBadgeInfo)}
+          className="text-xs text-[var(--editorial-accent)] hover:underline"
+        >
+          {showBadgeInfo ? 'Hide' : 'Learn more'}
+        </button>
+      </div>
+
+      {/* Badge info expandable section */}
+      <AnimatePresence>
+        {showBadgeInfo && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="mt-3 pt-3 border-t border-[var(--editorial-border)]"
+          >
+            <p className="text-xs font-medium text-[var(--editorial-text-primary)] mb-2">
+              Travel Tiers
+            </p>
+            <div className="space-y-2">
+              {[
+                { id: 'newcomer', name: 'Newcomer', places: '0-10' },
+                { id: 'explorer', name: 'Explorer', places: '11-25' },
+                { id: 'adventurer', name: 'Adventurer', places: '26-50' },
+                { id: 'globetrotter', name: 'Globetrotter', places: '51-100' },
+                { id: 'world-traveler', name: 'World Traveler', places: '100+' },
+              ].map((tier) => (
+                <div
+                  key={tier.id}
+                  className={`flex items-center justify-between text-xs p-2 rounded-lg ${
+                    tier.id === currentBadge.id
+                      ? 'bg-[var(--editorial-accent)]/10 border border-[var(--editorial-accent)]/20'
+                      : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {tier.id === currentBadge.id && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--editorial-accent)]" />
+                    )}
+                    <span
+                      className={
+                        tier.id === currentBadge.id
+                          ? 'font-medium text-[var(--editorial-text-primary)]'
+                          : 'text-[var(--editorial-text-secondary)]'
+                      }
+                    >
+                      {tier.name}
+                    </span>
+                  </div>
+                  <span className="text-[var(--editorial-text-tertiary)]">
+                    {tier.places} places
+                  </span>
+                </div>
+              ))}
+            </div>
+            {nextBadge && (
+              <p className="mt-3 text-xs text-[var(--editorial-text-tertiary)]">
+                Visit {nextBadge.minPlaces - visited} more places to become{' '}
+                <span className="font-medium text-[var(--editorial-accent)]">
+                  {nextBadge.name}
+                </span>
+              </p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -672,6 +756,8 @@ export function AccountDrawer() {
               countries={stats.countries}
               percentage={milestoneProgress.percentage}
               message={milestoneMessage}
+              currentBadge={badge}
+              nextBadge={milestoneProgress.nextBadge}
             />
           </div>
 

@@ -109,14 +109,14 @@ function useDebounce<T>(value: T, delay: number): T {
 
 const FEATURED_CITIES = ['Taipei', 'Tokyo', 'New York', 'London'];
 
-// AI-style rotating placeholders
+// AI-style rotating placeholders (with slower rotation for better UX)
+// The placeholder starts with a static prompt, then shows examples
 const AI_PLACEHOLDERS = [
-  'Ask me anything about travel...',
-  'Where would you like to go?',
-  'Find restaurants, hotels, or hidden gems...',
+  'Search destinations...',
   'Try: "best cafes in Tokyo"',
   'Try: "romantic dinner in Paris"',
-  'Try: "budget hotels near me"',
+  'Try: "hotels in London"',
+  'Try: "Michelin restaurants"',
 ];
 
 // Helper to safely normalize follow-up suggestions from API
@@ -276,12 +276,13 @@ export default function InteractiveHero() {
   }, [setSelectedCity, setSelectedCategory]);
 
   // Rotate placeholders when input is empty and not focused
+  // Slower rotation (5s) for better readability and less visual distraction
   useEffect(() => {
     if (localSearchTerm.trim() || isFocused || showChatResults) return;
 
     const interval = setInterval(() => {
       setPlaceholderIndex((prev) => (prev + 1) % AI_PLACEHOLDERS.length);
-    }, 3500);
+    }, 5000); // Slower rotation for better UX
 
     return () => clearInterval(interval);
   }, [localSearchTerm, isFocused, showChatResults]);

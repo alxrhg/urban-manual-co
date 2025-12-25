@@ -257,9 +257,33 @@ export function CookieConsent() {
     if (getStoredConsent() !== null) setIsVisible(false);
   }, []);
 
+  // Track consent state to avoid hydration mismatch
+  const [hasConsentState, setHasConsentState] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Check consent after mount to avoid SSR/hydration issues
+  useEffect(() => {
+    setIsMounted(true);
+    const consent = getStoredConsent();
+    setHasConsentState(consent !== null);
+  }, []);
+
+  // Re-check consent when visibility changes or on consent updates
+  useEffect(() => {
+    if (!isMounted) return;
+    const handleConsentUpdate = () => {
+      const consent = getStoredConsent();
+      setHasConsentState(consent !== null);
+    };
+    window.addEventListener(CONSENT_UPDATED_EVENT, handleConsentUpdate);
+    return () => window.removeEventListener(CONSENT_UPDATED_EVENT, handleConsentUpdate);
+  }, [isMounted]);
+
+  // Don't show anything until mounted (prevents hydration mismatch)
+  if (!isMounted) return null;
+
   // Show minimal bottom-left banner if no consent
-  const hasConsent = getStoredConsent() !== null;
-  const showMinimalBanner = !hasConsent && isVisible && !showDetails;
+  const showMinimalBanner = !hasConsentState && isVisible && !showDetails;
 
   return (
     <>

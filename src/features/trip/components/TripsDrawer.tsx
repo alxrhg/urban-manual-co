@@ -117,11 +117,18 @@ export function TripsDrawer() {
 
     try {
       const supabaseClient = createClient();
+
+      // Generate a more descriptive default title with date
+      const now = new Date();
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+      const defaultTitle = `${monthNames[now.getMonth()]} ${now.getFullYear()} Trip`;
+
       const { data, error } = await supabaseClient
         .from('trips')
         .insert({
           user_id: user.id,
-          title: 'New Trip',
+          title: defaultTitle,
           status: 'planning',
         })
         .select()

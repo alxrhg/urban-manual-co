@@ -99,8 +99,12 @@ export const CATEGORY_ICON_MAP: Record<string, string> = {
   'markets': 'shopping-bag',
   'flea market': 'shopping-bag',
 
-  // Other (generic)
+  // Other/Experiences (unique finds, special venues)
   'other': 'sparkles',
+  'others': 'sparkles',
+  'experiences': 'sparkles',
+  'experience': 'sparkles',
+  'unique': 'sparkles',
 };
 
 /**

@@ -23,10 +23,14 @@ export function capitalizeCity(city: string): string {
 
 /**
  * Capitalize category name (handles multi-word categories)
- * @example "fine dining" → "Fine Dining"
+ * Also renames "Others" to "Experiences" for better UX
+ * @example "fine dining" → "Fine Dining", "others" → "Experiences"
  */
 export function capitalizeCategory(category: string): string {
-  return category
+  // Rename "Others" to "Experiences" for better UX
+  const displayName = category.toLowerCase() === 'others' ? 'Experiences' : category;
+
+  return displayName
     .split(' ')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');

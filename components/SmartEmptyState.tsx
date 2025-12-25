@@ -1,7 +1,7 @@
 'use client';
 
-import { Search, Sparkles } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Search, Sparkles, MessageSquarePlus, MapPin } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
 
 interface SmartEmptyStateProps {
   query: string;
@@ -12,12 +12,21 @@ interface SmartEmptyStateProps {
   onAlternativeClick: (alternative: string) => void;
 }
 
+// Available cities for suggestions
+const AVAILABLE_CITIES = [
+  'London', 'Paris', 'Tokyo', 'New York', 'Los Angeles', 'Barcelona',
+  'Rome', 'Amsterdam', 'Berlin', 'Copenhagen', 'Melbourne', 'Singapore'
+];
+
 export function SmartEmptyState({ query, intent, onAlternativeClick }: SmartEmptyStateProps) {
   const [alternatives, setAlternatives] = useState<string[]>([]);
+  const [suggestedCities, setSuggestedCities] = useState<string[]>([]);
+  const [showRequestSent, setShowRequestSent] = useState(false);
 
   useEffect(() => {
     // Generate smart alternatives based on the query and intent
     const suggestions: string[] = [];
+    const cityMatches: string[] = [];
 
     // If they searched for a specific category, suggest related categories
     if (intent?.category) {
@@ -48,6 +57,12 @@ export function SmartEmptyState({ query, intent, onAlternativeClick }: SmartEmpt
       if (alts) {
         suggestions.push(...alts.map(area => `${intent.category || 'places'} in ${area}`));
       }
+
+      // Suggest similar cities with the same category
+      const similarCities = AVAILABLE_CITIES.filter(
+        c => c.toLowerCase() !== intent.city?.toLowerCase()
+      ).slice(0, 3);
+      cityMatches.push(...similarCities);
     }
 
     // Generic fallback suggestions
@@ -58,6 +73,8 @@ export function SmartEmptyState({ query, intent, onAlternativeClick }: SmartEmpt
         suggestions.push('tea houses', 'bakeries', 'breakfast spots');
       } else if (query.toLowerCase().includes('luxury')) {
         suggestions.push('boutique options', 'mid-range alternatives', 'hidden gems');
+      } else if (query.toLowerCase().includes('romantic')) {
+        suggestions.push('fine dining', 'rooftop bars', 'boutique hotels');
       } else {
         suggestions.push(
           'Try removing some filters',
@@ -68,7 +85,22 @@ export function SmartEmptyState({ query, intent, onAlternativeClick }: SmartEmpt
     }
 
     setAlternatives(suggestions.slice(0, 3));
+    setSuggestedCities(cityMatches);
   }, [query, intent]);
+
+  const handleRequestCity = useCallback(async () => {
+    // In a real implementation, this would submit to an API
+    // For now, we show a success message
+    setShowRequestSent(true);
+
+    // Reset after 3 seconds
+    setTimeout(() => setShowRequestSent(false), 3000);
+  }, []);
+
+  const cityName = intent?.city ?
+    intent.city.charAt(0).toUpperCase() + intent.city.slice(1).replace(/-/g, ' ') :
+    null;
+  const categoryName = intent?.category || 'places';
 
   return (
     <div className="text-center py-16 px-4">
@@ -85,13 +117,34 @@ export function SmartEmptyState({ query, intent, onAlternativeClick }: SmartEmpt
           No results found
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-          We couldn't find any {intent?.category || 'places'}
-          {intent?.city && ` in ${intent.city}`} matching "{query}"
+          We couldn't find any {categoryName}
+          {cityName && ` in ${cityName}`} matching "{query}"
         </p>
+
+        {/* Suggested cities with same category */}
+        {suggestedCities.length > 0 && intent?.category && (
+          <div className="mb-6 p-4 bg-[var(--editorial-accent)]/5 border border-[var(--editorial-accent)]/20 rounded-xl">
+            <div className="flex items-center justify-center gap-2 text-xs text-[var(--editorial-accent)] uppercase tracking-[2px] font-medium mb-3">
+              <MapPin className="h-3.5 w-3.5" />
+              <span>Try {categoryName} in:</span>
+            </div>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {suggestedCities.map((city) => (
+                <button
+                  key={city}
+                  onClick={() => onAlternativeClick(`${categoryName} in ${city}`)}
+                  className="px-4 py-2 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 transition-all"
+                >
+                  {city}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Alternatives */}
         {alternatives.length > 0 && (
-          <div className="space-y-3">
+          <div className="space-y-3 mb-8">
             <div className="flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
               <Sparkles className="h-3.5 w-3.5" />
               <span>Try instead:</span>
@@ -109,6 +162,29 @@ export function SmartEmptyState({ query, intent, onAlternativeClick }: SmartEmpt
             </div>
           </div>
         )}
+
+        {/* Request this city/category CTA */}
+        <div className="pt-6 border-t border-gray-200 dark:border-gray-800">
+          {showRequestSent ? (
+            <div className="flex items-center justify-center gap-2 text-sm text-green-600 dark:text-green-400">
+              <span className="inline-block w-4 h-4 rounded-full bg-green-500 flex items-center justify-center text-white text-xs">✓</span>
+              Request received! We'll add this soon.
+            </div>
+          ) : (
+            <>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                Can't find what you're looking for?
+              </p>
+              <button
+                onClick={handleRequestCity}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 rounded-full text-sm font-medium transition-all"
+              >
+                <MessageSquarePlus className="h-4 w-4" />
+                Request {cityName ? `${cityName}` : 'this destination'}
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
