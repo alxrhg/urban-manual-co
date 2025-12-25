@@ -12,7 +12,7 @@ import {
   type TripStats as TripStatsType,
 } from '@/lib/trip';
 import type { Trip } from '@/types/trip';
-import TripSetupWizard from '@/features/trip/components/TripSetupWizard';
+import { TripModal } from '@/components/TripModal';
 
 export interface TripWithStats extends Trip {
   stats: TripStatsType;
@@ -194,10 +194,11 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
           </div>
         )}
 
-      {/* Trip Setup Wizard */}
-      <TripSetupWizard
+      {/* Trip Modal */}
+      <TripModal
         isOpen={showWizard}
         onClose={() => setShowWizard(false)}
+        mode="create"
         onCreate={handleCreateTrip}
       />
     </main>

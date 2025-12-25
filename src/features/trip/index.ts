@@ -11,7 +11,7 @@ export * from "./components/TripHero";
 export * from "./components/TripInteractiveMap";
 export * from "./components/TripPlannerMap";
 export * from "./components/TripSettingsBox";
-export * from "./components/TripSetupWizard";
+// TripSetupWizard removed - replaced by TripModal in components/TripModal.tsx
 export * from "./components/TripWidgets";
 export * from "./components/TripInfoCards";
 export * from "./components/TripDaySection";
