@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, Plus, Check, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDrawer } from '@/contexts/DrawerContext';
 import { useRouter } from 'next/navigation';
 import type { Trip, ItineraryItemNotes } from '@/domain/types/trip';
 
@@ -32,6 +33,7 @@ export function InlineAddToTrip({
   isAddedToTrip,
 }: InlineAddToTripProps) {
   const { user } = useAuth();
+  const { openDrawer } = useDrawer();
   const router = useRouter();
   const [trips, setTrips] = useState<TripWithDetails[]>([]);
   const [loading, setLoading] = useState(false);
@@ -206,7 +208,7 @@ export function InlineAddToTrip({
         type="button"
         onClick={() => {
           if (!user) {
-            router.push('/auth/login');
+            openDrawer('login-modal');
             return;
           }
           onExpandedChange(true);
