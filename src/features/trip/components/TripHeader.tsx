@@ -9,6 +9,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/ui/tooltip';
 import type { Trip } from '@/types/trip';
 import { parseDestinations, formatDestinations } from '@/types/trip';
 
@@ -195,12 +200,20 @@ export default function TripHeader({
               </button>
             )}
 
-            <button
-              onClick={onSettingsClick}
-              className="p-2.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onSettingsClick}
+                  className="p-2.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
+                  aria-label="Trip settings"
+                >
+                  <Settings className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Trip settings</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
       </div>
@@ -258,13 +271,20 @@ export default function TripHeader({
 
           {/* Map Button */}
           {activeContentTab === 'itinerary' && onMapClick && (
-            <button
-              onClick={onMapClick}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
-              title="View map"
-            >
-              <Map className="w-4 h-4" />
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onMapClick}
+                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  aria-label="View map"
+                >
+                  <Map className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>View map</p>
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
       </div>
@@ -297,6 +317,7 @@ export default function TripHeader({
                 ? 'text-gray-900 dark:text-white'
                 : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
             }`}
+            aria-label={isEditMode ? 'Done editing' : 'Edit trip'}
           >
             {isEditMode ? (
               'Done'
