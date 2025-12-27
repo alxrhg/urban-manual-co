@@ -32,6 +32,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/ui/dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/ui/tooltip';
 
 interface MediaItem {
   id: string;
@@ -288,14 +293,15 @@ export function MediaLibrary() {
 
       {/* Error Message */}
       {error && (
-        <div className="flex items-center gap-3 p-4 border border-red-200 dark:border-red-900 rounded-lg bg-red-50 dark:bg-red-900/10">
-          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+        <div className="flex items-center gap-3 p-4 border border-red-200 dark:border-red-900 rounded-lg bg-red-50 dark:bg-red-900/10" role="alert">
+          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" aria-hidden="true" />
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setError(null)}
             className="ml-auto h-8 w-8 text-red-400 hover:text-red-600"
+            aria-label="Dismiss error"
           >
             <X className="w-4 h-4" />
           </Button>
@@ -319,22 +325,34 @@ export function MediaLibrary() {
         </div>
 
         <div className="flex items-center gap-1 border border-gray-200 dark:border-gray-800 rounded-lg p-0.5">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setViewMode('grid')}
-            className={viewMode === 'grid' ? 'bg-gray-100 dark:bg-gray-800' : ''}
-          >
-            <Grid className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setViewMode('list')}
-            className={viewMode === 'list' ? 'bg-gray-100 dark:bg-gray-800' : ''}
-          >
-            <List className="w-4 h-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setViewMode('grid')}
+                className={viewMode === 'grid' ? 'bg-gray-100 dark:bg-gray-800' : ''}
+                aria-label="Grid view"
+              >
+                <Grid className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Grid view</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setViewMode('list')}
+                className={viewMode === 'list' ? 'bg-gray-100 dark:bg-gray-800' : ''}
+                aria-label="List view"
+              >
+                <List className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>List view</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 
@@ -478,22 +496,34 @@ export function MediaLibrary() {
                 <span className="text-xs text-gray-400">
                   {new Date(item.created_at).toLocaleDateString()}
                 </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => copyUrl(item.url)}
-                  className="h-8 w-8"
-                >
-                  {copiedUrl === item.url ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSelectedMedia(item)}
-                  className="h-8 w-8"
-                >
-                  <Eye className="w-4 h-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => copyUrl(item.url)}
+                      className="h-8 w-8"
+                      aria-label="Copy URL"
+                    >
+                      {copiedUrl === item.url ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Copy URL</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setSelectedMedia(item)}
+                      className="h-8 w-8"
+                      aria-label="View details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>View details</TooltipContent>
+                </Tooltip>
               </div>
             </div>
           ))}
@@ -508,10 +538,11 @@ export function MediaLibrary() {
             size="icon"
             onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page === 1}
+            aria-label="Previous page"
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-gray-500" aria-current="page">
             Page {page} of {totalPages}
           </span>
           <Button
@@ -519,6 +550,7 @@ export function MediaLibrary() {
             size="icon"
             onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page === totalPages}
+            aria-label="Next page"
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
