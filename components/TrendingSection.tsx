@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback, memo, useRef } from 'react';
+import { useEffect, useState, useCallback, memo } from 'react';
+import { useInView } from '@/hooks/useInView';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
 import Image from 'next/image';
 import { MapPin } from 'lucide-react';
@@ -25,7 +26,18 @@ function TrendingSectionComponent({ city }: { city?: string }) {
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
-  const sectionRef = useRef<HTMLElement>(null);
+
+  // Intersection Observer for lazy loading
+  const { ref: sectionRef, isInView } = useInView({
+    rootMargin: '100px',
+    triggerOnce: true,
+  });
+
+  useEffect(() => {
+    if (isInView) {
+      setIsVisible(true);
+    }
+  }, [isInView]);
 
   const fetchTrending = useCallback(async () => {
     try {
@@ -81,29 +93,6 @@ function TrendingSectionComponent({ city }: { city?: string }) {
       });
   }, [city]);
 
-  // Intersection Observer for lazy loading
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setIsVisible(true);
-          }
-        });
-      },
-      { rootMargin: '100px' } // Start loading 100px before coming into view
-    );
-
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
-    return () => {
-      if (sectionRef.current) {
-        observer.unobserve(sectionRef.current);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     // Only fetch when visible
@@ -116,7 +105,7 @@ function TrendingSectionComponent({ city }: { city?: string }) {
   if (!destinations.length) return null;
 
   return (
-    <section ref={sectionRef}>
+    <section ref={sectionRef as any}>
       <div className="flex items-center gap-2 mb-4">
         <h2 className="text-sm tracking-wide uppercase text-gray-500">
           Trending This Week
