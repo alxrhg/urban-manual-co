@@ -71,12 +71,9 @@ const AuthContent = memo(function AuthContent() {
   return (
     <div className="flex flex-col h-full">
       {/* Welcome text */}
-      <div className="flex-shrink-0 px-5 pt-4 pb-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
-          {isSignUp ? 'Create Account' : 'Welcome back'}
-        </h2>
+      <div className="flex-shrink-0 px-5 pt-4 pb-4">
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          {isSignUp ? 'Begin your travel journey' : 'Sign in to your account'}
+          {isSignUp ? 'Create an account to save your favorite places' : 'Welcome back'}
         </p>
       </div>
 

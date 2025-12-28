@@ -87,15 +87,12 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
     <div className="flex items-center justify-between w-full">
       <button
         onClick={onClose}
-        className="w-9 h-9 flex items-center justify-center rounded-lg bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] hover:bg-[var(--editorial-border-subtle)] transition-all duration-150 active:scale-95"
+        className="w-9 h-9 flex items-center justify-center rounded-md hover:bg-[var(--editorial-border-subtle)] transition-colors duration-150 active:scale-95"
         aria-label="Close"
       >
-        <X className="h-4 w-4 text-[var(--editorial-text-secondary)]" />
+        <X className="h-5 w-5 text-[var(--editorial-text-primary)]" />
       </button>
-      <h2
-        className="text-[15px] font-normal text-[var(--editorial-text-primary)] tracking-tight"
-        style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
-      >
+      <h2 className="text-base font-semibold text-[var(--editorial-text-primary)] tracking-tight">
         {isSignUp ? 'Create Account' : 'Sign In'}
       </h2>
       <div className="w-9" /> {/* Spacer for balance */}
@@ -106,15 +103,9 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
     <Drawer isOpen={isOpen} onClose={onClose} headerContent={customHeader}>
       <div className="flex flex-col h-full bg-[var(--editorial-bg)]">
         {/* Welcome text */}
-        <div className="flex-shrink-0 px-5 sm:px-6 pt-4 sm:pt-6 pb-5">
-          <h1
-            className="text-xl font-normal text-[var(--editorial-text-primary)] tracking-tight"
-            style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
-          >
-            {isSignUp ? 'Begin your journey' : 'Welcome back'}
-          </h1>
-          <p className="text-sm text-[var(--editorial-text-secondary)] mt-1">
-            {isSignUp ? 'Create an account to save your favorite places' : 'Sign in to access your saved places'}
+        <div className="flex-shrink-0 px-5 sm:px-6 pt-4 sm:pt-6 pb-4">
+          <p className="text-sm text-[var(--editorial-text-secondary)]">
+            {isSignUp ? 'Create an account to save your favorite places' : 'Welcome back'}
           </p>
         </div>
 
@@ -124,7 +115,8 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
           <AuthButton
             onClick={handleAppleSignIn}
             disabled={loading}
-            className="gap-3"
+            variant="secondary"
+            className="gap-3 !bg-black hover:!bg-black/90 !rounded-full"
           >
             <svg className="h-5 w-5 sm:h-4.5 sm:w-4.5" viewBox="0 0 24 24" fill="currentColor">
               <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
