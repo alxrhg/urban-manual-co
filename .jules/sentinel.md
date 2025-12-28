@@ -1,8 +1,8 @@
-## 2024-05-23 - Public Service Role Endpoints MUST Have Rate Limiting
+## 2024-05-23 - Image Uploads MUST Use Magic Byte Validation
 
-**Vulnerability:** The `/api/intelligence/suggest-next` endpoint uses `createServiceRoleClient` (bypassing RLS) but lacked any rate limiting or authentication checks. This allowed unauthenticated users to trigger unlimited database queries with admin privileges.
-**Learning:** Endpoints that bypass RLS (even for benign features like "suggest next") are effectively open pipes to your database resources. They must be treated as critical security boundaries.
+**Vulnerability:** The `/api/upload-trip-cover` and `/api/upload-image` endpoints relied on client-provided `Content-Type` headers and file extensions for validation. This allowed attackers to upload malicious files (e.g., scripts) disguised as images by simply renaming them or spoofing the MIME type.
+**Learning:** Never trust client-provided file metadata. `file.type` and `file.name` are user-controlled.
 **Prevention:**
-1.  **Identify:** Scan for `createServiceRoleClient` usage in `app/api/`.
-2.  **Verify:** Check if the endpoint handles `request.auth` or similar.
-3.  **Protect:** If public, MANDATORY `enforceRateLimit` (IP-based). If private, MANDATORY auth check + user-based rate limit.
+1.  **Validate:** Always use `validateImageFile` (magic byte detection) from `@/lib/security/image-validation`.
+2.  **Sanitize:** Use `getSafeExtension` to generate the file extension based on the *detected* content, not the user's filename.
+3.  **Reject:** Fail closed if the file content doesn't match the allowed signatures.
