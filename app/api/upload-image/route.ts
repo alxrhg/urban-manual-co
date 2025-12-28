@@ -7,6 +7,10 @@ import {
   createRateLimitResponse,
   isUpstashConfigured,
 } from '@/lib/rate-limit';
+import {
+  validateImageFile,
+  getSafeExtension,
+} from '@/lib/security/image-validation';
 import { withErrorHandling } from '@/lib/errors';
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
@@ -31,25 +35,30 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      return NextResponse.json({ error: 'File must be an image' }, { status: 400 });
-    }
-
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       return NextResponse.json({ error: 'File size must be less than 5MB' }, { status: 400 });
     }
 
+    // Validate image using magic bytes (prevents MIME type spoofing)
+    const validation = await validateImageFile(file);
+    if (!validation.valid) {
+      return NextResponse.json(
+        { error: validation.error || 'Invalid image file' },
+        { status: 400 }
+      );
+    }
+
     // Generate unique filename
-    const fileExt = file.name.split('.').pop();
+    // Use safe extension from detected MIME type (not user-provided)
+    const safeExt = getSafeExtension(validation.detectedMime!);
     const fileName = slug
-      ? `${slug}-${Date.now()}.${fileExt}`
-      : `upload-${Date.now()}.${fileExt}`;
+      ? `${slug}-${Date.now()}.${safeExt}`
+      : `upload-${Date.now()}.${safeExt}`;
     const filePath = `destinations/${fileName}`;
 
     // Upload to Supabase Storage
-    const { data, error } = await supabaseAdmin.storage
+    const { error } = await supabaseAdmin.storage
       .from('destination-images')
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -71,7 +80,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       path: filePath
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
