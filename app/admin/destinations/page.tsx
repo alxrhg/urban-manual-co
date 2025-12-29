@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { X, ChevronLeft } from "lucide-react";
@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/useToast";
 import { ContentManager } from '@/features/admin/components/cms';
 import { DestinationForm } from '@/features/admin/components/DestinationForm';
 import type { Destination } from '@/types/destination';
+import { DiscardChangesDialog } from '@/ui/confirmation-dialog';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +21,9 @@ export default function AdminDestinationsPage() {
   const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const [pendingCloseAction, setPendingCloseAction] = useState(false);
 
   // Auto-open editor when slug query parameter is present
   useEffect(() => {
@@ -109,13 +113,41 @@ export default function AdminDestinationsPage() {
 
   const handleEditDestination = (destination: Destination) => {
     setEditingDestination(destination);
+    setHasUnsavedChanges(false);
     setShowCreateModal(true);
   };
 
   const handleCreateNew = () => {
     setEditingDestination(null);
+    setHasUnsavedChanges(false);
     setShowCreateModal(true);
   };
+
+  // Handle close with unsaved changes check
+  const handleCloseDrawer = useCallback(() => {
+    if (hasUnsavedChanges) {
+      setShowDiscardDialog(true);
+      setPendingCloseAction(true);
+    } else {
+      setShowCreateModal(false);
+      setEditingDestination(null);
+    }
+  }, [hasUnsavedChanges]);
+
+  // Confirm discard and close
+  const handleConfirmDiscard = useCallback(() => {
+    setShowDiscardDialog(false);
+    setPendingCloseAction(false);
+    setHasUnsavedChanges(false);
+    setShowCreateModal(false);
+    setEditingDestination(null);
+  }, []);
+
+  // Cancel discard
+  const handleCancelDiscard = useCallback(() => {
+    setShowDiscardDialog(false);
+    setPendingCloseAction(false);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -131,10 +163,7 @@ export default function AdminDestinationsPage() {
           {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity duration-300"
-            onClick={() => {
-              setShowCreateModal(false);
-              setEditingDestination(null);
-            }}
+            onClick={handleCloseDrawer}
           />
           {/* Drawer Panel */}
           <div
@@ -146,23 +175,22 @@ export default function AdminDestinationsPage() {
             <div className="flex-shrink-0 h-14 px-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-800">
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setEditingDestination(null);
-                  }}
+                  onClick={handleCloseDrawer}
                   className="p-1.5 -ml-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-500 dark:text-gray-400"
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
-                <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-                  {editingDestination ? editingDestination.name || 'Edit Destination' : 'New Destination'}
-                </h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                    {editingDestination ? editingDestination.name || 'Edit Destination' : 'New Destination'}
+                  </h2>
+                  {hasUnsavedChanges && (
+                    <span className="flex h-2 w-2 rounded-full bg-amber-500" title="Unsaved changes" />
+                  )}
+                </div>
               </div>
               <button
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setEditingDestination(null);
-                }}
+                onClick={handleCloseDrawer}
                 className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-500 dark:text-gray-400"
               >
                 <X className="h-5 w-5" />
@@ -174,16 +202,21 @@ export default function AdminDestinationsPage() {
                 destination={editingDestination ?? undefined}
                 toast={toast}
                 onSave={handleSaveDestination}
-                onCancel={() => {
-                  setShowCreateModal(false);
-                  setEditingDestination(null);
-                }}
+                onCancel={handleCloseDrawer}
                 isSaving={isSaving}
+                onUnsavedChange={setHasUnsavedChanges}
               />
             </div>
           </div>
         </>
       )}
+
+      {/* Discard Changes Confirmation Dialog */}
+      <DiscardChangesDialog
+        isOpen={showDiscardDialog}
+        onClose={handleCancelDiscard}
+        onConfirm={handleConfirmDiscard}
+      />
 
       <ConfirmDialogComponent />
     </div>

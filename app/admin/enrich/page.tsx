@@ -30,6 +30,8 @@ interface EnrichmentStats {
   total: number;
   enriched: number;
   notEnriched: number;
+  lastEnrichedAt?: string;
+  lastEnrichedSlug?: string;
 }
 
 interface EnrichmentResult {
@@ -62,15 +64,24 @@ export default function AdminEnrichPage() {
       const [
         { count: total },
         { count: enriched },
+        { data: lastEnriched },
       ] = await Promise.all([
         supabase.from('destinations').select('*', { count: 'exact', head: true }),
         supabase.from('destinations').select('*', { count: 'exact', head: true }).not('last_enriched_at', 'is', null),
+        supabase.from('destinations')
+          .select('slug, last_enriched_at')
+          .not('last_enriched_at', 'is', null)
+          .order('last_enriched_at', { ascending: false })
+          .limit(1)
+          .single(),
       ]);
 
       setStats({
         total: total || 0,
         enriched: enriched || 0,
         notEnriched: (total || 0) - (enriched || 0),
+        lastEnrichedAt: lastEnriched?.last_enriched_at,
+        lastEnrichedSlug: lastEnriched?.slug,
       });
     } catch (error) {
       console.error('Failed to fetch stats:', error);
@@ -248,51 +259,82 @@ export default function AdminEnrichPage() {
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-4 h-4 text-blue-500" />
-            <span className="text-xs text-gray-500 dark:text-gray-400">Total Destinations</span>
+      {/* Status Card */}
+      <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-5">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+              enrichmentProgress === 100
+                ? 'bg-green-100 dark:bg-green-900/30'
+                : enrichmentProgress > 50
+                  ? 'bg-blue-100 dark:bg-blue-900/30'
+                  : 'bg-amber-100 dark:bg-amber-900/30'
+            }`}>
+              {enrichmentProgress === 100 ? (
+                <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+              ) : (
+                <Sparkles className={`w-5 h-5 ${enrichmentProgress > 50 ? 'text-blue-600 dark:text-blue-400' : 'text-amber-600 dark:text-amber-400'}`} />
+              )}
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                Enrichment Status: {enrichmentProgress === 100 ? 'Complete' : enrichmentProgress > 50 ? 'In Progress' : 'Needs Attention'}
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {stats?.lastEnrichedAt ? (
+                  <>Last enriched: {new Date(stats.lastEnrichedAt).toLocaleDateString()} ({stats.lastEnrichedSlug})</>
+                ) : (
+                  'No enrichment history'
+                )}
+              </p>
+            </div>
           </div>
-          {statsLoading ? (
-            <Skeleton className="h-8 w-20" />
-          ) : (
-            <p className="text-2xl font-semibold text-gray-900 dark:text-white tabular-nums">
-              {stats?.total.toLocaleString()}
-            </p>
+          {loading && (
+            <Badge variant="secondary" className="animate-pulse">
+              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+              Processing
+            </Badge>
           )}
         </div>
 
-        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <CheckCircle className="w-4 h-4 text-green-500" />
-            <span className="text-xs text-gray-500 dark:text-gray-400">Enriched</span>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+          <div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total</p>
+            {statsLoading ? (
+              <Skeleton className="h-7 w-16" />
+            ) : (
+              <p className="text-xl font-semibold text-gray-900 dark:text-white tabular-nums">
+                {stats?.total.toLocaleString()}
+              </p>
+            )}
           </div>
-          {statsLoading ? (
-            <Skeleton className="h-8 w-20" />
-          ) : (
-            <div className="flex items-baseline gap-2">
-              <p className="text-2xl font-semibold text-gray-900 dark:text-white tabular-nums">
+          <div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
+              <CheckCircle className="w-3 h-3 text-green-500" />
+              Enriched
+            </p>
+            {statsLoading ? (
+              <Skeleton className="h-7 w-16" />
+            ) : (
+              <p className="text-xl font-semibold text-green-600 dark:text-green-400 tabular-nums">
                 {stats?.enriched.toLocaleString()}
               </p>
-              <Badge variant="secondary" className="text-xs">{enrichmentProgress}%</Badge>
-            </div>
-          )}
-        </div>
-
-        <div className="rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/20 p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="w-4 h-4 text-amber-500" />
-            <span className="text-xs text-amber-700 dark:text-amber-300">Needs Enrichment</span>
+            )}
           </div>
-          {statsLoading ? (
-            <Skeleton className="h-8 w-20" />
-          ) : (
-            <p className="text-2xl font-semibold text-amber-900 dark:text-amber-100 tabular-nums">
-              {stats?.notEnriched.toLocaleString()}
+          <div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3 text-amber-500" />
+              Pending
             </p>
-          )}
+            {statsLoading ? (
+              <Skeleton className="h-7 w-16" />
+            ) : (
+              <p className="text-xl font-semibold text-amber-600 dark:text-amber-400 tabular-nums">
+                {stats?.notEnriched.toLocaleString()}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 

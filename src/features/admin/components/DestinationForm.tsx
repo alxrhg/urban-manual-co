@@ -25,6 +25,7 @@ interface DestinationFormProps {
   onCancel: () => void;
   isSaving: boolean;
   toast: Toast;
+  onUnsavedChange?: (hasChanges: boolean) => void;
 }
 
 type TabId = 'details' | 'location' | 'media' | 'content' | 'architecture' | 'booking' | 'data';
@@ -49,14 +50,31 @@ interface DropdownOptions {
 }
 
 
+// Required fields configuration
+const REQUIRED_FIELDS = ['name', 'slug', 'city'] as const;
+
+// Tab field mapping for validation indicators
+const TAB_REQUIRED_FIELDS: Record<TabId, string[]> = {
+  details: ['name', 'slug', 'city'],
+  location: [],
+  media: [],
+  content: [],
+  architecture: [],
+  booking: [],
+  data: [],
+};
+
 export function DestinationForm({
   destination,
   onSave,
   onCancel,
   isSaving,
   toast,
+  onUnsavedChange,
 }: DestinationFormProps) {
   const [activeTab, setActiveTab] = useState<TabId>('details');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [initialFormData, setInitialFormData] = useState<string>('');
   const [formData, setFormData] = useState({
     // Core fields
     slug: destination?.slug || '',
@@ -123,10 +141,44 @@ export function DestinationForm({
   const [tagInput, setTagInput] = useState('');
   const [isEnriching, setIsEnriching] = useState(false);
 
+  // Track unsaved changes
+  useEffect(() => {
+    if (initialFormData) {
+      const currentData = JSON.stringify(formData);
+      const changed = currentData !== initialFormData;
+      setHasUnsavedChanges(changed);
+      onUnsavedChange?.(changed);
+    }
+  }, [formData, initialFormData, onUnsavedChange]);
+
+  // Check if a tab has validation issues (missing required fields)
+  const getTabValidationStatus = (tabId: TabId): 'complete' | 'incomplete' | 'neutral' => {
+    const requiredFields = TAB_REQUIRED_FIELDS[tabId];
+    if (requiredFields.length === 0) return 'neutral';
+
+    const hasAllRequired = requiredFields.every(field => {
+      const value = formData[field as keyof typeof formData];
+      return value !== undefined && value !== null && value !== '';
+    });
+
+    return hasAllRequired ? 'complete' : 'incomplete';
+  };
+
+  // Check if tab has been modified
+  const getTabModifiedStatus = (tabId: TabId): boolean => {
+    if (!initialFormData) return false;
+    const initial = JSON.parse(initialFormData || '{}');
+    const tabFields = TAB_REQUIRED_FIELDS[tabId];
+    // For now, simplified - check if any fields have changed
+    return tabFields.some(field => {
+      return formData[field as keyof typeof formData] !== initial[field];
+    });
+  };
+
   // Update form when destination changes
   useEffect(() => {
     if (destination) {
-      setFormData({
+      const newFormData = {
         slug: destination.slug || '',
         name: destination.name || '',
         city: destination.city || '',
@@ -163,7 +215,10 @@ export function DestinationForm({
         google_maps_url: destination.google_maps_url || '',
         rating: destination.rating || null,
         price_level: destination.price_level || null,
-      });
+      };
+      setFormData(newFormData);
+      setInitialFormData(JSON.stringify(newFormData));
+      setHasUnsavedChanges(false);
       setImagePreview(destination.image || null);
       setImageFile(null);
 
@@ -188,7 +243,7 @@ export function DestinationForm({
       }
     } else {
       // Reset form for new destination
-      setFormData({
+      const emptyFormData = {
         slug: '', name: '', city: '', country: '', neighborhood: '', category: '',
         brand: '', micro_description: '', tags: [], crown: false, michelin_stars: null,
         parent_destination_id: null, latitude: null, longitude: null, formatted_address: '',
@@ -197,7 +252,10 @@ export function DestinationForm({
         construction_year: null, architectural_significance: '', design_story: '',
         website: '', phone_number: '', instagram_handle: '', opentable_url: '',
         resy_url: '', booking_url: '', google_maps_url: '', rating: null, price_level: null,
-      });
+      };
+      setFormData(emptyFormData);
+      setInitialFormData(JSON.stringify(emptyFormData));
+      setHasUnsavedChanges(false);
       setImagePreview(null);
       setImageFile(null);
       setSelectedParent(null);
@@ -497,7 +555,7 @@ export function DestinationForm({
     setFormData(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tagToRemove) }));
   };
 
-  const tabs: { id: TabId; label: string }[] = [
+  const tabs: { id: TabId; label: string; icon?: React.ReactNode }[] = [
     { id: 'details', label: 'Details' },
     { id: 'location', label: 'Location' },
     { id: 'media', label: 'Media' },
@@ -507,6 +565,11 @@ export function DestinationForm({
     { id: 'data', label: 'Data' },
   ];
 
+  // Helper to render required field indicator
+  const RequiredIndicator = () => (
+    <span className="text-red-500 ml-0.5" aria-label="required">*</span>
+  );
+
   const inputClasses = "w-full px-3 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-shadow";
   const labelClasses = "block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5";
 
@@ -515,25 +578,52 @@ export function DestinationForm({
       {/* Tab Navigation */}
       <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 overflow-x-auto">
         <nav className="flex gap-0.5 px-1 min-w-max" aria-label="Tabs">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "px-3 py-2.5 text-xs font-medium transition-colors relative whitespace-nowrap",
-                activeTab === tab.id
-                  ? "text-black dark:text-white"
-                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-              )}
-            >
-              {tab.label}
-              {activeTab === tab.id && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-black dark:bg-white" />
-              )}
-            </button>
-          ))}
+          {tabs.map((tab) => {
+            const validationStatus = getTabValidationStatus(tab.id);
+            const isModified = getTabModifiedStatus(tab.id);
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "px-3 py-2.5 text-xs font-medium transition-all duration-200 relative whitespace-nowrap group",
+                  activeTab === tab.id
+                    ? "text-black dark:text-white bg-gray-50 dark:bg-gray-900"
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900/50"
+                )}
+              >
+                <span className="flex items-center gap-1.5">
+                  {tab.label}
+                  {/* Validation indicator */}
+                  {validationStatus === 'incomplete' && (
+                    <span className="flex h-1.5 w-1.5 rounded-full bg-amber-500" title="Missing required fields" />
+                  )}
+                  {validationStatus === 'complete' && tab.id === 'details' && (
+                    <span className="flex h-1.5 w-1.5 rounded-full bg-green-500" title="All required fields complete" />
+                  )}
+                  {/* Unsaved changes indicator */}
+                  {hasUnsavedChanges && isModified && activeTab !== tab.id && (
+                    <span className="flex h-1.5 w-1.5 rounded-full bg-blue-500" title="Unsaved changes" />
+                  )}
+                </span>
+                {/* Active tab indicator - now bolder */}
+                {activeTab === tab.id && (
+                  <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-black dark:bg-white rounded-t-full" />
+                )}
+              </button>
+            );
+          })}
         </nav>
+        {/* Unsaved changes banner */}
+        {hasUnsavedChanges && (
+          <div className="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-100 dark:border-amber-800/30">
+            <p className="text-xs text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+              <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+              You have unsaved changes
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Tab Content */}
@@ -543,7 +633,7 @@ export function DestinationForm({
           <div className="p-5 space-y-5">
             {/* Name with Google Places */}
             <div>
-              <label className={labelClasses}>Name</label>
+              <label className={labelClasses}>Name<RequiredIndicator /></label>
               <div className="flex gap-2">
                 <GooglePlacesAutocomplete
                   value={formData.name}
@@ -568,13 +658,17 @@ export function DestinationForm({
             {/* Slug, City, Country */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className={labelClasses}>Slug</label>
+                <label className={labelClasses}>Slug<RequiredIndicator /></label>
                 <input type="text" required value={formData.slug}
                   onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  placeholder="url-slug" className={inputClasses} />
+                  placeholder="url-slug"
+                  className={cn(inputClasses, !formData.slug && "border-amber-300 dark:border-amber-700")} />
+                {!formData.slug && formData.name && (
+                  <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">Slug is required</p>
+                )}
               </div>
               <div>
-                <label className={labelClasses}>City</label>
+                <label className={labelClasses}>City<RequiredIndicator /></label>
                 <SearchableSelect
                   value={formData.city}
                   onChange={(value) => setFormData({ ...formData, city: value })}
