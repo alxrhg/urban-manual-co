@@ -68,16 +68,16 @@ const DragPreview = memo(function DragPreview({ destination, isOverTarget }: Dra
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-semibold text-gray-900 dark:text-white truncate">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
             {destination.name}
           </p>
-          <p className="text-[11px] text-gray-500 truncate capitalize">
+          <p className="text-xs text-gray-500 truncate capitalize">
             {destination.category}
           </p>
 
           {/* Schedule preview when over target */}
           {isOverTarget && (
-            <div className="flex items-center gap-3 mt-1.5 text-[10px] text-green-600 dark:text-green-400">
+            <div className="flex items-center gap-3 mt-1.5 text-xs text-green-600 dark:text-green-400">
               <span className="flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
                 Add to day
@@ -93,7 +93,7 @@ const DragPreview = memo(function DragPreview({ destination, isOverTarget }: Dra
         {/* Drop indicator */}
         {isOverTarget && (
           <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-            <span className="text-white text-[10px] font-bold">+</span>
+            <span className="text-white text-xs font-bold">+</span>
           </div>
         )}
       </div>

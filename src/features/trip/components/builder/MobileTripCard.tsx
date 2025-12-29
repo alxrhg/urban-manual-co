@@ -155,7 +155,7 @@ const MobileTripCard = memo(function MobileTripCard({
               <span className="text-sm font-semibold text-gray-900 dark:text-white">
                 {item.timeSlot || '--:--'}
               </span>
-              <span className="text-[10px] text-gray-400 mt-0.5">
+              <span className="text-xs text-gray-400 mt-0.5">
                 {formatDuration(item.duration)}
               </span>
             </div>
@@ -179,7 +179,7 @@ const MobileTripCard = memo(function MobileTripCard({
 
             {/* Content */}
             <div className="flex-1 min-w-0 py-0.5">
-              <h3 className="text-[15px] font-medium text-gray-900 dark:text-white truncate pr-2">
+              <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate pr-2">
                 {item.destination.name}
               </h3>
 
@@ -191,7 +191,7 @@ const MobileTripCard = memo(function MobileTripCard({
               <div className="flex items-center gap-3 mt-2 flex-wrap">
                 {/* Michelin stars */}
                 {item.destination.michelin_stars && item.destination.michelin_stars > 0 && (
-                  <span className="flex items-center gap-0.5 text-[11px] text-amber-600">
+                  <span className="flex items-center gap-0.5 text-xs text-amber-600">
                     {Array.from({ length: item.destination.michelin_stars }).map((_, i) => (
                       <Star key={i} className="w-3 h-3 fill-current" />
                     ))}
@@ -200,7 +200,7 @@ const MobileTripCard = memo(function MobileTripCard({
 
                 {/* Crowd level */}
                 {item.crowdLabel && (
-                  <span className={`flex items-center gap-1 text-[11px] ${getCrowdColor(item.crowdLevel)}`}>
+                  <span className={`flex items-center gap-1 text-xs ${getCrowdColor(item.crowdLevel)}`}>
                     <Users className="w-3 h-3" />
                     {item.crowdLabel}
                   </span>
@@ -208,7 +208,7 @@ const MobileTripCard = memo(function MobileTripCard({
 
                 {/* Outdoor indicator */}
                 {item.isOutdoor && (
-                  <span className="flex items-center gap-1 text-[11px] text-sky-500">
+                  <span className="flex items-center gap-1 text-xs text-sky-500">
                     <Sun className="w-3 h-3" />
                     Outdoor
                   </span>

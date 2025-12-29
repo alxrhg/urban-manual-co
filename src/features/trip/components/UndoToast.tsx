@@ -124,13 +124,13 @@ function UndoToast({
 
             {/* Content */}
             <div className="flex items-center gap-3 px-4 py-3">
-              <span className="flex-1 text-[13px] text-white">
+              <span className="flex-1 text-sm text-white">
                 {action.message}
               </span>
 
               <button
                 onClick={onUndo}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
               >
                 <Undo2 className="w-3.5 h-3.5" />
                 Undo

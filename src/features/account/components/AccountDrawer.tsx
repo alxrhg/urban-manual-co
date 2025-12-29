@@ -93,7 +93,7 @@ function CompactProfileHeader({
           <h3 className="text-base font-semibold text-[var(--editorial-text-primary)] truncate">
             {displayUsername}
           </h3>
-          <span className="flex-shrink-0 px-2 py-0.5 border border-[var(--editorial-border)] rounded-md text-[10px] font-medium text-[var(--editorial-text-tertiary)]">
+          <span className="flex-shrink-0 px-2 py-0.5 border border-[var(--editorial-border)] rounded-md text-xs font-medium text-[var(--editorial-text-tertiary)]">
             {badge.name}
           </span>
         </div>
@@ -142,7 +142,7 @@ function NextTripHeroCard({
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-[var(--editorial-text-tertiary)]" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--editorial-text-tertiary)]">
+            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--editorial-text-tertiary)]">
               Next Trip
             </span>
           </div>
@@ -231,7 +231,7 @@ function LibraryStatsGrid({
           <span className="text-lg font-bold text-[var(--editorial-text-primary)]">
             {tile.count}
           </span>
-          <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--editorial-text-tertiary)]">
+          <span className="text-xs font-medium uppercase tracking-wider text-[var(--editorial-text-tertiary)]">
             {tile.label}
           </span>
         </motion.button>
@@ -652,7 +652,7 @@ export function AccountDrawer() {
 
           {/* 3. Library Stats */}
           <div className="px-4 py-4">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--editorial-text-tertiary)] mb-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--editorial-text-tertiary)] mb-3">
               Your Library
             </p>
             <LibraryStatsGrid
@@ -680,7 +680,7 @@ export function AccountDrawer() {
 
           {/* 5. Quick Actions */}
           <div className="px-4 py-4">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--editorial-text-tertiary)] mb-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--editorial-text-tertiary)] mb-2">
               Quick Access
             </p>
             <QuickActionsMenu

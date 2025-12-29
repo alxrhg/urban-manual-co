@@ -104,7 +104,7 @@ export default function TransitOptions({
   // Compact: single line with options
   if (compact) {
     return (
-      <div className={`flex items-center gap-3 py-1.5 text-[10px] text-stone-400 ${className}`}>
+      <div className={`flex items-center gap-3 py-1.5 text-xs text-stone-400 ${className}`}>
         <Navigation className="w-3 h-3" />
         {filteredOptions.map((opt, i) => (
           <span key={opt.id} className="flex items-center gap-1">
@@ -121,7 +121,7 @@ export default function TransitOptions({
   // Expanded: simple list
   return (
     <div className={`py-2 border-t border-stone-100 dark:border-gray-800 ${className}`}>
-      <div className="flex items-center gap-1.5 text-[10px] text-stone-400 mb-2">
+      <div className="flex items-center gap-1.5 text-xs text-stone-400 mb-2">
         <Navigation className="w-3 h-3" />
         <span>{formatDistance(distance)}</span>
       </div>

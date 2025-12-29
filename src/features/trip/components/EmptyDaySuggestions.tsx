@@ -110,7 +110,7 @@ export default function EmptyDaySuggestions({
         <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
           <div className="flex items-center justify-center gap-1.5 mb-3">
             <Sparkles className="w-3 h-3 text-gray-400" />
-            <span className="text-[10px] text-gray-400 uppercase tracking-wide">
+            <span className="text-xs text-gray-400 uppercase tracking-wide">
               Suggestions for {city}
             </span>
           </div>

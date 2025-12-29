@@ -166,7 +166,7 @@ export default function IntelligenceWarnings({
                           <p className="text-xs font-medium text-gray-900 dark:text-white truncate">
                             {warning.alternative.newPlace.name}
                           </p>
-                          <p className="text-[10px] text-gray-500 capitalize">
+                          <p className="text-xs text-gray-500 capitalize">
                             {warning.alternative.newPlace.category}
                           </p>
                         </div>

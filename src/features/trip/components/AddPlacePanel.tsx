@@ -318,7 +318,7 @@ export default function AddPlacePanel({
             <div className="flex items-center gap-1">
               <button
                 onClick={() => { setSearchSource('curated'); setSearchQuery(''); }}
-                className={`px-2.5 py-1 text-[11px] rounded-md transition-colors ${
+                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
                   searchSource === 'curated'
                     ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
                     : 'text-gray-500 hover:text-gray-700'
@@ -328,7 +328,7 @@ export default function AddPlacePanel({
               </button>
               <button
                 onClick={() => { setSearchSource('google'); setSearchQuery(''); }}
-                className={`px-2.5 py-1 text-[11px] rounded-md transition-colors ${
+                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
                   searchSource === 'google'
                     ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
                     : 'text-gray-500 hover:text-gray-700'
@@ -417,10 +417,10 @@ export default function AddPlacePanel({
           <div className="space-y-4 max-h-[60vh] overflow-y-auto">
             {/* Route */}
             <div>
-              <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Route</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Route</div>
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="text-[10px] text-gray-400 mb-1 block">From</label>
+                  <label className="text-xs text-gray-400 mb-1 block">From</label>
                   <input
                     type="text"
                     value={flightData.from}
@@ -430,7 +430,7 @@ export default function AddPlacePanel({
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="text-[10px] text-gray-400 mb-1 block">To</label>
+                  <label className="text-xs text-gray-400 mb-1 block">To</label>
                   <input
                     type="text"
                     value={flightData.to}
@@ -444,10 +444,10 @@ export default function AddPlacePanel({
 
             {/* Flight details */}
             <div>
-              <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Flight Details</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Flight Details</div>
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="text-[10px] text-gray-400 mb-1 block">Airline</label>
+                  <label className="text-xs text-gray-400 mb-1 block">Airline</label>
                   <input
                     type="text"
                     value={flightData.airline || ''}
@@ -457,7 +457,7 @@ export default function AddPlacePanel({
                   />
                 </div>
                 <div className="w-24">
-                  <label className="text-[10px] text-gray-400 mb-1 block">Flight #</label>
+                  <label className="text-xs text-gray-400 mb-1 block">Flight #</label>
                   <input
                     type="text"
                     value={flightData.flightNumber || ''}
@@ -471,10 +471,10 @@ export default function AddPlacePanel({
 
             {/* Times */}
             <div>
-              <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Schedule</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Schedule</div>
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="text-[10px] text-gray-400 mb-1 block">Departure</label>
+                  <label className="text-xs text-gray-400 mb-1 block">Departure</label>
                   <input
                     type="time"
                     value={flightData.departureTime || ''}
@@ -483,7 +483,7 @@ export default function AddPlacePanel({
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="text-[10px] text-gray-400 mb-1 block">Arrival</label>
+                  <label className="text-xs text-gray-400 mb-1 block">Arrival</label>
                   <input
                     type="time"
                     value={flightData.arrivalTime || ''}
@@ -496,7 +496,7 @@ export default function AddPlacePanel({
 
             {/* Booking */}
             <div>
-              <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Booking</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Booking</div>
               <input
                 type="text"
                 value={flightData.confirmationNumber || ''}
@@ -521,10 +521,10 @@ export default function AddPlacePanel({
           <div className="space-y-4 max-h-[60vh] overflow-y-auto">
             {/* Route */}
             <div>
-              <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Route</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Route</div>
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="text-[10px] text-gray-400 mb-1 block">From</label>
+                  <label className="text-xs text-gray-400 mb-1 block">From</label>
                   <input
                     type="text"
                     value={trainData.from}
@@ -534,7 +534,7 @@ export default function AddPlacePanel({
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="text-[10px] text-gray-400 mb-1 block">To</label>
+                  <label className="text-xs text-gray-400 mb-1 block">To</label>
                   <input
                     type="text"
                     value={trainData.to}
@@ -548,10 +548,10 @@ export default function AddPlacePanel({
 
             {/* Train details */}
             <div>
-              <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Train Details</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Train Details</div>
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="text-[10px] text-gray-400 mb-1 block">Train Line</label>
+                  <label className="text-xs text-gray-400 mb-1 block">Train Line</label>
                   <input
                     type="text"
                     value={trainData.trainLine || ''}
@@ -561,7 +561,7 @@ export default function AddPlacePanel({
                   />
                 </div>
                 <div className="w-24">
-                  <label className="text-[10px] text-gray-400 mb-1 block">Train #</label>
+                  <label className="text-xs text-gray-400 mb-1 block">Train #</label>
                   <input
                     type="text"
                     value={trainData.trainNumber || ''}
@@ -575,10 +575,10 @@ export default function AddPlacePanel({
 
             {/* Schedule */}
             <div>
-              <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Schedule</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Schedule</div>
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="text-[10px] text-gray-400 mb-1 block">Departure</label>
+                  <label className="text-xs text-gray-400 mb-1 block">Departure</label>
                   <input
                     type="time"
                     value={trainData.departureTime || ''}
@@ -587,7 +587,7 @@ export default function AddPlacePanel({
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="text-[10px] text-gray-400 mb-1 block">Arrival</label>
+                  <label className="text-xs text-gray-400 mb-1 block">Arrival</label>
                   <input
                     type="time"
                     value={trainData.arrivalTime || ''}
@@ -600,7 +600,7 @@ export default function AddPlacePanel({
 
             {/* Booking */}
             <div>
-              <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Booking</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Booking</div>
               <input
                 type="text"
                 value={trainData.confirmationNumber || ''}
@@ -625,7 +625,7 @@ export default function AddPlacePanel({
           <div className="space-y-4 max-h-[60vh] overflow-y-auto">
             {/* Property */}
             <div>
-              <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Property</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Property</div>
               <div className="space-y-2">
                 <input
                   type="text"
@@ -646,10 +646,10 @@ export default function AddPlacePanel({
 
             {/* Dates */}
             <div>
-              <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Dates</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Dates</div>
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="text-[10px] text-gray-400 mb-1 block">Check-in</label>
+                  <label className="text-xs text-gray-400 mb-1 block">Check-in</label>
                   <input
                     type="date"
                     value={hotelData.checkInDate || ''}
@@ -658,7 +658,7 @@ export default function AddPlacePanel({
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="text-[10px] text-gray-400 mb-1 block">Check-out</label>
+                  <label className="text-xs text-gray-400 mb-1 block">Check-out</label>
                   <input
                     type="date"
                     value={hotelData.checkOutDate || ''}
@@ -671,10 +671,10 @@ export default function AddPlacePanel({
 
             {/* Times */}
             <div>
-              <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Times</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Times</div>
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="text-[10px] text-gray-400 mb-1 block">Check-in time</label>
+                  <label className="text-xs text-gray-400 mb-1 block">Check-in time</label>
                   <input
                     type="time"
                     value={hotelData.checkInTime || ''}
@@ -683,7 +683,7 @@ export default function AddPlacePanel({
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="text-[10px] text-gray-400 mb-1 block">Check-out time</label>
+                  <label className="text-xs text-gray-400 mb-1 block">Check-out time</label>
                   <input
                     type="time"
                     value={hotelData.checkOutTime || ''}
@@ -696,7 +696,7 @@ export default function AddPlacePanel({
 
             {/* Room */}
             <div>
-              <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Room</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Room</div>
               <input
                 type="text"
                 value={hotelData.roomType || ''}
@@ -708,7 +708,7 @@ export default function AddPlacePanel({
 
             {/* Amenities */}
             <div>
-              <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Amenities</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Amenities</div>
               <label className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer">
                 <input
                   type="checkbox"
@@ -722,7 +722,7 @@ export default function AddPlacePanel({
 
             {/* Booking */}
             <div>
-              <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Booking</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Booking</div>
               <input
                 type="text"
                 value={hotelData.confirmationNumber || ''}
@@ -747,7 +747,7 @@ export default function AddPlacePanel({
           <div className="space-y-4 max-h-[60vh] overflow-y-auto">
             {/* Rest & Relaxation */}
             <div>
-              <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Rest & Relaxation</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Rest & Relaxation</div>
               <div className="space-y-1">
                 {[
                   { type: 'free-time', label: 'Free Time', duration: 60 },
@@ -768,7 +768,7 @@ export default function AddPlacePanel({
 
             {/* Hotel Amenities */}
             <div>
-              <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Hotel Amenities</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Hotel Amenities</div>
               <div className="space-y-1">
                 {[
                   { type: 'pool', label: 'Pool Time', duration: 90 },
@@ -790,7 +790,7 @@ export default function AddPlacePanel({
 
             {/* Productivity */}
             <div>
-              <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Productivity</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Productivity</div>
               <div className="space-y-1">
                 {[
                   { type: 'work', label: 'Work Time', duration: 120 },
@@ -810,7 +810,7 @@ export default function AddPlacePanel({
 
             {/* Exploration */}
             <div>
-              <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-2">Exploration</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Exploration</div>
               <div className="space-y-1">
                 {[
                   { type: 'shopping-time', label: 'Shopping', duration: 90 },

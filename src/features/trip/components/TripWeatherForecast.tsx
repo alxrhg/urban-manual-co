@@ -238,7 +238,7 @@ export default function TripWeatherForecast({
               className="flex items-center gap-1 px-2 py-1 bg-white dark:bg-stone-800 rounded-lg border border-stone-200 dark:border-stone-700 flex-shrink-0"
             >
               {getWeatherIcon(day.icon)}
-              <span className="text-[10px] font-medium">{day.temp.max}°</span>
+              <span className="text-xs font-medium">{day.temp.max}°</span>
             </div>
           ))}
         </div>
@@ -255,14 +255,14 @@ export default function TripWeatherForecast({
             key={day.date}
             className="p-3 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 text-center"
           >
-            <p className="text-[10px] text-stone-500 mb-1">{formatDate(day.date)}</p>
+            <p className="text-xs text-stone-500 mb-1">{formatDate(day.date)}</p>
             <div className="flex justify-center mb-1">{getWeatherIcon(day.icon)}</div>
             <p className="text-xs font-medium">
               {day.temp.max}° / {day.temp.min}°
             </p>
-            <p className="text-[10px] text-stone-500 mt-1">{day.condition}</p>
+            <p className="text-xs text-stone-500 mt-1">{day.condition}</p>
             {day.precipitation > 0 && (
-              <p className="text-[10px] text-blue-500 mt-0.5">{day.precipitation}mm</p>
+              <p className="text-xs text-blue-500 mt-0.5">{day.precipitation}mm</p>
             )}
           </div>
         ))}

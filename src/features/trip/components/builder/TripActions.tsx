@@ -30,7 +30,7 @@ const TripActions = memo(function TripActions({
         <button
           onClick={onSave}
           disabled={isSaving || !isModified}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 text-[13px] font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-100 disabled:opacity-50 transition-all hover:scale-[1.01] active:scale-[0.99]"
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-100 disabled:opacity-50 transition-all hover:scale-[1.01] active:scale-[0.99]"
         >
           {isSaving ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -43,7 +43,7 @@ const TripActions = memo(function TripActions({
         {/* Share button */}
         <button
           onClick={onShare}
-          className="px-4 py-2.5 text-[13px] font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/10 rounded-xl hover:bg-gray-200 dark:hover:bg-white/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          className="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/10 rounded-xl hover:bg-gray-200 dark:hover:bg-white/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
           aria-label="Share trip"
         >
           <Share2 className="w-4 h-4" />
@@ -53,7 +53,7 @@ const TripActions = memo(function TripActions({
       {/* Danger zone */}
       <button
         onClick={onClear}
-        className="w-full flex items-center justify-center gap-2 py-2 text-[12px] font-medium text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"
+        className="w-full flex items-center justify-center gap-2 py-2 text-xs font-medium text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"
       >
         <Trash2 className="w-3.5 h-3.5" />
         Clear Trip

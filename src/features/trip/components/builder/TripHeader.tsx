@@ -163,7 +163,7 @@ const TripHeader = memo(function TripHeader({
           )}
 
           {/* Trip metadata */}
-          <div className="flex items-center gap-3 mt-1.5 text-[12px] text-gray-500">
+          <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
             <span className="flex items-center gap-1">
               <MapPin className="w-3 h-3" />
               {trip.city}
@@ -177,7 +177,7 @@ const TripHeader = memo(function TripHeader({
                 value={trip.startDate || ''}
                 onChange={handleDateChange}
                 onBlur={() => setIsEditingDate(false)}
-                className="text-[12px] bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none"
+                className="text-xs bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none"
               />
             ) : (
               <button
@@ -198,7 +198,7 @@ const TripHeader = memo(function TripHeader({
           {/* Trip selector dropdown */}
           {showTripSelector && hasOtherTrips && (
             <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-              <p className="px-4 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+              <p className="px-4 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 Switch Trip
               </p>
               {otherTrips.map((t) => (
@@ -211,10 +211,10 @@ const TripHeader = memo(function TripHeader({
                     <FolderOpen className="w-4 h-4 text-gray-400" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                       {t.title}
                     </p>
-                    <p className="text-[11px] text-gray-500">
+                    <p className="text-xs text-gray-500">
                       {t.destination} · {t.itemCount} places
                     </p>
                   </div>
@@ -263,7 +263,7 @@ function StatItem({ value, label }: { value: string | number; label: string }) {
       <p className="text-[16px] font-semibold text-gray-900 dark:text-white tabular-nums">
         {value}
       </p>
-      <p className="text-[10px] text-gray-500">{label}</p>
+      <p className="text-xs text-gray-500">{label}</p>
     </div>
   );
 }

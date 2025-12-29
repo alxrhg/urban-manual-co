@@ -114,7 +114,7 @@ export default function TripOverviewCards({
           >
             {card.value}
           </span>
-          <span className="text-[11px] text-[var(--editorial-text-tertiary)] uppercase tracking-wider mt-0.5">
+          <span className="text-xs text-[var(--editorial-text-tertiary)] uppercase tracking-wider mt-0.5">
             {card.label}
           </span>
         </div>

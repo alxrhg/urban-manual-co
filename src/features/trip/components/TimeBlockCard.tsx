@@ -80,13 +80,13 @@ export default function TimeBlockCard({
           ) : (
             <button
               onClick={() => onTimeChange?.(item.id, '09:00')}
-              className="text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               + time
             </button>
           )}
           {item.parsedNotes?.duration && (
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1">
+            <span className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1">
               <Clock className="w-2.5 h-2.5" />
               {formatDuration(item.parsedNotes.duration)}
             </span>
@@ -139,7 +139,7 @@ export default function TimeBlockCard({
               )}
             </div>
             {/* Index badge - overlapping */}
-            <div className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[10px] font-semibold flex items-center justify-center shadow-sm">
+            <div className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-semibold flex items-center justify-center shadow-sm">
               {index + 1}
             </div>
           </div>
@@ -158,7 +158,7 @@ export default function TimeBlockCard({
               {category && (
                 <>
                   {item.description && <span className="text-gray-300 dark:text-gray-600">·</span>}
-                  <span className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-500 font-medium">
+                  <span className="text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500 font-medium">
                     {category}
                   </span>
                 </>

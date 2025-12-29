@@ -75,7 +75,7 @@ const AddToTripContent = memo(function AddToTripContent() {
             <h3 className="text-[16px] font-semibold text-gray-900 dark:text-white truncate">
               {destination.name}
             </h3>
-            <p className="text-[13px] text-gray-500 truncate">
+            <p className="text-sm text-gray-500 truncate">
               {destination.category && capitalizeCategory(destination.category)}
               {destination.category && destination.neighborhood && ' · '}
               {destination.neighborhood}
@@ -109,14 +109,14 @@ const AddToTripContent = memo(function AddToTripContent() {
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1">
-                <p className="text-[14px] font-semibold text-gray-900 dark:text-white mb-1">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
                   {fitAnalysis.category === 'perfect'
                     ? 'Perfect for Day ' + fitAnalysis.bestDay
                     : fitAnalysis.category === 'good'
                     ? 'Great fit for Day ' + fitAnalysis.bestDay
                     : 'Add to Day ' + fitAnalysis.bestDay}
                 </p>
-                <p className="text-[13px] text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   {fitAnalysis.reason}
                   {fitAnalysis.timeSlot && ` at ${fitAnalysis.timeSlot}`}
                 </p>
@@ -133,14 +133,14 @@ const AddToTripContent = memo(function AddToTripContent() {
                 >
                   {fitAnalysis.score}
                 </span>
-                <span className="text-[11px] text-gray-400 block">fit score</span>
+                <span className="text-xs text-gray-400 block">fit score</span>
               </div>
             </div>
 
             {/* Quick add to recommended day */}
             <button
               onClick={() => handleAddToDay(fitAnalysis.bestDay)}
-              className={`mt-4 w-full py-3 rounded-xl font-medium text-[14px] transition-all hover:scale-[1.01] active:scale-[0.99] ${
+              className={`mt-4 w-full py-3 rounded-xl font-medium text-sm transition-all hover:scale-[1.01] active:scale-[0.99] ${
                 fitAnalysis.category === 'perfect'
                   ? 'bg-green-600 text-white hover:bg-green-700'
                   : fitAnalysis.category === 'good'
@@ -160,7 +160,7 @@ const AddToTripContent = memo(function AddToTripContent() {
       {/* All Days Selection */}
       {activeTrip && (
         <div className="px-5 py-4">
-          <p className="text-[12px] font-medium text-gray-500 uppercase tracking-wide mb-3">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
             Or choose another day
           </p>
           <div className="grid grid-cols-3 gap-2">
@@ -184,10 +184,10 @@ const AddToTripContent = memo(function AddToTripContent() {
                       <Check className="w-2.5 h-2.5 text-white" />
                     </div>
                   )}
-                  <p className="text-[15px] font-semibold text-gray-900 dark:text-white">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
                     {day.dayNumber}
                   </p>
-                  <p className="text-[11px] text-gray-500">
+                  <p className="text-xs text-gray-500">
                     {day.items.length} place{day.items.length !== 1 ? 's' : ''}
                   </p>
                 </button>
@@ -207,14 +207,14 @@ const AddToTripContent = memo(function AddToTripContent() {
             <h3 className="text-[16px] font-semibold text-gray-900 dark:text-white mb-1">
               Start a new trip
             </h3>
-            <p className="text-[13px] text-gray-500">
+            <p className="text-sm text-gray-500">
               Create a trip to {destination.city || 'this destination'}
             </p>
           </div>
 
           <button
             onClick={handleStartNewTrip}
-            className="w-full py-3 px-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-medium text-[14px] hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+            className="w-full py-3 px-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-medium text-sm hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
           >
             <span className="flex items-center justify-center gap-2">
               <Plus className="w-4 h-4" />
@@ -227,7 +227,7 @@ const AddToTripContent = memo(function AddToTripContent() {
       {/* Trip Preview */}
       {activeTrip && totalItems > 0 && (
         <div className="px-5 pt-2 pb-4 border-t border-gray-100 dark:border-gray-800">
-          <div className="flex items-center justify-between text-[12px] text-gray-500">
+          <div className="flex items-center justify-between text-xs text-gray-500">
             <span>
               {activeTrip.title} · {totalItems} place{totalItems !== 1 ? 's' : ''}
             </span>

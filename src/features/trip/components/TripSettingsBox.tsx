@@ -326,7 +326,7 @@ export default function TripSettingsBox({
                     </button>
                   </div>
                   {/* Quick picks */}
-                  <p className="text-[10px] text-gray-400 mb-1.5">Quick picks</p>
+                  <p className="text-xs text-gray-400 mb-1.5">Quick picks</p>
                   <div className="grid grid-cols-8 gap-1">
                     {TRIP_EMOJIS.map((emoji) => (
                       <button

@@ -216,11 +216,11 @@ export default function DayTimeline({
       <div className="mt-4 pt-4 border-t border-black/[0.04] dark:border-white/[0.06]">
         <div className="flex items-center gap-2 mb-3">
           <Moon className="w-4 h-4 text-gray-400" />
-          <span className="text-[13px] font-medium text-gray-500 dark:text-gray-400">
+          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
             Overnight
           </span>
           {nightsInfo && (
-            <span className="text-[11px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
+            <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
               {nightsInfo}
             </span>
           )}
@@ -231,22 +231,22 @@ export default function DayTimeline({
         >
           <div className="flex items-center gap-3">
             <div className="flex-1 min-w-0">
-              <p className="text-[15px] font-medium text-gray-900 dark:text-white truncate">
+              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                 {hotelItem.title || 'Hotel'}
               </p>
-              <p className="text-[13px] text-gray-500 dark:text-gray-400 truncate">
+              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                 {hotelItem.parsedNotes?.address || hotelItem.destination?.formatted_address}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-4 mt-3 pt-3 border-t border-black/[0.04] dark:border-white/[0.06]">
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-gray-400 dark:text-gray-500">Check-in</span>
-              <span className="text-[13px] text-gray-600 dark:text-gray-300 tabular-nums">{checkInTime}</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">Check-in</span>
+              <span className="text-sm text-gray-600 dark:text-gray-300 tabular-nums">{checkInTime}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-gray-400 dark:text-gray-500">Check-out</span>
-              <span className="text-[13px] text-gray-600 dark:text-gray-300 tabular-nums">{checkOutTime}</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">Check-out</span>
+              <span className="text-sm text-gray-600 dark:text-gray-300 tabular-nums">{checkOutTime}</span>
             </div>
           </div>
         </div>
@@ -325,17 +325,17 @@ export default function DayTimeline({
       {/* Day Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.04] dark:border-white/[0.06]">
         <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2">
-          <span className="text-[17px] font-semibold text-gray-900 dark:text-white">
+          <span className="text-base font-semibold text-gray-900 dark:text-white">
             Day {day.dayNumber}
           </span>
           {formattedDate && (
-            <span className="text-[13px] text-gray-500 dark:text-gray-400">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               {formattedDate}
             </span>
           )}
           <NeighborhoodTags items={regularItems} />
         </div>
-        <span className="text-[13px] text-gray-400 dark:text-gray-500">
+        <span className="text-sm text-gray-400 dark:text-gray-500">
           {day.items.length} {day.items.length === 1 ? 'stop' : 'stops'}
         </span>
       </div>
@@ -426,7 +426,7 @@ export default function DayTimeline({
 
             {/* Scroll indicator */}
             {isScrollable && (
-              <div className="text-center py-2 text-[10px] text-gray-400 dark:text-gray-500">
+              <div className="text-center py-2 text-xs text-gray-400 dark:text-gray-500">
                 Scroll for more
               </div>
             )}

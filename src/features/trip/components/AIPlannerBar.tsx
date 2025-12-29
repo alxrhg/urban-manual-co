@@ -154,7 +154,7 @@ export default function AIPlannerBar({
               <button
                 key={action.label}
                 onClick={() => setInput(action.query)}
-                className="px-2 py-1 text-[11px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                className="px-2 py-1 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 {action.label}
               </button>
@@ -166,7 +166,7 @@ export default function AIPlannerBar({
             <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
               <div className="flex items-center gap-1.5 mb-2">
                 <Calendar className="w-3 h-3 text-gray-400" />
-                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
                   Happening during your trip
                 </span>
               </div>
@@ -180,9 +180,9 @@ export default function AIPlannerBar({
                     <Music className="w-3 h-3 text-gray-400 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-700 dark:text-gray-300 truncate">{event.title}</p>
-                      <p className="text-[10px] text-gray-400">{event.venue}</p>
+                      <p className="text-xs text-gray-400">{event.venue}</p>
                     </div>
-                    <span className="text-[10px] text-gray-400 flex-shrink-0">
+                    <span className="text-xs text-gray-400 flex-shrink-0">
                       {new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </span>
                   </div>

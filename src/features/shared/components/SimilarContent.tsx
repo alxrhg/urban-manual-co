@@ -74,7 +74,7 @@ const SimilarContent = memo(function SimilarContent({
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <Loader2 className="w-8 h-8 animate-spin text-gray-400 mb-3" />
-        <p className="text-[14px] text-gray-500">Finding similar places...</p>
+        <p className="text-sm text-gray-500">Finding similar places...</p>
       </div>
     );
   }
@@ -91,7 +91,7 @@ const SimilarContent = memo(function SimilarContent({
             Places like {destination.name}
           </h3>
         </div>
-        <p className="text-[13px] text-gray-500">
+        <p className="text-sm text-gray-500">
           {similar.length} similar {similar.length === 1 ? 'place' : 'places'} found
         </p>
       </div>
@@ -104,7 +104,7 @@ const SimilarContent = memo(function SimilarContent({
               key={f.key}
               onClick={() => setFilter(f.key)}
               className={`
-                px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors
+                px-3 py-1.5 rounded-md text-xs font-medium transition-colors
                 ${filter === f.key
                   ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                   : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/20'
@@ -140,7 +140,7 @@ const SimilarContent = memo(function SimilarContent({
       {similar.length === 0 ? (
         <div className="text-center py-12">
           <Sparkles className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-          <p className="text-[14px] text-gray-500">No similar places found</p>
+          <p className="text-sm text-gray-500">No similar places found</p>
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 gap-3">
@@ -204,17 +204,17 @@ function GridCard({
       </div>
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-3">
-        <p className="text-[13px] font-medium text-white truncate">
+        <p className="text-sm font-medium text-white truncate">
           {destination.name}
         </p>
-        <p className="text-[11px] text-white/70 truncate">
+        <p className="text-xs text-white/70 truncate">
           {capitalizeCategory(destination.category || '')}
         </p>
       </div>
       {destination.rating && (
         <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-md bg-black/40 backdrop-blur-sm">
           <img src="/google-logo.svg" alt="Google" className="w-3 h-3" />
-          <span className="text-[11px] font-medium text-white">
+          <span className="text-xs font-medium text-white">
             {destination.rating.toFixed(1)}
           </span>
         </div>
@@ -259,19 +259,19 @@ function ListCard({
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">
+          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
             {destination.name}
           </p>
           {destination.rating && (
             <div className="flex items-center gap-0.5 flex-shrink-0">
               <img src="/google-logo.svg" alt="Google" className="w-3 h-3" />
-              <span className="text-[11px] text-gray-500">
+              <span className="text-xs text-gray-500">
                 {destination.rating.toFixed(1)}
               </span>
             </div>
           )}
         </div>
-        <p className="text-[13px] text-gray-500 dark:text-gray-400 truncate">
+        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
           {capitalizeCategory(destination.category || '')}
           {destination.neighborhood && ` · ${destination.neighborhood}`}
         </p>

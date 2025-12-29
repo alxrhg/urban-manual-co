@@ -53,7 +53,7 @@ export default function CrowdIndicator({
   // Compact mode: just show icon and label
   if (compact) {
     return (
-      <div className={`flex items-center gap-1 text-[10px] ${getLevelColor(prediction.level)}`}>
+      <div className={`flex items-center gap-1 text-xs ${getLevelColor(prediction.level)}`}>
         <Users className="w-3 h-3" />
         <span>{prediction.label}</span>
       </div>
@@ -66,7 +66,7 @@ export default function CrowdIndicator({
   // Only show expanded for busy times
   if (prediction.level < 70) {
     return (
-      <div className={`flex items-center gap-1 text-[10px] ${getLevelColor(prediction.level)}`}>
+      <div className={`flex items-center gap-1 text-xs ${getLevelColor(prediction.level)}`}>
         <Users className="w-3 h-3" />
         <span>{prediction.label}</span>
       </div>
@@ -83,7 +83,7 @@ export default function CrowdIndicator({
       </div>
 
       {prediction.suggestion && (
-        <p className="text-[11px] text-stone-600 dark:text-gray-400 mb-2">
+        <p className="text-xs text-stone-600 dark:text-gray-400 mb-2">
           {prediction.suggestion}
         </p>
       )}
@@ -91,12 +91,12 @@ export default function CrowdIndicator({
       {prediction.bestTimes && prediction.bestTimes.length > 0 && (
         <div className="flex items-center gap-1.5 flex-wrap">
           <TrendingDown className="w-3 h-3 text-green-500" />
-          <span className="text-[10px] text-stone-500">Better times:</span>
+          <span className="text-xs text-stone-500">Better times:</span>
           {prediction.bestTimes.map((time) => (
             <button
               key={time}
               onClick={() => onTimeClick?.(time)}
-              className="text-[10px] px-1.5 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
+              className="text-xs px-1.5 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
             >
               {time}
             </button>

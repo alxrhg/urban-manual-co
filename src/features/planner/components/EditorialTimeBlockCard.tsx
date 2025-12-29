@@ -75,13 +75,13 @@ export const EditorialTimeBlockCard = memo(function EditorialTimeBlockCard({
         <h3 className="font-serif text-lg leading-tight text-gray-900 dark:text-white truncate">
           {block.title}
         </h3>
-        <p className="text-[10px] text-gray-500 dark:text-gray-500 uppercase tracking-widest">
+        <p className="text-xs text-gray-500 dark:text-gray-500 uppercase tracking-widest">
           {block.category || block.type}
         </p>
 
         {/* Intelligence Badge (Minimal) */}
         {isBusy && (
-          <span className="inline-flex items-center gap-1 text-[10px] border border-gray-200 dark:border-gray-800 px-2 py-0.5 rounded-full text-gray-400 dark:text-gray-600">
+          <span className="inline-flex items-center gap-1 text-xs border border-gray-200 dark:border-gray-800 px-2 py-0.5 rounded-full text-gray-400 dark:text-gray-600">
             <Users className="w-2.5 h-2.5" />
             Busy at {startTime}
           </span>

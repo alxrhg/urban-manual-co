@@ -66,7 +66,7 @@ export default function DraggableSpotCard({ destination }: DraggableSpotCardProp
 
         {/* Category Badge */}
         <div className="absolute top-2 left-2">
-          <span className="px-2 py-1 text-[10px] font-medium uppercase tracking-wide rounded-md bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm text-gray-700 dark:text-gray-300">
+          <span className="px-2 py-1 text-xs font-medium uppercase tracking-wide rounded-md bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm text-gray-700 dark:text-gray-300">
             {destination.category?.replace(/_/g, ' ')}
           </span>
         </div>

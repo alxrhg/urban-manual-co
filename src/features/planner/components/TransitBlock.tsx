@@ -35,7 +35,7 @@ export default function TransitBlock({
       </div>
 
       {/* Transit info */}
-      <div className="flex items-center gap-2 text-[10px] text-gray-300 dark:text-gray-700">
+      <div className="flex items-center gap-2 text-xs text-gray-300 dark:text-gray-700">
         <Icon className="w-3 h-3" />
         <span>{durationText}</span>
         {distanceKm && distanceKm > 0.1 && (

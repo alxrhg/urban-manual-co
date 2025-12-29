@@ -68,7 +68,7 @@ export default function OpeningHoursIndicator({
         icon={icon}
       />
       {hours && (
-        <span className="text-[10px] text-gray-400 ml-1">({hours})</span>
+        <span className="text-xs text-gray-400 ml-1">({hours})</span>
       )}
     </div>
   );

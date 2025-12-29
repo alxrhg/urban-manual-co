@@ -259,7 +259,7 @@ export function RealTimeAnalytics() {
                   title={`${hour}:00 - ${Math.round(intensity * 100)} views`}
                 />
                 {hour % 4 === 0 && (
-                  <span className="text-[10px] text-gray-500 block text-center">{hour}h</span>
+                  <span className="text-xs text-gray-500 block text-center">{hour}h</span>
                 )}
               </div>
             );

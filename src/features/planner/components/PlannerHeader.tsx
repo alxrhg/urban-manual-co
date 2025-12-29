@@ -58,7 +58,7 @@ export default function PlannerHeader({
     <div className="py-8 px-6 border-b border-gray-50 dark:border-gray-900">
       {/* Meta (Destination & Dates) */}
       {metaText && (
-        <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 dark:text-gray-600 text-center mb-4">
+        <p className="text-xs uppercase tracking-[0.2em] text-gray-400 dark:text-gray-600 text-center mb-4">
           {metaText}
         </p>
       )}

@@ -626,7 +626,7 @@ export default function InteractiveHero() {
         {/* Left Column - Editorial Text */}
         <div className="flex flex-col justify-center lg:py-12">
           {/* Small Caps Label */}
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-6">
+          <p className="text-xs uppercase tracking-widest text-[var(--editorial-text-tertiary)] mb-6">
             Curated Travel Guide
           </p>
 
@@ -640,7 +640,7 @@ export default function InteractiveHero() {
 
           {/* Subheadline */}
           <p
-            className="text-[15px] md:text-[17px] text-[var(--editorial-text-secondary)] mb-10 leading-[1.7] max-w-md"
+            className="text-sm md:text-base text-[var(--editorial-text-secondary)] mb-10 leading-relaxed max-w-md"
             style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
           >
             {destinationCount}+ handpicked hotels, restaurants, and destinations across the globe.
@@ -666,7 +666,7 @@ export default function InteractiveHero() {
                 onBlur={() => setTimeout(() => setIsFocused(false), 150)}
                 onKeyDown={handleInputKeyDown}
                 placeholder={showChatResults ? 'Ask a follow-up question...' : AI_PLACEHOLDERS[placeholderIndex]}
-                className="w-full h-12 pl-11 pr-14 text-[15px] bg-[var(--editorial-bg-elevated)] rounded-lg
+                className="w-full h-12 pl-11 pr-14 text-sm bg-[var(--editorial-bg-elevated)] rounded-lg
                            border border-[var(--editorial-border)] text-[var(--editorial-text-primary)]
                            placeholder:text-[var(--editorial-text-tertiary)]
                            focus:outline-none focus:border-[var(--editorial-text-primary)]
@@ -704,7 +704,7 @@ export default function InteractiveHero() {
                       {/* Group results by type */}
                       {instantResults.filter(r => r.type === 'saved' || r.type === 'visited').length > 0 && (
                         <div className="mb-2">
-                          <p className="px-3 py-1 text-[11px] font-medium text-[var(--editorial-text-tertiary)] uppercase tracking-wider">
+                          <p className="px-3 py-1 text-xs font-medium text-[var(--editorial-text-tertiary)] uppercase tracking-wider">
                             Your Places
                           </p>
                           {instantResults
@@ -736,10 +736,10 @@ export default function InteractiveHero() {
                                     </div>
                                   )}
                                   <div className="min-w-0 flex-1">
-                                    <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] truncate">
+                                    <p className="text-sm font-medium text-[var(--editorial-text-primary)] truncate">
                                       {result.name}
                                     </p>
-                                    <p className="text-[12px] text-[var(--editorial-text-secondary)] truncate flex items-center gap-1.5">
+                                    <p className="text-xs text-[var(--editorial-text-secondary)] truncate flex items-center gap-1.5">
                                       {getResultIcon(result.type)}
                                       {result.subtitle}
                                     </p>
@@ -753,7 +753,7 @@ export default function InteractiveHero() {
                       {/* Trips */}
                       {instantResults.filter(r => r.type === 'trip').length > 0 && (
                         <div className="mb-2">
-                          <p className="px-3 py-1 text-[11px] font-medium text-[var(--editorial-text-tertiary)] uppercase tracking-wider">
+                          <p className="px-3 py-1 text-xs font-medium text-[var(--editorial-text-tertiary)] uppercase tracking-wider">
                             Your Trips
                           </p>
                           {instantResults
@@ -773,10 +773,10 @@ export default function InteractiveHero() {
                                     <Map className="w-5 h-5 text-blue-500" />
                                   </div>
                                   <div className="min-w-0 flex-1">
-                                    <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] truncate">
+                                    <p className="text-sm font-medium text-[var(--editorial-text-primary)] truncate">
                                       {result.name}
                                     </p>
-                                    <p className="text-[12px] text-[var(--editorial-text-secondary)] truncate">
+                                    <p className="text-xs text-[var(--editorial-text-secondary)] truncate">
                                       {result.subtitle}
                                     </p>
                                   </div>
@@ -789,7 +789,7 @@ export default function InteractiveHero() {
                       {/* Search Results */}
                       {instantResults.filter(r => r.type === 'destination').length > 0 && (
                         <div>
-                          <p className="px-3 py-1 text-[11px] font-medium text-[var(--editorial-text-tertiary)] uppercase tracking-wider">
+                          <p className="px-3 py-1 text-xs font-medium text-[var(--editorial-text-tertiary)] uppercase tracking-wider">
                             Results
                           </p>
                           {instantResults
@@ -821,10 +821,10 @@ export default function InteractiveHero() {
                                     </div>
                                   )}
                                   <div className="min-w-0 flex-1">
-                                    <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] truncate">
+                                    <p className="text-sm font-medium text-[var(--editorial-text-primary)] truncate">
                                       {result.name}
                                     </p>
-                                    <p className="text-[12px] text-[var(--editorial-text-secondary)] truncate">
+                                    <p className="text-xs text-[var(--editorial-text-secondary)] truncate">
                                       {result.subtitle}
                                     </p>
                                   </div>
@@ -839,7 +839,7 @@ export default function InteractiveHero() {
                   {/* Suggestions */}
                   {instantSuggestions.length > 0 && (
                     <div className="border-t border-[var(--editorial-border-subtle)] p-2">
-                      <p className="px-3 py-1 text-[11px] font-medium text-[var(--editorial-text-tertiary)] uppercase tracking-wider">
+                      <p className="px-3 py-1 text-xs font-medium text-[var(--editorial-text-tertiary)] uppercase tracking-wider">
                         Try searching for
                       </p>
                       {instantSuggestions.map((suggestion, idx) => {
@@ -857,7 +857,7 @@ export default function InteractiveHero() {
                                          : 'hover:bg-[var(--editorial-border-subtle)]'}`}
                           >
                             <Sparkles className="w-4 h-4 text-[var(--editorial-text-tertiary)] flex-shrink-0" />
-                            <span className="text-[14px] text-[var(--editorial-text-secondary)]">{suggestion}</span>
+                            <span className="text-sm text-[var(--editorial-text-secondary)]">{suggestion}</span>
                           </button>
                         );
                       })}
@@ -873,10 +873,10 @@ export default function InteractiveHero() {
 
                   {/* Press Enter hint */}
                   <div className="border-t border-[var(--editorial-border-subtle)] px-3 py-2 flex items-center justify-between">
-                    <span className="text-[11px] text-[var(--editorial-text-tertiary)]">
+                    <span className="text-xs text-[var(--editorial-text-tertiary)]">
                       Press Enter for full AI search
                     </span>
-                    <span className="text-[11px] text-[var(--editorial-text-tertiary)]">
+                    <span className="text-xs text-[var(--editorial-text-tertiary)]">
                       ↑↓ to navigate
                     </span>
                   </div>
@@ -884,8 +884,8 @@ export default function InteractiveHero() {
               )}
             </div>
             {!showChatResults && !showInstantResults && (
-              <p className="mt-2 text-[10px] text-[var(--editorial-text-tertiary)]">
-                Press <kbd className="px-1 py-0.5 rounded bg-gray-100 dark:bg-white/5 font-mono text-[10px]">/</kbd> to focus • Enter to search
+              <p className="mt-2 text-xs text-[var(--editorial-text-tertiary)]">
+                Press <kbd className="px-1 py-0.5 rounded bg-gray-100 dark:bg-white/5 font-mono text-xs">/</kbd> to focus • Enter to search
               </p>
             )}
           </form>
@@ -895,7 +895,7 @@ export default function InteractiveHero() {
             <div className="max-w-xl mb-8 animate-in fade-in slide-in-from-top-2 duration-300">
               {/* Response header with close button */}
               <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2 text-[13px] text-[var(--editorial-text-secondary)]">
+                <div className="flex items-center gap-2 text-sm text-[var(--editorial-text-secondary)]">
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>AI Response for "{lastQuery}"</span>
                 </div>
@@ -910,7 +910,7 @@ export default function InteractiveHero() {
 
               {/* AI Response text */}
               {chatResponse && (
-                <p className="text-[15px] text-[var(--editorial-text-secondary)] mb-3 leading-relaxed">
+                <p className="text-sm text-[var(--editorial-text-secondary)] mb-3 leading-relaxed">
                   {chatResponse}
                 </p>
               )}
@@ -921,7 +921,7 @@ export default function InteractiveHero() {
                   {deterministicUI.contextChips.map((chip) => (
                     <span
                       key={chip.key}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium
                                  bg-[var(--editorial-border)] text-[var(--editorial-text-secondary)] rounded-full"
                     >
                       {chip.label}
@@ -942,7 +942,7 @@ export default function InteractiveHero() {
               {/* Question card - for ambiguous queries */}
               {deterministicUI?.question && (
                 <div className="mb-4 p-3 rounded-xl bg-[var(--editorial-border-subtle)] border border-[var(--editorial-border-subtle)]">
-                  <p className="text-[13px] font-medium text-[var(--editorial-text-primary)] mb-2">
+                  <p className="text-sm font-medium text-[var(--editorial-text-primary)] mb-2">
                     {deterministicUI.question.prompt}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -950,7 +950,7 @@ export default function InteractiveHero() {
                       <button
                         key={idx}
                         onClick={() => handleQuestionOptionClick(option.patch)}
-                        className="px-3 py-1.5 text-[12px] font-medium text-[var(--editorial-text-secondary)]
+                        className="px-3 py-1.5 text-xs font-medium text-[var(--editorial-text-secondary)]
                                    bg-[var(--editorial-bg-elevated)] rounded-full border border-gray-200 dark:border-white/10
                                    hover:bg-gray-100 dark:hover:bg-white/20 hover:border-gray-300 dark:hover:border-white/20
                                    transition-colors"
@@ -969,7 +969,7 @@ export default function InteractiveHero() {
                     <div key={index} className="flex items-start gap-3">
                       {/* Time slot indicator */}
                       <div className="flex-shrink-0 w-24">
-                        <span className="text-[13px] font-medium text-[var(--editorial-text-primary)]">
+                        <span className="text-sm font-medium text-[var(--editorial-text-primary)]">
                           {slot.label}
                         </span>
                       </div>
@@ -996,10 +996,10 @@ export default function InteractiveHero() {
                             </div>
                           )}
                           <div className="min-w-0 flex-1">
-                            <p className="text-[13px] font-medium text-[var(--editorial-text-primary)] truncate">
+                            <p className="text-sm font-medium text-[var(--editorial-text-primary)] truncate">
                               {slot.destination.name}
                             </p>
-                            <p className="text-[11px] text-[var(--editorial-text-secondary)] truncate">
+                            <p className="text-xs text-[var(--editorial-text-secondary)] truncate">
                               {capitalizeCategory(slot.destination.category)}
                             </p>
                           </div>
@@ -1040,10 +1040,10 @@ export default function InteractiveHero() {
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className="text-[13px] font-medium text-[var(--editorial-text-primary)] truncate group-hover:text-[var(--editorial-text-secondary)]">
+                          <p className="text-sm font-medium text-[var(--editorial-text-primary)] truncate group-hover:text-[var(--editorial-text-secondary)]">
                             {dest.name}
                           </p>
-                          <p className="text-[11px] text-[var(--editorial-text-secondary)] truncate">
+                          <p className="text-xs text-[var(--editorial-text-secondary)] truncate">
                             {dest.city} • {capitalizeCategory(dest.category)}
                           </p>
                           {/* "Why" chips - reasons this result was recommended */}
@@ -1052,7 +1052,7 @@ export default function InteractiveHero() {
                               {deterministicUI.whyBySlug[dest.slug].slice(0, 2).map((reason, idx) => (
                                 <span
                                   key={idx}
-                                  className="text-[10px] px-1.5 py-0.5 bg-amber-50 dark:bg-amber-900/20
+                                  className="text-xs px-1.5 py-0.5 bg-amber-50 dark:bg-amber-900/20
                                              text-amber-700 dark:text-amber-300 rounded"
                                 >
                                   {reason}
@@ -1075,7 +1075,7 @@ export default function InteractiveHero() {
               {(lastFilters.city || lastFilters.category) && filteredDestinations.length > 0 && (
                 <button
                   onClick={() => handleCloseChatResults(false)}
-                  className="text-[13px] font-medium text-[var(--editorial-text-primary)] mb-4 flex items-center gap-1.5 hover:underline"
+                  className="text-sm font-medium text-[var(--editorial-text-primary)] mb-4 flex items-center gap-1.5 hover:underline"
                 >
                   See all {filteredDestinations.length} results in grid
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -1085,13 +1085,13 @@ export default function InteractiveHero() {
               {/* Refinement chips - apply filter patches */}
               {deterministicUI?.refinements && deterministicUI.refinements.length > 0 && !deterministicUI.question && (
                 <div className="mb-3">
-                  <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-2">Refine results</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Refine results</p>
                   <div className="flex flex-wrap gap-1.5">
                     {deterministicUI.refinements.map((refinement, idx) => (
                       <button
                         key={idx}
                         onClick={() => handleRefinementClick(refinement.patch)}
-                        className="px-2.5 py-1 text-[11px] font-medium text-gray-600 dark:text-gray-300
+                        className="px-2.5 py-1 text-xs font-medium text-gray-600 dark:text-gray-300
                                    bg-white dark:bg-white/5 rounded-full border border-gray-200 dark:border-white/10
                                    hover:bg-gray-50 dark:hover:bg-white/10 hover:border-gray-300 dark:hover:border-white/20
                                    transition-colors"
@@ -1113,7 +1113,7 @@ export default function InteractiveHero() {
                       <button
                         key={index}
                         onClick={() => handleFollowUp(suggestion)}
-                        className="px-3 py-1.5 text-[12px] font-medium text-gray-600 dark:text-gray-300
+                        className="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300
                                    bg-[var(--editorial-border)] rounded-full
                                    hover:bg-[var(--editorial-border)] transition-colors"
                       >
@@ -1123,7 +1123,7 @@ export default function InteractiveHero() {
                   })}
                   <button
                     onClick={() => handleCloseChatResults(true)}
-                    className="px-3 py-1.5 text-[12px] font-medium text-gray-400 dark:text-gray-500
+                    className="px-3 py-1.5 text-xs font-medium text-gray-400 dark:text-gray-500
                                hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex items-center gap-1"
                   >
                     <RefreshCw className="w-3 h-3" />
@@ -1143,7 +1143,7 @@ export default function InteractiveHero() {
             style={{ aspectRatio: '3/4' }}
           >
             <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-4">
                 Est. 2024
               </p>
             </div>
@@ -1154,7 +1154,7 @@ export default function InteractiveHero() {
               >
                 Urban Manual
               </h3>
-              <p className="text-[12px] text-[var(--editorial-text-secondary)] leading-[1.6]">
+              <p className="text-xs text-[var(--editorial-text-secondary)] leading-[1.6]">
                 A curated guide for those who appreciate the finer details of travel.
               </p>
             </div>
@@ -1178,7 +1178,7 @@ export default function InteractiveHero() {
                 )}
               </div>
               <div className="p-6">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-white/70 mb-2">
+                <p className="text-xs uppercase tracking-[0.2em] text-white/70 mb-2">
                   {featuredDestinations[0].category}
                 </p>
                 <h3
@@ -1187,7 +1187,7 @@ export default function InteractiveHero() {
                 >
                   {featuredDestinations[0].name}
                 </h3>
-                <p className="text-[12px] text-white/80">
+                <p className="text-xs text-white/80">
                   {capitalizeCity(featuredDestinations[0].city)}
                 </p>
               </div>
@@ -1204,7 +1204,7 @@ export default function InteractiveHero() {
               <div className="flex flex-wrap gap-x-4 gap-y-2">
                 <button
                   onClick={() => setSelectedCity('')}
-                  className={`text-[13px] font-medium transition-colors duration-200 ${
+                  className={`text-sm font-medium transition-colors duration-200 ${
                     !selectedCity
                       ? 'text-[var(--editorial-text-primary)]'
                       : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
@@ -1216,7 +1216,7 @@ export default function InteractiveHero() {
                   <button
                     key={city}
                     onClick={() => handleCityClick(city)}
-                    className={`text-[13px] font-medium transition-colors duration-200 ${
+                    className={`text-sm font-medium transition-colors duration-200 ${
                       selectedCity.toLowerCase() === city.toLowerCase()
                         ? 'text-[var(--editorial-text-primary)]'
                         : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
@@ -1228,7 +1228,7 @@ export default function InteractiveHero() {
                 {cities.length > displayedCities.length && !showAllCities && (
                   <button
                     onClick={() => setShowAllCities(true)}
-                    className="text-[13px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+                    className="text-sm font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
                   >
                     +{cities.length - displayedCities.length} more
                   </button>
@@ -1236,7 +1236,7 @@ export default function InteractiveHero() {
                 {showAllCities && (
                   <button
                     onClick={() => setShowAllCities(false)}
-                    className="text-[13px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+                    className="text-sm font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
                   >
                     Show less
                   </button>
@@ -1246,7 +1246,7 @@ export default function InteractiveHero() {
 
             {/* Category Filters with Icons */}
             {categories.length > 0 && (
-              <div className="flex flex-wrap gap-x-4 gap-y-2 text-[12px]">
+              <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
                 <button
                   onClick={() => {
                     setSelectedCategory('');

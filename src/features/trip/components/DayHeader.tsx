@@ -47,7 +47,7 @@ export default function DayHeader({
         </span>
         {/* Date in refined uppercase */}
         {formattedDate && (
-          <span className="text-[11px] uppercase tracking-[0.15em] text-gray-400 dark:text-gray-500 font-medium">
+          <span className="text-xs uppercase tracking-[0.15em] text-gray-400 dark:text-gray-500 font-medium">
             {formattedDate}
           </span>
         )}
@@ -57,7 +57,7 @@ export default function DayHeader({
       <div className="flex items-center gap-3">
         {/* Item Count Badge */}
         {itemCount > 0 && (
-          <span className="text-[11px] text-gray-400 dark:text-gray-500 tabular-nums">
+          <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
             {itemCount} {itemCount === 1 ? 'stop' : 'stops'}
           </span>
         )}

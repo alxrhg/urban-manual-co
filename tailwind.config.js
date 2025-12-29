@@ -62,14 +62,7 @@ module.exports = {
           xl: '1280px',
         },
       },
-      colors: {
-        'dark-blue': {
-          900: '#0a1628',
-          800: '#0f1f35',
-          700: '#152438',
-          600: '#1a2a3a',
-        },
-      },
+      /* Colors defined via CSS variables in globals.css */
     },
   },
 }

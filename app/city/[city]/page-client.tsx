@@ -337,13 +337,13 @@ export default function CityPageClient({
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={handleAddNewPOI}
-                    className="px-3 py-1.5 text-[11px] font-semibold rounded-md bg-white text-gray-900 border border-gray-200 shadow-sm hover:bg-gray-100 transition-all dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
+                    className="px-3 py-1.5 text-xs font-semibold rounded-md bg-white text-gray-900 border border-gray-200 shadow-sm hover:bg-gray-100 transition-all dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
                   >
                     Add Place
                   </button>
                   <button
                     onClick={() => disableEditMode()}
-                    className="px-3 py-1.5 text-[11px] font-semibold rounded-md bg-gray-900 text-white hover:bg-gray-800 transition-all dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
+                    className="px-3 py-1.5 text-xs font-semibold rounded-md bg-gray-900 text-white hover:bg-gray-800 transition-all dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
                   >
                     Exit Edit Mode
                   </button>

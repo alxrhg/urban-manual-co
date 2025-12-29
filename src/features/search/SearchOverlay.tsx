@@ -169,7 +169,7 @@ export default function SearchOverlay({
 
               {/* Type Badge */}
               {result.type && (
-                <span className="text-[10px] uppercase tracking-widest text-gray-400 flex-shrink-0">
+                <span className="text-xs uppercase tracking-widest text-gray-400 flex-shrink-0">
                   {result.type}
                 </span>
               )}

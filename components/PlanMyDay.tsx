@@ -259,7 +259,7 @@ export function PlanMyDay({
                     <div className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">
                       {item.time}
                     </div>
-                    <div className="text-[10px] text-gray-400">{item.duration}</div>
+                    <div className="text-xs text-gray-400">{item.duration}</div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">

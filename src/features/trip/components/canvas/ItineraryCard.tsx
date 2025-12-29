@@ -129,7 +129,7 @@ function PlaceTicket({
         <span className={`font-bold text-gray-900 dark:text-white ${isCompact ? 'text-sm' : 'text-base'}`}>
           {item.timeSlot || '--:--'}
         </span>
-        <span className="text-[10px] text-gray-400 uppercase tracking-wide">
+        <span className="text-xs text-gray-400 uppercase tracking-wide">
           {item.duration}m
         </span>
       </div>
@@ -172,7 +172,7 @@ function PlaceTicket({
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2 text-[10px] text-gray-500 dark:text-gray-400">
+        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
           <span className="capitalize truncate">{dest.category?.replace(/_/g, ' ')}</span>
           {dest.neighborhood && (
             <>
@@ -188,7 +188,7 @@ function PlaceTicket({
         {dest.rating && (
           <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700">
             <img src="/google-logo.svg" alt="Google" className="w-3 h-3" />
-            <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300">
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
               {dest.rating.toFixed(1)}
             </span>
           </div>
@@ -299,13 +299,13 @@ function FlightCard({
           <div className="flex items-center gap-4 mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
             {flightData.terminal && (
               <div>
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide">Terminal</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wide">Terminal</p>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{flightData.terminal}</p>
               </div>
             )}
             {flightData.gate && (
               <div>
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide">Gate</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wide">Gate</p>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{flightData.gate}</p>
               </div>
             )}
@@ -401,7 +401,7 @@ function HotelCard({
               <Clock className="w-4 h-4 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide">Check-in</p>
+              <p className="text-xs text-gray-400 uppercase tracking-wide">Check-in</p>
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 {hotelData.checkIn || item.timeSlot || '15:00'}
               </p>
@@ -412,7 +412,7 @@ function HotelCard({
 
           <div className="flex items-center gap-2">
             <div>
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide">Check-out</p>
+              <p className="text-xs text-gray-400 uppercase tracking-wide">Check-out</p>
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 {hotelData.checkOut || '11:00'}
               </p>
@@ -426,7 +426,7 @@ function HotelCard({
         {/* Confirmation number */}
         {hotelData.confirmationNumber && (
           <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-            <p className="text-[10px] text-gray-400 uppercase tracking-wide">Confirmation</p>
+            <p className="text-xs text-gray-400 uppercase tracking-wide">Confirmation</p>
             <p className="text-sm font-mono text-gray-900 dark:text-white">{hotelData.confirmationNumber}</p>
           </div>
         )}
@@ -485,7 +485,7 @@ function NightPass({
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] text-white/60 uppercase tracking-wide">Tonight</p>
+          <p className="text-xs text-white/60 uppercase tracking-wide">Tonight</p>
           <h4 className="font-semibold text-white truncate">{dest.name}</h4>
         </div>
 

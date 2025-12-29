@@ -242,7 +242,7 @@ export function UserManagement() {
                   <div className="flex items-center gap-2 text-xs text-gray-500">
                     <span className="truncate">{user.email}</span>
                     {user.app_metadata.role === 'admin' && (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-md text-[10px] font-medium">
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-md text-xs font-medium">
                         <ShieldCheck className="w-2.5 h-2.5" />
                         Admin
                       </span>

@@ -210,7 +210,7 @@ function LibraryTile({
       <span className="text-xl font-semibold text-gray-900 dark:text-white">
         {count}
       </span>
-      <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-500">
+      <span className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-500">
         {label}
       </span>
     </button>
@@ -519,7 +519,7 @@ const AccountContent = memo(function AccountContent() {
         <div className="px-5 mb-4">
           <div className="flex items-center gap-2 mb-3">
             <Calendar className="w-4 h-4 text-gray-400" />
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
               Next Trip
             </h3>
           </div>
@@ -533,7 +533,7 @@ const AccountContent = memo(function AccountContent() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-gray-400" />
-              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
                 For You
               </h3>
             </div>
@@ -582,7 +582,7 @@ const AccountContent = memo(function AccountContent() {
 
       {/* Library Grid */}
       <div className="px-5 mb-4">
-        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
           Your Library
         </h3>
         <div className="grid grid-cols-3 gap-3">

@@ -328,7 +328,7 @@ export const TripModal = memo(function TripModal({
                 </button>
               )}
               <div>
-                <h2 className="text-[17px] font-semibold text-stone-900 dark:text-white">
+                <h2 className="text-sm font-semibold text-stone-900 dark:text-white">
                   {step === 'select' && 'Add to Trip'}
                   {step === 'name' && 'Name your trip'}
                   {step === 'destination' && 'Where are you going?'}
@@ -479,10 +479,10 @@ export const TripModal = memo(function TripModal({
                     onChange={(e) => setTitle(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Summer in Paris"
-                    className="w-full px-4 py-3 text-[16px] bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl outline-none focus:border-stone-400 dark:focus:border-stone-500 transition-colors"
+                    className="w-full px-4 py-3 text-sm bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl outline-none focus:border-stone-400 dark:focus:border-stone-500 transition-colors"
                     autoFocus
                   />
-                  <p className="mt-2 text-[13px] text-stone-400">
+                  <p className="mt-2 text-sm text-stone-400">
                     Give your trip a memorable name
                   </p>
                 </motion.div>
@@ -506,10 +506,10 @@ export const TripModal = memo(function TripModal({
                       onChange={(e) => setDestination(e.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder="Paris, France"
-                      className="w-full pl-12 pr-4 py-3 text-[16px] bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl outline-none focus:border-stone-400 dark:focus:border-stone-500 transition-colors"
+                      className="w-full pl-12 pr-4 py-3 text-sm bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl outline-none focus:border-stone-400 dark:focus:border-stone-500 transition-colors"
                     />
                   </div>
-                  <p className="mt-2 text-[13px] text-stone-400">
+                  <p className="mt-2 text-sm text-stone-400">
                     City or region you&apos;re visiting (optional)
                   </p>
                 </motion.div>
@@ -527,7 +527,7 @@ export const TripModal = memo(function TripModal({
                 >
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[12px] font-medium text-stone-500 mb-1.5">
+                      <label className="block text-xs font-medium text-stone-500 mb-1.5">
                         Start
                       </label>
                       <div className="relative">
@@ -543,12 +543,12 @@ export const TripModal = memo(function TripModal({
                             }
                           }}
                           onKeyDown={handleKeyDown}
-                          className="w-full pl-10 pr-3 py-2.5 text-[14px] bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl outline-none focus:border-stone-400 dark:focus:border-stone-500 transition-colors"
+                          className="w-full pl-10 pr-3 py-2.5 text-sm bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl outline-none focus:border-stone-400 dark:focus:border-stone-500 transition-colors"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[12px] font-medium text-stone-500 mb-1.5">
+                      <label className="block text-xs font-medium text-stone-500 mb-1.5">
                         End
                       </label>
                       <div className="relative">
@@ -559,19 +559,19 @@ export const TripModal = memo(function TripModal({
                           onChange={(e) => setEndDate(e.target.value)}
                           onKeyDown={handleKeyDown}
                           min={startDate}
-                          className="w-full pl-10 pr-3 py-2.5 text-[14px] bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl outline-none focus:border-stone-400 dark:focus:border-stone-500 transition-colors"
+                          className="w-full pl-10 pr-3 py-2.5 text-sm bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl outline-none focus:border-stone-400 dark:focus:border-stone-500 transition-colors"
                         />
                       </div>
                     </div>
                   </div>
 
                   {tripDuration && tripDuration > 0 && (
-                    <p className="text-[13px] text-stone-500 text-center">
+                    <p className="text-sm text-stone-500 text-center">
                       {tripDuration} {tripDuration === 1 ? 'day' : 'days'}
                     </p>
                   )}
 
-                  <p className="text-[13px] text-stone-400 text-center">
+                  <p className="text-sm text-stone-400 text-center">
                     Dates can be changed later (optional)
                   </p>
                 </motion.div>
@@ -586,7 +586,7 @@ export const TripModal = memo(function TripModal({
                 <button
                   onClick={handleCreate}
                   disabled={!canCreate || isCreating}
-                  className="w-full py-3 rounded-xl bg-stone-900 dark:bg-white text-white dark:text-stone-900 text-[15px] font-medium hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-xl bg-stone-900 dark:bg-white text-white dark:text-stone-900 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                 >
                   {isCreating ? (
                     <>
@@ -606,7 +606,7 @@ export const TripModal = memo(function TripModal({
                 <button
                   onClick={handleNext}
                   disabled={!canProceed}
-                  className="w-full py-3 rounded-xl bg-stone-900 dark:bg-white text-white dark:text-stone-900 text-[15px] font-medium hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-xl bg-stone-900 dark:bg-white text-white dark:text-stone-900 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                 >
                   Continue
                   <ChevronRight className="w-4 h-4" />
@@ -616,7 +616,7 @@ export const TripModal = memo(function TripModal({
               {step === 'destination' && (
                 <button
                   onClick={() => setStep('dates')}
-                  className="w-full mt-2 py-2 text-[13px] text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
+                  className="w-full mt-2 py-2 text-sm text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
                 >
                   Skip for now
                 </button>
@@ -626,7 +626,7 @@ export const TripModal = memo(function TripModal({
                 <button
                   onClick={handleCreate}
                   disabled={!canCreate || isCreating}
-                  className="w-full mt-2 py-2 text-[13px] text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
+                  className="w-full mt-2 py-2 text-sm text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
                 >
                   Skip dates and create trip
                 </button>

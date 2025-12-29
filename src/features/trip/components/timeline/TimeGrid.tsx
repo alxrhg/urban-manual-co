@@ -30,7 +30,7 @@ function TimeGridComponent({
         style={{ top }}
       >
         {/* Time label */}
-        <span className="w-12 text-[11px] text-gray-400 dark:text-gray-500 tabular-nums flex-shrink-0">
+        <span className="w-12 text-xs text-gray-400 dark:text-gray-500 tabular-nums flex-shrink-0">
           {label}
         </span>
         {/* Separator line */}

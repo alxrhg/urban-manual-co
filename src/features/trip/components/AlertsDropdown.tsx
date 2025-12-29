@@ -73,7 +73,7 @@ export default function AlertsDropdown({
         <Bell className={`w-5 h-5 ${highCount > 0 ? 'text-gray-700 dark:text-gray-300' : 'text-gray-500 dark:text-gray-400'}`} />
         {hasWarnings && (
           <span className={`
-            absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-[10px] font-medium
+            absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-xs font-medium
             flex items-center justify-center
             bg-gray-900 dark:bg-white text-white dark:text-gray-900
           `}>

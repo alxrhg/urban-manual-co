@@ -140,7 +140,7 @@ export function InteractiveTravelConnector({
                 key={m}
                 onClick={() => handleModeChange(m)}
                 className={`
-                  flex items-center gap-1 px-2 py-1 rounded-full transition-all text-[10px] font-medium
+                  flex items-center gap-1 px-2 py-1 rounded-full transition-all text-xs font-medium
                   ${isSelected
                     ? 'bg-white dark:bg-gray-700 text-stone-900 dark:text-white shadow-sm'
                     : 'text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
@@ -158,7 +158,7 @@ export function InteractiveTravelConnector({
 
         {/* Distance */}
         {distanceText && (
-          <span className="text-[10px] text-stone-400 dark:text-gray-500 tabular-nums">
+          <span className="text-xs text-stone-400 dark:text-gray-500 tabular-nums">
             {distanceText}
           </span>
         )}
@@ -202,7 +202,7 @@ export function CompactTravelConnector({
 
   return (
     <div className={`flex items-center justify-end py-1.5 ${className}`}>
-      <span className="text-[10px] text-stone-400 dark:text-gray-500">
+      <span className="text-xs text-stone-400 dark:text-gray-500">
         ↓ {formatDuration(durationMinutes)} {modeLabels[mode]}
       </span>
     </div>

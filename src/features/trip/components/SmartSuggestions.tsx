@@ -338,11 +338,11 @@ export default function SmartSuggestions({
             className="group flex items-center gap-2 px-3 py-1.5 rounded-md bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-gray-800 transition-all"
           >
             <Plus className="w-3 h-3 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
-            <span className="text-[12px] text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white">
+            <span className="text-xs text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white">
               {suggestion.text}
             </span>
             {suggestion.subtext && (
-              <span className="text-[10px] text-gray-400 dark:text-gray-500">
+              <span className="text-xs text-gray-400 dark:text-gray-500">
                 {suggestion.subtext}
               </span>
             )}
@@ -370,10 +370,10 @@ export default function SmartSuggestions({
               </div>
             )}
             <div className="text-left">
-              <span className="text-[12px] text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+              <span className="text-xs text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
                 {patch.meta?.destination?.name || patch.label}
               </span>
-              <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-1.5">
+              <span className="text-xs text-gray-400 dark:text-gray-500 ml-1.5">
                 Day {patch.meta?.day || 1}
               </span>
             </div>

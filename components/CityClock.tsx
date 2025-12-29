@@ -66,7 +66,7 @@ export function CityClock({ citySlug, className = '' }: CityClockProps) {
         <Clock className="h-3 w-3" />
         <div className="flex flex-col">
           <span className="font-mono font-medium opacity-0">00:00:00</span>
-          <span className="text-[10px] leading-tight opacity-0">Mon, Jan 1, 2024</span>
+          <span className="text-xs leading-tight opacity-0">Mon, Jan 1, 2024</span>
         </div>
       </div>
     );
@@ -77,7 +77,7 @@ export function CityClock({ citySlug, className = '' }: CityClockProps) {
       <Clock className="h-3 w-3" />
       <div className="flex flex-col">
         <span className="font-mono font-medium" suppressHydrationWarning>{time}</span>
-        <span className="text-[10px] leading-tight" suppressHydrationWarning>{date}</span>
+        <span className="text-xs leading-tight" suppressHydrationWarning>{date}</span>
       </div>
     </div>
   );

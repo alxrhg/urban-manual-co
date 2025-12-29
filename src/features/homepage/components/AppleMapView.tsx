@@ -230,7 +230,7 @@ export function AppleMapView() {
       <div className="w-full h-[70vh] rounded-lg bg-gray-100 dark:bg-[#1c1c1e] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-          <span className="text-[14px] text-gray-500 dark:text-gray-400">Loading Apple Maps...</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">Loading Apple Maps...</span>
         </div>
       </div>
     );
@@ -246,10 +246,10 @@ export function AppleMapView() {
             <MapPin className="w-7 h-7 text-amber-500" />
           </div>
           <div>
-            <h3 className="text-[16px] font-medium text-gray-900 dark:text-white mb-1">
+            <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1">
               {isCredentialError ? 'Map configuration required' : 'Map unavailable'}
             </h3>
-            <p className="text-[14px] text-gray-500 dark:text-gray-400 max-w-sm">
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
               {isCredentialError
                 ? 'Apple Maps requires MapKit credentials to be configured. Switch to grid view to browse destinations.'
                 : error}
@@ -258,7 +258,7 @@ export function AppleMapView() {
           <div className="flex gap-3">
             <button
               onClick={() => setViewMode('grid')}
-              className="px-5 py-2.5 text-[14px] font-medium rounded-full
+              className="px-5 py-2.5 text-sm font-medium rounded-full
                          bg-gray-900 dark:bg-white text-white dark:text-gray-900
                          hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
             >
@@ -267,7 +267,7 @@ export function AppleMapView() {
             {!isCredentialError && (
               <button
                 onClick={() => window.location.reload()}
-                className="px-5 py-2.5 text-[14px] font-medium rounded-full
+                className="px-5 py-2.5 text-sm font-medium rounded-full
                            border border-gray-300 dark:border-white/20
                            text-gray-700 dark:text-gray-300
                            hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
@@ -299,10 +299,10 @@ export function AppleMapView() {
             <div className="flex-shrink-0 px-4 py-3 border-b border-gray-100 dark:border-white/10">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-[15px] font-semibold text-gray-900 dark:text-white">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
                     On this map
                   </h3>
-                  <p className="text-[12px] text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {mappableDestinations.length} destinations
                   </p>
                 </div>
@@ -351,10 +351,10 @@ export function AppleMapView() {
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                       {dest.name}
                     </p>
-                    <p className="text-[12px] text-gray-500 dark:text-gray-400 truncate">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                       {dest.category && capitalizeCategory(dest.category)}
                       {dest.category && dest.city && ' · '}
                       {dest.city && capitalizeCity(dest.city)}
@@ -379,7 +379,7 @@ export function AppleMapView() {
                      hover:bg-white dark:hover:bg-black/90 transition-colors"
         >
           <List className="w-4 h-4 text-gray-700 dark:text-gray-200" />
-          <span className="text-[13px] font-medium text-gray-700 dark:text-gray-200">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
             Show list
           </span>
         </button>
@@ -388,7 +388,7 @@ export function AppleMapView() {
       {/* Location count badge */}
       <div className="absolute bottom-4 left-4 px-3 py-1.5 rounded-full
                       bg-white/90 dark:bg-black/70 backdrop-blur-md shadow-lg
-                      text-[13px] font-medium text-gray-700 dark:text-gray-200">
+                      text-sm font-medium text-gray-700 dark:text-gray-200">
         {mappableDestinations.length} locations
       </div>
     </div>

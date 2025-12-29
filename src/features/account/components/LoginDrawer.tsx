@@ -93,7 +93,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
         <X className="h-4 w-4 text-[var(--editorial-text-secondary)]" />
       </button>
       <h2
-        className="text-[15px] font-normal text-[var(--editorial-text-primary)] tracking-tight"
+        className="text-sm font-normal text-[var(--editorial-text-primary)] tracking-tight"
         style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
       >
         {isSignUp ? 'Create Account' : 'Sign In'}

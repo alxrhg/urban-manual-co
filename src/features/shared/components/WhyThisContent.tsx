@@ -149,7 +149,7 @@ const WhyThisContent = memo(function WhyThisContent({
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <Loader2 className="w-8 h-8 animate-spin text-gray-400 mb-3" />
-        <p className="text-[14px] text-gray-500">Understanding why...</p>
+        <p className="text-sm text-gray-500">Understanding why...</p>
       </div>
     );
   }
@@ -174,10 +174,10 @@ const WhyThisContent = memo(function WhyThisContent({
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[15px] font-medium text-gray-900 dark:text-white truncate">
+          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
             {destination.name}
           </p>
-          <p className="text-[13px] text-gray-500 truncate">
+          <p className="text-sm text-gray-500 truncate">
             {destination.category} · {destination.city}
           </p>
         </div>
@@ -192,7 +192,7 @@ const WhyThisContent = memo(function WhyThisContent({
           <h3 className="text-[17px] font-semibold text-gray-900 dark:text-white mb-1">
             Why we recommended this
           </h3>
-          <p className="text-[14px] text-gray-600 dark:text-gray-400 leading-relaxed">
+          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
             {data?.summary}
           </p>
         </div>
@@ -201,7 +201,7 @@ const WhyThisContent = memo(function WhyThisContent({
       {/* Reasons */}
       {data?.reasons && data.reasons.length > 0 && (
         <div className="space-y-3 mb-6">
-          <h4 className="text-[12px] font-semibold text-gray-400 uppercase tracking-wider">
+          <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
             Key Factors
           </h4>
           {data.reasons.map((reason, idx) => (
@@ -217,10 +217,10 @@ const WhyThisContent = memo(function WhyThisContent({
                 {getReasonIcon(reason.type)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-medium text-gray-900 dark:text-white">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
                   {reason.title}
                 </p>
-                <p className="text-[13px] text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {reason.description}
                 </p>
               </div>
@@ -233,8 +233,8 @@ const WhyThisContent = memo(function WhyThisContent({
       {data?.confidence && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[13px] text-gray-500">Match confidence</span>
-            <span className="text-[13px] font-medium text-gray-900 dark:text-white">
+            <span className="text-sm text-gray-500">Match confidence</span>
+            <span className="text-sm font-medium text-gray-900 dark:text-white">
               {data.confidence}%
             </span>
           </div>
@@ -249,7 +249,7 @@ const WhyThisContent = memo(function WhyThisContent({
 
       {/* Feedback */}
       <div className="p-4 rounded-lg bg-gray-50 dark:bg-white/5">
-        <p className="text-[13px] text-gray-600 dark:text-gray-400 mb-3">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
           Was this recommendation helpful?
         </p>
         <div className="flex gap-2">
@@ -257,7 +257,7 @@ const WhyThisContent = memo(function WhyThisContent({
             onClick={() => setFeedback('up')}
             className={`
               flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl
-              text-[13px] font-medium transition-all
+              text-sm font-medium transition-all
               ${feedback === 'up'
                 ? 'bg-green-500 text-white'
                 : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -271,7 +271,7 @@ const WhyThisContent = memo(function WhyThisContent({
             onClick={() => setFeedback('down')}
             className={`
               flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl
-              text-[13px] font-medium transition-all
+              text-sm font-medium transition-all
               ${feedback === 'down'
                 ? 'bg-red-500 text-white'
                 : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -283,7 +283,7 @@ const WhyThisContent = memo(function WhyThisContent({
           </button>
         </div>
         {feedback && (
-          <p className="text-[12px] text-gray-500 text-center mt-3">
+          <p className="text-xs text-gray-500 text-center mt-3">
             Thanks for your feedback!
           </p>
         )}

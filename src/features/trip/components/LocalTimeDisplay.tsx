@@ -131,7 +131,7 @@ export default function LocalTimeDisplay({
 
   if (compact) {
     return (
-      <div className={`flex items-center gap-1.5 text-[12px] text-[var(--editorial-text-secondary)] ${className}`}>
+      <div className={`flex items-center gap-1.5 text-xs text-[var(--editorial-text-secondary)] ${className}`}>
         <Clock className="w-3 h-3" />
         <span>{currentTime}</span>
         <span className="text-[var(--editorial-text-tertiary)]">{abbreviation}</span>
@@ -140,7 +140,7 @@ export default function LocalTimeDisplay({
   }
 
   return (
-    <div className={`flex items-center gap-1.5 text-[11px] text-[var(--editorial-text-secondary)] ${className}`}>
+    <div className={`flex items-center gap-1.5 text-xs text-[var(--editorial-text-secondary)] ${className}`}>
       <Globe className="w-3.5 h-3.5" />
       <span>{city}</span>
       <span className="text-[var(--editorial-text-tertiary)]">·</span>

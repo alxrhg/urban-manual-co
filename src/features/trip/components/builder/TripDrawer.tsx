@@ -63,10 +63,10 @@ const TripDrawer = memo(function TripDrawer() {
         {/* Header - just title and close */}
         <div className="flex-shrink-0 px-5 py-3 flex items-center justify-between">
           <div>
-            <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
               {activeTrip.title || activeTrip.city || 'Trip'}
             </h2>
-            <p className="text-[12px] text-gray-400">
+            <p className="text-xs text-gray-400">
               {totalItems} {totalItems === 1 ? 'place' : 'places'}
             </p>
           </div>
@@ -100,12 +100,12 @@ function EmptyState({ onClose }: { onClose: () => void }) {
       <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-3">
         <MapPin className="w-4 h-4 text-gray-400" />
       </div>
-      <p className="text-[14px] text-gray-500 mb-4">
+      <p className="text-sm text-gray-500 mb-4">
         Add places while browsing
       </p>
       <button
         onClick={onClose}
-        className="text-[13px] font-medium text-gray-900 dark:text-white"
+        className="text-sm font-medium text-gray-900 dark:text-white"
       >
         Browse destinations
       </button>
@@ -145,7 +145,7 @@ function ItemList({
         <div key={dayNum}>
           {/* Day header - subtle */}
           <div className="px-5 py-2 sticky top-0 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm">
-            <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
+            <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
               Day {dayNum}
               {date && (
                 <span className="ml-2 font-normal normal-case">
@@ -184,7 +184,7 @@ function ItemRow({
   return (
     <div className="flex items-center gap-3 px-2 py-2 rounded-lg group hover:bg-gray-50 dark:hover:bg-white/[0.02]">
       {/* Time */}
-      <span className="w-10 text-[11px] text-gray-400 text-center flex-shrink-0">
+      <span className="w-10 text-xs text-gray-400 text-center flex-shrink-0">
         {item.timeSlot || '—'}
       </span>
 
@@ -206,7 +206,7 @@ function ItemRow({
       </div>
 
       {/* Name */}
-      <span className="flex-1 text-[13px] text-gray-900 dark:text-white truncate">
+      <span className="flex-1 text-sm text-gray-900 dark:text-white truncate">
         {item.destination.name}
       </span>
 

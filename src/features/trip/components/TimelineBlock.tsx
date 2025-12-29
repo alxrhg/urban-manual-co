@@ -264,19 +264,19 @@ export default function TimelineBlock({
               setEditTimeValue('09:00');
               setIsEditingTime(true);
             }}
-            className="text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex items-center gap-1"
+            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex items-center gap-1"
           >
             <Clock className="w-3 h-3" />
             <span className="hidden sm:inline">set time</span>
           </button>
         )}
         {item.parsedNotes?.duration && (
-          <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
+          <span className="text-xs text-gray-400 dark:text-gray-500 mt-1">
             {formatDuration(item.parsedNotes.duration)}
           </span>
         )}
         {/* Index badge */}
-        <div className="mt-2 w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] font-semibold flex items-center justify-center">
+        <div className="mt-2 w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-semibold flex items-center justify-center">
           {index + 1}
         </div>
       </div>

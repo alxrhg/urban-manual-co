@@ -133,14 +133,14 @@ export default function DayIntelligence({
     <div className={`flex items-center gap-2 ${className}`}>
       {/* Overstuffed warning */}
       {hasOverstuffedWarning && (
-        <span className="text-[10px] text-amber-600 dark:text-amber-400">
+        <span className="text-xs text-amber-600 dark:text-amber-400">
           Tight schedule
         </span>
       )}
 
       {/* Rain warning */}
       {hasRainWarning && (
-        <div className="flex items-center gap-1 text-[10px] text-blue-500 dark:text-blue-400">
+        <div className="flex items-center gap-1 text-xs text-blue-500 dark:text-blue-400">
           <CloudRain className="w-3 h-3" />
           <span>Rain likely</span>
         </div>

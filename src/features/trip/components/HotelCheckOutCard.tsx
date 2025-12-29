@@ -83,7 +83,7 @@ export default function HotelCheckOutCard({
                     {hotelName}
                   </span>
                   {nights && (
-                    <span className="text-[10px] text-stone-400 dark:text-gray-500">
+                    <span className="text-xs text-stone-400 dark:text-gray-500">
                       · {nights} {nights === 1 ? 'night' : 'nights'}
                     </span>
                   )}
@@ -95,7 +95,7 @@ export default function HotelCheckOutCard({
                 {checkOutTime}
               </p>
               {lateCheckOut && (
-                <p className="text-[10px] text-rose-500 dark:text-rose-400">
+                <p className="text-xs text-rose-500 dark:text-rose-400">
                   Late checkout
                 </p>
               )}
@@ -120,7 +120,7 @@ export default function HotelCheckOutCard({
             <Luggage className="w-5 h-5 text-stone-500 dark:text-gray-400" />
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-gray-400">
+            <p className="text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-gray-400">
               Check-Out
             </p>
             <h3 className="text-lg font-semibold text-stone-900 dark:text-white">
@@ -135,7 +135,7 @@ export default function HotelCheckOutCard({
           <div className="bg-white dark:bg-gray-900/50 rounded-xl p-3 shadow-sm">
             <div className="flex items-center gap-2 mb-1">
               <Clock className="w-3.5 h-3.5 text-stone-400" />
-              <p className="text-[10px] text-stone-500 dark:text-gray-400 uppercase tracking-wide">
+              <p className="text-xs text-stone-500 dark:text-gray-400 uppercase tracking-wide">
                 Departure
               </p>
             </div>
@@ -153,7 +153,7 @@ export default function HotelCheckOutCard({
           <div className="bg-white dark:bg-gray-900/50 rounded-xl p-3 shadow-sm">
             <div className="flex items-center gap-2 mb-1">
               <Calendar className="w-3.5 h-3.5 text-stone-400" />
-              <p className="text-[10px] text-stone-500 dark:text-gray-400 uppercase tracking-wide">
+              <p className="text-xs text-stone-500 dark:text-gray-400 uppercase tracking-wide">
                 Your Stay
               </p>
             </div>
@@ -198,7 +198,7 @@ export default function HotelCheckOutCard({
         {/* Room number footer */}
         {roomNumber && (
           <div className="mt-4 pt-3 border-t border-stone-200 dark:border-gray-700">
-            <p className="text-[10px] text-stone-400 dark:text-gray-500">
+            <p className="text-xs text-stone-400 dark:text-gray-500">
               Room {roomNumber}
             </p>
           </div>

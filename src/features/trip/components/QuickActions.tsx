@@ -90,7 +90,7 @@ export default function QuickActions({
             <span className="text-gray-500 dark:text-gray-400 transition-colors duration-200 group-hover:text-gray-900 dark:group-hover:text-white">
               {action.icon}
             </span>
-            <span className="text-[10px] uppercase tracking-[0.2em] font-medium text-gray-400 dark:text-gray-500 transition-colors duration-200 group-hover:text-gray-700 dark:group-hover:text-gray-300">
+            <span className="text-xs uppercase tracking-[0.2em] font-medium text-gray-400 dark:text-gray-500 transition-colors duration-200 group-hover:text-gray-700 dark:group-hover:text-gray-300">
               {action.label}
             </span>
           </div>

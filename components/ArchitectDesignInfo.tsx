@@ -53,14 +53,14 @@ export function ArchitectDesignInfo({ destination }: ArchitectDesignInfoProps) {
 
   return (
     <div className="p-6 bg-white dark:bg-[#161b22] rounded-xl border border-gray-200 dark:border-[#30363d]">
-      <h2 className="text-[18px] font-medium text-gray-900 dark:text-white mb-5">Architecture & Design</h2>
+      <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-5">Architecture & Design</h2>
       <div className="space-y-5">
         {/* Architect - Enhanced with rich data */}
         {architect && (
           <div className="flex items-start gap-3">
             <Building2 className="h-4 w-4 text-gray-400 dark:text-[#8b949e] mt-0.5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <div className="text-[12px] text-gray-500 dark:text-[#8b949e] mb-1">Architect</div>
+              <div className="text-xs text-gray-500 dark:text-[#8b949e] mb-1">Architect</div>
               <div className="space-y-1">
                 <Link
                   href={architectObj?.slug ? `/architect/${architectObj.slug}` : `/architect/${architectNameToSlug(architect)}`}
@@ -107,7 +107,7 @@ export function ArchitectDesignInfo({ destination }: ArchitectDesignInfoProps) {
           <div className="flex items-start gap-3">
             <Building2 className="h-4 w-4 text-gray-400 dark:text-[#8b949e] mt-0.5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <div className="text-[12px] text-gray-500 dark:text-[#8b949e] mb-1">Design Firm</div>
+              <div className="text-xs text-gray-500 dark:text-[#8b949e] mb-1">Design Firm</div>
               <div className="space-y-1">
                 <div className="text-sm text-gray-900 dark:text-white font-medium">
                   {designFirm}
@@ -136,7 +136,7 @@ export function ArchitectDesignInfo({ destination }: ArchitectDesignInfoProps) {
           <div className="flex items-start gap-3">
             <Palette className="h-4 w-4 text-gray-400 dark:text-[#8b949e] mt-0.5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <div className="text-[12px] text-gray-500 dark:text-[#8b949e] mb-1">Interior Designer</div>
+              <div className="text-xs text-gray-500 dark:text-[#8b949e] mb-1">Interior Designer</div>
               <div className="space-y-1">
                 <div className="text-sm text-gray-900 dark:text-white font-medium">
                   {interiorDesigner}
@@ -166,7 +166,7 @@ export function ArchitectDesignInfo({ destination }: ArchitectDesignInfoProps) {
           <div className="flex items-start gap-3">
             <Palette className="h-4 w-4 text-gray-400 dark:text-[#8b949e] mt-0.5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <div className="text-[12px] text-gray-500 dark:text-[#8b949e] mb-1">Style</div>
+              <div className="text-xs text-gray-500 dark:text-[#8b949e] mb-1">Style</div>
               <div className="text-sm text-gray-900 dark:text-white font-medium capitalize">
                 {architecturalStyle}
               </div>
@@ -179,7 +179,7 @@ export function ArchitectDesignInfo({ destination }: ArchitectDesignInfoProps) {
           <div className="flex items-start gap-3">
             <Palette className="h-4 w-4 text-gray-400 dark:text-[#8b949e] mt-0.5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <div className="text-[12px] text-gray-500 dark:text-[#8b949e] mb-1">Movement</div>
+              <div className="text-xs text-gray-500 dark:text-[#8b949e] mb-1">Movement</div>
               <div className="space-y-1">
                 <Link
                   href={`/movement/${movementObj.slug}`}
@@ -208,7 +208,7 @@ export function ArchitectDesignInfo({ destination }: ArchitectDesignInfoProps) {
           <div className="flex items-start gap-3">
             <Calendar className="h-4 w-4 text-gray-400 dark:text-[#8b949e] mt-0.5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <div className="text-[12px] text-gray-500 dark:text-[#8b949e] mb-1">Period</div>
+              <div className="text-xs text-gray-500 dark:text-[#8b949e] mb-1">Period</div>
               <div className="text-sm text-gray-900 dark:text-white font-medium">
                 {designPeriod}
               </div>
@@ -219,7 +219,7 @@ export function ArchitectDesignInfo({ destination }: ArchitectDesignInfoProps) {
         {/* Architectural Significance */}
         {architecturalSignificance && (
           <div className="pt-4 border-t border-gray-100 dark:border-[#30363d]">
-            <div className="text-[12px] font-medium text-gray-500 dark:text-[#8b949e] mb-2">Significance</div>
+            <div className="text-xs font-medium text-gray-500 dark:text-[#8b949e] mb-2">Significance</div>
             <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
               {architecturalSignificance}
             </p>
@@ -229,7 +229,7 @@ export function ArchitectDesignInfo({ destination }: ArchitectDesignInfoProps) {
         {/* Design Story */}
         {designStory && (
           <div className="pt-4 border-t border-gray-100 dark:border-[#30363d]">
-            <div className="text-[12px] font-medium text-gray-500 dark:text-[#8b949e] mb-2">Design Story</div>
+            <div className="text-xs font-medium text-gray-500 dark:text-[#8b949e] mb-2">Design Story</div>
             <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
               {designStory}
             </p>
@@ -241,7 +241,7 @@ export function ArchitectDesignInfo({ destination }: ArchitectDesignInfoProps) {
           <div className="flex items-start gap-3">
             <Calendar className="h-4 w-4 text-gray-400 dark:text-[#8b949e] mt-0.5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <div className="text-[12px] text-gray-500 dark:text-[#8b949e] mb-1">Construction</div>
+              <div className="text-xs text-gray-500 dark:text-[#8b949e] mb-1">Construction</div>
               <div className="text-sm text-gray-900 dark:text-white font-medium">
                 {constructionYear}
               </div>
@@ -252,7 +252,7 @@ export function ArchitectDesignInfo({ destination }: ArchitectDesignInfoProps) {
         {/* Sources */}
         {sources && sources.length > 0 && (
           <div className="pt-4 border-t border-gray-100 dark:border-[#30363d]">
-            <div className="text-[12px] text-gray-500 dark:text-[#8b949e] mb-2">Sources</div>
+            <div className="text-xs text-gray-500 dark:text-[#8b949e] mb-2">Sources</div>
             <div className="space-y-1.5">
               {sources.slice(0, 3).map((source: any, idx: number) => (
                 <a

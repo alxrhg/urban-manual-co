@@ -36,7 +36,7 @@ export default function ItemNotesEditor({ notes = '', duration, onSave }: ItemNo
     return (
       <button
         onClick={() => setIsEditing(true)}
-        className="flex items-center gap-1 text-[10px] text-stone-400 hover:text-stone-600 dark:hover:text-gray-300 transition-colors mt-1"
+        className="flex items-center gap-1 text-xs text-stone-400 hover:text-stone-600 dark:hover:text-gray-300 transition-colors mt-1"
       >
         <StickyNote className="w-3 h-3" />
         {notes ? (
@@ -76,7 +76,7 @@ export default function ItemNotesEditor({ notes = '', duration, onSave }: ItemNo
             placeholder="Duration (min)"
             className="w-20 text-xs bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-700 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
           />
-          <span className="text-[10px] text-stone-400">min</span>
+          <span className="text-xs text-stone-400">min</span>
         </div>
 
         <div className="flex items-center gap-1">

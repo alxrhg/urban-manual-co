@@ -151,7 +151,7 @@ export function DestinationDrawer() {
               <h2 className="text-[22px] font-semibold text-white tracking-tight mb-1">
                 {selectedDestination.name}
               </h2>
-              <p className="text-[14px] text-white/70">
+              <p className="text-sm text-white/70">
                 {categoryName}{categoryName && cityName && ' · '}{cityName}
               </p>
             </div>
@@ -167,7 +167,7 @@ export function DestinationDrawer() {
                   {selectedDestination.rating.toFixed(1)}
                 </span>
                 {selectedDestination.user_ratings_total && (
-                  <span className="text-[14px] text-gray-400">
+                  <span className="text-sm text-gray-400">
                     ({selectedDestination.user_ratings_total} reviews)
                   </span>
                 )}
@@ -178,7 +178,7 @@ export function DestinationDrawer() {
             <div className="flex gap-2 mb-6">
               <button
                 onClick={() => setIsSaved(!isSaved)}
-                className={`flex-1 h-12 rounded-xl text-[15px] font-medium
+                className={`flex-1 h-12 rounded-xl text-sm font-medium
                             flex items-center justify-center gap-2 transition-all
                             ${isSaved
                               ? 'bg-white text-gray-900'
@@ -211,7 +211,7 @@ export function DestinationDrawer() {
             {/* Description */}
             {(selectedDestination.micro_description || selectedDestination.description) && (
               <div className="mb-6">
-                <p className="text-[15px] leading-relaxed text-gray-300">
+                <p className="text-sm leading-relaxed text-gray-300">
                   {selectedDestination.micro_description || selectedDestination.description}
                 </p>
               </div>
@@ -220,7 +220,7 @@ export function DestinationDrawer() {
             {/* Contact & Hours Section */}
             {(selectedDestination.formatted_address || selectedDestination.phone_number || selectedDestination.website) && (
               <div className="mb-6">
-                <h3 className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-4">
+                <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-4">
                   Contact & Hours
                 </h3>
                 <div className="space-y-3">
@@ -228,7 +228,7 @@ export function DestinationDrawer() {
                   {selectedDestination.formatted_address && (
                     <div className="flex items-start gap-3">
                       <MapPin className="w-5 h-5 text-gray-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-[15px] text-white">
+                      <span className="text-sm text-white">
                         {selectedDestination.formatted_address}
                       </span>
                     </div>
@@ -241,7 +241,7 @@ export function DestinationDrawer() {
                       className="flex items-center gap-3 group"
                     >
                       <Phone className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                      <span className="text-[15px] text-white group-hover:text-gray-300 transition-colors">
+                      <span className="text-sm text-white group-hover:text-gray-300 transition-colors">
                         {selectedDestination.phone_number}
                       </span>
                     </a>
@@ -256,7 +256,7 @@ export function DestinationDrawer() {
                       className="flex items-center gap-3 group"
                     >
                       <Globe className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                      <span className="text-[15px] text-cyan-400 group-hover:text-cyan-300 transition-colors">
+                      <span className="text-sm text-cyan-400 group-hover:text-cyan-300 transition-colors">
                         {selectedDestination.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
                       </span>
                     </a>
@@ -268,7 +268,7 @@ export function DestinationDrawer() {
             {/* Design & Architecture Section */}
             {(architect || designStyle) && (
               <div className="mb-6">
-                <h3 className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-4">
+                <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-4">
                   Design & Architecture
                 </h3>
                 <div className="space-y-4">
@@ -276,13 +276,13 @@ export function DestinationDrawer() {
                   {architect && (
                     <div className="flex items-center gap-3 py-3 border-b border-white/10">
                       <div className="w-10 h-10 rounded-lg bg-[#2c2c2e] flex items-center justify-center flex-shrink-0">
-                        <span className="text-[14px] font-medium text-gray-400">A</span>
+                        <span className="text-sm font-medium text-gray-400">A</span>
                       </div>
                       <div>
-                        <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Architect
                         </p>
-                        <p className="text-[15px] text-white">
+                        <p className="text-sm text-white">
                           {architect}
                         </p>
                       </div>
@@ -293,13 +293,13 @@ export function DestinationDrawer() {
                   {designStyle && (
                     <div className="flex items-center gap-3 py-3 border-b border-white/10">
                       <div className="w-10 h-10 rounded-lg bg-[#2c2c2e] flex items-center justify-center flex-shrink-0">
-                        <span className="text-[14px] font-medium text-gray-400">S</span>
+                        <span className="text-sm font-medium text-gray-400">S</span>
                       </div>
                       <div>
-                        <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Style
                         </p>
-                        <p className="text-[15px] text-white">
+                        <p className="text-sm text-white">
                           {designStyle}
                         </p>
                       </div>
@@ -315,11 +315,11 @@ export function DestinationDrawer() {
                 <div className="bg-[#2c2c2e] rounded-lg p-6">
                   <div className="flex flex-col items-center justify-center py-8">
                     <MapPin className="w-8 h-8 text-gray-500 mb-2" />
-                    <span className="text-[14px] text-gray-400">Map Preview</span>
+                    <span className="text-sm text-gray-400">Map Preview</span>
                   </div>
                   <button
                     onClick={handleDirections}
-                    className="w-full py-3 px-4 bg-[#3c3c3e] rounded-xl text-[15px] font-medium text-white
+                    className="w-full py-3 px-4 bg-[#3c3c3e] rounded-xl text-sm font-medium text-white
                                hover:bg-[#4c4c4e] transition-colors"
                   >
                     View larger map
@@ -344,7 +344,7 @@ export function DestinationDrawer() {
             {/* Related Destinations */}
             {relatedDestinations.length > 0 && (
               <div className="mt-8">
-                <h3 className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-4">
+                <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-4">
                   More in {cityName}
                 </h3>
                 <div className="space-y-3">
@@ -367,10 +367,10 @@ export function DestinationDrawer() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[14px] font-medium text-white truncate">
+                        <p className="text-sm font-medium text-white truncate">
                           {dest.name}
                         </p>
-                        <p className="text-[13px] text-gray-400 truncate">
+                        <p className="text-sm text-gray-400 truncate">
                           {dest.category && capitalizeCategory(dest.category)}
                         </p>
                       </div>

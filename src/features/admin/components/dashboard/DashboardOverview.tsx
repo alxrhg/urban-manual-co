@@ -312,7 +312,7 @@ export function DashboardOverview() {
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{dest.city}</p>
                   </div>
-                  <span className="text-[10px] uppercase tracking-wider text-gray-400 capitalize">
+                  <span className="text-xs uppercase tracking-wider text-gray-400 capitalize">
                     {dest.category}
                   </span>
                 </Link>

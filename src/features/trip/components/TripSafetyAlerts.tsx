@@ -88,7 +88,7 @@ export default function TripSafetyAlerts({ destination, countryCode }: TripSafet
         <Shield className="w-4 h-4 text-blue-500" />
         <span className="font-medium text-stone-700 dark:text-stone-300">Travel Safety</span>
         {highPriorityAlerts.length > 0 && (
-          <span className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded text-[10px] font-medium">
+          <span className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded text-xs font-medium">
             {highPriorityAlerts.length} alert{highPriorityAlerts.length !== 1 ? 's' : ''}
           </span>
         )}
@@ -112,7 +112,7 @@ export default function TripSafetyAlerts({ destination, countryCode }: TripSafet
             href={`https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories.html`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-600"
+            className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600"
           >
             <ExternalLink className="w-3 h-3" />
             View official travel advisories
@@ -144,11 +144,11 @@ function AlertCard({ alert }: { alert: SafetyAlert }) {
         {levelIcons[alert.level]}
         <div className="flex-1 min-w-0">
           <p className="text-xs font-medium">{alert.title}</p>
-          <p className="text-[10px] text-stone-600 dark:text-stone-400 mt-0.5">
+          <p className="text-xs text-stone-600 dark:text-stone-400 mt-0.5">
             {alert.description}
           </p>
           {alert.source && (
-            <p className="text-[10px] text-stone-400 mt-1">Source: {alert.source}</p>
+            <p className="text-xs text-stone-400 mt-1">Source: {alert.source}</p>
           )}
         </div>
       </div>

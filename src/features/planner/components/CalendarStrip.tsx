@@ -38,7 +38,7 @@ export default function CalendarStrip({
             `}
           >
             {/* Day of week */}
-            <span className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-500 mb-1">
+            <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-500 mb-1">
               {day.dayOfWeek.slice(0, 3)}
             </span>
 
@@ -56,7 +56,7 @@ export default function CalendarStrip({
             </span>
 
             {/* Date */}
-            <span className="text-[10px] font-mono text-gray-400 dark:text-gray-600 mt-1">
+            <span className="text-xs font-mono text-gray-400 dark:text-gray-600 mt-1">
               {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </span>
 

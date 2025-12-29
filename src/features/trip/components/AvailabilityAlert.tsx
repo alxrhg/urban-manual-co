@@ -58,7 +58,7 @@ export default function AvailabilityAlert({
     }
 
     return (
-      <span className={`text-[10px] text-stone-400 ${className}`}>
+      <span className={`text-xs text-stone-400 ${className}`}>
         {prediction.requiresReservation ? (
           <span className="flex items-center gap-1">
             <CalendarCheck className="w-3 h-3" />
@@ -107,7 +107,7 @@ export default function AvailabilityAlert({
       {expanded && (
         <div className="pb-2 space-y-2">
           {prediction.suggestion && (
-            <p className="text-[11px] text-stone-500 leading-relaxed">
+            <p className="text-xs text-stone-500 leading-relaxed">
               {prediction.suggestion}
             </p>
           )}
@@ -116,7 +116,7 @@ export default function AvailabilityAlert({
           {prediction.alternativeTime && onTimeChange && (
             <button
               onClick={() => onTimeChange(prediction.alternativeTime!)}
-              className="flex items-center gap-2 text-[11px] text-stone-900 dark:text-white hover:underline"
+              className="flex items-center gap-2 text-xs text-stone-900 dark:text-white hover:underline"
             >
               <span>→</span>
               <span>Try {prediction.alternativeTime}</span>

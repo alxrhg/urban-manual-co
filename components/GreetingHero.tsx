@@ -200,7 +200,7 @@ export default function GreetingHero({
             />
             {/* Travel Intelligence hint */}
             {isAIEnabled && !searchQuery && (
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-[1px]">
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 uppercase tracking-[1px]">
                 <Sparkles className="h-3 w-3" />
                 <span>Travel Intelligence</span>
               </div>

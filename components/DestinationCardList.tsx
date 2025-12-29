@@ -30,7 +30,7 @@ export function DestinationCardList({
           }`}
         >
           <div className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">{d.name}</div>
-          <div className="text-[10px] text-gray-500 line-clamp-1">
+          <div className="text-xs text-gray-500 line-clamp-1">
             {d.micro_description || 
              (d.category && d.city 
                ? `${d.category} in ${d.city}`

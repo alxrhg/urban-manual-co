@@ -18,7 +18,7 @@ export function GoogleRatingBadge({ rating, count, className = '' }: GoogleRatin
         loading="lazy"
       />
       {rating.toFixed(1)}
-      {count ? <span className="text-[10px] opacity-75">({count.toLocaleString()})</span> : null}
+      {count ? <span className="text-xs opacity-75">({count.toLocaleString()})</span> : null}
     </span>
   );
 }

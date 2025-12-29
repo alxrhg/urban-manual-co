@@ -101,7 +101,7 @@ export default function TripQuickActions({
       <div className="relative">
         <button
           onClick={handleNativeShare}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors"
           title="Share trip"
         >
           <Share2 className="w-3.5 h-3.5" />
@@ -126,7 +126,7 @@ export default function TripQuickActions({
                 className="absolute right-0 top-full mt-2 w-64 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-2xl shadow-lg overflow-hidden z-50"
               >
                 <div className="flex items-center justify-between px-3 pt-3 pb-2">
-                  <p className="text-[11px] font-medium text-[var(--editorial-text-tertiary)] uppercase tracking-wider">
+                  <p className="text-xs font-medium text-[var(--editorial-text-tertiary)] uppercase tracking-wider">
                     Share Link
                   </p>
                   <button
@@ -142,7 +142,7 @@ export default function TripQuickActions({
                       type="text"
                       readOnly
                       value={shareUrl}
-                      className="flex-1 px-2 py-1.5 text-[12px] bg-[var(--editorial-bg)] border border-[var(--editorial-border)] rounded-lg text-[var(--editorial-text-secondary)] truncate"
+                      className="flex-1 px-2 py-1.5 text-xs bg-[var(--editorial-bg)] border border-[var(--editorial-border)] rounded-lg text-[var(--editorial-text-secondary)] truncate"
                     />
                     <button
                       onClick={handleCopyLink}
@@ -164,7 +164,7 @@ export default function TripQuickActions({
                       window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(`Check out my trip${destination ? ` to ${destination}` : ''}!`)}`, '_blank');
                       setShowShareMenu(false);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] rounded-lg transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)] rounded-lg transition-colors text-left"
                   >
                     <ExternalLink className="w-4 h-4" />
                     Share on X (Twitter)
@@ -181,7 +181,7 @@ export default function TripQuickActions({
         <button
           onClick={handleExportCalendar}
           disabled={exporting}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors disabled:opacity-50"
           title="Add to Google Calendar"
         >
           <Calendar className="w-3.5 h-3.5" />
@@ -192,7 +192,7 @@ export default function TripQuickActions({
       {/* Print */}
       <button
         onClick={handlePrint}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors print:hidden"
+        className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] transition-colors print:hidden"
         title="Print itinerary"
       >
         <Printer className="w-3.5 h-3.5" />

@@ -113,7 +113,7 @@ export function CommandPalette() {
       >
         <Search className="h-4 w-4 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
         <span className="hidden md:inline text-sm text-gray-500 dark:text-gray-400">Search</span>
-        <kbd className="hidden md:inline-flex pointer-events-none h-6 select-none items-center gap-0.5 rounded-md bg-white dark:bg-white/10 border border-gray-200/60 dark:border-white/10 px-2 font-mono text-[11px] font-medium text-gray-400 dark:text-gray-500 shadow-sm">
+        <kbd className="hidden md:inline-flex pointer-events-none h-6 select-none items-center gap-0.5 rounded-md bg-white dark:bg-white/10 border border-gray-200/60 dark:border-white/10 px-2 font-mono text-xs font-medium text-gray-400 dark:text-gray-500 shadow-sm">
           <span>⌘</span>K
         </kbd>
       </button>

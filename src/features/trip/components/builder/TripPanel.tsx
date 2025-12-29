@@ -310,7 +310,7 @@ const TripPanel = memo(function TripPanel({ className = '' }: TripPanelProps) {
               {/* Add day button */}
               <button
                 onClick={addDay}
-                className="w-full p-4 flex items-center justify-center gap-2 text-[13px] font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                className="w-full p-4 flex items-center justify-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Add Day
@@ -353,7 +353,7 @@ function LoadingState() {
   return (
     <div className="flex flex-col items-center justify-center h-full gap-3">
       <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-      <p className="text-[14px] text-gray-500">Building your itinerary...</p>
+      <p className="text-sm text-gray-500">Building your itinerary...</p>
     </div>
   );
 }
@@ -426,10 +426,10 @@ function TripSelector({
                     <MapPin className="w-5 h-5 text-gray-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                       {trip.title}
                     </p>
-                    <p className="text-[12px] text-gray-500 truncate">
+                    <p className="text-xs text-gray-500 truncate">
                       {trip.destination} · {trip.itemCount} places
                     </p>
                   </div>

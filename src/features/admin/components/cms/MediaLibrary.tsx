@@ -425,7 +425,7 @@ export function MediaLibrary() {
 
               {/* Quick Actions */}
               <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
-                <span className="text-[10px] text-white bg-black/50 px-2 py-1 rounded-md truncate max-w-[70%]">
+                <span className="text-xs text-white bg-black/50 px-2 py-1 rounded-md truncate max-w-[70%]">
                   {item.name}
                 </span>
                 <button

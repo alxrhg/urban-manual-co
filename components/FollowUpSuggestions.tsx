@@ -177,7 +177,7 @@ export function FollowUpSuggestionsCompact({
             onClick={() => onPatchClick?.(patch)}
             disabled={isLoading}
             title={patch.reason.text}
-            className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1 px-2 py-1 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <IconComponent className="h-2.5 w-2.5" />
             <span>{patch.label}</span>

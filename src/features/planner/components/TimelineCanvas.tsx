@@ -348,7 +348,7 @@ export default function TimelineCanvas({
             style={{ width: `${Math.min(100, (stats.totalPlannedMinutes / (10 * 60)) * 100)}%` }}
           />
         </div>
-        <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+        <div className="flex justify-between text-xs text-gray-400 mt-1">
           <span>{Math.floor(stats.totalPlannedMinutes / 60)}h of activities</span>
           <span>{Math.floor(stats.freeTimeMinutes / 60)}h free</span>
         </div>

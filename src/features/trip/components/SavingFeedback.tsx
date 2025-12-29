@@ -29,7 +29,7 @@ export function SavingFeedback({ status, className = '' }: SavingFeedbackProps) 
           <div
             className={`
               flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg backdrop-blur-sm
-              text-[13px] font-medium
+              text-sm font-medium
               ${status === 'saving' ? 'bg-gray-900/90 dark:bg-gray-800/90 text-white' : ''}
               ${status === 'saved' ? 'bg-green-600/90 dark:bg-green-700/90 text-white' : ''}
               ${status === 'error' ? 'bg-red-600/90 dark:bg-red-700/90 text-white' : ''}

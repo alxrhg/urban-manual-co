@@ -145,7 +145,7 @@ export default function NaturalLanguageInput({
               <button
                 key={suggestion}
                 onClick={() => setInput(suggestion)}
-                className="px-2.5 py-1 text-[11px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                className="px-2.5 py-1 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 {suggestion}
               </button>

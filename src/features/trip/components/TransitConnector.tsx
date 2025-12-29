@@ -195,7 +195,7 @@ export default function TransitConnector({
               key={m}
               onClick={() => handleModeChange(m)}
               className={`
-                flex items-center gap-1 px-2.5 py-1 rounded-md transition-all text-[10px] font-medium
+                flex items-center gap-1 px-2.5 py-1 rounded-md transition-all text-xs font-medium
                 ${isSelected
                   ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
                   : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
@@ -216,7 +216,7 @@ export default function TransitConnector({
       </div>
       {/* Distance indicator - inline */}
       {distance !== undefined && distance > 0 && (
-        <span className="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">
+        <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
           {formatDistance(distance)}
         </span>
       )}

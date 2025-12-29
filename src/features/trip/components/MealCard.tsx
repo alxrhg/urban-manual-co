@@ -77,12 +77,12 @@ export default function MealCard({
               {name}
             </h3>
             {includedWithHotel && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 font-medium">
+              <span className="text-xs px-1.5 py-0.5 rounded-md bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 font-medium">
                 Included
               </span>
             )}
           </div>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-gray-400 mt-0.5">
+          <p className="text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-gray-400 mt-0.5">
             {getMealLabel()}
           </p>
         </div>
@@ -119,7 +119,7 @@ export default function MealCard({
         {/* Notes (if any) */}
         {notes && (
           <div className="mt-2 pt-2 border-t border-stone-200 dark:border-gray-700">
-            <p className="text-[10px] text-stone-500 dark:text-gray-400 line-clamp-2">
+            <p className="text-xs text-stone-500 dark:text-gray-400 line-clamp-2">
               {notes}
             </p>
           </div>

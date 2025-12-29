@@ -64,7 +64,7 @@ function ServerDestinationCard({
         {typeof destination.michelin_stars === 'number' &&
           destination.michelin_stars > 0 && (
             <div className="absolute bottom-2.5 left-2.5 z-10 px-2.5 py-1 rounded-full
-                            text-[11px] font-medium tracking-wide
+                            text-xs font-medium tracking-wide
                             bg-white/90 dark:bg-black/70 backdrop-blur-md
                             text-gray-700 dark:text-gray-200
                             flex items-center gap-1.5 shadow-sm">
@@ -80,10 +80,10 @@ function ServerDestinationCard({
 
       {/* Info Section - Apple-style clean typography */}
       <div className="flex-1 flex flex-col gap-0.5">
-        <h3 className="text-[14px] font-medium leading-snug text-gray-900 dark:text-white line-clamp-2 tracking-[-0.01em]">
+        <h3 className="text-sm font-medium leading-snug text-gray-900 dark:text-white line-clamp-2 tracking-[-0.01em]">
           {destination.name}
         </h3>
-        <p className="text-[12px] text-gray-500 dark:text-gray-400 line-clamp-1 tracking-[-0.01em]">
+        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 tracking-[-0.01em]">
           {destination.micro_description ||
             (destination.category && destination.city
               ? `${destination.category} in ${capitalizeCity(destination.city)}`
