@@ -1,10 +1,16 @@
 const STORAGE_KEY = 'um_conversation_session_token';
 
-function generateToken() {
+/**
+ * Generate a cryptographically secure session token.
+ * Uses crypto.randomUUID() which is available in all modern browsers and Node.js.
+ * Throws an error if crypto is not available rather than falling back to insecure methods.
+ */
+function generateToken(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  // In environments without crypto.randomUUID, throw rather than use insecure fallback
+  throw new Error('Cryptographically secure random generation not available');
 }
 
 export function getStoredConversationSessionToken(): string | null {

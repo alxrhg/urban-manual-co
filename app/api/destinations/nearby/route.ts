@@ -10,14 +10,11 @@ import { withErrorHandling, createValidationError, handleSupabaseError, CustomEr
 
 function getSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-  const key = 
-    process.env.SUPABASE_SECRET_KEY || 
-    process.env.SUPABASE_SERVICE_ROLE_KEY || 
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // Use service role key only - do not fallback to anon key for server-side operations
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
 
   if (!url || !key) {
-    throw new Error('Supabase configuration is missing. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE keys.');
+    throw new Error('Supabase configuration is missing. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
   }
 
   return createClient(url, key);
@@ -25,14 +22,31 @@ function getSupabaseClient() {
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const searchParams = request.nextUrl.searchParams;
-  const lat = parseFloat(searchParams.get('lat') || '0');
-  const lng = parseFloat(searchParams.get('lng') || '0');
+  const latParam = searchParams.get('lat');
+  const lngParam = searchParams.get('lng');
   const radiusKm = parseFloat(searchParams.get('radius') || '5');
-  const maxWalkingMinutes = parseInt(searchParams.get('maxWalkingMinutes') || '15');
+  const maxWalkingMinutes = parseInt(searchParams.get('maxWalkingMinutes') || '15', 10);
   const city = searchParams.get('city');
 
-  if (!lat || !lng) {
+  // Validate lat/lng are provided (not just falsy check - 0 is valid coordinate)
+  if (latParam === null || lngParam === null) {
     throw createValidationError('Latitude and longitude are required');
+  }
+
+  const lat = parseFloat(latParam);
+  const lng = parseFloat(lngParam);
+
+  // Validate coordinates are valid numbers
+  if (isNaN(lat) || isNaN(lng)) {
+    throw createValidationError('Latitude and longitude must be valid numbers');
+  }
+
+  // Validate coordinate ranges
+  if (lat < -90 || lat > 90) {
+    throw createValidationError('Latitude must be between -90 and 90');
+  }
+  if (lng < -180 || lng > 180) {
+    throw createValidationError('Longitude must be between -180 and 180');
   }
 
   const supabase = getSupabaseClient();

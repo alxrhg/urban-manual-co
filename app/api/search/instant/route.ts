@@ -14,6 +14,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { withErrorHandling } from '@/lib/errors';
 import { queryVectorIndex, VectorSearchResult } from '@/lib/upstash-vector';
 import { generateTextEmbedding } from '@/lib/ml/embeddings';
+import { sanitizeForIlike } from '@/lib/sanitize';
 
 interface InstantResult {
   type: 'destination' | 'saved' | 'visited' | 'trip' | 'suggestion';
@@ -102,10 +103,11 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     // 1b. Fallback text search (in case vector search fails or misses exact matches)
     (async () => {
       try {
+        const safeQuery = sanitizeForIlike(query);
         const { data: textResults } = await supabase
           .from('destinations')
           .select('id, name, city, category, slug, image')
-          .or(`name.ilike.%${query}%,city.ilike.%${query}%`)
+          .or(`name.ilike.%${safeQuery}%,city.ilike.%${safeQuery}%`)
           .limit(5);
 
         if (textResults && textResults.length > 0) {
@@ -131,6 +133,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     // 2. Search user's saved places
     userId ? (async () => {
       try {
+        const safeQuery = sanitizeForIlike(query);
         const { data: saved } = await supabase
           .from('saved_places')
           .select(`
@@ -140,7 +143,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
             destinations!inner(id, name, city, category, slug, image)
           `)
           .eq('user_id', userId)
-          .or(`notes.ilike.%${query}%,destinations.name.ilike.%${query}%,destinations.city.ilike.%${query}%`)
+          .or(`notes.ilike.%${safeQuery}%,destinations.name.ilike.%${safeQuery}%,destinations.city.ilike.%${safeQuery}%`)
           .limit(3);
 
         if (saved && saved.length > 0) {
@@ -166,6 +169,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     // 3. Search user's visited places
     userId ? (async () => {
       try {
+        const safeQuery = sanitizeForIlike(query);
         const { data: visited } = await supabase
           .from('visited_places')
           .select(`
@@ -175,7 +179,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
             destinations!inner(id, name, city, category, slug, image)
           `)
           .eq('user_id', userId)
-          .or(`destinations.name.ilike.%${query}%,destinations.city.ilike.%${query}%`)
+          .or(`destinations.name.ilike.%${safeQuery}%,destinations.city.ilike.%${safeQuery}%`)
           .limit(3);
 
         if (visited && visited.length > 0) {
@@ -201,11 +205,12 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     // 4. Search user's trips
     userId ? (async () => {
       try {
+        const safeQuery = sanitizeForIlike(query);
         const { data: trips } = await supabase
           .from('trips')
           .select('id, title, destination, start_date, cover_image')
           .eq('user_id', userId)
-          .or(`title.ilike.%${query}%,destination.ilike.%${query}%`)
+          .or(`title.ilike.%${safeQuery}%,destination.ilike.%${safeQuery}%`)
           .limit(2);
 
         if (trips && trips.length > 0) {

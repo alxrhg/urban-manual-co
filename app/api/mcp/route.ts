@@ -238,14 +238,38 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+  'https://www.urbanmanual.co',
+  'https://urbanmanual.co',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+];
+
+/**
+ * Get CORS origin based on request origin
+ */
+function getCorsOrigin(requestOrigin: string | null): string | null {
+  if (!requestOrigin) return null;
+  if (ALLOWED_ORIGINS.includes(requestOrigin)) return requestOrigin;
+  // In development, allow localhost variations
+  if (process.env.NODE_ENV !== 'production' && requestOrigin.startsWith('http://localhost:')) {
+    return requestOrigin;
+  }
+  return null;
+}
+
 /**
  * OPTIONS - CORS preflight
  */
-export async function OPTIONS() {
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  const allowedOrigin = getCorsOrigin(origin);
+
   return new NextResponse(null, {
     status: 204,
     headers: {
-      "Access-Control-Allow-Origin": "*",
+      ...(allowedOrigin && { "Access-Control-Allow-Origin": allowedOrigin }),
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
       "Access-Control-Max-Age": "86400",

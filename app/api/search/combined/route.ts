@@ -13,9 +13,14 @@ import { generateTextEmbedding } from '@/lib/ml/embeddings';
 import { queryVectorIndex } from '@/lib/upstash-vector';
 import { withErrorHandling } from '@/lib/errors';
 import { searchRatelimit, memorySearchRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';
+import { sanitizeForIlike } from '@/lib/sanitize';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseKey) {
+  console.error('[Search Combined] SUPABASE_SERVICE_ROLE_KEY is required');
+}
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const identifier = getIdentifier(request);
@@ -37,13 +42,23 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       );
     }
 
+    if (!supabaseKey) {
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Sanitize query to prevent SQL injection via ILIKE wildcards
+    const safeQuery = sanitizeForIlike(query);
 
     // Step 1: Fast keyword search to get candidate IDs (top 100)
     let keywordQuery = supabase
       .from('destinations')
       .select('id, name, slug, city, country, category, image, michelin_stars, popularity_score')
-      .or(`name.ilike.%${query}%,city.ilike.%${query}%,category.ilike.%${query}%,description.ilike.%${query}%`)
+      .or(`name.ilike.%${safeQuery}%,city.ilike.%${safeQuery}%,category.ilike.%${safeQuery}%,description.ilike.%${safeQuery}%`)
       .order('popularity_score', { ascending: false, nullsFirst: false })
       .limit(100);
 

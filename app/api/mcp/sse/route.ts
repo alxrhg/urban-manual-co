@@ -10,22 +10,17 @@ import { createServerClient } from "@/lib/supabase/server";
 
 /**
  * Authenticate request using Supabase Auth
+ * Note: Only accepts Bearer token from Authorization header for security
+ * URL query parameter tokens are logged in browser history and server logs
  */
 async function authenticateRequest(request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const token = url.searchParams.get("token");
-
-    if (!token) {
-      const authHeader = request.headers.get("authorization");
-      if (!authHeader?.startsWith("Bearer ")) {
-        return null;
-      }
-      const headerToken = authHeader.slice(7);
-      return await validateToken(headerToken);
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return null;
     }
-
-    return await validateToken(token);
+    const headerToken = authHeader.slice(7);
+    return await validateToken(headerToken);
   } catch {
     return null;
   }
@@ -99,12 +94,23 @@ export async function GET(request: NextRequest) {
     },
   });
 
+  // Get allowed origin for CORS
+  const origin = request.headers.get('origin');
+  const allowedOrigins = [
+    'https://www.urbanmanual.co',
+    'https://urbanmanual.co',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+  ];
+  const allowedOrigin = origin && allowedOrigins.includes(origin) ? origin :
+    (process.env.NODE_ENV !== 'production' && origin?.startsWith('http://localhost:') ? origin : null);
+
   return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
       Connection: "keep-alive",
-      "Access-Control-Allow-Origin": "*",
+      ...(allowedOrigin && { "Access-Control-Allow-Origin": allowedOrigin }),
       "X-MCP-Server": "urban-manual-mcp/1.0.0",
     },
   });

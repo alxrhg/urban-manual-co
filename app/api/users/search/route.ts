@@ -6,6 +6,7 @@ import {
   memorySearchRatelimit,
   enforceRateLimit,
 } from '@/lib/rate-limit';
+import { sanitizeForIlike } from '@/lib/sanitize';
 
 export const GET = withErrorHandling(async (req: NextRequest) => {
   const searchParams = req.nextUrl.searchParams;
@@ -28,11 +29,14 @@ export const GET = withErrorHandling(async (req: NextRequest) => {
 
   const supabase = await createServerClient();
 
+  // Sanitize query to prevent SQL injection via ILIKE wildcards
+  const safeQuery = sanitizeForIlike(query);
+
   // Search for users by username or display_name
   const { data: users, error } = await supabase
     .from('user_profiles')
     .select('user_id, username, display_name, bio, avatar_url, location, follower_count, following_count, is_public')
-    .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
+    .or(`username.ilike.%${safeQuery}%,display_name.ilike.%${safeQuery}%`)
     .eq('is_public', true)
     .limit(20);
 

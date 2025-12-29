@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { withErrorHandling } from '@/lib/errors';
 import { searchRatelimit, memorySearchRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';
+import { sanitizeForIlike } from '@/lib/sanitize';
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const identifier = getIdentifier(request);
@@ -20,16 +21,17 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     }
 
     const searchTerm = query.toLowerCase().trim();
+    const safeSearchTerm = sanitizeForIlike(searchTerm);
     const suggestions: string[] = [];
 
     // 1. Search cities
     const { data: cities } = await (async () => {
-      const query = supabase
+      const cityQuery = supabase
         .from('destinations')
         .select('city')
-        .ilike('city', `%${searchTerm}%`)
+        .ilike('city', `%${safeSearchTerm}%`)
         .limit(5);
-      return await query;
+      return await cityQuery;
     })();
 
     if (cities) {
@@ -39,12 +41,12 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
     // 2. Search destinations
     const { data: destinations } = await (async () => {
-      const query = supabase
+      const destQuery = supabase
         .from('destinations')
         .select('name, city')
-        .or(`name.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`)
+        .or(`name.ilike.%${safeSearchTerm}%,content.ilike.%${safeSearchTerm}%`)
         .limit(5);
-      return await query;
+      return await destQuery;
     })();
 
     if (destinations) {
