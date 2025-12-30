@@ -30,6 +30,8 @@ export interface Review {
     city: string;
     image?: string;
   };
+  // Current user's vote (populated when fetching)
+  user_vote?: 'helpful' | 'not_helpful' | null;
 }
 
 export interface ReviewPhoto {
