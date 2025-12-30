@@ -2,8 +2,8 @@
 
 import { useState, useCallback } from 'react';
 import { X, SlidersHorizontal, Clock, MapPin, Star, DollarSign, Utensils, Volume2, Shirt } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@/ui/badge';
+import { Button } from '@/ui/button';
 import {
   Sheet,
   SheetContent,
@@ -11,10 +11,9 @@ import {
   SheetTitle,
   SheetTrigger,
   SheetFooter,
-} from '@/components/ui/sheet';
-import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+} from '@/ui/sheet';
+import { Switch } from '@/ui/switch';
+import { Label } from '@/ui/label';
 import {
   ATMOSPHERE_TAGS,
   BEST_FOR_OPTIONS,
@@ -180,13 +179,14 @@ export function AdvancedFilters({
 
                 <div>
                   <Label>Distance (km)</Label>
-                  <Slider
-                    value={[filters.distanceKm || 10]}
-                    onValueChange={([v]) => updateFilter('distanceKm', v)}
+                  <input
+                    type="range"
+                    value={filters.distanceKm || 10}
+                    onChange={(e) => updateFilter('distanceKm', parseInt(e.target.value))}
                     max={50}
                     min={1}
                     step={1}
-                    className="mt-2"
+                    className="mt-2 w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-black dark:accent-white"
                   />
                   <p className="text-xs text-gray-500 mt-1">Within {filters.distanceKm || 10} km</p>
                 </div>
@@ -218,13 +218,17 @@ export function AdvancedFilters({
               <div className="space-y-3">
                 <div>
                   <Label>Minimum Rating</Label>
-                  <Slider
-                    value={[filters.minRating || 0]}
-                    onValueChange={([v]) => updateFilter('minRating', v > 0 ? v : undefined)}
+                  <input
+                    type="range"
+                    value={filters.minRating || 0}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value);
+                      updateFilter('minRating', v > 0 ? v : undefined);
+                    }}
                     max={5}
                     min={0}
                     step={0.5}
-                    className="mt-2"
+                    className="mt-2 w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-black dark:accent-white"
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     {filters.minRating ? `${filters.minRating}+ stars` : 'Any rating'}
