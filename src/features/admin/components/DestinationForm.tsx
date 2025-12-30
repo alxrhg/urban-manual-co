@@ -567,17 +567,18 @@ export function DestinationForm({
 
   // Helper to render required field indicator
   const RequiredIndicator = () => (
-    <span className="text-red-500 ml-0.5" aria-label="required">*</span>
+    <span className="text-[var(--editorial-accent)] ml-0.5" aria-label="required">*</span>
   );
 
-  const inputClasses = "w-full px-3 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-shadow";
-  const labelClasses = "block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5";
+  // Editorial design system classes - warm, premium styling
+  const inputClasses = "w-full px-4 py-3.5 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg text-sm text-[var(--editorial-text-primary)] placeholder:text-[var(--editorial-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--editorial-accent)]/20 focus:border-[var(--editorial-accent)] transition-all";
+  const labelClasses = "block text-[11px] font-medium text-[var(--editorial-text-secondary)] uppercase tracking-[0.1em] mb-2";
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col h-full">
-      {/* Tab Navigation */}
-      <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 overflow-x-auto">
-        <nav className="flex gap-0.5 px-1 min-w-max" aria-label="Tabs">
+    <form onSubmit={handleSubmit} className="flex flex-col h-full bg-[var(--editorial-bg)]">
+      {/* Tab Navigation - Editorial Style */}
+      <div className="flex-shrink-0 border-b border-[var(--editorial-border)] overflow-x-auto bg-[var(--editorial-bg-elevated)]">
+        <nav className="flex gap-1 px-4 min-w-max" aria-label="Tabs">
           {tabs.map((tab) => {
             const validationStatus = getTabValidationStatus(tab.id);
             const isModified = getTabModifiedStatus(tab.id);
@@ -587,29 +588,29 @@ export function DestinationForm({
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "px-3 py-2.5 text-xs font-medium transition-all duration-200 relative whitespace-nowrap group",
+                  "px-4 py-3.5 text-[11px] font-medium uppercase tracking-[0.08em] transition-all duration-200 relative whitespace-nowrap",
                   activeTab === tab.id
-                    ? "text-black dark:text-white bg-gray-50 dark:bg-gray-900"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900/50"
+                    ? "text-[var(--editorial-text-primary)]"
+                    : "text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)]"
                 )}
               >
                 <span className="flex items-center gap-1.5">
                   {tab.label}
                   {/* Validation indicator */}
                   {validationStatus === 'incomplete' && (
-                    <span className="flex h-1.5 w-1.5 rounded-full bg-amber-500" title="Missing required fields" />
+                    <span className="flex h-1.5 w-1.5 rounded-full bg-[var(--editorial-accent)]" title="Missing required fields" />
                   )}
                   {validationStatus === 'complete' && tab.id === 'details' && (
-                    <span className="flex h-1.5 w-1.5 rounded-full bg-green-500" title="All required fields complete" />
+                    <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500" title="All required fields complete" />
                   )}
                   {/* Unsaved changes indicator */}
                   {hasUnsavedChanges && isModified && activeTab !== tab.id && (
-                    <span className="flex h-1.5 w-1.5 rounded-full bg-blue-500" title="Unsaved changes" />
+                    <span className="flex h-1.5 w-1.5 rounded-full bg-[var(--editorial-accent-muted)]" title="Unsaved changes" />
                   )}
                 </span>
-                {/* Active tab indicator - now bolder */}
+                {/* Active tab indicator - refined underline */}
                 {activeTab === tab.id && (
-                  <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-black dark:bg-white rounded-t-full" />
+                  <span className="absolute bottom-0 left-2 right-2 h-[2px] bg-[var(--editorial-accent)]" />
                 )}
               </button>
             );
@@ -617,9 +618,9 @@ export function DestinationForm({
         </nav>
         {/* Unsaved changes banner */}
         {hasUnsavedChanges && (
-          <div className="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-100 dark:border-amber-800/30">
-            <p className="text-xs text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
-              <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+          <div className="px-6 py-2.5 bg-[var(--editorial-accent)]/10 border-b border-[var(--editorial-accent)]/20">
+            <p className="text-xs text-[var(--editorial-accent)] flex items-center gap-2">
+              <span className="flex h-1.5 w-1.5 rounded-full bg-[var(--editorial-accent)] animate-pulse" />
               You have unsaved changes
             </p>
           </div>
@@ -627,10 +628,10 @@ export function DestinationForm({
       </div>
 
       {/* Tab Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
         {/* Details Tab */}
         {activeTab === 'details' && (
-          <div className="p-5 space-y-5">
+          <div className="p-6 space-y-6">
             {/* Name with Google Places */}
             <div>
               <label className={labelClasses}>Name<RequiredIndicator /></label>
@@ -647,7 +648,7 @@ export function DestinationForm({
                   type="button"
                   onClick={fetchFromGoogle}
                   disabled={fetchingGoogle || !formData.name.trim()}
-                  className="px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-3.5 border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)] rounded-lg hover:bg-[var(--editorial-border-subtle)] text-[var(--editorial-text-secondary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Fetch details from Google"
                 >
                   {fetchingGoogle ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
@@ -656,15 +657,15 @@ export function DestinationForm({
             </div>
 
             {/* Slug, City, Country */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className={labelClasses}>Slug<RequiredIndicator /></label>
                 <input type="text" required value={formData.slug}
                   onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                   placeholder="url-slug"
-                  className={cn(inputClasses, !formData.slug && "border-amber-300 dark:border-amber-700")} />
+                  className={cn(inputClasses, !formData.slug && formData.name && "border-[var(--editorial-accent)] ring-1 ring-[var(--editorial-accent)]/20")} />
                 {!formData.slug && formData.name && (
-                  <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">Slug is required</p>
+                  <p className="mt-1.5 text-xs text-[var(--editorial-accent)]">Slug is required</p>
                 )}
               </div>
               <div>
@@ -692,7 +693,7 @@ export function DestinationForm({
             </div>
 
             {/* Neighborhood, Brand */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelClasses}>Neighborhood</label>
                 <SearchableSelect
@@ -723,16 +724,16 @@ export function DestinationForm({
               <div className="relative">
                 <button type="button" onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
                   className={cn(inputClasses, "text-left flex items-center justify-between")}>
-                  <span className={formData.category ? "" : "text-gray-400"}>{formData.category || "Select..."}</span>
-                  <ChevronDown className={cn("h-4 w-4 text-gray-400 transition-transform", showCategoryDropdown && "rotate-180")} />
+                  <span className={formData.category ? "" : "text-[var(--editorial-text-tertiary)]"}>{formData.category || "Select..."}</span>
+                  <ChevronDown className={cn("h-4 w-4 text-[var(--editorial-text-tertiary)] transition-transform", showCategoryDropdown && "rotate-180")} />
                 </button>
                 {showCategoryDropdown && (
-                  <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  <div className="absolute z-20 w-full mt-1 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg shadow-lg max-h-48 overflow-y-auto">
                     {CATEGORIES.map((cat) => (
                       <button key={cat} type="button"
                         onClick={() => { setFormData({ ...formData, category: cat }); setShowCategoryDropdown(false); }}
-                        className={cn("w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800",
-                          formData.category === cat && "bg-gray-50 dark:bg-gray-800 font-medium")}>
+                        className={cn("w-full text-left px-4 py-3 text-sm hover:bg-[var(--editorial-border-subtle)] text-[var(--editorial-text-primary)]",
+                          formData.category === cat && "bg-[var(--editorial-border-subtle)] font-medium")}>
                         {cat}
                       </button>
                     ))}
@@ -747,27 +748,27 @@ export function DestinationForm({
               <input type="text" value={formData.micro_description}
                 onChange={(e) => setFormData({ ...formData, micro_description: e.target.value })}
                 placeholder="Short tagline for cards (50-100 chars)" className={inputClasses} maxLength={150} />
-              <div className="mt-1 text-right text-xs text-gray-400">{formData.micro_description.length}/150</div>
+              <div className="mt-1.5 text-right text-[10px] text-[var(--editorial-text-tertiary)] tracking-wide">{formData.micro_description.length}/150</div>
             </div>
 
             {/* Tags */}
             <div>
               <label className={labelClasses}>Tags</label>
-              <div className="flex gap-2 mb-2">
+              <div className="flex gap-2 mb-3">
                 <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
                   placeholder="Add a tag..." className={cn(inputClasses, "flex-1")} />
                 <button type="button" onClick={addTag}
-                  className="px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                  className="px-4 py-3.5 border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)] rounded-lg hover:bg-[var(--editorial-border-subtle)] text-[var(--editorial-text-secondary)] transition-colors">
                   <Tag className="h-4 w-4" />
                 </button>
               </div>
               {formData.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {formData.tags.map((tag) => (
-                    <span key={tag} className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs">
+                    <span key={tag} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--editorial-border-subtle)] rounded-md text-xs text-[var(--editorial-text-primary)]">
                       {tag}
-                      <button type="button" onClick={() => removeTag(tag)} className="hover:text-red-500">
+                      <button type="button" onClick={() => removeTag(tag)} className="hover:text-[var(--editorial-accent)] transition-colors">
                         <X className="h-3 w-3" />
                       </button>
                     </span>
@@ -781,33 +782,33 @@ export function DestinationForm({
               <label className={labelClasses}>Parent Destination</label>
               <div className="relative">
                 {selectedParent ? (
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-gray-400" />
+                  <div className="flex items-center justify-between p-4 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <MapPin className="h-4 w-4 text-[var(--editorial-text-tertiary)]" />
                       <div>
-                        <div className="text-sm font-medium">{selectedParent.name}</div>
-                        <div className="text-xs text-gray-500">{selectedParent.city}</div>
+                        <div className="text-sm font-medium text-[var(--editorial-text-primary)]">{selectedParent.name}</div>
+                        <div className="text-xs text-[var(--editorial-text-tertiary)]">{selectedParent.city}</div>
                       </div>
                     </div>
                     <button type="button" onClick={() => { setSelectedParent(null); setFormData({ ...formData, parent_destination_id: null }); }}
-                      className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded">
-                      <X className="h-4 w-4 text-gray-500" />
+                      className="p-1.5 hover:bg-[var(--editorial-border-subtle)] rounded-md transition-colors">
+                      <X className="h-4 w-4 text-[var(--editorial-text-secondary)]" />
                     </button>
                   </div>
                 ) : (
                   <>
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--editorial-text-tertiary)]" />
                     <input type="text" value={parentSearchQuery} onChange={(e) => setParentSearchQuery(e.target.value)}
-                      placeholder="Search parent venue..." className={cn(inputClasses, "pl-9")} />
-                    {isSearchingParent && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-gray-400" />}
+                      placeholder="Search parent venue..." className={cn(inputClasses, "pl-11")} />
+                    {isSearchingParent && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-[var(--editorial-text-tertiary)]" />}
                     {parentSearchResults.length > 0 && (
-                      <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      <div className="absolute z-20 w-full mt-1 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg shadow-lg max-h-48 overflow-y-auto">
                         {parentSearchResults.map((parent) => (
                           <button key={parent.id} type="button"
                             onClick={() => { setSelectedParent(parent); setFormData({ ...formData, parent_destination_id: parent.id ?? null }); setParentSearchQuery(''); setParentSearchResults([]); }}
-                            className="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800">
-                            <div className="text-sm font-medium">{parent.name}</div>
-                            <div className="text-xs text-gray-500">{parent.city} · {parent.category}</div>
+                            className="w-full text-left px-4 py-3 hover:bg-[var(--editorial-border-subtle)] transition-colors">
+                            <div className="text-sm font-medium text-[var(--editorial-text-primary)]">{parent.name}</div>
+                            <div className="text-xs text-[var(--editorial-text-tertiary)]">{parent.city} · {parent.category}</div>
                           </button>
                         ))}
                       </div>
@@ -818,22 +819,22 @@ export function DestinationForm({
             </div>
 
             {/* Badges */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <label className={labelClasses}>Badges & Recognition</label>
               {/* Michelin Stars */}
-              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">Michelin Stars</span>
+              <div className="flex items-center justify-between p-4 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Star className="h-4 w-4 text-[var(--editorial-text-tertiary)]" />
+                  <span className="text-sm text-[var(--editorial-text-primary)]">Michelin Stars</span>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
                   {[0, 1, 2, 3].map((stars) => (
                     <button key={stars} type="button"
                       onClick={() => { setFormData({ ...formData, michelin_stars: stars || null, category: stars > 0 ? 'Restaurant' : formData.category }); }}
-                      className={cn("w-8 h-8 rounded-md text-sm font-medium transition-colors",
+                      className={cn("w-9 h-9 rounded-lg text-sm font-medium transition-all",
                         (formData.michelin_stars || 0) === stars
-                          ? "bg-black dark:bg-white text-white dark:text-black"
-                          : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700")}>
+                          ? "bg-[var(--editorial-accent)] text-white shadow-sm"
+                          : "bg-[var(--editorial-bg)] border border-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-accent)] hover:text-[var(--editorial-accent)]")}>
                       {stars}
                     </button>
                   ))}
@@ -841,15 +842,15 @@ export function DestinationForm({
               </div>
               {/* Crown */}
               <button type="button" onClick={() => setFormData({ ...formData, crown: !formData.crown })}
-                className={cn("w-full flex items-center justify-between p-3 rounded-lg border transition-colors",
-                  formData.crown ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
-                    : "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800")}>
-                <div className="flex items-center gap-2">
-                  <Crown className={cn("h-4 w-4", formData.crown ? "text-amber-500" : "text-gray-500")} />
-                  <span className="text-sm">Featured (Crown)</span>
+                className={cn("w-full flex items-center justify-between p-4 rounded-lg border transition-all",
+                  formData.crown ? "bg-[var(--editorial-accent)]/10 border-[var(--editorial-accent)]/30"
+                    : "bg-[var(--editorial-bg-elevated)] border-[var(--editorial-border)] hover:border-[var(--editorial-border-subtle)]")}>
+                <div className="flex items-center gap-3">
+                  <Crown className={cn("h-4 w-4", formData.crown ? "text-[var(--editorial-accent)]" : "text-[var(--editorial-text-tertiary)]")} />
+                  <span className="text-sm text-[var(--editorial-text-primary)]">Featured (Crown)</span>
                 </div>
-                <div className={cn("w-10 h-6 rounded-full relative transition-colors",
-                  formData.crown ? "bg-amber-500" : "bg-gray-300 dark:bg-gray-600")}>
+                <div className={cn("w-11 h-6 rounded-full relative transition-colors",
+                  formData.crown ? "bg-[var(--editorial-accent)]" : "bg-[var(--editorial-border)]")}>
                   <div className={cn("absolute top-1 w-4 h-4 bg-white rounded-full transition-transform shadow-sm",
                     formData.crown ? "translate-x-5" : "translate-x-1")} />
                 </div>
@@ -862,17 +863,17 @@ export function DestinationForm({
                 <label className={labelClasses}>AI Enrichment</label>
                 <button type="button" onClick={handleEnrich}
                   disabled={isEnriching || !formData.slug || !formData.name || !formData.city}
-                  className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-gray-600 to-gray-800 rounded-md flex items-center justify-center">
+                  className="w-full flex items-center justify-between p-4 bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] rounded-lg hover:border-[var(--editorial-accent)]/50 hover:bg-[var(--editorial-accent)]/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-gradient-to-br from-[var(--editorial-accent)] to-[var(--editorial-accent-hover)] rounded-lg flex items-center justify-center">
                       <Star className="h-4 w-4 text-white" />
                     </div>
                     <div className="text-left">
-                      <div className="text-sm font-medium">Enrich with AI</div>
-                      <div className="text-xs text-gray-500">Fetch Google Places data & generate tags</div>
+                      <div className="text-sm font-medium text-[var(--editorial-text-primary)]">Enrich with AI</div>
+                      <div className="text-xs text-[var(--editorial-text-tertiary)]">Fetch Google Places data & generate tags</div>
                     </div>
                   </div>
-                  {isEnriching ? <Loader2 className="h-4 w-4 animate-spin text-gray-500" /> : <ChevronDown className="h-4 w-4 text-gray-400 -rotate-90" />}
+                  {isEnriching ? <Loader2 className="h-4 w-4 animate-spin text-[var(--editorial-accent)]" /> : <ChevronDown className="h-4 w-4 text-[var(--editorial-text-tertiary)] -rotate-90" />}
                 </button>
               </div>
             )}
@@ -881,41 +882,41 @@ export function DestinationForm({
 
         {/* Location Tab */}
         {activeTab === 'location' && (
-          <div className="p-5 space-y-5">
+          <div className="p-6 space-y-6">
             <div>
               <label className={labelClasses}>Formatted Address</label>
               <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--editorial-text-tertiary)]" />
                 <input type="text" value={formData.formatted_address}
                   onChange={(e) => setFormData({ ...formData, formatted_address: e.target.value })}
-                  placeholder="123 Main St, City, Country" className={cn(inputClasses, "pl-9")} />
+                  placeholder="123 Main St, City, Country" className={cn(inputClasses, "pl-11")} />
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelClasses}>Latitude</label>
                 <div className="relative">
-                  <Compass className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Compass className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--editorial-text-tertiary)]" />
                   <input type="number" step="any" value={formData.latitude || ''}
                     onChange={(e) => setFormData({ ...formData, latitude: e.target.value ? parseFloat(e.target.value) : null })}
-                    placeholder="35.6762" className={cn(inputClasses, "pl-9")} />
+                    placeholder="35.6762" className={cn(inputClasses, "pl-11")} />
                 </div>
               </div>
               <div>
                 <label className={labelClasses}>Longitude</label>
                 <div className="relative">
-                  <Compass className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Compass className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--editorial-text-tertiary)]" />
                   <input type="number" step="any" value={formData.longitude || ''}
                     onChange={(e) => setFormData({ ...formData, longitude: e.target.value ? parseFloat(e.target.value) : null })}
-                    placeholder="139.6503" className={cn(inputClasses, "pl-9")} />
+                    placeholder="139.6503" className={cn(inputClasses, "pl-11")} />
                 </div>
               </div>
             </div>
             {formData.latitude && formData.longitude && (
-              <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
+              <div className="p-4 bg-[var(--editorial-bg-elevated)] rounded-lg border border-[var(--editorial-border)]">
                 <a href={`https://www.google.com/maps?q=${formData.latitude},${formData.longitude}`}
                   target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                  className="flex items-center gap-2 text-sm text-[var(--editorial-accent)] hover:underline">
                   <ExternalLink className="h-4 w-4" />
                   View on Google Maps
                 </a>
@@ -926,13 +927,13 @@ export function DestinationForm({
 
         {/* Media Tab */}
         {activeTab === 'media' && (
-          <div className="p-5 space-y-5">
+          <div className="p-6 space-y-6">
             <div>
               <label className={labelClasses}>Image</label>
               <div onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
                 className={cn("relative border-2 border-dashed rounded-xl transition-all cursor-pointer overflow-hidden",
-                  isDragging ? "border-black dark:border-white bg-gray-50 dark:bg-gray-900"
-                    : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700")}>
+                  isDragging ? "border-[var(--editorial-accent)] bg-[var(--editorial-accent)]/5"
+                    : "border-[var(--editorial-border)] hover:border-[var(--editorial-accent)]/50")}>
                 <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" id="image-upload-input" />
                 <label htmlFor="image-upload-input" className="block cursor-pointer">
                   {imagePreview ? (
@@ -947,36 +948,36 @@ export function DestinationForm({
                       </button>
                     </div>
                   ) : (
-                    <div className="py-12 px-6 flex flex-col items-center justify-center text-center">
-                      <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center mb-3">
-                        <ImageIcon className="h-6 w-6 text-gray-400" />
+                    <div className="py-14 px-6 flex flex-col items-center justify-center text-center">
+                      <div className="w-12 h-12 bg-[var(--editorial-border-subtle)] rounded-xl flex items-center justify-center mb-3">
+                        <ImageIcon className="h-6 w-6 text-[var(--editorial-text-tertiary)]" />
                       </div>
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Drop an image here</p>
-                      <p className="text-xs text-gray-500">or click to browse</p>
+                      <p className="text-sm font-medium text-[var(--editorial-text-primary)] mb-1">Drop an image here</p>
+                      <p className="text-xs text-[var(--editorial-text-tertiary)]">or click to browse</p>
                     </div>
                   )}
                 </label>
               </div>
-              {uploadingImage && <div className="mt-2 flex items-center gap-2 text-sm text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /><span>Uploading...</span></div>}
+              {uploadingImage && <div className="mt-2 flex items-center gap-2 text-sm text-[var(--editorial-text-secondary)]"><Loader2 className="h-4 w-4 animate-spin" /><span>Uploading...</span></div>}
             </div>
             <div>
               <label className={labelClasses}>Or paste image URL</label>
               <div className="relative">
-                <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--editorial-text-tertiary)]" />
                 <input type="url" value={formData.image}
                   onChange={(e) => { setFormData({ ...formData, image: e.target.value }); if (!imageFile) setImagePreview(e.target.value || null); }}
-                  placeholder="https://..." className={cn(inputClasses, "pl-9")} />
+                  placeholder="https://..." className={cn(inputClasses, "pl-11")} />
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button type="button" onClick={() => { setImageFile(null); setImagePreview(null); setFormData({ ...formData, image: '' }); }}
                 disabled={!imagePreview && !formData.image}
-                className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50">
+                className="flex-1 px-4 py-3 text-sm border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)] rounded-lg hover:bg-[var(--editorial-border-subtle)] text-[var(--editorial-text-secondary)] disabled:opacity-50 transition-colors">
                 Clear Image
               </button>
               <label className="flex-1">
                 <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-                <span className="flex items-center justify-center gap-2 px-3 py-2 text-sm border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
+                <span className="flex items-center justify-center gap-2 px-4 py-3 text-sm border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)] rounded-lg hover:bg-[var(--editorial-border-subtle)] text-[var(--editorial-text-secondary)] cursor-pointer transition-colors">
                   <Upload className="h-4 w-4" />Upload New
                 </span>
               </label>
@@ -986,19 +987,19 @@ export function DestinationForm({
 
         {/* Content Tab */}
         {activeTab === 'content' && (
-          <div className="p-5 space-y-5">
+          <div className="p-6 space-y-6">
             <div>
               <label className={labelClasses}>Short Description</label>
               <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3} className={cn(inputClasses, "resize-none")} placeholder="A brief description (1-2 sentences)" />
-              <div className="mt-1 text-right text-xs text-gray-400">{formData.description.length} chars</div>
+              <div className="mt-1.5 text-right text-[10px] text-[var(--editorial-text-tertiary)] tracking-wide">{formData.description.length} chars</div>
             </div>
             <div>
               <label className={labelClasses}>Full Content</label>
               <textarea value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                 rows={10} className={cn(inputClasses, "resize-y min-h-[200px]")}
                 placeholder="Detailed description, what makes it special, atmosphere, best time to visit..." />
-              <div className="mt-1 text-right text-xs text-gray-400">{formData.content.length} chars</div>
+              <div className="mt-1.5 text-right text-[10px] text-[var(--editorial-text-tertiary)] tracking-wide">{formData.content.length} chars</div>
             </div>
             <div>
               <label className={labelClasses}>Editorial Summary</label>
@@ -1010,14 +1011,14 @@ export function DestinationForm({
 
         {/* Architecture Tab */}
         {activeTab === 'architecture' && (
-          <div className="p-5 space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelClasses}>Architect</label>
                 <div className="relative">
-                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--editorial-text-tertiary)]" />
                   <input type="text" value={formData.architect} onChange={(e) => setFormData({ ...formData, architect: e.target.value })}
-                    placeholder="Tadao Ando" className={cn(inputClasses, "pl-9")} />
+                    placeholder="Tadao Ando" className={cn(inputClasses, "pl-11")} />
                 </div>
               </div>
               <div>
@@ -1026,7 +1027,7 @@ export function DestinationForm({
                   placeholder="Kelly Wearstler" className={inputClasses} />
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelClasses}>Design Firm</label>
                 <input type="text" value={formData.design_firm} onChange={(e) => setFormData({ ...formData, design_firm: e.target.value })}
@@ -1035,14 +1036,14 @@ export function DestinationForm({
               <div>
                 <label className={labelClasses}>Construction Year</label>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--editorial-text-tertiary)]" />
                   <input type="number" min="1000" max="2100" value={formData.construction_year || ''}
                     onChange={(e) => setFormData({ ...formData, construction_year: e.target.value ? parseInt(e.target.value) : null })}
-                    placeholder="2020" className={cn(inputClasses, "pl-9")} />
+                    placeholder="2020" className={cn(inputClasses, "pl-11")} />
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelClasses}>Architectural Style</label>
                 <input type="text" value={formData.architectural_style} onChange={(e) => setFormData({ ...formData, architectural_style: e.target.value })}
@@ -1069,56 +1070,56 @@ export function DestinationForm({
 
         {/* Booking Tab */}
         {activeTab === 'booking' && (
-          <div className="p-5 space-y-5">
+          <div className="p-6 space-y-6">
             <div>
               <label className={labelClasses}>Website</label>
               <div className="relative">
-                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Globe className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--editorial-text-tertiary)]" />
                 <input type="url" value={formData.website} onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                  placeholder="https://example.com" className={cn(inputClasses, "pl-9")} />
+                  placeholder="https://example.com" className={cn(inputClasses, "pl-11")} />
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelClasses}>Phone Number</label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--editorial-text-tertiary)]" />
                   <input type="tel" value={formData.phone_number} onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                    placeholder="+1 234 567 8900" className={cn(inputClasses, "pl-9")} />
+                    placeholder="+1 234 567 8900" className={cn(inputClasses, "pl-11")} />
                 </div>
               </div>
               <div>
                 <label className={labelClasses}>Instagram Handle</label>
                 <div className="relative">
-                  <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Instagram className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--editorial-text-tertiary)]" />
                   <input type="text" value={formData.instagram_handle} onChange={(e) => setFormData({ ...formData, instagram_handle: e.target.value })}
-                    placeholder="username" className={cn(inputClasses, "pl-9")} />
+                    placeholder="username" className={cn(inputClasses, "pl-11")} />
                 </div>
               </div>
             </div>
             <div>
               <label className={labelClasses}>Google Maps URL</label>
               <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--editorial-text-tertiary)]" />
                 <input type="url" value={formData.google_maps_url} onChange={(e) => setFormData({ ...formData, google_maps_url: e.target.value })}
-                  placeholder="https://maps.google.com/..." className={cn(inputClasses, "pl-9")} />
+                  placeholder="https://maps.google.com/..." className={cn(inputClasses, "pl-11")} />
               </div>
             </div>
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-5">
-              <label className={cn(labelClasses, "mb-3")}>Reservation Links</label>
-              <div className="space-y-3">
+            <div className="border-t border-[var(--editorial-border)] pt-6">
+              <label className={cn(labelClasses, "mb-4")}>Reservation Links</label>
+              <div className="space-y-4">
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">OpenTable</label>
+                  <label className="text-[10px] text-[var(--editorial-text-tertiary)] uppercase tracking-wide mb-1.5 block">OpenTable</label>
                   <input type="url" value={formData.opentable_url} onChange={(e) => setFormData({ ...formData, opentable_url: e.target.value })}
                     placeholder="https://opentable.com/..." className={inputClasses} />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Resy</label>
+                  <label className="text-[10px] text-[var(--editorial-text-tertiary)] uppercase tracking-wide mb-1.5 block">Resy</label>
                   <input type="url" value={formData.resy_url} onChange={(e) => setFormData({ ...formData, resy_url: e.target.value })}
                     placeholder="https://resy.com/..." className={inputClasses} />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Other Booking URL</label>
+                  <label className="text-[10px] text-[var(--editorial-text-tertiary)] uppercase tracking-wide mb-1.5 block">Other Booking URL</label>
                   <input type="url" value={formData.booking_url} onChange={(e) => setFormData({ ...formData, booking_url: e.target.value })}
                     placeholder="https://..." className={inputClasses} />
                 </div>
@@ -1129,14 +1130,14 @@ export function DestinationForm({
 
         {/* Data Tab (Read-only enrichment) */}
         {activeTab === 'data' && (
-          <div className="p-5 space-y-5">
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-800">
-              <p className="text-xs text-gray-500 mb-3">This data is typically populated from Google Places API enrichment.</p>
+          <div className="p-6 space-y-6">
+            <div className="bg-[var(--editorial-bg-elevated)] rounded-xl p-5 border border-[var(--editorial-border)]">
+              <p className="text-xs text-[var(--editorial-text-tertiary)] mb-4">This data is typically populated from Google Places API enrichment.</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelClasses}>Rating</label>
                   <div className="flex items-center gap-2">
-                    <Star className="h-4 w-4 text-amber-500" />
+                    <Star className="h-4 w-4 text-[var(--editorial-accent)]" />
                     <input type="number" step="0.1" min="0" max="5" value={formData.rating || ''}
                       onChange={(e) => setFormData({ ...formData, rating: e.target.value ? parseFloat(e.target.value) : null })}
                       placeholder="4.5" className={inputClasses} />
@@ -1145,10 +1146,10 @@ export function DestinationForm({
                 <div>
                   <label className={labelClasses}>Price Level</label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--editorial-text-tertiary)]" />
                     <select value={formData.price_level || ''}
                       onChange={(e) => setFormData({ ...formData, price_level: e.target.value ? parseInt(e.target.value) : null })}
-                      className={cn(inputClasses, "pl-9")}>
+                      className={cn(inputClasses, "pl-11")}>
                       <option value="">Not set</option>
                       {PRICE_LEVELS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                     </select>
@@ -1157,26 +1158,26 @@ export function DestinationForm({
               </div>
             </div>
             {destination && (
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
-                  <span className="text-gray-500">Place ID</span>
-                  <span className="font-mono text-xs">{destination.place_id || '—'}</span>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between py-3 border-b border-[var(--editorial-border)]">
+                  <span className="text-[var(--editorial-text-secondary)]">Place ID</span>
+                  <span className="font-mono text-xs text-[var(--editorial-text-primary)]">{destination.place_id || '—'}</span>
                 </div>
-                <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
-                  <span className="text-gray-500">User Ratings Total</span>
-                  <span>{destination.user_ratings_total?.toLocaleString() || '—'}</span>
+                <div className="flex justify-between py-3 border-b border-[var(--editorial-border)]">
+                  <span className="text-[var(--editorial-text-secondary)]">User Ratings Total</span>
+                  <span className="text-[var(--editorial-text-primary)]">{destination.user_ratings_total?.toLocaleString() || '—'}</span>
                 </div>
-                <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
-                  <span className="text-gray-500">Views</span>
-                  <span>{destination.views_count?.toLocaleString() || '0'}</span>
+                <div className="flex justify-between py-3 border-b border-[var(--editorial-border)]">
+                  <span className="text-[var(--editorial-text-secondary)]">Views</span>
+                  <span className="text-[var(--editorial-text-primary)]">{destination.views_count?.toLocaleString() || '0'}</span>
                 </div>
-                <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
-                  <span className="text-gray-500">Saves</span>
-                  <span>{destination.saves_count?.toLocaleString() || '0'}</span>
+                <div className="flex justify-between py-3 border-b border-[var(--editorial-border)]">
+                  <span className="text-[var(--editorial-text-secondary)]">Saves</span>
+                  <span className="text-[var(--editorial-text-primary)]">{destination.saves_count?.toLocaleString() || '0'}</span>
                 </div>
-                <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
-                  <span className="text-gray-500">Last Enriched</span>
-                  <span>{destination.last_enriched_at ? new Date(destination.last_enriched_at).toLocaleDateString() : '—'}</span>
+                <div className="flex justify-between py-3 border-b border-[var(--editorial-border)]">
+                  <span className="text-[var(--editorial-text-secondary)]">Last Enriched</span>
+                  <span className="text-[var(--editorial-text-primary)]">{destination.last_enriched_at ? new Date(destination.last_enriched_at).toLocaleDateString() : '—'}</span>
                 </div>
               </div>
             )}
@@ -1184,15 +1185,15 @@ export function DestinationForm({
         )}
       </div>
 
-      {/* Sticky Action Bar */}
-      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-5 py-4">
+      {/* Sticky Action Bar - Editorial Style */}
+      <div className="flex-shrink-0 border-t border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)] px-6 py-5">
         <div className="flex items-center justify-between">
           <button type="button" onClick={onCancel} disabled={isSaving}
-            className="px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-50">
+            className="px-5 py-3 text-sm font-medium text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-text-primary)] disabled:opacity-50 transition-colors">
             Cancel
           </button>
           <button type="submit" disabled={isSaving}
-            className="px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-sm font-medium hover:opacity-80 disabled:opacity-50 flex items-center gap-2">
+            className="px-7 py-3 bg-[var(--editorial-accent)] hover:bg-[var(--editorial-accent-hover)] text-white rounded-lg text-sm font-medium disabled:opacity-50 flex items-center gap-2 transition-colors shadow-sm">
             {isSaving ? <><Loader2 className="h-4 w-4 animate-spin" /><span>Saving...</span></> : destination ? 'Save Changes' : 'Create Destination'}
           </button>
         </div>

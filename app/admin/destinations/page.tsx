@@ -162,36 +162,36 @@ export default function AdminDestinationsPage() {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity duration-300"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300"
             onClick={handleCloseDrawer}
           />
-          {/* Drawer Panel */}
+          {/* Drawer Panel - Editorial Design */}
           <div
-            className={`fixed right-0 top-0 h-full w-full sm:w-[520px] lg:w-[560px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${
+            className={`fixed right-0 top-0 h-full w-full sm:w-[520px] lg:w-[560px] bg-[var(--editorial-bg-elevated)] z-50 shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${
               showCreateModal ? 'translate-x-0' : 'translate-x-full'
             }`}
           >
-            {/* Header */}
-            <div className="flex-shrink-0 h-14 px-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-800">
-              <div className="flex items-center gap-3">
+            {/* Header - Editorial Style */}
+            <div className="flex-shrink-0 h-16 px-6 flex items-center justify-between border-b border-[var(--editorial-border)]">
+              <div className="flex items-center gap-4">
                 <button
                   onClick={handleCloseDrawer}
-                  className="p-1.5 -ml-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-500 dark:text-gray-400"
+                  className="p-2 -ml-2 hover:bg-[var(--editorial-border-subtle)] rounded-lg transition-colors text-[var(--editorial-text-secondary)]"
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-lg font-medium text-[var(--editorial-text-primary)] tracking-tight">
                     {editingDestination ? editingDestination.name || 'Edit Destination' : 'New Destination'}
                   </h2>
                   {hasUnsavedChanges && (
-                    <span className="flex h-2 w-2 rounded-full bg-amber-500" title="Unsaved changes" />
+                    <span className="flex h-2 w-2 rounded-full bg-[var(--editorial-accent)]" title="Unsaved changes" />
                   )}
                 </div>
               </div>
               <button
                 onClick={handleCloseDrawer}
-                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-500 dark:text-gray-400"
+                className="p-2 hover:bg-[var(--editorial-border-subtle)] rounded-lg transition-colors text-[var(--editorial-text-secondary)]"
               >
                 <X className="h-5 w-5" />
               </button>
