@@ -4,8 +4,8 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MapPin, Globe, Users, Calendar } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/ui/button';
+import { Badge } from '@/ui/badge';
 import type { UserProfile, UserStats } from '@/types/features';
 
 interface UserProfileCardProps {

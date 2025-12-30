@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { Star, ThumbsUp, ThumbsDown, Flag, MoreHorizontal, CheckCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@/ui/dropdown-menu';
 import type { Review } from '@/types/features';
 
 interface ReviewCardProps {

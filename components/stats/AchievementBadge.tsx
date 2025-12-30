@@ -6,8 +6,8 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { Progress } from '@/components/ui/progress';
+} from '@/ui/tooltip';
+import { Progress } from '@/ui/progress';
 import type { Achievement } from '@/types/features';
 
 interface AchievementBadgeProps {

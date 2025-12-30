@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { ThumbsUp, ThumbsDown, MapPin, ExternalLink, Clock } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/ui/badge';
 import type { DestinationSuggestion } from '@/types/features';
 
 interface SuggestionCardProps {

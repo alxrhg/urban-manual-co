@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { Star, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/ui/button';
 import { ReviewCard } from './ReviewCard';
 import { ReviewForm } from './ReviewForm';
 import type { Review, CreateReviewInput } from '@/types/features';
