@@ -11,6 +11,8 @@ import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
 import type { Destination } from '@/types/destination';
 import { cn, toTitleCase } from '@/lib/utils';
 import { SearchableSelect } from '@/ui/searchable-select';
+import { ExpandableSelect } from '@/ui/expandable-select';
+import { ExpandableCategorySelect } from '@/ui/expandable-category-select';
 
 interface Toast {
   success: (message: string) => void;
@@ -112,7 +114,6 @@ export function DestinationForm({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [fetchingGoogle, setFetchingGoogle] = useState(false);
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [dropdownOptions, setDropdownOptions] = useState<DropdownOptions>({
     cities: [],
     countries: [],
@@ -575,11 +576,13 @@ export function DestinationForm({
               </div>
               <div>
                 <label className={labelClasses}>City</label>
-                <SearchableSelect
+                <ExpandableSelect
                   value={formData.city}
                   onChange={(value) => setFormData({ ...formData, city: value })}
                   options={dropdownOptions.cities}
                   placeholder="Select city..."
+                  fieldLabel="city"
+                  featuredOptions={['Tokyo', 'Kyoto', 'London', 'Paris', 'New York', 'Bangkok']}
                   allowCustomValue
                   isLoading={isLoadingDropdowns}
                 />
@@ -626,25 +629,13 @@ export function DestinationForm({
             {/* Category */}
             <div>
               <label className={labelClasses}>Category</label>
-              <div className="relative">
-                <button type="button" onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                  className={cn(inputClasses, "text-left flex items-center justify-between")}>
-                  <span className={formData.category ? "" : "text-gray-400"}>{formData.category || "Select..."}</span>
-                  <ChevronDown className={cn("h-4 w-4 text-gray-400 transition-transform", showCategoryDropdown && "rotate-180")} />
-                </button>
-                {showCategoryDropdown && (
-                  <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                    {CATEGORIES.map((cat) => (
-                      <button key={cat} type="button"
-                        onClick={() => { setFormData({ ...formData, category: cat }); setShowCategoryDropdown(false); }}
-                        className={cn("w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800",
-                          formData.category === cat && "bg-gray-50 dark:bg-gray-800 font-medium")}>
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <ExpandableCategorySelect
+                value={formData.category}
+                onChange={(value) => setFormData({ ...formData, category: value })}
+                categories={CATEGORIES}
+                placeholder="Select category..."
+                featuredCategories={['Restaurant', 'Hotel', 'Bar', 'Cafe', 'Shopping', 'Museum']}
+              />
             </div>
 
             {/* Micro Description */}
