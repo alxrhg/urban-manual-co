@@ -105,24 +105,20 @@ export const GET = withOptionalAuth(async (request: NextRequest, { user }) => {
     });
   });
 
-  // Track search query for popular searches
+  // Track search query for popular searches (fire and forget - ignore errors)
   if (query.length >= 3) {
-    // Upsert to popular_searches
-    await supabase.rpc('increment_search_count', { search_query: query }).catch(() => {
-      // Ignore errors - this is just analytics
-    });
+    // Upsert to popular_searches - ignore result
+    supabase.rpc('increment_search_count', { search_query: query }).then(() => {});
 
     // Track in search history if user is logged in
     if (user) {
-      await supabase
+      supabase
         .from('search_history')
         .insert({
           user_id: user.id,
           query,
         })
-        .catch(() => {
-          // Ignore errors
-        });
+        .then(() => {});
     }
   }
 
