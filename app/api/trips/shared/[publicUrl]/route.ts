@@ -68,12 +68,12 @@ export const GET = withOptionalAuth(async (request: NextRequest, { user }, conte
     .order('order_index');
 
   // Group items by day
-  const days: Record<number, typeof items> = {};
+  const days: Record<number, NonNullable<typeof items>> = {};
   items?.forEach((item) => {
     if (!days[item.day]) {
       days[item.day] = [];
     }
-    days[item.day].push(item);
+    days[item.day]!.push(item);
   });
 
   // Check if current user can copy
