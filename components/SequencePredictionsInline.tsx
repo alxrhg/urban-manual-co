@@ -110,7 +110,7 @@ export function SequencePredictionsInline({
             >
               <Icon className="h-3 w-3" />
               <span>{label}</span>
-              <span className="text-gray-600 dark:text-gray-400 text-[10px]">
+              <span className="text-gray-600 dark:text-gray-400 text-xs">
                 {Math.round(pred.probability * 100)}%
               </span>
             </button>

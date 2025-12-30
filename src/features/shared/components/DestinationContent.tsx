@@ -1126,19 +1126,19 @@ const DestinationContent = memo(function DestinationContent({
             {/* User-related context badge */}
             {userRelatedContext && (
               <div className="mb-4 px-3 py-2.5 rounded-lg bg-[#f9ede8] dark:bg-[#662e26]/20 border border-[#f2d9cf] dark:border-[#973f30]/30">
-                <p className="text-[12px] text-[#c4604b] dark:text-[#d99c82] font-medium">
+                <p className="text-xs text-[#c4604b] dark:text-[#d99c82] font-medium">
                   {userRelatedContext}
                 </p>
               </div>
             )}
 
-            <p className="text-[15px] text-[#5a5955] dark:text-[#c8c7c4] leading-relaxed">
+            <p className="text-sm text-[#5a5955] dark:text-[#c8c7c4] leading-relaxed">
               {displayText}
             </p>
             {isLong && (
               <button
                 onClick={() => setShowFullDescription(!showFullDescription)}
-                className="mt-3 text-[13px] font-medium text-[#c4604b] hover:text-[#b54d3a] transition-colors"
+                className="mt-3 text-sm font-medium text-[#c4604b] hover:text-[#b54d3a] transition-colors"
               >
                 {showFullDescription ? 'Show less' : 'Read more'}
               </button>
@@ -1163,8 +1163,8 @@ const DestinationContent = memo(function DestinationContent({
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)]">Located inside</p>
-              <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] truncate group-hover:text-[var(--editorial-accent)] transition-colors">{parentDestination.name}</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)]">Located inside</p>
+              <p className="text-sm font-medium text-[var(--editorial-text-primary)] truncate group-hover:text-[var(--editorial-accent)] transition-colors">{parentDestination.name}</p>
             </div>
             <ChevronRight className="h-4 w-4 text-[var(--editorial-text-tertiary)] group-hover:text-[var(--editorial-accent)] transition-colors" />
           </button>
@@ -1173,7 +1173,7 @@ const DestinationContent = memo(function DestinationContent({
       case 'nested':
         return (
           <div key="nested" className="py-8 border-b border-[var(--editorial-border)]">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-4">Venues Inside</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-4">Venues Inside</p>
             <div className="space-y-2">
               {nestedDestinations.map((nested) => (
                 <button
@@ -1189,8 +1189,8 @@ const DestinationContent = memo(function DestinationContent({
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] truncate group-hover:text-[var(--editorial-accent)] transition-colors">{nested.name}</p>
-                    <p className="text-[12px] text-[var(--editorial-text-tertiary)]">{nested.category && capitalizeCategory(nested.category)}</p>
+                    <p className="text-sm font-medium text-[var(--editorial-text-primary)] truncate group-hover:text-[var(--editorial-accent)] transition-colors">{nested.name}</p>
+                    <p className="text-xs text-[var(--editorial-text-tertiary)]">{nested.category && capitalizeCategory(nested.category)}</p>
                   </div>
                   <ChevronRight className="h-4 w-4 text-[var(--editorial-text-tertiary)] group-hover:text-[var(--editorial-accent)] transition-colors" />
                 </button>
@@ -1203,7 +1203,7 @@ const DestinationContent = memo(function DestinationContent({
         const localTimeStr = getLocalTimeAtDestination(enrichedData?.utc_offset, destination.city);
         return (
           <div key="hours" className="py-8 border-b border-[var(--editorial-border)]">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-5">
+            <p className="text-xs uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-5">
               Hours & Contact
             </p>
             <div className="space-y-5">
@@ -1211,9 +1211,9 @@ const DestinationContent = memo(function DestinationContent({
                 <div className="flex items-start gap-4">
                   <Clock className="h-4 w-4 text-[var(--editorial-accent)] mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <span className="text-[14px] text-[var(--editorial-text-primary)]">{todayHours}</span>
+                    <span className="text-sm text-[var(--editorial-text-primary)]">{todayHours}</span>
                     {hoursAnalysis.timeUntilChange && (
-                      <span className={`ml-2 text-[12px] font-medium ${
+                      <span className={`ml-2 text-xs font-medium ${
                         hoursAnalysis.category === 'closing-soon' ? 'text-amber-600' :
                         hoursAnalysis.category === 'opening-soon' ? 'text-[var(--editorial-accent)]' : ''
                       }`}>
@@ -1226,19 +1226,19 @@ const DestinationContent = memo(function DestinationContent({
               {enrichedData?.formatted_address && (
                 <button onClick={handleDirections} className="flex items-start gap-4 text-left group">
                   <MapPin className="h-4 w-4 text-[var(--editorial-accent)] mt-0.5 flex-shrink-0" />
-                  <span className="text-[14px] text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors">{enrichedData.formatted_address}</span>
+                  <span className="text-sm text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors">{enrichedData.formatted_address}</span>
                 </button>
               )}
               {enrichedData?.international_phone_number && (
                 <a href={`tel:${enrichedData.international_phone_number}`} className="flex items-center gap-4 group">
                   <Phone className="h-4 w-4 text-[var(--editorial-accent)] flex-shrink-0" />
-                  <span className="text-[14px] text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors">{enrichedData.international_phone_number}</span>
+                  <span className="text-sm text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors">{enrichedData.international_phone_number}</span>
                 </a>
               )}
               {enrichedData?.website && (
                 <a href={enrichedData.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 group">
                   <Globe className="h-4 w-4 text-[var(--editorial-accent)] flex-shrink-0" />
-                  <span className="text-[14px] text-[var(--editorial-accent)] group-hover:underline truncate">
+                  <span className="text-sm text-[var(--editorial-accent)] group-hover:underline truncate">
                     {(() => { try { return new URL(enrichedData.website).hostname.replace('www.', ''); } catch { return enrichedData.website; } })()}
                   </span>
                 </a>
@@ -1250,7 +1250,7 @@ const DestinationContent = memo(function DestinationContent({
       case 'architecture':
         return (
           <div key="architecture" className="py-8 border-b border-[var(--editorial-border)]">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-5">Design</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-5">Design</p>
             <div className="space-y-2">
               {enrichedData?.architect_obj && (
                 <Link href={`/architect/${enrichedData.architect_obj.slug}`} className="flex items-center gap-4 py-3 group">
@@ -1258,12 +1258,12 @@ const DestinationContent = memo(function DestinationContent({
                     {enrichedData.architect_obj.image_url ? (
                       <Image src={enrichedData.architect_obj.image_url} alt="" width={44} height={44} className="object-cover" />
                     ) : (
-                      <span className="text-[14px] font-medium text-[var(--editorial-text-secondary)]">{enrichedData.architect_obj.name.charAt(0)}</span>
+                      <span className="text-sm font-medium text-[var(--editorial-text-secondary)]">{enrichedData.architect_obj.name.charAt(0)}</span>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] uppercase tracking-[0.1em] text-[var(--editorial-text-tertiary)]">Architect</p>
-                    <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] truncate transition-colors">
+                    <p className="text-xs uppercase tracking-[0.1em] text-[var(--editorial-text-tertiary)]">Architect</p>
+                    <p className="text-sm font-medium text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] truncate transition-colors">
                       {enrichedData.architect_obj.name}
                     </p>
                   </div>
@@ -1276,19 +1276,19 @@ const DestinationContent = memo(function DestinationContent({
                     <Building2 className="h-4 w-4 text-[var(--editorial-text-secondary)]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] uppercase tracking-[0.1em] text-[var(--editorial-text-tertiary)]">Architect</p>
-                    <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] truncate">{destination.architect}</p>
+                    <p className="text-xs uppercase tracking-[0.1em] text-[var(--editorial-text-tertiary)]">Architect</p>
+                    <p className="text-sm font-medium text-[var(--editorial-text-primary)] truncate">{destination.architect}</p>
                   </div>
                 </div>
               )}
               {enrichedData?.interior_designer_obj && (
                 <Link href={`/architect/${enrichedData.interior_designer_obj.slug}`} className="flex items-center gap-4 py-3 group">
                   <div className="w-11 h-11 rounded-full bg-[var(--editorial-border)] flex items-center justify-center">
-                    <span className="text-[14px] font-medium text-[var(--editorial-text-secondary)]">{enrichedData.interior_designer_obj.name.charAt(0)}</span>
+                    <span className="text-sm font-medium text-[var(--editorial-text-secondary)]">{enrichedData.interior_designer_obj.name.charAt(0)}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] uppercase tracking-[0.1em] text-[var(--editorial-text-tertiary)]">Interior Designer</p>
-                    <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] truncate transition-colors">
+                    <p className="text-xs uppercase tracking-[0.1em] text-[var(--editorial-text-tertiary)]">Interior Designer</p>
+                    <p className="text-sm font-medium text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] truncate transition-colors">
                       {enrichedData.interior_designer_obj.name}
                     </p>
                   </div>
@@ -1298,11 +1298,11 @@ const DestinationContent = memo(function DestinationContent({
               {enrichedData?.architectural_style && (
                 <div className="flex items-center gap-4 py-3">
                   <div className="w-11 h-11 rounded-full bg-[var(--editorial-border)] flex items-center justify-center">
-                    <span className="text-[12px] font-medium text-[var(--editorial-text-secondary)]">S</span>
+                    <span className="text-xs font-medium text-[var(--editorial-text-secondary)]">S</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] uppercase tracking-[0.1em] text-[var(--editorial-text-tertiary)]">Style</p>
-                    <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] truncate">{enrichedData.architectural_style}</p>
+                    <p className="text-xs uppercase tracking-[0.1em] text-[var(--editorial-text-tertiary)]">Style</p>
+                    <p className="text-sm font-medium text-[var(--editorial-text-primary)] truncate">{enrichedData.architectural_style}</p>
                   </div>
                 </div>
               )}
@@ -1326,7 +1326,7 @@ const DestinationContent = memo(function DestinationContent({
                 className="w-full h-full"
               />
               <div className="absolute inset-0 flex items-center justify-center hover:bg-black/10 transition-colors">
-                <span className="px-4 py-2 bg-[var(--editorial-bg)]/95 text-[12px] font-medium tracking-[0.02em] text-[var(--editorial-text-primary)] border border-[var(--editorial-text-primary)]">
+                <span className="px-4 py-2 bg-[var(--editorial-bg)]/95 text-xs font-medium tracking-[0.02em] text-[var(--editorial-text-primary)] border border-[var(--editorial-text-primary)]">
                   Open in Maps
                 </span>
               </div>
@@ -1339,7 +1339,7 @@ const DestinationContent = memo(function DestinationContent({
         if (!activeTrip) {
           return (
             <div key="trip" className="py-8 border-b border-[var(--editorial-border)]">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-4">
                 Add to Trip
               </p>
               <button
@@ -1348,7 +1348,7 @@ const DestinationContent = memo(function DestinationContent({
                   handleAddToTrip(1);
                 }}
                 disabled={isAddingToTrip}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-lg border border-[var(--editorial-text-primary)] text-[var(--editorial-text-primary)] text-[13px] font-medium tracking-[0.02em] transition-all hover:bg-[var(--editorial-text-primary)] hover:text-[var(--editorial-bg)] active:scale-[0.98] disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-lg border border-[var(--editorial-text-primary)] text-[var(--editorial-text-primary)] text-sm font-medium tracking-[0.02em] transition-all hover:bg-[var(--editorial-text-primary)] hover:text-[var(--editorial-bg)] active:scale-[0.98] disabled:opacity-50"
               >
                 <Plus className="w-4 h-4" />
                 Start {destination.city ? `${destination.city} Trip` : 'New Trip'}
@@ -1360,11 +1360,11 @@ const DestinationContent = memo(function DestinationContent({
         return (
           <div key="trip" className="py-8 border-b border-[var(--editorial-border)]">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)]">
+              <p className="text-xs uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)]">
                 {isFromTrip ? 'Add to Trip' : `Add to ${activeTrip.title}`}
               </p>
               {tripContext?.fit && (
-                <span className="text-[11px] text-[#4A7C59] font-medium">{tripContext.fit}</span>
+                <span className="text-xs text-[#4A7C59] font-medium">{tripContext.fit}</span>
               )}
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -1373,7 +1373,7 @@ const DestinationContent = memo(function DestinationContent({
                   key={day.dayNumber}
                   onClick={() => handleAddToTrip(day.dayNumber)}
                   disabled={isAddingToTrip}
-                  className={`px-4 py-2.5 rounded-lg text-[13px] font-medium transition-colors disabled:opacity-50 ${
+                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
                     tripContext?.day === day.dayNumber
                       ? 'border border-[var(--editorial-text-primary)] bg-[var(--editorial-text-primary)] text-[var(--editorial-bg)]'
                       : 'border border-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-secondary)]'
@@ -1385,7 +1385,7 @@ const DestinationContent = memo(function DestinationContent({
               <button
                 onClick={() => handleAddToTrip()}
                 disabled={isAddingToTrip}
-                className="px-4 py-2.5 rounded-lg border border-dashed border-[var(--editorial-text-tertiary)] text-[13px] font-medium text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-secondary)] transition-colors"
+                className="px-4 py-2.5 rounded-lg border border-dashed border-[var(--editorial-text-tertiary)] text-sm font-medium text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-secondary)] transition-colors"
               >
                 <Plus className="h-4 w-4 inline mr-1" />
                 New Day
@@ -1398,8 +1398,8 @@ const DestinationContent = memo(function DestinationContent({
         return (
           <div key="similar" className="py-8 border-b border-[var(--editorial-border)]">
             <div className="flex items-center justify-between mb-5">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)]">Similar</p>
-              <button onClick={onShowSimilar} className="text-[11px] font-medium text-[var(--editorial-accent)] hover:underline transition-colors">
+              <p className="text-xs uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)]">Similar</p>
+              <button onClick={onShowSimilar} className="text-xs font-medium text-[var(--editorial-accent)] hover:underline transition-colors">
                 View all
               </button>
             </div>
@@ -1420,8 +1420,8 @@ const DestinationContent = memo(function DestinationContent({
                       />
                     )}
                   </div>
-                  <p className="text-[13px] font-medium text-[var(--editorial-text-primary)] truncate group-hover:text-[var(--editorial-accent)] transition-colors">{dest.name}</p>
-                  <p className="text-[11px] text-[var(--editorial-text-tertiary)] truncate">{capitalizeCategory(dest.category || '')}</p>
+                  <p className="text-sm font-medium text-[var(--editorial-text-primary)] truncate group-hover:text-[var(--editorial-accent)] transition-colors">{dest.name}</p>
+                  <p className="text-xs text-[var(--editorial-text-tertiary)] truncate">{capitalizeCategory(dest.category || '')}</p>
                 </button>
               ))}
             </div>
@@ -1431,7 +1431,7 @@ const DestinationContent = memo(function DestinationContent({
       case 'related':
         return (
           <div key="related" className="py-8 border-b border-[var(--editorial-border)]">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-5">
+            <p className="text-xs uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-5">
               More in {capitalizeCity(destination.city || '')}
             </p>
             <div className="space-y-3">
@@ -1449,8 +1449,8 @@ const DestinationContent = memo(function DestinationContent({
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[14px] font-medium text-[var(--editorial-text-primary)] truncate group-hover:text-[var(--editorial-accent)] transition-colors">{dest.name}</p>
-                    <p className="text-[12px] text-[var(--editorial-text-tertiary)]">{capitalizeCategory(dest.category || '')}</p>
+                    <p className="text-sm font-medium text-[var(--editorial-text-primary)] truncate group-hover:text-[var(--editorial-accent)] transition-colors">{dest.name}</p>
+                    <p className="text-xs text-[var(--editorial-text-tertiary)]">{capitalizeCategory(dest.category || '')}</p>
                   </div>
                   <ChevronRight className="h-4 w-4 text-[var(--editorial-accent)] opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
@@ -1466,20 +1466,20 @@ const DestinationContent = memo(function DestinationContent({
 
   // Render edit form when in edit mode
   if (isEditMode && isAdmin) {
-    const inputClass = "w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white";
-    const labelClass = "block text-[12px] font-medium text-gray-500 mb-1.5";
+    const inputClass = "w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white";
+    const labelClass = "block text-xs font-medium text-gray-500 mb-1.5";
 
     return (
       <div className="pb-8 px-5 pt-5 max-h-[calc(100vh-100px)] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-[18px] font-semibold text-gray-900 dark:text-white">Edit Destination</h2>
-          <span className="text-[11px] text-gray-400">{destination.slug}</span>
+          <span className="text-xs text-gray-400">{destination.slug}</span>
         </div>
 
         <div className="space-y-5">
           {/* Basic Info */}
           <div className="space-y-3">
-            <p className="text-[11px] uppercase tracking-wider text-gray-400">Basic Info</p>
+            <p className="text-xs uppercase tracking-wider text-gray-400">Basic Info</p>
             <div>
               <label className={labelClass}>Name *</label>
               <input type="text" value={editForm.name} onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))} className={inputClass} />
@@ -1508,7 +1508,7 @@ const DestinationContent = memo(function DestinationContent({
 
           {/* Descriptions */}
           <div className="space-y-3 border-t border-gray-100 dark:border-gray-800 pt-5">
-            <p className="text-[11px] uppercase tracking-wider text-gray-400">Descriptions</p>
+            <p className="text-xs uppercase tracking-wider text-gray-400">Descriptions</p>
             <div>
               <label className={labelClass}>Micro Description</label>
               <textarea value={editForm.micro_description} onChange={(e) => setEditForm(prev => ({ ...prev, micro_description: e.target.value }))} rows={2} className={`${inputClass} resize-none`} placeholder="One-liner description" />
@@ -1521,7 +1521,7 @@ const DestinationContent = memo(function DestinationContent({
 
           {/* Contact & Location */}
           <div className="space-y-3 border-t border-gray-100 dark:border-gray-800 pt-5">
-            <p className="text-[11px] uppercase tracking-wider text-gray-400">Contact & Location</p>
+            <p className="text-xs uppercase tracking-wider text-gray-400">Contact & Location</p>
             <div>
               <label className={labelClass}>Address</label>
               <input type="text" value={editForm.formatted_address} onChange={(e) => setEditForm(prev => ({ ...prev, formatted_address: e.target.value }))} className={inputClass} />
@@ -1550,7 +1550,7 @@ const DestinationContent = memo(function DestinationContent({
 
           {/* Ratings & Status */}
           <div className="space-y-3 border-t border-gray-100 dark:border-gray-800 pt-5">
-            <p className="text-[11px] uppercase tracking-wider text-gray-400">Ratings & Status</p>
+            <p className="text-xs uppercase tracking-wider text-gray-400">Ratings & Status</p>
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className={labelClass}>Rating</label>
@@ -1569,7 +1569,7 @@ const DestinationContent = memo(function DestinationContent({
 
           {/* Image */}
           <div className="space-y-3 border-t border-gray-100 dark:border-gray-800 pt-5">
-            <p className="text-[11px] uppercase tracking-wider text-gray-400">Media</p>
+            <p className="text-xs uppercase tracking-wider text-gray-400">Media</p>
             <div>
               <label className={labelClass}>Image URL</label>
               <input type="text" value={editForm.image} onChange={(e) => setEditForm(prev => ({ ...prev, image: e.target.value }))} className={inputClass} />
@@ -1584,14 +1584,14 @@ const DestinationContent = memo(function DestinationContent({
           {/* Parent/Nested Info */}
           {(parentDestination || nestedDestinations.length > 0) && (
             <div className="space-y-3 border-t border-gray-100 dark:border-gray-800 pt-5">
-              <p className="text-[11px] uppercase tracking-wider text-gray-400">Location Nesting</p>
+              <p className="text-xs uppercase tracking-wider text-gray-400">Location Nesting</p>
               {parentDestination && (
-                <div className="text-[13px] text-gray-600 dark:text-gray-400">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
                   <span className="text-gray-400">Located inside:</span> {parentDestination.name}
                 </div>
               )}
               {nestedDestinations.length > 0 && (
-                <div className="text-[13px] text-gray-600 dark:text-gray-400">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
                   <span className="text-gray-400">Contains:</span> {nestedDestinations.map(n => n.name).join(', ')}
                 </div>
               )}
@@ -1602,14 +1602,14 @@ const DestinationContent = memo(function DestinationContent({
           <div className="flex gap-3 pt-6 sticky bottom-0 bg-white dark:bg-gray-950 pb-2">
             <button
               onClick={() => setIsEditMode(false)}
-              className="flex-1 h-11 rounded-xl border border-gray-200 dark:border-gray-700 text-[14px] font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              className="flex-1 h-11 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleSaveEdit}
               disabled={isSaving}
-              className="flex-1 h-11 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[14px] font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 h-11 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isSaving ? (
                 <>
@@ -1647,7 +1647,7 @@ const DestinationContent = memo(function DestinationContent({
           {/* Hours Status Badge */}
           {hoursAnalysis.status && (
             <div className="absolute bottom-3 left-3">
-              <span className={`px-2.5 py-1 text-[11px] font-medium rounded-md ${
+              <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${
                 hoursAnalysis.category === 'open' ? 'bg-green-600 text-white' :
                 hoursAnalysis.category === 'opening-soon' ? 'bg-blue-600 text-white' :
                 hoursAnalysis.category === 'closing-soon' ? 'bg-amber-500 text-white' :
@@ -1663,7 +1663,7 @@ const DestinationContent = memo(function DestinationContent({
       {/* Content */}
       <div className="px-6 sm:px-8 pt-6 pb-10">
         {/* Category Label - Small caps */}
-        <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-3">
+        <p className="text-xs uppercase tracking-[0.2em] text-[var(--editorial-text-tertiary)] mb-3">
           {destination.category && capitalizeCategory(destination.category)}
           {destination.city && ` · ${capitalizeCity(destination.city)}`}
         </p>
@@ -1677,7 +1677,7 @@ const DestinationContent = memo(function DestinationContent({
         {destination.brand && (
           <Link
             href={`/brand/${encodeURIComponent(destination.brand)}`}
-            className="inline-flex items-center gap-1.5 text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-accent)] transition-colors mb-3"
+            className="inline-flex items-center gap-1.5 text-xs text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-accent)] transition-colors mb-3"
           >
             <Building2 className="h-3 w-3" />
             {destination.brand}
@@ -1685,7 +1685,7 @@ const DestinationContent = memo(function DestinationContent({
         )}
 
         {/* Rating & Meta Row */}
-        <div className="flex items-center gap-3 text-[13px] text-[var(--editorial-text-secondary)] mb-5 flex-wrap">
+        <div className="flex items-center gap-3 text-sm text-[var(--editorial-text-secondary)] mb-5 flex-wrap">
           {rating && (
             <span className="flex items-center gap-1.5">
               <img src="/google-logo.svg" alt="Google" className="h-3.5 w-3.5" />
@@ -1766,7 +1766,7 @@ const DestinationContent = memo(function DestinationContent({
         {user && (
           <button
             onClick={handleVisit}
-            className={`w-full h-10 flex items-center justify-center gap-2 text-[13px] font-medium rounded-lg border transition-all mb-6 ${
+            className={`w-full h-10 flex items-center justify-center gap-2 text-sm font-medium rounded-lg border transition-all mb-6 ${
               isVisited
                 ? 'border-green-600 bg-green-600 text-white'
                 : 'border-[var(--editorial-border)] text-[var(--editorial-text-secondary)] hover:border-[var(--editorial-text-primary)] hover:text-[var(--editorial-text-primary)]'
@@ -1781,7 +1781,7 @@ const DestinationContent = memo(function DestinationContent({
         <div className="flex gap-6 border-b border-[var(--editorial-border)] mb-6">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`pb-3 text-[13px] font-medium transition-colors ${
+            className={`pb-3 text-sm font-medium transition-colors ${
               activeTab === 'overview'
                 ? 'text-[var(--editorial-text-primary)] border-b-2 border-[var(--editorial-text-primary)]'
                 : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)]'
@@ -1791,7 +1791,7 @@ const DestinationContent = memo(function DestinationContent({
           </button>
           <button
             onClick={() => setActiveTab('info')}
-            className={`pb-3 text-[13px] font-medium transition-colors ${
+            className={`pb-3 text-sm font-medium transition-colors ${
               activeTab === 'info'
                 ? 'text-[var(--editorial-text-primary)] border-b-2 border-[var(--editorial-text-primary)]'
                 : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)]'
@@ -1802,7 +1802,7 @@ const DestinationContent = memo(function DestinationContent({
           {destination.latitude && destination.longitude && (
             <button
               onClick={() => setActiveTab('map')}
-              className={`pb-3 text-[13px] font-medium transition-colors ${
+              className={`pb-3 text-sm font-medium transition-colors ${
                 activeTab === 'map'
                   ? 'text-[var(--editorial-text-primary)] border-b-2 border-[var(--editorial-text-primary)]'
                   : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-secondary)]'
@@ -1819,7 +1819,7 @@ const DestinationContent = memo(function DestinationContent({
             {/* Description */}
             {(destination.micro_description || destination.description) && (
               <p
-                className="text-[15px] leading-[1.75] text-[var(--editorial-text-secondary)] mb-6"
+                className="text-sm leading-[1.75] text-[var(--editorial-text-secondary)] mb-6"
                 style={{ fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" }}
               >
                 {destination.micro_description || destination.description}
@@ -1829,7 +1829,7 @@ const DestinationContent = memo(function DestinationContent({
             {/* Architecture / Design Info */}
             {(enrichedData?.architect_obj || enrichedData?.interior_designer_obj || enrichedData?.design_firm_obj || enrichedData?.architectural_style) && (
               <div className="mb-6 pt-4 border-t border-[var(--editorial-border)]">
-                <p className="text-[11px] uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-3">Design</p>
+                <p className="text-xs uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-3">Design</p>
                 {enrichedData?.architect_obj && (
                   <Link
                     href={`/architect/${enrichedData.architect_obj.slug}`}
@@ -1843,13 +1843,13 @@ const DestinationContent = memo(function DestinationContent({
                       </div>
                     )}
                     <div>
-                      <p className="text-[11px] text-[var(--editorial-text-tertiary)]">Architect</p>
-                      <p className="text-[14px] text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors">{enrichedData.architect_obj.name}</p>
+                      <p className="text-xs text-[var(--editorial-text-tertiary)]">Architect</p>
+                      <p className="text-sm text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors">{enrichedData.architect_obj.name}</p>
                     </div>
                   </Link>
                 )}
                 {enrichedData?.architectural_style && (
-                  <p className="text-[13px] text-[var(--editorial-text-secondary)] mt-2">{enrichedData.architectural_style}</p>
+                  <p className="text-sm text-[var(--editorial-text-secondary)] mt-2">{enrichedData.architectural_style}</p>
                 )}
               </div>
             )}
@@ -1858,8 +1858,8 @@ const DestinationContent = memo(function DestinationContent({
             {similarPlaces.length > 0 && (
               <div className="mb-6 pt-4 border-t border-[var(--editorial-border)]">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[11px] uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)]">Similar Places</p>
-                  <button onClick={onShowSimilar} className="text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-accent)] transition-colors">
+                  <p className="text-xs uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)]">Similar Places</p>
+                  <button onClick={onShowSimilar} className="text-xs text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-accent)] transition-colors">
                     See all
                   </button>
                 </div>
@@ -1875,8 +1875,8 @@ const DestinationContent = memo(function DestinationContent({
                           <Image src={place.image} alt={place.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
                         )}
                       </div>
-                      <p className="text-[12px] text-[var(--editorial-text-primary)] line-clamp-1">{place.name}</p>
-                      <p className="text-[11px] text-[var(--editorial-text-tertiary)]">{place.city && capitalizeCity(place.city)}</p>
+                      <p className="text-xs text-[var(--editorial-text-primary)] line-clamp-1">{place.name}</p>
+                      <p className="text-xs text-[var(--editorial-text-tertiary)]">{place.city && capitalizeCity(place.city)}</p>
                     </button>
                   ))}
                 </div>
@@ -1886,7 +1886,7 @@ const DestinationContent = memo(function DestinationContent({
             {/* Nested Destinations (venues inside hotels, etc) */}
             {nestedDestinations.length > 0 && (
               <div className="mb-6 pt-4 border-t border-[var(--editorial-border)]">
-                <p className="text-[11px] uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-3">Inside {destination.name}</p>
+                <p className="text-xs uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-3">Inside {destination.name}</p>
                 <div className="space-y-2">
                   {nestedDestinations.map((nested) => (
                     <button
@@ -1898,8 +1898,8 @@ const DestinationContent = memo(function DestinationContent({
                         {nested.image && <Image src={nested.image} alt={nested.name} fill className="object-cover" />}
                       </div>
                       <div>
-                        <p className="text-[14px] text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors">{nested.name}</p>
-                        <p className="text-[12px] text-[var(--editorial-text-tertiary)]">{nested.category && capitalizeCategory(nested.category)}</p>
+                        <p className="text-sm text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors">{nested.name}</p>
+                        <p className="text-xs text-[var(--editorial-text-tertiary)]">{nested.category && capitalizeCategory(nested.category)}</p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-[var(--editorial-text-tertiary)] ml-auto" />
                     </button>
@@ -1911,7 +1911,7 @@ const DestinationContent = memo(function DestinationContent({
             {/* Parent Destination */}
             {parentDestination && (
               <div className="mb-6 pt-4 border-t border-[var(--editorial-border)]">
-                <p className="text-[11px] uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-3">Located Inside</p>
+                <p className="text-xs uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-3">Located Inside</p>
                 <button
                   onClick={() => onOpenRelated(parentDestination)}
                   className="w-full flex items-center gap-3 py-2 text-left group"
@@ -1920,8 +1920,8 @@ const DestinationContent = memo(function DestinationContent({
                     {parentDestination.image && <Image src={parentDestination.image} alt={parentDestination.name} fill className="object-cover" />}
                   </div>
                   <div>
-                    <p className="text-[14px] text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors">{parentDestination.name}</p>
-                    <p className="text-[12px] text-[var(--editorial-text-tertiary)]">{parentDestination.category && capitalizeCategory(parentDestination.category)}</p>
+                    <p className="text-sm text-[var(--editorial-text-primary)] group-hover:text-[var(--editorial-accent)] transition-colors">{parentDestination.name}</p>
+                    <p className="text-xs text-[var(--editorial-text-tertiary)]">{parentDestination.category && capitalizeCategory(parentDestination.category)}</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-[var(--editorial-text-tertiary)] ml-auto" />
                 </button>
@@ -1934,7 +1934,7 @@ const DestinationContent = memo(function DestinationContent({
                 href={enrichedData.website}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-[13px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-accent)] transition-colors"
+                className="inline-flex items-center gap-2 text-sm text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-accent)] transition-colors"
               >
                 <Globe className="w-4 h-4" />
                 {(() => { try { return new URL(enrichedData.website).hostname.replace('www.', ''); } catch { return enrichedData.website; } })()}
@@ -1948,10 +1948,10 @@ const DestinationContent = memo(function DestinationContent({
             {/* Hours */}
             {hours && hours.length > 0 && (
               <div>
-                <p className="text-[11px] uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-2">Hours</p>
+                <p className="text-xs uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-2">Hours</p>
                 <div className="space-y-1">
                   {hours.map((h, i) => (
-                    <p key={i} className="text-[13px] text-[var(--editorial-text-secondary)]">{h}</p>
+                    <p key={i} className="text-sm text-[var(--editorial-text-secondary)]">{h}</p>
                   ))}
                 </div>
               </div>
@@ -1960,18 +1960,18 @@ const DestinationContent = memo(function DestinationContent({
             {/* Address */}
             {enrichedData?.formatted_address && (
               <div>
-                <p className="text-[11px] uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-2">Address</p>
-                <p className="text-[13px] text-[var(--editorial-text-secondary)]">{enrichedData.formatted_address}</p>
+                <p className="text-xs uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-2">Address</p>
+                <p className="text-sm text-[var(--editorial-text-secondary)]">{enrichedData.formatted_address}</p>
               </div>
             )}
 
             {/* Phone */}
             {enrichedData?.international_phone_number && (
               <div>
-                <p className="text-[11px] uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-2">Phone</p>
+                <p className="text-xs uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-2">Phone</p>
                 <a
                   href={`tel:${enrichedData.international_phone_number}`}
-                  className="text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-accent)] transition-colors"
+                  className="text-sm text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-accent)] transition-colors"
                 >
                   {enrichedData.international_phone_number}
                 </a>
@@ -1981,12 +1981,12 @@ const DestinationContent = memo(function DestinationContent({
             {/* Website */}
             {enrichedData?.website && (
               <div>
-                <p className="text-[11px] uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-2">Website</p>
+                <p className="text-xs uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)] mb-2">Website</p>
                 <a
                   href={enrichedData.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[13px] text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-accent)] transition-colors"
+                  className="text-sm text-[var(--editorial-text-secondary)] hover:text-[var(--editorial-accent)] transition-colors"
                 >
                   {(() => { try { return new URL(enrichedData.website).hostname.replace('www.', ''); } catch { return enrichedData.website; } })()}
                 </a>
@@ -2006,7 +2006,7 @@ const DestinationContent = memo(function DestinationContent({
               />
             </div>
             {enrichedData?.formatted_address && (
-              <p className="text-[13px] text-[var(--editorial-text-secondary)]">{enrichedData.formatted_address}</p>
+              <p className="text-sm text-[var(--editorial-text-secondary)]">{enrichedData.formatted_address}</p>
             )}
           </div>
         )}
@@ -2015,7 +2015,7 @@ const DestinationContent = memo(function DestinationContent({
         <div className="mt-8 pt-6 border-t border-[var(--editorial-border)]">
           <Link
             href={`/destination/${destination.slug}`}
-            className="inline-flex items-center gap-2 text-[13px] font-medium text-[var(--editorial-text-primary)] hover:text-[var(--editorial-accent)] transition-colors"
+            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--editorial-text-primary)] hover:text-[var(--editorial-accent)] transition-colors"
           >
             View full page
             <ExternalLink className="w-4 h-4" />

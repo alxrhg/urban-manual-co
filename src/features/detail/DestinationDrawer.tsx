@@ -1620,7 +1620,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               <div className="space-y-0.5">
                 {addToTripError && <p className="font-medium">{addToTripError}</p>}
                 {actionError && <p className="font-medium">{actionError}</p>}
-                <p className="text-[11px] text-red-700/80 dark:text-red-200/80">You can retry without closing the drawer.</p>
+                <p className="text-xs text-red-700/80 dark:text-red-200/80">You can retry without closing the drawer.</p>
               </div>
             </div>
           )}
@@ -2020,7 +2020,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               {destination.tags && Array.isArray(destination.tags) && destination.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {destination.tags.slice(0, 5).map((tag, idx) => (
-                    <span key={idx} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-md text-[10px] text-gray-600 dark:text-gray-400">
+                    <span key={idx} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-md text-xs text-gray-600 dark:text-gray-400">
                       {formatHighlightTag(tag)}
                     </span>
                   ))}
@@ -2321,7 +2321,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </div>
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-0.5">Located inside</p>
+                  <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-0.5">Located inside</p>
                   <p className="font-medium text-sm text-black dark:text-white truncate group-hover:underline">{parentDestination.name}</p>
                   {parentDestination.category && (
                     <p className="text-xs text-gray-500 dark:text-gray-400">{parentDestination.category}</p>
@@ -3024,7 +3024,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </div>
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-0.5">Located inside</p>
+                  <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-0.5">Located inside</p>
                   <p className="font-medium text-sm text-black dark:text-white truncate group-hover:underline">{parentDestination.name}</p>
                   {parentDestination.category && (
                     <p className="text-xs text-gray-500 dark:text-gray-400">{parentDestination.category}</p>

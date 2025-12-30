@@ -446,7 +446,7 @@ function CityEditDrawer({ city, isOpen, isSaving, onClose, onSave }: CityEditDra
       <div className="relative ml-auto h-full w-full max-w-md bg-white dark:bg-gray-900 shadow-2xl flex flex-col">
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 dark:border-gray-800">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 mb-1">Editing City</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 mb-1">Editing City</p>
             <h2 className="text-2xl font-bold text-black dark:text-white">{capitalizeCity(city.city)}</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">Slug: {city.city}</p>
           </div>

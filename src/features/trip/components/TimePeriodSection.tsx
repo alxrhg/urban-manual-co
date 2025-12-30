@@ -69,13 +69,13 @@ export default function TimePeriodSection({
           <Icon className={`w-3.5 h-3.5 ${periodInfo.color}`} />
         </div>
         <span
-          className="text-[13px] font-medium text-[var(--editorial-text-primary)] uppercase tracking-wider"
+          className="text-sm font-medium text-[var(--editorial-text-primary)] uppercase tracking-wider"
           style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}
         >
           {periodInfo.label}
         </span>
         {itemCount !== undefined && itemCount > 0 && (
-          <span className="text-[11px] text-[var(--editorial-text-tertiary)]">
+          <span className="text-xs text-[var(--editorial-text-tertiary)]">
             {itemCount} {itemCount === 1 ? 'item' : 'items'}
           </span>
         )}

@@ -97,7 +97,7 @@ export function AdvancedAnalyticsDashboard() {
     if (value === 0) return null;
     const isPositive = value > 0;
     return (
-      <span className={`inline-flex items-center gap-0.5 text-[10px] ${isPositive ? 'text-green-600' : 'text-red-500'}`}>
+      <span className={`inline-flex items-center gap-0.5 text-xs ${isPositive ? 'text-green-600' : 'text-red-500'}`}>
         {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
         {Math.abs(value)}%
       </span>

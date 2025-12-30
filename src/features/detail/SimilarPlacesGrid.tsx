@@ -100,7 +100,7 @@ export function SimilarPlacesGrid({
                   </div>
                 )}
                 {rec.michelin_stars && rec.michelin_stars > 0 && (
-                  <div className="absolute bottom-1 left-1 px-1.5 py-0.5 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-600 dark:text-gray-400 text-[10px] bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-0.5">
+                  <div className="absolute bottom-1 left-1 px-1.5 py-0.5 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-0.5">
                     <img
                       src="/michelin-star.svg"
                       alt="Michelin star"
@@ -110,10 +110,10 @@ export function SimilarPlacesGrid({
                   </div>
                 )}
               </div>
-              <h4 className="font-medium text-[11px] leading-tight line-clamp-2 mb-0.5 text-black dark:text-white">
+              <h4 className="font-medium text-xs leading-tight line-clamp-2 mb-0.5 text-black dark:text-white">
                 {rec.name}
               </h4>
-              <span className="text-[10px] text-gray-500 dark:text-gray-400">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
                 {capitalizeCity(rec.city)}
               </span>
             </button>

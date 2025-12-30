@@ -86,7 +86,7 @@ export default function TimelineItem({
           {block.startTime || '--:--'}
         </span>
         {block.durationMinutes && (
-          <p className="text-[10px] text-gray-300 dark:text-gray-700 mt-0.5">
+          <p className="text-xs text-gray-300 dark:text-gray-700 mt-0.5">
             {formatDuration(block.durationMinutes)}
           </p>
         )}

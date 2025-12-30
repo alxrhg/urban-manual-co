@@ -53,10 +53,10 @@ const TripSelectorContent = memo(function TripSelectorContent() {
         <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
           <MapPin className="w-8 h-8 text-gray-400" />
         </div>
-        <p className="text-[15px] font-medium text-gray-900 dark:text-white mb-2">
+        <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">
           Sign in to access your trips
         </p>
-        <p className="text-[13px] text-gray-500 text-center">
+        <p className="text-sm text-gray-500 text-center">
           Create an account to save and manage your travel plans
         </p>
       </div>
@@ -70,7 +70,7 @@ const TripSelectorContent = memo(function TripSelectorContent() {
         <h2 className="text-[18px] font-semibold text-gray-900 dark:text-white">
           Your Trips
         </h2>
-        <p className="text-[13px] text-gray-500 mt-1">
+        <p className="text-sm text-gray-500 mt-1">
           Select a trip to edit or create a new one
         </p>
       </div>
@@ -85,8 +85,8 @@ const TripSelectorContent = memo(function TripSelectorContent() {
             <Plus className="w-5 h-5" />
           </div>
           <div className="text-left">
-            <p className="text-[14px] font-medium">Create New Trip</p>
-            <p className="text-[12px] opacity-70">Start planning your next adventure</p>
+            <p className="text-sm font-medium">Create New Trip</p>
+            <p className="text-xs opacity-70">Start planning your next adventure</p>
           </div>
           <ChevronRight className="w-5 h-5 ml-auto opacity-50" />
         </button>
@@ -100,7 +100,7 @@ const TripSelectorContent = memo(function TripSelectorContent() {
           </div>
         ) : savedTrips.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-[13px] text-gray-400">No saved trips yet</p>
+            <p className="text-sm text-gray-400">No saved trips yet</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -126,10 +126,10 @@ const TripSelectorContent = memo(function TripSelectorContent() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                     {trip.title}
                   </p>
-                  <div className="flex items-center gap-2 text-[12px] text-gray-500">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
                     <span>{trip.destination}</span>
                     <span>·</span>
                     <span>{trip.itemCount} places</span>

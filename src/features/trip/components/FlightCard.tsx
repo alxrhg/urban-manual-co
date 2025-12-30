@@ -212,7 +212,7 @@ export default function FlightCard({ flight, departureDate, onExpand }: FlightCa
                 {origin.code}
               </p>
               {origin.city && (
-                <p className="text-[11px] text-stone-500 dark:text-gray-400 mt-0.5 max-w-[80px] truncate">
+                <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5 max-w-[80px] truncate">
                   {origin.city}
                 </p>
               )}
@@ -232,7 +232,7 @@ export default function FlightCard({ flight, departureDate, onExpand }: FlightCa
                 {destination.code}
               </p>
               {destination.city && (
-                <p className="text-[11px] text-stone-500 dark:text-gray-400 mt-0.5 max-w-[80px] truncate">
+                <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5 max-w-[80px] truncate">
                   {destination.city}
                 </p>
               )}
@@ -241,7 +241,7 @@ export default function FlightCard({ flight, departureDate, onExpand }: FlightCa
 
           {/* Status Badge */}
           {flightInfo && (
-            <div className={`px-2.5 py-1 rounded-md text-[11px] font-medium ${getStatusStyles(flightInfo.status)}`}>
+            <div className={`px-2.5 py-1 rounded-md text-xs font-medium ${getStatusStyles(flightInfo.status)}`}>
               {flightInfo.statusText}
             </div>
           )}
@@ -260,14 +260,14 @@ export default function FlightCard({ flight, departureDate, onExpand }: FlightCa
         <div className="flex items-center justify-between">
           {/* Departure */}
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-0.5">
+            <p className="text-xs uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-0.5">
               Depart
             </p>
             <p className="text-lg font-semibold text-stone-900 dark:text-white font-mono tabular-nums">
               {formatTime(flightInfo?.actualDeparture || flight.departureTime)}
             </p>
             {(departureDate || flight.departureDate) && (
-              <p className="text-[11px] text-stone-500 dark:text-gray-400 mt-0.5">
+              <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
                 {formatDate(departureDate || flight.departureDate)}
               </p>
             )}
@@ -280,11 +280,11 @@ export default function FlightCard({ flight, departureDate, onExpand }: FlightCa
                 {duration}
               </p>
             )}
-            <p className="text-[10px] text-stone-400 dark:text-gray-500 mt-0.5">
+            <p className="text-xs text-stone-400 dark:text-gray-500 mt-0.5">
               Nonstop
             </p>
             {flightInfo?.delay && flightInfo.delay > 0 && (
-              <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5 font-medium">
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5 font-medium">
                 +{flightInfo.delay}m delay
               </p>
             )}
@@ -292,14 +292,14 @@ export default function FlightCard({ flight, departureDate, onExpand }: FlightCa
 
           {/* Arrival */}
           <div className="text-right">
-            <p className="text-[10px] uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-0.5">
+            <p className="text-xs uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-0.5">
               Arrive
             </p>
             <p className="text-lg font-semibold text-stone-900 dark:text-white font-mono tabular-nums">
               {formatTime(flightInfo?.actualArrival || flight.arrivalTime)}
             </p>
             {flight.arrivalDate && flight.arrivalDate !== flight.departureDate && (
-              <p className="text-[11px] text-stone-500 dark:text-gray-400 mt-0.5">
+              <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
                 {formatDate(flight.arrivalDate)}
               </p>
             )}
@@ -359,7 +359,7 @@ export default function FlightCard({ flight, departureDate, onExpand }: FlightCa
             <div className="flex gap-6">
               {(flightInfo?.terminal || flight.terminal) && (
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-stone-400 dark:text-gray-500">
+                  <p className="text-xs uppercase tracking-wider text-stone-400 dark:text-gray-500">
                     Terminal
                   </p>
                   <p className="text-sm font-medium text-stone-700 dark:text-gray-300 font-mono">
@@ -369,7 +369,7 @@ export default function FlightCard({ flight, departureDate, onExpand }: FlightCa
               )}
               {(flightInfo?.gate || flight.gate) && (
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-stone-400 dark:text-gray-500">
+                  <p className="text-xs uppercase tracking-wider text-stone-400 dark:text-gray-500">
                     Gate
                   </p>
                   <p className="text-sm font-medium text-stone-700 dark:text-gray-300 font-mono">
@@ -383,7 +383,7 @@ export default function FlightCard({ flight, departureDate, onExpand }: FlightCa
           {/* Seat */}
           {flight.seatNumber && (
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-stone-400 dark:text-gray-500">
+              <p className="text-xs uppercase tracking-wider text-stone-400 dark:text-gray-500">
                 Seat
               </p>
               <p className="text-sm font-medium text-stone-700 dark:text-gray-300 font-mono">
@@ -395,7 +395,7 @@ export default function FlightCard({ flight, departureDate, onExpand }: FlightCa
           {/* Confirmation Number */}
           {flight.confirmationNumber && (
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-stone-400 dark:text-gray-500">
+              <p className="text-xs uppercase tracking-wider text-stone-400 dark:text-gray-500">
                 Confirmation
               </p>
               <p className="text-sm font-medium text-stone-700 dark:text-gray-300 font-mono tracking-wide">
@@ -407,7 +407,7 @@ export default function FlightCard({ flight, departureDate, onExpand }: FlightCa
           {/* Notes */}
           {flight.notes && (
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-stone-400 dark:text-gray-500">
+              <p className="text-xs uppercase tracking-wider text-stone-400 dark:text-gray-500">
                 Notes
               </p>
               <p className="text-xs text-stone-600 dark:text-gray-400 mt-0.5">

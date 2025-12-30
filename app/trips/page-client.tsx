@@ -147,7 +147,7 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
         {/* Tab Navigation - Editorial style */}
         {categorizedTrips.upcoming.length > 0 && categorizedTrips.past.length > 0 && (
           <div className="mb-12">
-            <div className="flex flex-wrap gap-x-5 gap-y-2 text-[13px]">
+            <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
               {(['all', 'upcoming', 'past'] as FilterTab[]).map((tab) => (
                 <button
                   key={tab}
@@ -219,11 +219,11 @@ function TripCard({ trip }: { trip: TripWithStats }) {
       className="flex flex-col border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)] rounded-lg overflow-hidden hover:bg-[var(--editorial-border-subtle)] transition-colors"
     >
       <div className="text-left p-5 flex-1">
-        <h3 className="font-medium text-[15px] text-[var(--editorial-text-primary)] mb-2 line-clamp-2">{trip.title}</h3>
+        <h3 className="font-medium text-sm text-[var(--editorial-text-primary)] mb-2 line-clamp-2">{trip.title}</h3>
         {trip.description && (
-          <p className="text-[13px] text-[var(--editorial-text-secondary)] line-clamp-2 mb-3">{trip.description}</p>
+          <p className="text-sm text-[var(--editorial-text-secondary)] line-clamp-2 mb-3">{trip.description}</p>
         )}
-        <div className="space-y-1.5 text-[12px] text-[var(--editorial-text-tertiary)]">
+        <div className="space-y-1.5 text-xs text-[var(--editorial-text-tertiary)]">
           {destinations && (
             <div className="flex items-center gap-2">
               <MapPin className="h-3.5 w-3.5" />
@@ -240,13 +240,13 @@ function TripCard({ trip }: { trip: TripWithStats }) {
             </div>
           )}
           {totalItems > 0 && (
-            <div className="text-[12px] text-[var(--editorial-text-tertiary)] pt-1">
+            <div className="text-xs text-[var(--editorial-text-tertiary)] pt-1">
               {totalItems} {totalItems === 1 ? 'place' : 'places'}
             </div>
           )}
           {state && (
             <div className="pt-2">
-              <span className={`capitalize text-[11px] px-2.5 py-1 rounded-md font-medium ${
+              <span className={`capitalize text-xs px-2.5 py-1 rounded-md font-medium ${
                 state === 'upcoming'
                   ? 'bg-[var(--editorial-accent)]/10 text-[var(--editorial-accent)]'
                   : 'bg-[var(--editorial-border)] text-[var(--editorial-text-secondary)]'

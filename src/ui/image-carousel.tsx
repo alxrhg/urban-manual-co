@@ -166,7 +166,7 @@ export function ImageCarousel({
 
         {/* Image counter */}
         {images.length > 1 && (
-          <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm text-white text-[13px] font-medium">
+          <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm text-white text-sm font-medium">
             {currentIndex + 1}/{images.length}
           </div>
         )}

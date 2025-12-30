@@ -32,7 +32,7 @@ const TripEmptyState = memo(function TripEmptyState({
       </h3>
 
       {/* Description */}
-      <p className="text-[13px] text-gray-500 mb-6 max-w-[260px] leading-relaxed">
+      <p className="text-sm text-gray-500 mb-6 max-w-[260px] leading-relaxed">
         Add places from the homepage or let our AI curate the perfect itinerary for you
       </p>
 
@@ -42,7 +42,7 @@ const TripEmptyState = memo(function TripEmptyState({
         <button
           onClick={onSuggest}
           disabled={isLoading}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 text-[13px] font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-100 transition-all disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] shadow-sm"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-100 transition-all disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] shadow-sm"
         >
           {isLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -55,7 +55,7 @@ const TripEmptyState = memo(function TripEmptyState({
         {/* Secondary: Browse */}
         <button
           onClick={onBrowse}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/10 rounded-xl hover:bg-gray-200 dark:hover:bg-white/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/10 rounded-xl hover:bg-gray-200 dark:hover:bg-white/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
           <Map className="w-4 h-4" />
           Browse destinations
@@ -63,7 +63,7 @@ const TripEmptyState = memo(function TripEmptyState({
       </div>
 
       {/* Tip */}
-      <p className="mt-6 text-[11px] text-gray-400 max-w-[220px]">
+      <p className="mt-6 text-xs text-gray-400 max-w-[220px]">
         Tip: Click the + button on any destination card to add it to your trip
       </p>
     </div>

@@ -54,10 +54,10 @@ const DestinationPalette = memo(function DestinationPalette({ city }: Destinatio
       >
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-amber-500" />
-          <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Add Places
           </span>
-          <span className="text-[11px] text-gray-400">
+          <span className="text-xs text-gray-400">
             Drag to add
           </span>
         </div>
@@ -72,7 +72,7 @@ const DestinationPalette = memo(function DestinationPalette({ city }: Destinatio
       {isExpanded && (
         <div className="px-3 pb-3 space-y-1.5 max-h-48 overflow-y-auto">
           {isLoading ? (
-            <div className="py-4 text-center text-[12px] text-gray-400">
+            <div className="py-4 text-center text-xs text-gray-400">
               Loading suggestions...
             </div>
           ) : (
@@ -146,10 +146,10 @@ function DraggableDestinationCard({ destination }: { destination: Destination })
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-[12px] font-medium text-gray-900 dark:text-white truncate">
+        <p className="text-xs font-medium text-gray-900 dark:text-white truncate">
           {destination.name}
         </p>
-        <p className="text-[10px] text-gray-500 truncate capitalize">
+        <p className="text-xs text-gray-500 truncate capitalize">
           {destination.category}
         </p>
       </div>

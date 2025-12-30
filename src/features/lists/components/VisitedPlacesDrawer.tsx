@@ -147,7 +147,7 @@ export function VisitedPlacesDrawer() {
                       showBadges={true}
                     />
                     {place.visited_at && (
-                      <div className="absolute top-2.5 right-2.5 text-[11px] sm:text-[10px] font-medium text-stone-500 dark:text-gray-400 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm px-2 py-1 rounded-lg">
+                      <div className="absolute top-2.5 right-2.5 text-xs sm:text-xs font-medium text-stone-500 dark:text-gray-400 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm px-2 py-1 rounded-lg">
                         {new Date(place.visited_at).getFullYear()}
                       </div>
                     )}

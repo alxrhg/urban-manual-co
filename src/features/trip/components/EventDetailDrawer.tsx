@@ -117,7 +117,7 @@ export default function EventDetailDrawer({
             {/* Time */}
             {timeRange && (
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] uppercase tracking-widest text-gray-400">
+                <span className="text-xs uppercase tracking-widest text-gray-400">
                   Time
                 </span>
                 <span className="text-sm text-gray-900 dark:text-white flex items-center gap-2">
@@ -130,7 +130,7 @@ export default function EventDetailDrawer({
             {/* Duration */}
             {event.durationMinutes && (
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] uppercase tracking-widest text-gray-400">
+                <span className="text-xs uppercase tracking-widest text-gray-400">
                   Duration
                 </span>
                 <span className="text-sm text-gray-900 dark:text-white">
@@ -142,7 +142,7 @@ export default function EventDetailDrawer({
             {/* Location */}
             {event.place?.city && (
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] uppercase tracking-widest text-gray-400">
+                <span className="text-xs uppercase tracking-widest text-gray-400">
                   Location
                 </span>
                 <span className="text-sm text-gray-900 dark:text-white flex items-center gap-2">
@@ -155,7 +155,7 @@ export default function EventDetailDrawer({
             {/* Address */}
             {event.place?.address && (
               <div className="flex flex-col gap-1 col-span-2">
-                <span className="text-[10px] uppercase tracking-widest text-gray-400">
+                <span className="text-xs uppercase tracking-widest text-gray-400">
                   Address
                 </span>
                 <span className="text-sm text-gray-900 dark:text-white">
@@ -170,7 +170,7 @@ export default function EventDetailDrawer({
             <>
               <Separator />
               <div className="px-6 py-4">
-                <span className="text-[10px] uppercase tracking-widest text-gray-400 block mb-2">
+                <span className="text-xs uppercase tracking-widest text-gray-400 block mb-2">
                   Notes
                 </span>
                 <p className="text-sm text-gray-700 dark:text-gray-300">

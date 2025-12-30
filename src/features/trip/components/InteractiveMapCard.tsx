@@ -72,7 +72,7 @@ export default function InteractiveMapCard({
           <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <div className="relative">
               <div className="w-4 h-4 rounded-full bg-gray-900 dark:bg-white border-2 border-white dark:border-gray-900 shadow-lg" />
-              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-gray-900 dark:bg-white rounded text-[10px] text-white dark:text-gray-900 whitespace-nowrap">
+              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-gray-900 dark:bg-white rounded text-xs text-white dark:text-gray-900 whitespace-nowrap">
                 {locationName}
               </div>
             </div>
@@ -104,7 +104,7 @@ export default function InteractiveMapCard({
 
       {/* Footer */}
       <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
-        <div className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
+        <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
           Interactive Map
         </div>
         <div className="font-medium text-gray-900 dark:text-white">

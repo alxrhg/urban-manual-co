@@ -217,7 +217,7 @@ export default function HotelCard({
       <div className="p-5">
         {/* YOUR STAY Section */}
         <div className="mb-5">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-3">
+          <p className="text-xs font-bold uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-3">
             Your Stay
           </p>
 
@@ -229,7 +229,7 @@ export default function HotelCard({
                 <div className="w-7 h-7 rounded-lg bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
                   <KeyRound className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
                 </div>
-                <p className="text-[10px] font-medium uppercase tracking-wide text-green-600 dark:text-green-400">
+                <p className="text-xs font-medium uppercase tracking-wide text-green-600 dark:text-green-400">
                   Check-in
                 </p>
               </div>
@@ -245,7 +245,7 @@ export default function HotelCard({
             <div className="flex flex-col items-center justify-center px-2">
               <div className="flex-1 w-px bg-gradient-to-b from-green-300 via-stone-300 to-rose-300 dark:from-green-600 dark:via-gray-600 dark:to-rose-600" />
               {nights && (
-                <div className="my-2 px-2 py-1 rounded-full bg-stone-100 dark:bg-gray-800 text-[10px] font-medium text-stone-600 dark:text-gray-300 whitespace-nowrap">
+                <div className="my-2 px-2 py-1 rounded-full bg-stone-100 dark:bg-gray-800 text-xs font-medium text-stone-600 dark:text-gray-300 whitespace-nowrap">
                   {nights} {nights === 1 ? 'night' : 'nights'}
                 </div>
               )}
@@ -258,7 +258,7 @@ export default function HotelCard({
                 <div className="w-7 h-7 rounded-lg bg-rose-100 dark:bg-rose-900/50 flex items-center justify-center">
                   <Clock className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
                 </div>
-                <p className="text-[10px] font-medium uppercase tracking-wide text-rose-600 dark:text-rose-400">
+                <p className="text-xs font-medium uppercase tracking-wide text-rose-600 dark:text-rose-400">
                   Check-out
                 </p>
               </div>
@@ -276,7 +276,7 @@ export default function HotelCard({
         <div className="grid grid-cols-2 gap-3 mb-5">
           {roomNumber && (
             <div className="bg-stone-50 dark:bg-gray-800/50 rounded-xl p-3">
-              <p className="text-[10px] text-stone-400 dark:text-gray-500 uppercase tracking-wide mb-1">
+              <p className="text-xs text-stone-400 dark:text-gray-500 uppercase tracking-wide mb-1">
                 Room
               </p>
               <p className="text-lg font-bold text-stone-900 dark:text-white">
@@ -290,7 +290,7 @@ export default function HotelCard({
 
           {confirmationNumber && (
             <div className="bg-stone-50 dark:bg-gray-800/50 rounded-xl p-3">
-              <p className="text-[10px] text-stone-400 dark:text-gray-500 uppercase tracking-wide mb-1">
+              <p className="text-xs text-stone-400 dark:text-gray-500 uppercase tracking-wide mb-1">
                 Confirmation
               </p>
               <p className="text-sm font-mono font-bold text-stone-900 dark:text-white truncate">
@@ -312,7 +312,7 @@ export default function HotelCard({
                   <p className="text-sm font-medium text-stone-900 dark:text-white">
                     Breakfast
                     {breakfast.included && (
-                      <span className="ml-2 text-[10px] text-green-600 dark:text-green-400 font-normal">
+                      <span className="ml-2 text-xs text-green-600 dark:text-green-400 font-normal">
                         Included
                       </span>
                     )}
@@ -334,7 +334,7 @@ export default function HotelCard({
         {/* Amenities */}
         {amenities.length > 0 && (
           <div className="mb-5">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-2">
+            <p className="text-xs font-bold uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-2">
               Amenities
             </p>
             <div className="flex flex-wrap gap-2">

@@ -184,7 +184,7 @@ export default function BestTimeToVisitWidget({
               <p className="text-xs font-medium text-stone-900 dark:text-white">
                 {data.bestOverall.month}
               </p>
-              <p className="text-[10px] text-stone-500 dark:text-gray-400">
+              <p className="text-xs text-stone-500 dark:text-gray-400">
                 Best overall
               </p>
             </div>
@@ -198,7 +198,7 @@ export default function BestTimeToVisitWidget({
                 <p className="text-xs font-medium text-stone-900 dark:text-white">
                   {data.bestForWeather.month}
                 </p>
-                <p className="text-[10px] text-stone-500 dark:text-gray-400">
+                <p className="text-xs text-stone-500 dark:text-gray-400">
                   Best weather
                 </p>
               </div>
@@ -213,7 +213,7 @@ export default function BestTimeToVisitWidget({
                 <p className="text-xs font-medium text-stone-900 dark:text-white">
                   {data.bestForBudget.month}
                 </p>
-                <p className="text-[10px] text-stone-500 dark:text-gray-400">
+                <p className="text-xs text-stone-500 dark:text-gray-400">
                   Best prices
                 </p>
               </div>
@@ -240,10 +240,10 @@ export default function BestTimeToVisitWidget({
                       : 'border-stone-200 dark:border-gray-800'
                   }`}
                 >
-                  <p className="text-[10px] font-medium text-stone-700 dark:text-gray-300">
+                  <p className="text-xs font-medium text-stone-700 dark:text-gray-300">
                     {month.month.slice(0, 3)}
                   </p>
-                  <p className="text-[10px] text-stone-500 dark:text-gray-400">
+                  <p className="text-xs text-stone-500 dark:text-gray-400">
                     {month.overallScore}
                   </p>
                 </div>

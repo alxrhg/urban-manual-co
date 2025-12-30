@@ -77,7 +77,7 @@ export default function GoogleStaticMap({
           {infoWindowContent.rating && <p className="text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-1"><img src="/google-logo.svg" alt="Google" className="h-3 w-3 inline" /> {infoWindowContent.rating.toFixed(1)}</p>}
         </div>
       )}
-      <div className="absolute bottom-3 right-3 bg-white/80 dark:bg-gray-900/70 text-[10px] uppercase tracking-wide px-2 py-1 rounded z-10">
+      <div className="absolute bottom-3 right-3 bg-white/80 dark:bg-gray-900/70 text-xs uppercase tracking-wide px-2 py-1 rounded z-10">
         Powered by Google Maps
       </div>
     </div>

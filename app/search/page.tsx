@@ -290,7 +290,7 @@ function SearchPageContent() {
             </div>
             <button
               onClick={() => disableEditMode()}
-              className="px-3 py-1.5 text-[11px] font-semibold rounded-md bg-gray-900 text-white hover:bg-gray-800 transition-all dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
+              className="px-3 py-1.5 text-xs font-semibold rounded-md bg-gray-900 text-white hover:bg-gray-800 transition-all dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
             >
               Exit Edit Mode
             </button>

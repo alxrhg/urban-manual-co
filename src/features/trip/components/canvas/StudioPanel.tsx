@@ -128,7 +128,7 @@ function Inspector() {
 
         {/* Title overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-4">
-          <span className="inline-block px-2 py-0.5 mb-2 text-[10px] font-medium uppercase tracking-wide rounded-md bg-white/20 backdrop-blur-sm text-white">
+          <span className="inline-block px-2 py-0.5 mb-2 text-xs font-medium uppercase tracking-wide rounded-md bg-white/20 backdrop-blur-sm text-white">
             {destination.category?.replace(/_/g, ' ')}
           </span>
           <h2 className="text-xl font-bold text-white">
@@ -465,7 +465,7 @@ function Palette({ city, sourceDestinations }: { city: string; sourceDestination
           </div>
         ) : (
           <div className="space-y-3">
-            <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide font-medium">
+            <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide font-medium">
               Drag to add to your trip →
             </p>
             {filteredDestinations.map((destination) => (

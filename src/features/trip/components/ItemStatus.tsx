@@ -79,14 +79,14 @@ export default function ItemStatus({
       {status !== 'unknown' && (
         <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md ${config.bg}`}>
           <Icon className={`w-3 h-3 ${config.color}`} />
-          <span className={`text-[10px] font-medium ${config.color}`}>
+          <span className={`text-xs font-medium ${config.color}`}>
             {config.label}
           </span>
         </div>
       )}
 
       {waitMinutes !== undefined && waitMinutes > 0 && (
-        <div className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400">
+        <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
           <Clock className="w-3 h-3" />
           <span>~{waitMinutes} min wait</span>
         </div>

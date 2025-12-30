@@ -245,7 +245,7 @@ export function TripsDrawer() {
                             </h4>
                             <div className="flex items-center gap-1.5 mt-1">
                               {statusConfig && (
-                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${statusConfig.bg} ${statusConfig.text}`}>
+                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium ${statusConfig.bg} ${statusConfig.text}`}>
                                   <span className={`w-1 h-1 rounded-full ${statusConfig.dot}`} />
                                   {statusConfig.label}
                                 </span>

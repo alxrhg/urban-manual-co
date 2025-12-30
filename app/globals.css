@@ -1,3 +1,20 @@
+/* ============================================
+   SCROLLBAR DESIGN TOKENS
+   ============================================ */
+:root {
+  --scrollbar-thumb: #d4d4d4;
+  --scrollbar-thumb-hover: #a3a3a3;
+  --scrollbar-editorial-thumb: #ddd7cf;
+  --scrollbar-editorial-thumb-hover: #c9c1b6;
+}
+
+.dark {
+  --scrollbar-thumb: #525252;
+  --scrollbar-thumb-hover: #737373;
+  --scrollbar-editorial-thumb: #484744;
+  --scrollbar-editorial-thumb-hover: #5a5955;
+}
+
 /* Ultra-minimal scrollbar for response section */
 .scrollbar-thin::-webkit-scrollbar {
   width: 4px;
@@ -8,30 +25,18 @@
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #d4d4d4;
+  background: var(--scrollbar-thumb);
   border-radius: 2px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: #a3a3a3;
-}
-
-.dark .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #525252;
-}
-
-.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: #737373;
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* Firefox */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: #d4d4d4 transparent;
-}
-
-.dark .scrollbar-thin {
-  scrollbar-color: #525252 transparent;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 /* No scrollbar utility - Lovably style */
@@ -55,30 +60,18 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #ddd7cf;
+  background: var(--scrollbar-editorial-thumb);
   border-radius: 3px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #c9c1b6;
-}
-
-.dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #484744;
-}
-
-.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #5a5955;
+  background: var(--scrollbar-editorial-thumb-hover);
 }
 
 /* Editorial scrollbar - Firefox */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #ddd7cf transparent;
-}
-
-.dark .custom-scrollbar {
-  scrollbar-color: #484744 transparent;
+  scrollbar-color: var(--scrollbar-editorial-thumb) transparent;
 }
 
 /* ============================================

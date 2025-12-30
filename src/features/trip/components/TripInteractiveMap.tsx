@@ -947,7 +947,7 @@ export default function TripInteractiveMap({
               return (
                 <div key={day} className="flex items-center gap-2">
                   <div
-                    className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-semibold"
+                    className="w-4 h-4 rounded-full flex items-center justify-center text-xs font-semibold"
                     style={{ background: colors.bg, color: colors.text }}
                   >
                     {day}

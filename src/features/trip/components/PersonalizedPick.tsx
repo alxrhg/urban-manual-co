@@ -133,19 +133,19 @@ export default function PersonalizedPick({
                   {recommendation.reason}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] text-gray-400 capitalize">
+                  <span className="text-xs text-gray-400 capitalize">
                     {recommendation.destination.category}
                   </span>
                   {recommendation.destination.rating && (
                     <>
                       <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
-                      <span className="text-[10px] text-gray-400">
+                      <span className="text-xs text-gray-400">
                         {recommendation.destination.rating.toFixed(1)}
                       </span>
                     </>
                   )}
                   <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
-                  <span className="text-[10px] text-gray-400">
+                  <span className="text-xs text-gray-400">
                     {Math.round(recommendation.matchScore * 100)}% match
                   </span>
                 </div>

@@ -61,14 +61,14 @@ export default function WeatherSwapAlert({ days, onSwap, className = '' }: Weath
           <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 rounded-lg mb-3">
             {/* Outdoor activity (rainy day) */}
             <div className="flex-1 text-center">
-              <div className="flex items-center justify-center gap-1 text-[10px] text-stone-500 mb-1">
+              <div className="flex items-center justify-center gap-1 text-xs text-stone-500 mb-1">
                 <CloudRain className="w-3 h-3 text-blue-400" />
                 Day {suggestion.affectedDay}
               </div>
               <div className="text-xs font-medium text-stone-900 dark:text-white truncate px-2">
                 {suggestion.affectedItem.name}
               </div>
-              <div className="text-[10px] text-orange-500 mt-0.5">Outdoor</div>
+              <div className="text-xs text-orange-500 mt-0.5">Outdoor</div>
             </div>
 
             {/* Swap arrow */}
@@ -78,14 +78,14 @@ export default function WeatherSwapAlert({ days, onSwap, className = '' }: Weath
 
             {/* Indoor activity (clear day) */}
             <div className="flex-1 text-center">
-              <div className="flex items-center justify-center gap-1 text-[10px] text-stone-500 mb-1">
+              <div className="flex items-center justify-center gap-1 text-xs text-stone-500 mb-1">
                 <Sun className="w-3 h-3 text-yellow-500" />
                 Day {suggestion.targetDay}
               </div>
               <div className="text-xs font-medium text-stone-900 dark:text-white truncate px-2">
                 {suggestion.targetItem.name}
               </div>
-              <div className="text-[10px] text-green-500 mt-0.5">Indoor</div>
+              <div className="text-xs text-green-500 mt-0.5">Indoor</div>
             </div>
           </div>
 

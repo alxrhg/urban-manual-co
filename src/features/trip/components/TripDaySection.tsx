@@ -228,13 +228,13 @@ export default function TripDaySection({
               Day {day.dayNumber}
             </span>
             {formattedDate && (
-              <span className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+              <span className="text-xs sm:text-xs text-gray-500 dark:text-gray-400">
                 {formattedDate}
               </span>
             )}
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <span className="text-[11px] sm:text-xs text-gray-400 dark:text-gray-500">
+            <span className="text-xs sm:text-xs text-gray-400 dark:text-gray-500">
               {day.items.length} {day.items.length === 1 ? 'stop' : 'stops'}
             </span>
             <ChevronDown

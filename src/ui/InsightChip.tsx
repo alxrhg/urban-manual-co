@@ -23,7 +23,7 @@ import {
  * - Time indicators
  *
  * Standard styles:
- * - Text: text-[10px] font-medium
+ * - Text: text-xs font-medium
  * - Padding: px-2 py-0.5 (standard), px-1.5 py-0.5 (compact)
  * - Border radius: rounded-full
  * - Icon: w-3 h-3
@@ -135,7 +135,7 @@ export function InsightChip({
   return (
     <span
       className={`
-        inline-flex items-center gap-1 rounded-md text-[10px] font-medium
+        inline-flex items-center gap-1 rounded-md text-xs font-medium
         ${padding} ${styles.bg} ${styles.text}
         ${isClickable ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}
         ${className}
@@ -171,7 +171,7 @@ export function InsightText({
   return (
     <span
       className={`
-        inline-flex items-center gap-1 text-[10px] font-medium
+        inline-flex items-center gap-1 text-xs font-medium
         ${styles.text} ${className}
       `.trim()}
     >

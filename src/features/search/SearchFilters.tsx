@@ -156,7 +156,7 @@ export function SearchFiltersComponent({
           }
           handleToggle(!isOpen);
         }}
-        className={`flex items-center justify-center gap-2 h-10 px-4 text-[13px] font-medium rounded-lg transition-all duration-200 ease-out
+        className={`flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium rounded-lg transition-all duration-200 ease-out
           border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)]
           text-[var(--editorial-text-primary)] hover:bg-[var(--editorial-border-subtle)]
           active:scale-[0.98]`}

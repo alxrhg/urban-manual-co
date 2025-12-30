@@ -197,7 +197,7 @@ export function BestTimeToVisit({
             </div>
           ))}
         </div>
-        <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+        <div className="flex justify-between text-xs text-gray-400 mt-1">
           <span>6am</span>
           <span>12pm</span>
           <span>6pm</span>
@@ -206,7 +206,7 @@ export function BestTimeToVisit({
       </div>
 
       {/* Legend */}
-      <div className="flex items-center justify-center gap-3 mb-4 text-[10px] text-gray-500">
+      <div className="flex items-center justify-center gap-3 mb-4 text-xs text-gray-500">
         <span className="flex items-center gap-1">
           <span className="w-2 h-2 rounded bg-emerald-500" /> Low
         </span>
@@ -245,28 +245,28 @@ export function BestTimeToVisit({
           {bestTimes.morning !== undefined && (
             <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
               <Sun className="h-3 w-3 mx-auto mb-1 text-yellow-500" />
-              <p className="text-[10px] text-gray-500">Morning</p>
+              <p className="text-xs text-gray-500">Morning</p>
               <p className="text-xs font-medium">{formatHour(bestTimes.morning)}</p>
             </div>
           )}
           {bestTimes.afternoon !== undefined && (
             <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
               <Sun className="h-3 w-3 mx-auto mb-1 text-orange-500" />
-              <p className="text-[10px] text-gray-500">Afternoon</p>
+              <p className="text-xs text-gray-500">Afternoon</p>
               <p className="text-xs font-medium">{formatHour(bestTimes.afternoon)}</p>
             </div>
           )}
           {bestTimes.evening !== undefined && (
             <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
               <Moon className="h-3 w-3 mx-auto mb-1 text-indigo-500" />
-              <p className="text-[10px] text-gray-500">Evening</p>
+              <p className="text-xs text-gray-500">Evening</p>
               <p className="text-xs font-medium">{formatHour(bestTimes.evening)}</p>
             </div>
           )}
         </div>
       </div>
 
-      <p className="text-[10px] text-gray-400 mt-3 text-center">
+      <p className="text-xs text-gray-400 mt-3 text-center">
         Based on historical visitor patterns
       </p>
     </div>

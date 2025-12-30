@@ -63,7 +63,7 @@ function CurrentTimeIndicatorComponent({
       aria-label={`Current time: ${timeLabel}`}
     >
       <div className="flex items-center">
-        <div className="w-12 text-[11px] text-right text-red-500 font-medium tabular-nums pr-2">
+        <div className="w-12 text-xs text-right text-red-500 font-medium tabular-nums pr-2">
           {timeLabel}
         </div>
         <div className="w-2 h-2 rounded-full bg-red-500 -ml-1 shadow-sm" />

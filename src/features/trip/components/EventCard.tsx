@@ -89,7 +89,7 @@ export default function EventCard({ event, name, compact = true }: EventCardProp
         <h3 className="text-lg font-semibold text-stone-900 dark:text-white leading-tight">
           {displayName}
         </h3>
-        <span className={`flex-shrink-0 px-2 py-0.5 rounded-md text-[10px] font-medium uppercase tracking-wide ${eventTypeColors[eventType]}`}>
+        <span className={`flex-shrink-0 px-2 py-0.5 rounded-md text-xs font-medium uppercase tracking-wide ${eventTypeColors[eventType]}`}>
           {eventTypeLabels[eventType]}
         </span>
       </div>
@@ -126,13 +126,13 @@ export default function EventCard({ event, name, compact = true }: EventCardProp
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {event.ticketConfirmation && (
-            <p className="text-[10px] text-stone-500 dark:text-gray-400 flex items-center gap-1">
+            <p className="text-xs text-stone-500 dark:text-gray-400 flex items-center gap-1">
               <Ticket className="w-3 h-3" />
               <span className="font-mono font-medium">{event.ticketConfirmation}</span>
             </p>
           )}
           {event.seatInfo && (
-            <p className="text-[10px] text-stone-500 dark:text-gray-400">
+            <p className="text-xs text-stone-500 dark:text-gray-400">
               {event.seatInfo}
             </p>
           )}
@@ -156,7 +156,7 @@ export default function EventCard({ event, name, compact = true }: EventCardProp
       {/* Notes (if any) */}
       {event.notes && (
         <div className="mt-2 pt-2 border-t border-stone-200 dark:border-gray-700">
-          <p className="text-[10px] text-stone-500 dark:text-gray-400 line-clamp-2">
+          <p className="text-xs text-stone-500 dark:text-gray-400 line-clamp-2">
             {event.notes}
           </p>
         </div>

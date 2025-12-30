@@ -580,7 +580,7 @@ export function ContentManager({ onEditDestination, onCreateNew, refreshTrigger 
             <SlidersHorizontal className="w-3 h-3" />
             <span>Filters</span>
             {activeFilterCount > 0 && (
-              <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-full">
+              <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 text-xs bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-full">
                 {activeFilterCount}
               </span>
             )}
@@ -844,7 +844,7 @@ export function ContentManager({ onEditDestination, onCreateNew, refreshTrigger 
 
               {/* Sort + Show - right aligned */}
               <div className="flex items-center gap-1.5 ml-auto">
-                <span className="text-[10px] text-gray-400 uppercase tracking-wider">Sort</span>
+                <span className="text-xs text-gray-400 uppercase tracking-wider">Sort</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-150">
@@ -865,7 +865,7 @@ export function ContentManager({ onEditDestination, onCreateNew, refreshTrigger 
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <span className="text-[10px] text-gray-400 uppercase tracking-wider">Show</span>
+                <span className="text-xs text-gray-400 uppercase tracking-wider">Show</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-150">
@@ -1040,7 +1040,7 @@ export function ContentManager({ onEditDestination, onCreateNew, refreshTrigger 
             <p className="text-xs sm:text-sm text-gray-400 dark:text-gray-500">
               {((page - 1) * itemsPerPage) + 1}–{Math.min(page * itemsPerPage, totalCount)} of {totalCount.toLocaleString()}
             </p>
-            <span className="hidden lg:flex items-center gap-1.5 text-[10px] text-gray-400 dark:text-gray-600">
+            <span className="hidden lg:flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-600">
               <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 font-mono">←</kbd>
               <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 font-mono">→</kbd>
               <span>to navigate</span>
@@ -1134,7 +1134,7 @@ function TableView({
   const SortButton = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <button
       onClick={() => handleSort(field)}
-      className={`flex items-center gap-1.5 text-[11px] uppercase tracking-wide font-medium transition-colors ${
+      className={`flex items-center gap-1.5 text-xs uppercase tracking-wide font-medium transition-colors ${
         sortField === field
           ? 'text-black dark:text-white'
           : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
@@ -1158,13 +1158,13 @@ function TableView({
         return (
           <div className="flex items-center gap-1.5">
             {dest.last_enriched_at && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full">
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full">
                 <Check className="w-3 h-3" />
                 Enriched
               </span>
             )}
             {dest.image && (
-              <span className="inline-flex items-center text-[10px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 p-1 rounded">
+              <span className="inline-flex items-center text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 p-1 rounded">
                 <ImageIcon className="w-3 h-3" />
               </span>
             )}
@@ -1201,7 +1201,7 @@ function TableView({
       return <SortButton field={column.sortField}>{column.label}</SortButton>;
     }
     return (
-      <span className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500 font-medium">
+      <span className="text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500 font-medium">
         {column.label}
       </span>
     );

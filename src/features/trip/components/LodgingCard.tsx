@@ -105,7 +105,7 @@ export default function LodgingCard({
             <span className="text-stone-400 px-0.5">→</span>
             <span className="font-medium">{formatDate(checkOut) || 'Check-out'}</span>
             {nights && (
-              <span className="text-stone-400 ml-auto text-[10px] bg-stone-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
+              <span className="text-stone-400 ml-auto text-xs bg-stone-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
                 {nights} {nights === 1 ? 'night' : 'nights'}
               </span>
             )}
@@ -115,7 +115,7 @@ export default function LodgingCard({
         {/* REGION 3: Confirmation & Contact */}
         <div className="flex items-center justify-between">
           {confirmationNumber && (
-            <p className="text-[10px] text-stone-500 dark:text-gray-400">
+            <p className="text-xs text-stone-500 dark:text-gray-400">
               Confirmation: <span className="font-mono font-medium">{confirmationNumber}</span>
             </p>
           )}
@@ -148,7 +148,7 @@ export default function LodgingCard({
         {/* Notes (if any) */}
         {notes && (
           <div className="mt-2 pt-2 border-t border-stone-200 dark:border-gray-700">
-            <p className="text-[10px] text-stone-500 dark:text-gray-400 line-clamp-2">
+            <p className="text-xs text-stone-500 dark:text-gray-400 line-clamp-2">
               {notes}
             </p>
           </div>

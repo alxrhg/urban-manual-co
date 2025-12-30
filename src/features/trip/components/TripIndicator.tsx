@@ -30,7 +30,7 @@ export default function TripIndicator() {
                    bg-gray-900 dark:bg-white rounded-full shadow-lg
                    active:scale-[0.97] transition-transform"
       >
-        <span className="text-[13px] font-medium text-white dark:text-gray-900">
+        <span className="text-sm font-medium text-white dark:text-gray-900">
           {recentTrip.title} · {recentTrip.itemCount}
         </span>
       </button>
@@ -48,7 +48,7 @@ export default function TripIndicator() {
                  bg-gray-900 dark:bg-white rounded-full shadow-lg
                  active:scale-[0.97] transition-transform"
     >
-      <span className="text-[13px] font-medium text-white dark:text-gray-900">
+      <span className="text-sm font-medium text-white dark:text-gray-900">
         {activeTrip.title || activeTrip.city || 'Trip'} · {totalItems}
       </span>
     </button>

@@ -371,7 +371,7 @@ export default function AdminSearchesPage() {
                       <td className="py-2 pr-4 capitalize">{(intent.category as string) || (filters.category as string) || ''}</td>
                       <td className="py-2 pr-4">
                         {count === 0 ? (
-                          <Badge variant="destructive" className="text-[10px]">0</Badge>
+                          <Badge variant="destructive" className="text-xs">0</Badge>
                         ) : (
                           count
                         )}

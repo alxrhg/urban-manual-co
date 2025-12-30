@@ -243,7 +243,7 @@ export function CompactGapIndicator({
     <div className={`flex items-center justify-center py-1 ${className}`}>
       <button
         onClick={onClick}
-        className="text-[10px] text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-400 transition-colors"
+        className="text-xs text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-400 transition-colors"
       >
         {formatGap(gapMinutes)} gap
         {onClick && <span className="ml-1">+</span>}
@@ -281,14 +281,14 @@ export function SubtleSuggestionHint({
     <div className={`p-3 rounded-xl bg-gray-50 dark:bg-white/5 ${className}`}>
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
-          <p className="text-[12px] text-gray-600 dark:text-gray-400">{message}</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400">{message}</p>
           {suggestions.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {suggestions.map((suggestion, index) => (
                 <button
                   key={index}
                   onClick={() => onAccept?.(suggestion)}
-                  className="flex items-center gap-1 px-2 py-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors text-[11px]"
+                  className="flex items-center gap-1 px-2 py-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors text-xs"
                 >
                   <span>{suggestion.emoji}</span>
                   <span className="text-gray-600 dark:text-gray-400">{suggestion.label}</span>

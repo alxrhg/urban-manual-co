@@ -261,7 +261,7 @@ export default function GooglePlacesAutocomplete({
                       {prediction.types.slice(0, 2).map((type: string) => (
                         <span
                           key={type}
-                          className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded"
+                          className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded"
                         >
                           {type.replace(/_/g, ' ')}
                         </span>

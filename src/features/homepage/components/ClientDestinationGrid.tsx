@@ -305,7 +305,7 @@ export function ClientDestinationGrid() {
                 <button
                   key={pageNum}
                   onClick={() => setCurrentPage(pageNum)}
-                  className={`w-10 h-10 sm:w-10 sm:h-10 rounded-full text-[13px] font-medium transition-all duration-200
+                  className={`w-10 h-10 sm:w-10 sm:h-10 rounded-full text-sm font-medium transition-all duration-200
                              active:scale-95 ${
                     currentPage === pageNum
                       ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
@@ -337,14 +337,14 @@ export function ClientDestinationGrid() {
       )}
 
       {/* Results count & keyboard hint */}
-      <div className="text-center text-[13px] text-gray-400 dark:text-gray-500 mb-8">
+      <div className="text-center text-sm text-gray-400 dark:text-gray-500 mb-8">
         <span>
           Showing {(currentPage - 1) * displayedDestinations.length + 1}-
           {Math.min(currentPage * displayedDestinations.length, filteredDestinations.length)} of {filteredDestinations.length} destinations
         </span>
         <span className="hidden md:inline ml-2">
-          • Use <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 font-mono text-[11px]">←</kbd>{' '}
-          <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 font-mono text-[11px]">→</kbd> to navigate
+          • Use <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 font-mono text-xs">←</kbd>{' '}
+          <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 font-mono text-xs">→</kbd> to navigate
         </span>
       </div>
     </div>

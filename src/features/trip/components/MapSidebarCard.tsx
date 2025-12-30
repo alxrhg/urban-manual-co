@@ -500,7 +500,7 @@ export default function MapSidebarCard({
       <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-0.5">
+            <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-0.5">
               Trip Map
             </div>
             <div className="flex items-center gap-2">
@@ -531,7 +531,7 @@ export default function MapSidebarCard({
                 );
               })}
               {uniqueDays.length > 4 && (
-                <span className="text-[10px] text-gray-400 ml-1">+{uniqueDays.length - 4}</span>
+                <span className="text-xs text-gray-400 ml-1">+{uniqueDays.length - 4}</span>
               )}
             </div>
           )}

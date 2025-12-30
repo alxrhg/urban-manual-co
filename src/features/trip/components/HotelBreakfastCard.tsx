@@ -74,7 +74,7 @@ export default function HotelBreakfastCard({
                     </span>
                   )}
                   {included && (
-                    <span className="inline-flex items-center gap-1 text-[10px] text-green-600 dark:text-green-400">
+                    <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
                       <Check className="w-3 h-3" />
                       Included
                     </span>
@@ -87,7 +87,7 @@ export default function HotelBreakfastCard({
                 {startTime}–{endTime}
               </p>
               {date && (
-                <p className="text-[10px] text-stone-500 dark:text-gray-400">
+                <p className="text-xs text-stone-500 dark:text-gray-400">
                   {formatDate(date)}
                 </p>
               )}
@@ -115,7 +115,7 @@ export default function HotelBreakfastCard({
             <Coffee className="w-5 h-5 text-orange-600 dark:text-orange-400" />
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400">
+            <p className="text-xs font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400">
               Breakfast
             </p>
             <h3 className="text-lg font-semibold text-stone-900 dark:text-white">
@@ -130,7 +130,7 @@ export default function HotelBreakfastCard({
           <div className="bg-white dark:bg-gray-900/50 rounded-xl p-3 shadow-sm">
             <div className="flex items-center gap-2 mb-1">
               <Clock className="w-3.5 h-3.5 text-stone-400" />
-              <p className="text-[10px] text-stone-500 dark:text-gray-400 uppercase tracking-wide">
+              <p className="text-xs text-stone-500 dark:text-gray-400 uppercase tracking-wide">
                 Serving
               </p>
             </div>
@@ -148,7 +148,7 @@ export default function HotelBreakfastCard({
           <div className="bg-white dark:bg-gray-900/50 rounded-xl p-3 shadow-sm">
             <div className="flex items-center gap-2 mb-1">
               <Utensils className="w-3.5 h-3.5 text-stone-400" />
-              <p className="text-[10px] text-stone-500 dark:text-gray-400 uppercase tracking-wide">
+              <p className="text-xs text-stone-500 dark:text-gray-400 uppercase tracking-wide">
                 Style
               </p>
             </div>

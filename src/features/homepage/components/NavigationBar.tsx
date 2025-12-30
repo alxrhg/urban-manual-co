@@ -89,13 +89,13 @@ export default function NavigationBar() {
       <div className="flex justify-between items-center">
         {/* Left side - Results count and clear filters */}
         <div className="flex items-center gap-3">
-          <p className="text-[13px] text-[var(--editorial-text-secondary)]">
+          <p className="text-sm text-[var(--editorial-text-secondary)]">
             {filteredDestinations.length} destinations
           </p>
           {hasFilters && (
             <button
               onClick={clearFilters}
-              className="flex items-center gap-1 text-[12px] text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
+              className="flex items-center gap-1 text-xs text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors"
             >
               <X className="h-3 w-3" />
               Clear
@@ -110,7 +110,7 @@ export default function NavigationBar() {
             onClick={handleCreateTrip}
             disabled={creatingTrip}
             className="flex h-10 flex-shrink-0 items-center justify-center gap-2 rounded-lg
-                       bg-[var(--editorial-accent)] px-4 text-[13px] font-medium
+                       bg-[var(--editorial-accent)] px-4 text-sm font-medium
                        text-white
                        disabled:opacity-50 hover:bg-[var(--editorial-accent-hover)]
                        active:scale-[0.98] transition-all duration-200"
@@ -140,7 +140,7 @@ export default function NavigationBar() {
             href="/cities"
             className="hidden sm:flex h-10 flex-shrink-0 items-center justify-center gap-2 rounded-lg
                        border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)]
-                       px-4 text-[13px] font-medium text-[var(--editorial-text-primary)]
+                       px-4 text-sm font-medium text-[var(--editorial-text-primary)]
                        hover:bg-[var(--editorial-border-subtle)]
                        active:scale-[0.98] transition-all duration-200"
           >

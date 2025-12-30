@@ -141,7 +141,7 @@ function SortableBucketItem({
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-600 mt-1"
+              className="inline-flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 mt-1"
             >
               <ExternalLink className="w-3 h-3" />
               {item.source || 'Link'}
@@ -171,7 +171,7 @@ function SortableBucketItem({
       {/* Day Picker */}
       {showDayPicker && (
         <div className="px-3 pb-3 pt-1 border-t border-stone-100 dark:border-gray-800">
-          <p className="text-[10px] text-stone-500 mb-2">Add to day:</p>
+          <p className="text-xs text-stone-500 mb-2">Add to day:</p>
           <div className="flex flex-wrap gap-1">
             {availableDays.map((day) => (
               <button

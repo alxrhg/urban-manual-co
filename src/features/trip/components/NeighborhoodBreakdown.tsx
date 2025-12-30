@@ -116,14 +116,14 @@ export default function NeighborhoodBreakdown({
               <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
                 {neighborhood.name}
               </span>
-              <span className="text-[10px] text-gray-400 dark:text-gray-500">
+              <span className="text-xs text-gray-400 dark:text-gray-500">
                 ({neighborhood.items.length})
               </span>
             </div>
 
             {/* Transit time arrow */}
             {index < neighborhoods.length - 1 && transitTimes[index] && (
-              <div className="flex items-center gap-1 text-[10px] text-gray-400">
+              <div className="flex items-center gap-1 text-xs text-gray-400">
                 <span>→</span>
                 <Clock className="w-2.5 h-2.5" />
                 <span>{transitTimes[index].minutes}m</span>

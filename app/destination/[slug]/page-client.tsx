@@ -418,7 +418,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
           {/* Back link - Breadcrumb style */}
           <Link
             href={`/city/${destination.city}`}
-            className="inline-flex items-center gap-1.5 text-[13px] text-gray-500 dark:text-[#8b949e] hover:text-gray-900 dark:hover:text-white transition-colors mb-6 group"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-[#8b949e] hover:text-gray-900 dark:hover:text-white transition-colors mb-6 group"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
             <span>{cityName}</span>
@@ -431,7 +431,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
               {/* Header - Hero Section */}
               <div className="mb-8">
                 {/* Category & Rating - Meta Info */}
-                <div className="flex items-center gap-3 text-[13px] mb-4">
+                <div className="flex items-center gap-3 text-sm mb-4">
                   <span className="uppercase tracking-wider text-gray-500 dark:text-[#8b949e] font-medium">
                     {formatLabel(destination.category)}
                   </span>
@@ -456,7 +456,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 {/* Location */}
                 <div className="flex items-center gap-2 text-gray-600 dark:text-[#8b949e] mb-5">
                   <MapPin className="w-4 h-4" />
-                  <span className="text-[14px]">
+                  <span className="text-sm">
                     {destination.neighborhood && `${destination.neighborhood} · `}
                     {cityName}{destination.country ? `, ${destination.country}` : ''}
                   </span>
@@ -465,20 +465,20 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 {/* Tags - Pills */}
                 <div className="flex flex-wrap gap-2 mb-5">
                   {destination.michelin_stars && destination.michelin_stars > 0 && (
-                    <span className="px-3 py-1.5 rounded-full bg-[#f85149]/10 dark:bg-[#f85149]/20 border border-[#f85149]/30 dark:border-[#f85149]/40 text-[12px] font-medium text-[#f85149] flex items-center gap-1.5">
+                    <span className="px-3 py-1.5 rounded-full bg-[#f85149]/10 dark:bg-[#f85149]/20 border border-[#f85149]/30 dark:border-[#f85149]/40 text-xs font-medium text-[#f85149] flex items-center gap-1.5">
                       <img src="/michelin-star.svg" alt="Michelin" className="w-3.5 h-3.5" />
                       {destination.michelin_stars} Michelin {destination.michelin_stars === 1 ? 'Star' : 'Stars'}
                     </span>
                   )}
                   {destination.crown && (
-                    <span className="px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-[12px] font-medium text-amber-700 dark:text-amber-300">
+                    <span className="px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-xs font-medium text-amber-700 dark:text-amber-300">
                       Crown
                     </span>
                   )}
                   {destination.brand && (
                     <Link
                       href={`/brand/${encodeURIComponent(destination.brand)}`}
-                      className="px-3 py-1.5 rounded-lg bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] text-[12px] font-medium text-[var(--editorial-text-secondary)] hover:bg-[var(--editorial-border-subtle)] transition-colors flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-lg bg-[var(--editorial-bg-elevated)] border border-[var(--editorial-border)] text-xs font-medium text-[var(--editorial-text-secondary)] hover:bg-[var(--editorial-border-subtle)] transition-colors flex items-center gap-1.5"
                     >
                       <Building2 className="w-3.5 h-3.5" />
                       {destination.brand}
@@ -490,14 +490,14 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 <div className="flex items-center gap-2 flex-wrap">
                   <button
                     onClick={handleShare}
-                    className="flex items-center gap-2 px-4 py-2 border border-[var(--editorial-border)] rounded-lg text-[13px] font-medium text-[var(--editorial-text-secondary)] hover:bg-[var(--editorial-border-subtle)] transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 border border-[var(--editorial-border)] rounded-lg text-sm font-medium text-[var(--editorial-text-secondary)] hover:bg-[var(--editorial-border-subtle)] transition-colors"
                   >
                     <Share2 className="w-4 h-4" />
                     Share
                   </button>
                   <button
                     onClick={() => user ? (!isSaved && setShowSaveModal(true)) : router.push('/auth/login')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                       isSaved
                         ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                         : 'border border-gray-200 dark:border-[#30363d] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#1c2128]'
@@ -515,7 +515,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                             user ? handleVisitToggle() : router.push('/auth/login');
                           }
                         }}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-colors ${
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                           isVisited
                             ? 'bg-green-600 text-white'
                             : 'border border-gray-200 dark:border-[#30363d] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#1c2128]'
@@ -565,7 +565,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                       />
                       {/* Image counter badge */}
                       {allImages.length > 1 && (
-                        <div className="absolute bottom-3 right-3 px-3 py-1.5 rounded-md bg-black/70 backdrop-blur-sm text-white text-[12px] font-medium">
+                        <div className="absolute bottom-3 right-3 px-3 py-1.5 rounded-md bg-black/70 backdrop-blur-sm text-white text-xs font-medium">
                           {selectedImageIndex + 1} / {allImages.length}
                         </div>
                       )}
@@ -598,7 +598,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                           loading="lazy"
                         />
                         {idx === 4 && allImages.length > 5 && (
-                          <div className="absolute inset-0 bg-black/70 flex items-center justify-center text-white text-[12px] font-medium">
+                          <div className="absolute inset-0 bg-black/70 flex items-center justify-center text-white text-xs font-medium">
                             +{allImages.length - 5}
                           </div>
                         )}
@@ -611,7 +611,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
               {/* Parent Destination */}
               {parentDestination && (
                 <div className="mb-8 p-4 bg-white dark:bg-[#161b22] rounded-xl border border-gray-200 dark:border-[#30363d]">
-                  <p className="text-[11px] uppercase tracking-wider text-gray-500 dark:text-[#8b949e] font-medium mb-3">Located inside</p>
+                  <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-[#8b949e] font-medium mb-3">Located inside</p>
                   <HorizontalDestinationCard
                     destination={parentDestination}
                     onClick={() => router.push(`/destination/${parentDestination.slug}`)}
@@ -623,14 +623,14 @@ export default function DestinationPageClient({ initialDestination, parentDestin
               {/* About Section - Card style */}
               {(destination.micro_description || destination.content) && (
                 <div className="mb-8 p-6 bg-white dark:bg-[#161b22] rounded-xl border border-gray-200 dark:border-[#30363d]">
-                  <h2 className="text-[11px] font-medium text-gray-500 dark:text-[#8b949e] uppercase tracking-wider mb-4">About</h2>
+                  <h2 className="text-xs font-medium text-gray-500 dark:text-[#8b949e] uppercase tracking-wider mb-4">About</h2>
                   {destination.micro_description && (
                     <p className="text-[16px] font-medium text-gray-900 dark:text-white mb-3 leading-relaxed">
                       {destination.micro_description}
                     </p>
                   )}
                   {destination.content && (
-                    <p className="text-[15px] leading-[1.7] text-gray-600 dark:text-[#8b949e]">
+                    <p className="text-sm leading-[1.7] text-gray-600 dark:text-[#8b949e]">
                       {htmlToPlainText(destination.content)}
                     </p>
                   )}
@@ -655,19 +655,19 @@ export default function DestinationPageClient({ initialDestination, parentDestin
               {/* Reviews Section - 2x2 Grid */}
               {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
                 <div className="mb-8">
-                  <h2 className="text-[11px] font-medium text-gray-500 dark:text-[#8b949e] uppercase tracking-wider mb-4">Reviews</h2>
+                  <h2 className="text-xs font-medium text-gray-500 dark:text-[#8b949e] uppercase tracking-wider mb-4">Reviews</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {enrichedData.reviews.slice(0, 4).map((review: any, idx: number) => (
                       <div key={idx} className="p-4 bg-[var(--editorial-bg-elevated)] rounded-xl border border-[var(--editorial-border)] hover:border-[var(--editorial-text-tertiary)] transition-colors">
                         <div className="flex items-center gap-3 mb-3">
                           {/* Avatar with initial */}
                           <div className="w-9 h-9 rounded-full bg-[var(--editorial-border)] flex items-center justify-center flex-shrink-0">
-                            <span className="text-[13px] font-semibold text-[var(--editorial-text-secondary)]">
+                            <span className="text-sm font-semibold text-[var(--editorial-text-secondary)]">
                               {review.author_name?.charAt(0)?.toUpperCase() || '?'}
                             </span>
                           </div>
                           <div className="min-w-0">
-                            <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">{review.author_name}</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{review.author_name}</p>
                             {/* Star rating */}
                             <div className="flex items-center gap-0.5 mt-0.5">
                               {[...Array(5)].map((_, i) => (
@@ -677,7 +677,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                           </div>
                         </div>
                         {review.text && (
-                          <p className="text-[13px] text-gray-600 dark:text-[#8b949e] leading-relaxed line-clamp-3">{review.text}</p>
+                          <p className="text-sm text-gray-600 dark:text-[#8b949e] leading-relaxed line-clamp-3">{review.text}</p>
                         )}
                       </div>
                     ))}
@@ -689,12 +689,12 @@ export default function DestinationPageClient({ initialDestination, parentDestin
               {destination.latitude && destination.longitude && (
                 <div className="mb-8">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-[11px] font-medium text-gray-500 dark:text-[#8b949e] uppercase tracking-wider">Location</h2>
+                    <h2 className="text-xs font-medium text-gray-500 dark:text-[#8b949e] uppercase tracking-wider">Location</h2>
                     <a
                       href={`https://www.google.com/maps/search/?api=1&query=${destination.latitude},${destination.longitude}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-[12px] text-gray-500 dark:text-[#8b949e] hover:text-gray-900 dark:hover:text-white transition-colors group"
+                      className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-[#8b949e] hover:text-gray-900 dark:hover:text-white transition-colors group"
                     >
                       <Navigation className="w-3.5 h-3.5" />
                       <span>Get Directions</span>
@@ -718,7 +718,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                       }}
                     />
                     {/* Map attribution */}
-                    <div className="absolute bottom-2 right-2 text-[10px] text-gray-500 dark:text-[#8b949e] bg-white/80 dark:bg-[#161b22]/80 px-2 py-0.5 rounded">
+                    <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-[#8b949e] bg-white/80 dark:bg-[#161b22]/80 px-2 py-0.5 rounded">
                       Powered by Google
                     </div>
                   </div>
@@ -728,7 +728,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
               {/* Sibling Destinations */}
               {siblingDestinations.length > 0 && parentDestination && (
                 <div className="mb-8">
-                  <h2 className="text-[11px] font-medium text-gray-500 dark:text-[#8b949e] uppercase tracking-wider mb-4">
+                  <h2 className="text-xs font-medium text-gray-500 dark:text-[#8b949e] uppercase tracking-wider mb-4">
                     Also inside {parentDestination.name}
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -759,7 +759,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
               {/* Recommendations Section - 4 column grid */}
               {(loadingRecommendations || recommendations.length > 0) && (
                 <div className="mb-8">
-                  <h2 className="text-[11px] font-medium text-gray-500 dark:text-[#8b949e] uppercase tracking-wider mb-4">You might also like</h2>
+                  <h2 className="text-xs font-medium text-gray-500 dark:text-[#8b949e] uppercase tracking-wider mb-4">You might also like</h2>
                   {loadingRecommendations ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                       {[1, 2, 3, 4].map(i => (
@@ -808,17 +808,17 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                             )}
                             {/* Michelin star badge */}
                             {rec.michelin_stars && rec.michelin_stars > 0 && (
-                              <div className="absolute bottom-2 left-2 px-2 py-1 rounded-md bg-[#f85149] text-white text-[10px] font-medium flex items-center gap-1">
+                              <div className="absolute bottom-2 left-2 px-2 py-1 rounded-md bg-[#f85149] text-white text-xs font-medium flex items-center gap-1">
                                 <img src="/michelin-star.svg" alt="Michelin" className="w-2.5 h-2.5" />
                                 {rec.michelin_stars}
                               </div>
                             )}
                           </div>
                           {/* Card info */}
-                          <h3 className="text-[13px] font-medium text-gray-900 dark:text-white group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors line-clamp-1">
+                          <h3 className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors line-clamp-1">
                             {rec.name}
                           </h3>
-                          <p className="text-[12px] text-gray-500 dark:text-[#8b949e]">{capitalizeCity(rec.city)}</p>
+                          <p className="text-xs text-gray-500 dark:text-[#8b949e]">{capitalizeCity(rec.city)}</p>
                         </button>
                       ))}
                     </div>
@@ -848,13 +848,13 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                   enrichedData?.opening_hours?.weekday_text) && (
                   <div className="bg-white dark:bg-[#161b22] rounded-xl border border-gray-200 dark:border-[#30363d] overflow-hidden">
                     <div className="p-5">
-                      <h3 className="text-[11px] font-medium text-gray-500 dark:text-[#8b949e] uppercase tracking-wider mb-4">Contact</h3>
+                      <h3 className="text-xs font-medium text-gray-500 dark:text-[#8b949e] uppercase tracking-wider mb-4">Contact</h3>
 
                       {/* Address */}
                       {(enrichedData?.formatted_address || destination.formatted_address) && (
                         <div className="flex items-start gap-3 mb-4">
                           <MapPin className="w-4 h-4 text-gray-400 dark:text-[#8b949e] mt-0.5 flex-shrink-0" />
-                          <p className="text-[13px] text-gray-600 dark:text-[#8b949e] leading-relaxed">
+                          <p className="text-sm text-gray-600 dark:text-[#8b949e] leading-relaxed">
                             {enrichedData?.formatted_address || destination.formatted_address}
                           </p>
                         </div>
@@ -866,7 +866,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                           href={`https://www.google.com/maps/search/?api=1&query=${destination.latitude},${destination.longitude}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-[13px] font-medium hover:opacity-90 transition-opacity mb-4"
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity mb-4"
                         >
                           <Navigation className="w-4 h-4" />
                           Get Directions
@@ -878,7 +878,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                         {(enrichedData?.international_phone_number || destination.phone_number) && (
                           <a
                             href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
-                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-gray-100 dark:bg-[#21262d] rounded-lg text-[12px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#30363d] transition-colors"
+                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-gray-100 dark:bg-[#21262d] rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#30363d] transition-colors"
                           >
                             <Phone className="w-3.5 h-3.5" />
                             Call
@@ -892,7 +892,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                             })()}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-gray-100 dark:bg-[#21262d] rounded-lg text-[12px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#30363d] transition-colors"
+                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-gray-100 dark:bg-[#21262d] rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#30363d] transition-colors"
                           >
                             <Globe className="w-3.5 h-3.5" />
                             Website
@@ -906,15 +906,15 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                       <div className="px-5 py-4 bg-gray-50 dark:bg-[#0d1117] border-t border-gray-200 dark:border-[#30363d]">
                         <div className="flex items-center gap-2 mb-3">
                           <Clock className="w-3.5 h-3.5 text-gray-400 dark:text-[#8b949e]" />
-                          <h4 className="text-[11px] font-medium text-gray-500 dark:text-[#8b949e] uppercase tracking-wider">Hours</h4>
+                          <h4 className="text-xs font-medium text-gray-500 dark:text-[#8b949e] uppercase tracking-wider">Hours</h4>
                         </div>
                         <div className="space-y-1.5">
                           {enrichedData.opening_hours.weekday_text.map((day: string, index: number) => {
                             const [dayName, hoursText] = day.split(': ');
                             return (
                               <div key={index} className="flex justify-between items-center">
-                                <span className="text-[11px] text-gray-500 dark:text-[#8b949e]">{dayName}</span>
-                                <span className="text-[11px] text-gray-900 dark:text-white font-medium">{hoursText}</span>
+                                <span className="text-xs text-gray-500 dark:text-[#8b949e]">{dayName}</span>
+                                <span className="text-xs text-gray-900 dark:text-white font-medium">{hoursText}</span>
                               </div>
                             );
                           })}
@@ -930,7 +930,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                     href={destination.booking_url || destination.opentable_url || destination.resy_url || (destination.website?.startsWith('http') ? destination.website : `https://${destination.website}`)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-[14px] font-semibold hover:opacity-90 transition-opacity"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
                   >
                     <ExternalLink className="w-4 h-4" />
                     Book Now
@@ -941,13 +941,13 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 <div className="space-y-2">
                   <button
                     onClick={() => router.push(`/city/${destination.city}`)}
-                    className="w-full px-4 py-3 text-[13px] font-medium border border-gray-200 dark:border-[#30363d] rounded-xl hover:bg-gray-50 dark:hover:bg-[#161b22] transition-colors text-gray-700 dark:text-gray-300"
+                    className="w-full px-4 py-3 text-sm font-medium border border-gray-200 dark:border-[#30363d] rounded-xl hover:bg-gray-50 dark:hover:bg-[#161b22] transition-colors text-gray-700 dark:text-gray-300"
                   >
                     Explore more in {cityName}
                   </button>
                   <button
                     onClick={() => router.push('/')}
-                    className="w-full px-4 py-3 text-[13px] font-medium border border-gray-200 dark:border-[#30363d] rounded-xl hover:bg-gray-50 dark:hover:bg-[#161b22] transition-colors text-gray-700 dark:text-gray-300"
+                    className="w-full px-4 py-3 text-sm font-medium border border-gray-200 dark:border-[#30363d] rounded-xl hover:bg-gray-50 dark:hover:bg-[#161b22] transition-colors text-gray-700 dark:text-gray-300"
                   >
                     Browse all destinations
                   </button>
@@ -964,10 +964,10 @@ export default function DestinationPageClient({ initialDestination, parentDestin
               enrichedData?.international_phone_number || destination.phone_number ||
               enrichedData?.website || destination.website) && (
               <div className="bg-white dark:bg-[#161b22] rounded-xl border border-gray-200 dark:border-[#30363d] p-4">
-                <h3 className="text-[11px] font-medium text-gray-500 dark:text-[#8b949e] uppercase tracking-wider mb-3">Contact</h3>
+                <h3 className="text-xs font-medium text-gray-500 dark:text-[#8b949e] uppercase tracking-wider mb-3">Contact</h3>
 
                 {(enrichedData?.formatted_address || destination.formatted_address) && (
-                  <p className="text-[13px] text-gray-600 dark:text-[#8b949e] mb-4">
+                  <p className="text-sm text-gray-600 dark:text-[#8b949e] mb-4">
                     {enrichedData?.formatted_address || destination.formatted_address}
                   </p>
                 )}
@@ -978,7 +978,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                       href={`https://www.google.com/maps/search/?api=1&query=${destination.latitude},${destination.longitude}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-[13px] font-medium hover:opacity-90 transition-opacity"
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
                     >
                       <Navigation className="w-4 h-4" />
                       Directions
@@ -987,7 +987,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                   {(enrichedData?.international_phone_number || destination.phone_number) && (
                     <a
                       href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
-                      className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-[#21262d] rounded-lg text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#30363d] transition-colors"
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-[#21262d] rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#30363d] transition-colors"
                     >
                       <Phone className="w-4 h-4" />
                     </a>
@@ -1000,7 +1000,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                       })()}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-[#21262d] rounded-lg text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#30363d] transition-colors"
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-[#21262d] rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#30363d] transition-colors"
                     >
                       <Globe className="w-4 h-4" />
                     </a>
@@ -1011,7 +1011,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
             <button
               onClick={() => router.push(`/city/${destination.city}`)}
-              className="w-full px-4 py-3.5 text-[14px] font-semibold bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 transition-opacity"
+              className="w-full px-4 py-3.5 text-sm font-semibold bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 transition-opacity"
             >
               Explore more in {cityName}
             </button>

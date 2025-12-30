@@ -143,7 +143,7 @@ export default function NearbyDiscoveries({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium truncate">{place.name}</p>
-                <p className="text-[10px] text-stone-500 truncate">
+                <p className="text-xs text-stone-500 truncate">
                   {place.category} · {formatDistance((place as any).distance)}
                 </p>
               </div>

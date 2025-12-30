@@ -38,7 +38,7 @@ export default function UMPillButton({
         className
       )}
     >
-      {icon && <span className="text-[15px]">{icon}</span>}
+      {icon && <span className="text-sm">{icon}</span>}
       {children}
     </button>
   );

@@ -14,7 +14,7 @@ const AppleMapView = dynamic(
       <div className="w-full h-[70vh] rounded-lg bg-gray-100 dark:bg-[#1c1c1e] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-          <span className="text-[14px] text-gray-500 dark:text-gray-400">Loading map...</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">Loading map...</span>
         </div>
       </div>
     ),

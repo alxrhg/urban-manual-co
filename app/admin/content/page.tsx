@@ -183,7 +183,7 @@ export default function CMSPage() {
             >
               <div className="flex items-center gap-3">
                 <span className={`
-                  text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded
+                  text-xs uppercase tracking-wider font-semibold px-2 py-0.5 rounded
                   ${activity.action === 'Created' ? 'bg-emerald-500/10 text-emerald-400' :
                     activity.action === 'Updated' ? 'bg-indigo-500/10 text-indigo-400' :
                     'bg-rose-500/10 text-rose-400'}

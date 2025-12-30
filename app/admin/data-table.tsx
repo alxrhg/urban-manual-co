@@ -250,7 +250,7 @@ export function DataTable<TData, TValue>({
             {table.getFilteredRowModel().rows.length} destination(s) found.
           </div>
           {table.getPageCount() > 1 && (
-            <span className="hidden lg:flex items-center gap-1.5 text-[10px] text-gray-400 dark:text-gray-600">
+            <span className="hidden lg:flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-600">
               <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 font-mono">←</kbd>
               <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 font-mono">→</kbd>
               <span>to navigate</span>

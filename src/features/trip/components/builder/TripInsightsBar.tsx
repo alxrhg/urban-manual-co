@@ -79,7 +79,7 @@ export const TripInsightsBar = memo(function TripInsightsBar({
         <div
           key={`${insight.icon}-${idx}`}
           className={`
-            flex items-center gap-2 px-3 py-2 rounded-xl text-[11px]
+            flex items-center gap-2 px-3 py-2 rounded-xl text-xs
             ${getInsightColor(insight.type)}
             transition-all duration-200
           `}
@@ -121,7 +121,7 @@ export const TripHealthBadge = memo(function TripHealthBadge({
     <div
       className={`
         inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md
-        text-[10px] font-semibold tracking-wide
+        text-xs font-semibold tracking-wide
         ${getHealthColor(score)}
         transition-colors duration-200
       `}
@@ -154,10 +154,10 @@ export const TripHealthCard = memo(function TripHealthCard({
       {/* Header with score */}
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="text-[13px] font-semibold text-gray-900 dark:text-white">
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
             Trip Health
           </h4>
-          <p className="text-[11px] text-gray-500 mt-0.5">
+          <p className="text-xs text-gray-500 mt-0.5">
             Based on timing, variety & routing
           </p>
         </div>
@@ -170,13 +170,13 @@ export const TripHealthCard = memo(function TripHealthCard({
           <div className="text-[16px] font-semibold text-gray-900 dark:text-white">
             {Math.round(health.totalWalkingTime)}m
           </div>
-          <div className="text-[10px] text-gray-500">Travel</div>
+          <div className="text-xs text-gray-500">Travel</div>
         </div>
         <div className="p-2 rounded-xl bg-white dark:bg-white/5">
           <div className="text-[16px] font-semibold text-gray-900 dark:text-white">
             {categories.length}
           </div>
-          <div className="text-[10px] text-gray-500">Categories</div>
+          <div className="text-xs text-gray-500">Categories</div>
         </div>
         <div className="p-2 rounded-xl bg-white dark:bg-white/5">
           <div
@@ -188,21 +188,21 @@ export const TripHealthCard = memo(function TripHealthCard({
           >
             {health.hasTimeConflicts ? 'Yes' : 'No'}
           </div>
-          <div className="text-[10px] text-gray-500">Conflicts</div>
+          <div className="text-xs text-gray-500">Conflicts</div>
         </div>
       </div>
 
       {/* Category breakdown */}
       {categories.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
             Category Mix
           </p>
           <div className="flex flex-wrap gap-1.5">
             {categories.map(([category, count]) => (
               <span
                 key={category}
-                className="px-2 py-0.5 text-[10px] bg-white dark:bg-white/10 rounded-md text-gray-600 dark:text-gray-300"
+                className="px-2 py-0.5 text-xs bg-white dark:bg-white/10 rounded-md text-gray-600 dark:text-gray-300"
               >
                 {category} ({count})
               </span>
@@ -218,7 +218,7 @@ export const TripHealthCard = memo(function TripHealthCard({
             <div
               key={idx}
               className={`
-                flex items-center gap-2 px-3 py-2 rounded-xl text-[11px]
+                flex items-center gap-2 px-3 py-2 rounded-xl text-xs
                 ${getInsightColor(insight.type)}
               `}
             >

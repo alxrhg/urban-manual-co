@@ -226,7 +226,7 @@ export function InlineAddToTrip({
     <div className="rounded-xl border border-[var(--editorial-border)] bg-[var(--editorial-bg-elevated)] overflow-hidden animate-in slide-in-from-bottom-2 duration-200">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--editorial-border)]">
-        <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)]">
+        <span className="text-xs font-medium uppercase tracking-[0.15em] text-[var(--editorial-text-tertiary)]">
           Select Trip
         </span>
         <button

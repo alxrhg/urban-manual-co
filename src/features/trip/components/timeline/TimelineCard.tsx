@@ -98,17 +98,17 @@ function TimelineCardComponent({
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <p className="text-[15px] font-medium text-gray-900 dark:text-white leading-tight truncate">
+          <p className="text-sm font-medium text-gray-900 dark:text-white leading-tight truncate">
             {item.title || 'Untitled stop'}
           </p>
-          <p className="text-[13px] text-gray-500 dark:text-gray-400 truncate">
+          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
             {startLabel}–{endLabel}
             {item.destination?.neighborhood && ` · ${item.destination.neighborhood}`}
           </p>
         </div>
 
         {/* Duration pill */}
-        <span className="flex-shrink-0 text-[13px] text-gray-500 dark:text-gray-400 tabular-nums">
+        <span className="flex-shrink-0 text-sm text-gray-500 dark:text-gray-400 tabular-nums">
           {formatDuration(duration)}
         </span>
 

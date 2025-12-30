@@ -63,7 +63,7 @@ const MobileTripFloatingBar = memo(function MobileTripFloatingBar() {
 
           {/* Item count badge */}
           <div className="absolute -bottom-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-white dark:bg-gray-900 rounded-full border-2 border-gray-900 dark:border-white">
-            <span className="text-[10px] font-bold text-gray-900 dark:text-white">
+            <span className="text-xs font-bold text-gray-900 dark:text-white">
               {totalItems}
             </span>
           </div>
@@ -74,7 +74,7 @@ const MobileTripFloatingBar = memo(function MobileTripFloatingBar() {
           <p className="text-sm font-medium text-white dark:text-gray-900 truncate max-w-[120px]">
             {tripName}
           </p>
-          <p className="text-[11px] text-gray-400 dark:text-gray-500">
+          <p className="text-xs text-gray-400 dark:text-gray-500">
             {totalItems} {totalItems === 1 ? 'place' : 'places'} · Tap to view
           </p>
         </div>

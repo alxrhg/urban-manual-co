@@ -141,7 +141,7 @@ export default function PlaceCard({
         {/* Notes (if any) */}
         {notes && (
           <div className="mt-2 pt-2 border-t border-stone-200 dark:border-gray-700">
-            <p className="text-[10px] text-stone-500 dark:text-gray-400 line-clamp-2">
+            <p className="text-xs text-stone-500 dark:text-gray-400 line-clamp-2">
               {notes}
             </p>
           </div>

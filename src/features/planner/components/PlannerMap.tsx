@@ -246,7 +246,7 @@ export default function PlannerMap({
       {/* Map Legend */}
       <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 shadow-lg text-xs">
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold">
+          <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
             1
           </div>
           <span className="text-gray-700 dark:text-gray-300">Planned stops</span>

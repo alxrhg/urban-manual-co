@@ -242,7 +242,7 @@ export default function TripHeader({
               >
                 {count > 0 && (
                   <span className={`
-                    w-4 h-4 rounded-full text-[10px] flex items-center justify-center
+                    w-4 h-4 rounded-full text-xs flex items-center justify-center
                     ${activeContentTab === key
                       ? 'bg-white/20 dark:bg-gray-900/20'
                       : 'bg-gray-100 dark:bg-gray-800'

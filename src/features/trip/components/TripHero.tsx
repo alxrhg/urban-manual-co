@@ -105,7 +105,7 @@ export default function TripHero({
           {subtitle && (
             <p
               className={`
-                text-[11px] uppercase tracking-[0.25em] font-medium
+                text-xs uppercase tracking-[0.25em] font-medium
                 text-gray-500 dark:text-gray-400 mb-4
                 opacity-0 ${mounted ? 'animate-fade-in' : ''}
               `}

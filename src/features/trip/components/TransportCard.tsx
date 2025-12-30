@@ -129,17 +129,17 @@ export default function TransportCard({
       {/* REGION 3: Transport Identity */}
       <div className="flex items-center justify-between">
         {isTrain && (trainLine || trainNumber) ? (
-          <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-gray-400">
+          <p className="text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-gray-400">
             {trainLine} {trainNumber}
           </p>
         ) : (
-          <p className="text-[10px] text-stone-500 dark:text-gray-400">
+          <p className="text-xs text-stone-500 dark:text-gray-400">
             {isTrain ? 'Train' : 'Drive'}
           </p>
         )}
 
         {confirmationNumber && (
-          <p className="text-[10px] text-stone-500">
+          <p className="text-xs text-stone-500">
             <span className="font-mono font-medium">{confirmationNumber}</span>
           </p>
         )}
@@ -148,7 +148,7 @@ export default function TransportCard({
       {/* Notes (if any) */}
       {notes && (
         <div className="mt-2 pt-2 border-t border-stone-200 dark:border-gray-700">
-          <p className="text-[10px] text-stone-500 dark:text-gray-400 line-clamp-2">
+          <p className="text-xs text-stone-500 dark:text-gray-400 line-clamp-2">
             {notes}
           </p>
         </div>

@@ -135,7 +135,7 @@ export default function MorphingDragPreview({
             </div>
 
             {/* Category Badge */}
-            <span className="flex-shrink-0 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+            <span className="flex-shrink-0 px-2 py-0.5 text-xs font-medium uppercase tracking-wide rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
               {destination.category?.replace(/_/g, ' ')}
             </span>
           </div>

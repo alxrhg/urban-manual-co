@@ -123,7 +123,7 @@ export default function HotelNightCard({
               <Moon className="w-6 h-6 text-indigo-200" />
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-300/80">
+              <p className="text-xs font-bold uppercase tracking-wider text-indigo-300/80">
                 Overnight Stay
               </p>
               <p className="text-xl font-bold text-white">
@@ -171,7 +171,7 @@ export default function HotelNightCard({
             />
           ))}
         </div>
-        <p className="text-[10px] text-indigo-300/60 mt-2 text-center">
+        <p className="text-xs text-indigo-300/60 mt-2 text-center">
           {totalNights - nightNumber} {totalNights - nightNumber === 1 ? 'night' : 'nights'} remaining
         </p>
       </div>

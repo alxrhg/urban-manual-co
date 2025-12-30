@@ -217,14 +217,14 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
 
       {/* REGION 3: Flight Identity & Status */}
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-gray-400">
+        <p className="text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-gray-400">
           {flight.airline} {flight.flightNumber}
         </p>
 
         <div className="flex items-center gap-2">
           {/* Status Badge */}
           {flightInfo && (
-            <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium ${getStatusColor(flightInfo.status)}`}>
+            <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium ${getStatusColor(flightInfo.status)}`}>
               {getStatusIcon(flightInfo.status)}
               {flightInfo.statusText}
             </div>
@@ -249,7 +249,7 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
       {/* Gate/Terminal (if available) */}
       {flightInfo && (flightInfo.gate || flightInfo.terminal) && (
         <div className="flex items-center gap-2 mt-2 pt-2 border-t border-stone-200 dark:border-gray-700">
-          <p className="text-[10px] text-stone-500">
+          <p className="text-xs text-stone-500">
             {flightInfo.terminal && `Terminal ${flightInfo.terminal}`}
             {flightInfo.terminal && flightInfo.gate && ' • '}
             {flightInfo.gate && `Gate ${flightInfo.gate}`}
@@ -260,7 +260,7 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
       {/* Confirmation Number */}
       {flight.confirmationNumber && (
         <div className="mt-2 pt-2 border-t border-stone-200 dark:border-gray-700">
-          <p className="text-[10px] text-stone-500">
+          <p className="text-xs text-stone-500">
             Confirmation: <span className="font-mono font-medium">{flight.confirmationNumber}</span>
           </p>
         </div>

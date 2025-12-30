@@ -205,7 +205,7 @@ export function ExpandableHomeControls({
           >
             <Funnel className="h-4 w-4" />
             {hasActiveFilters && (
-              <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-[11px] bg-blue-500 text-white rounded-full">
+              <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-xs bg-blue-500 text-white rounded-full">
                 {Math.min(activeFiltersCount, 99)}
               </span>
             )}

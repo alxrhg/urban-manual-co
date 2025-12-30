@@ -263,7 +263,7 @@ export function Drawer({
           <>
             <div className="w-9" /> {/* Spacer */}
             {title && (
-              <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white flex-1 text-center px-2 truncate">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex-1 text-center px-2 truncate">
                 {title}
               </h2>
             )}

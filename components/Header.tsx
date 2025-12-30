@@ -109,7 +109,7 @@ export function Header() {
     <>
       {isAdmin && buildVersion && (
         <span
-          className="text-[10px] text-[var(--editorial-text-tertiary)] font-mono px-1.5 py-0.5 bg-[var(--editorial-border)] rounded"
+          className="text-xs text-[var(--editorial-text-tertiary)] font-mono px-1.5 py-0.5 bg-[var(--editorial-border)] rounded"
           title="Build version"
           aria-label={`Build version ${buildVersion}`}
         >

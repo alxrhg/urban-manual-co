@@ -68,7 +68,7 @@ const CROWD_COLORS: Record<CrowdLevel, { text: string; bg: string }> = {
 };
 
 // Badge styles - standardized across app
-// Uses consistent: text-[10px], px-2 py-0.5, rounded-full, w-3 h-3 icons
+// Uses consistent: text-xs, px-2 py-0.5, rounded-full, w-3 h-3 icons
 const BADGE_STYLES: Record<string, { icon: React.ReactNode; className: string }> = {
   'High Demand': {
     icon: <Users className="w-3 h-3" />,
@@ -130,11 +130,11 @@ export const TimeBlockCard = memo(function TimeBlockCard({
         <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
           <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
             {smartData?.transitMode === 'walk' ? (
-              <span className="text-[10px]">🚶</span>
+              <span className="text-xs">🚶</span>
             ) : smartData?.transitMode === 'transit' ? (
-              <span className="text-[10px]">🚇</span>
+              <span className="text-xs">🚇</span>
             ) : (
-              <span className="text-[10px]">🚗</span>
+              <span className="text-xs">🚗</span>
             )}
           </div>
           <span className="font-medium">{formatDuration(block.durationMinutes)}</span>
@@ -195,7 +195,7 @@ export const TimeBlockCard = memo(function TimeBlockCard({
               />
             </div>
             {block.endTime && (
-              <div className="text-[10px] text-gray-400 mt-0.5 text-center">
+              <div className="text-xs text-gray-400 mt-0.5 text-center">
                 → {block.endTime}
               </div>
             )}
@@ -231,11 +231,11 @@ export const TimeBlockCard = memo(function TimeBlockCard({
                 </h4>
                 <div className="flex items-center gap-2 mt-0.5">
                   {block.category && (
-                    <span className="text-[10px] text-gray-500 dark:text-gray-400 capitalize">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
                       {block.category}
                     </span>
                   )}
-                  <span className="text-[10px] text-gray-400">
+                  <span className="text-xs text-gray-400">
                     {formatDuration(block.durationMinutes)}
                   </span>
                 </div>
@@ -251,13 +251,13 @@ export const TimeBlockCard = memo(function TimeBlockCard({
             {(badge || crowdLevel) && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {badgeStyle && (
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium ${badgeStyle.className}`}>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium ${badgeStyle.className}`}>
                     {badgeStyle.icon}
                     {badge}
                   </span>
                 )}
                 {crowdStyle && crowdLevel !== 'low' && (
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium ${crowdStyle.bg} ${crowdStyle.text}`}>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium ${crowdStyle.bg} ${crowdStyle.text}`}>
                     <Users className="w-3 h-3" />
                     {crowdLevel === 'high' ? 'Busy' : crowdLevel === 'very_high' ? 'Very Busy' : 'Moderate'}
                   </span>
