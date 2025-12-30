@@ -119,8 +119,19 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     case 'update_password': {
       const { currentPassword, newPassword } = body;
 
-      if (!newPassword || newPassword.length < 6) {
-        throw createValidationError('Password must be at least 6 characters');
+      // Strong password requirements: 12+ chars, mixed case, numbers, symbols
+      if (!newPassword || newPassword.length < 12) {
+        throw createValidationError('Password must be at least 12 characters');
+      }
+
+      // Check for password complexity
+      const hasUpperCase = /[A-Z]/.test(newPassword);
+      const hasLowerCase = /[a-z]/.test(newPassword);
+      const hasNumbers = /\d/.test(newPassword);
+      const hasSymbols = /[!@#$%^&*(),.?":{}|<>]/.test(newPassword);
+
+      if (!hasUpperCase || !hasLowerCase || !hasNumbers) {
+        throw createValidationError('Password must contain uppercase, lowercase, and numbers');
       }
 
       // If user has a password, verify current password first

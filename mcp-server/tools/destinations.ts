@@ -10,6 +10,7 @@
 
 import { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { createServiceClient } from "../utils/supabase.js";
+import { sanitizeForIlike } from "../utils/sanitize.js";
 
 export const destinationTools: Tool[] = [
   {
@@ -334,7 +335,8 @@ export async function handleDestinationTool(
         .limit(Number(limit) * 2);
 
       if (category) {
-        query = query.ilike("category", `%${category}%`);
+        const safeCategory = sanitizeForIlike(category as string);
+        query = query.ilike("category", `%${safeCategory}%`);
       }
 
       if (destination_slug) {
@@ -542,7 +544,8 @@ export async function handleDestinationTool(
         .limit(Number(limit));
 
       if (category) {
-        query = query.ilike("category", `%${category}%`);
+        const safeCategory = sanitizeForIlike(category as string);
+        query = query.ilike("category", `%${safeCategory}%`);
       }
 
       // Apply sorting

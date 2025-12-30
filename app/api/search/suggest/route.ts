@@ -10,9 +10,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/errors';
+import { sanitizeForIlike } from '@/lib/sanitize';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseKey) {
+  console.error('[Search Suggest] SUPABASE_SERVICE_ROLE_KEY is required');
+}
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
   try {
@@ -27,14 +32,24 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
       );
     }
 
+    if (!supabaseKey) {
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Sanitize query to prevent SQL injection via ILIKE wildcards
+    const safeQuery = sanitizeForIlike(query);
 
     // Fast keyword search on name, city, and category
     // Using PostgreSQL's ILIKE for case-insensitive matching
     const { data: destinations, error } = await supabase
       .from('destinations')
       .select('id, name, slug, city, country, category, image, michelin_stars')
-      .or(`name.ilike.%${query}%,city.ilike.%${query}%,category.ilike.%${query}%`)
+      .or(`name.ilike.%${safeQuery}%,city.ilike.%${safeQuery}%,category.ilike.%${safeQuery}%`)
       .order('popularity_score', { ascending: false, nullsFirst: false })
       .limit(limit);
 

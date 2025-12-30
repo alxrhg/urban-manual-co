@@ -18,6 +18,7 @@ import {
 import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import type { Destination } from '@/types/destination';
 import { getAirportCoordinates } from '@/lib/utils/airports';
+import { escapeHtml } from '@/lib/sanitize';
 
 interface MapMarker {
   id: string;
@@ -392,10 +393,13 @@ export default function TripInteractiveMap({
     // Show info window for search result
     if (infoWindowRef.current) {
       const content = document.createElement('div');
+      // Escape user-provided data to prevent XSS
+      const safeName = escapeHtml(result.name || '');
+      const safeAddress = escapeHtml(result.address || '');
       content.innerHTML = `
         <div style="padding: 8px; max-width: 280px;">
-          <div style="font-weight: 600; font-size: 14px; color: #111827; margin-bottom: 4px;">${result.name}</div>
-          <div style="font-size: 12px; color: #6b7280; margin-bottom: 12px;">${result.address}</div>
+          <div style="font-weight: 600; font-size: 14px; color: #111827; margin-bottom: 4px;">${safeName}</div>
+          <div style="font-size: 12px; color: #6b7280; margin-bottom: 12px;">${safeAddress}</div>
           ${onAddPlace ? `
             <button id="add-place-btn" style="
               width: 100%;
@@ -725,7 +729,7 @@ export default function TripInteractiveMap({
               overflow: hidden;
               margin-bottom: 10px;
             ">
-              <img src="${image}" alt="${marker.label}" style="width: 100%; height: 100%; object-fit: cover;" />
+              <img src="${escapeHtml(image)}" alt="${escapeHtml(marker.label || '')}" style="width: 100%; height: 100%; object-fit: cover;" />
             </div>
           ` : ''}
           <div style="padding: 4px;">
@@ -739,8 +743,8 @@ export default function TripInteractiveMap({
               font-weight: 500;
               margin-bottom: 6px;
             ">Day ${marker.dayNumber}</div>
-            <div style="font-weight: 600; font-size: 15px; color: #111827; margin-bottom: 4px;">${marker.label}</div>
-            ${category ? `<div style="font-size: 11px; color: #6b7280; text-transform: capitalize; margin-bottom: 6px;">${category}</div>` : ''}
+            <div style="font-weight: 600; font-size: 15px; color: #111827; margin-bottom: 4px;">${escapeHtml(marker.label || '')}</div>
+            ${category ? `<div style="font-size: 11px; color: #6b7280; text-transform: capitalize; margin-bottom: 6px;">${escapeHtml(category)}</div>` : ''}
             <div style="display: flex; align-items: center; gap: 12px; font-size: 12px; color: #6b7280;">
               ${time ? `
                 <div style="display: flex; align-items: center; gap: 4px;">

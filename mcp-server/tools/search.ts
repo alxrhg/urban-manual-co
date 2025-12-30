@@ -11,6 +11,7 @@
 import { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { createServiceClient } from "../utils/supabase.js";
 import { searchVectors } from "../utils/vector.js";
+import { sanitizeForIlike } from "../utils/sanitize.js";
 
 export const searchTools: Tool[] = [
   {
@@ -192,16 +193,20 @@ export async function handleSearchTool(
         .limit(Math.min(Number(limit), 50));
 
       if (city) {
-        dbQuery = dbQuery.ilike("city", `%${city}%`);
+        const safeCity = sanitizeForIlike(city as string);
+        dbQuery = dbQuery.ilike("city", `%${safeCity}%`);
       }
       if (country) {
-        dbQuery = dbQuery.ilike("country", `%${country}%`);
+        const safeCountry = sanitizeForIlike(country as string);
+        dbQuery = dbQuery.ilike("country", `%${safeCountry}%`);
       }
       if (category) {
-        dbQuery = dbQuery.ilike("category", `%${category}%`);
+        const safeCategory = sanitizeForIlike(category as string);
+        dbQuery = dbQuery.ilike("category", `%${safeCategory}%`);
       }
       if (neighborhood) {
-        dbQuery = dbQuery.ilike("neighborhood", `%${neighborhood}%`);
+        const safeNeighborhood = sanitizeForIlike(neighborhood as string);
+        dbQuery = dbQuery.ilike("neighborhood", `%${safeNeighborhood}%`);
       }
       if (min_rating) {
         dbQuery = dbQuery.gte("rating", Number(min_rating));
@@ -210,7 +215,8 @@ export async function handleSearchTool(
         dbQuery = dbQuery.eq("michelin_stars", Number(michelin_stars));
       }
       if (query) {
-        dbQuery = dbQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,micro_description.ilike.%${query}%`);
+        const safeQuery = sanitizeForIlike(query as string);
+        dbQuery = dbQuery.or(`name.ilike.%${safeQuery}%,description.ilike.%${safeQuery}%,micro_description.ilike.%${safeQuery}%`);
       }
 
       const { data, error } = await dbQuery;

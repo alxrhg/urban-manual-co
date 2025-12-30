@@ -4,13 +4,15 @@ import withPWAInit from "@ducanh2912/next-pwa";
 
 const cspDirectives = [
   "default-src 'self'",
-  // Inline scripts are occasionally required for Next.js hydration/runtime.
-  // Added external script sources: Google Ads, Google Analytics, Vercel Live, Apple MapKit
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://cdn.amcharts.com https://*.supabase.co https://*.supabase.in https://pagead2.googlesyndication.com https://www.googletagmanager.com https://fundingchoicesmessages.google.com https://ep2.adtrafficquality.google https://vercel.live https://cdn.apple-mapkit.com",
-  // More granular control for script elements (separate from inline scripts)
-  "script-src-elem 'self' 'unsafe-inline' https://maps.googleapis.com https://cdn.amcharts.com https://*.supabase.co https://*.supabase.in https://pagead2.googlesyndication.com https://www.googletagmanager.com https://fundingchoicesmessages.google.com https://ep2.adtrafficquality.google https://vercel.live https://cdn.apple-mapkit.com",
+  // Script sources - removed unsafe-inline and unsafe-eval for security
+  // Note: If inline scripts are needed, use nonce-based CSP instead
+  "script-src 'self' https://maps.googleapis.com https://cdn.amcharts.com https://*.supabase.co https://*.supabase.in https://pagead2.googlesyndication.com https://www.googletagmanager.com https://fundingchoicesmessages.google.com https://ep2.adtrafficquality.google https://vercel.live https://cdn.apple-mapkit.com",
+  // More granular control for script elements
+  "script-src-elem 'self' https://maps.googleapis.com https://cdn.amcharts.com https://*.supabase.co https://*.supabase.in https://pagead2.googlesyndication.com https://www.googletagmanager.com https://fundingchoicesmessages.google.com https://ep2.adtrafficquality.google https://vercel.live https://cdn.apple-mapkit.com",
+  // Style sources - unsafe-inline kept for Tailwind CSS compatibility
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "img-src 'self' data: blob: https://*",
+  // Restrict image sources to specific trusted domains instead of wildcard
+  "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in https://guide.michelin.com https://cdn.prod.website-files.com https://framerusercontent.com https://images.unsplash.com https://api.mapbox.com https://maps.googleapis.com https://maps.gstatic.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "connect-src 'self' https://*.supabase.co https://*.supabase.in https://maps.googleapis.com https://api.openai.com https://*.upstash.io https://*.googleapis.com https://cdn.jsdelivr.net https://googleads.g.doubleclick.net https://*.doubleclick.net https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://*.sentry.io https://*.ingest.sentry.io https://*.apple-mapkit.com https://*.ls.apple.com https://*.apple.com https://cdn.apple-mapkit.com https://*.mzstatic.com https://*.geo.apple.com https://*.cdn-apple.com https://featureassets.org https://prodregistryv2.org https://api.open-meteo.com https://geocoding-api.open-meteo.com https://analytics.google.com https://*.google-analytics.com",
   "worker-src 'self' blob:",
@@ -44,7 +46,7 @@ const securityHeaders: { key: string; value: string }[] = [
   },
   {
     key: 'Access-Control-Allow-Origin',
-    value: process.env.NODE_ENV === 'production' ? 'https://www.urbanmanual.co' : '*',
+    value: process.env.NODE_ENV === 'production' ? 'https://www.urbanmanual.co' : 'http://localhost:3000',
   },
   {
     key: 'Access-Control-Allow-Methods',
