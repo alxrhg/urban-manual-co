@@ -1204,7 +1204,7 @@ export default function InteractiveHero() {
               <div className="flex flex-wrap gap-x-4 gap-y-2">
                 <button
                   onClick={() => setSelectedCity('')}
-                  className={`text-sm font-medium transition-colors duration-200 ${
+                  className={`text-xs font-medium transition-colors duration-200 ${
                     !selectedCity
                       ? 'text-[var(--editorial-text-primary)]'
                       : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
@@ -1216,7 +1216,7 @@ export default function InteractiveHero() {
                   <button
                     key={city}
                     onClick={() => handleCityClick(city)}
-                    className={`text-sm font-medium transition-colors duration-200 ${
+                    className={`text-xs font-medium transition-colors duration-200 ${
                       selectedCity.toLowerCase() === city.toLowerCase()
                         ? 'text-[var(--editorial-text-primary)]'
                         : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
@@ -1228,7 +1228,7 @@ export default function InteractiveHero() {
                 {cities.length > displayedCities.length && !showAllCities && (
                   <button
                     onClick={() => setShowAllCities(true)}
-                    className="text-sm font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+                    className="text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
                   >
                     +{cities.length - displayedCities.length} more
                   </button>
@@ -1236,7 +1236,7 @@ export default function InteractiveHero() {
                 {showAllCities && (
                   <button
                     onClick={() => setShowAllCities(false)}
-                    className="text-sm font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+                    className="text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
                   >
                     Show less
                   </button>
