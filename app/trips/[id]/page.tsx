@@ -45,6 +45,7 @@ import { isFeatureEnabled } from '@/lib/feature-flags';
 import { Settings, Moon } from 'lucide-react';
 import LocalTimeDisplay from '@/features/trip/components/LocalTimeDisplay';
 import TripQuickActions from '@/features/trip/components/TripQuickActions';
+import CollapsibleDayTabs from '@/features/trip/components/CollapsibleDayTabs';
 
 /**
  * TripPage - Completely rethought
@@ -425,38 +426,15 @@ export default function TripPage() {
           />
         </div>
 
-        {/* Day Tabs */}
+        {/* Day Tabs with Collapsible Past Dates */}
         {days.length > 0 && (
           <div className="sticky top-16 z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 py-3 bg-[var(--editorial-bg)] mt-6">
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-              {days.map((day) => {
-                const isSelected = day.dayNumber === selectedDayNumber;
-                const dayDate = day.date
-                  ? new Date(day.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                  : null;
-                const dayWeather = day.date ? weatherByDate[day.date] : undefined;
-                return (
-                  <button
-                    key={day.dayNumber}
-                    onClick={() => setSelectedDayNumber(day.dayNumber)}
-                    className={`flex-shrink-0 flex flex-col items-center px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                      isSelected
-                        ? 'bg-[var(--editorial-accent)] text-white'
-                        : 'bg-[var(--editorial-bg-elevated)] text-[var(--editorial-text-secondary)] hover:bg-[var(--editorial-border-subtle)] border border-[var(--editorial-border)]'
-                    }`}
-                  >
-                    <span>
-                      {dayDate || `Day ${day.dayNumber}`}
-                    </span>
-                    {dayWeather && (
-                      <span className={`text-xs mt-0.5 ${isSelected ? 'text-white/80' : 'text-[var(--editorial-text-tertiary)]'}`}>
-                        {dayWeather.tempMax}° {dayWeather.description.split(' ')[0]}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            <CollapsibleDayTabs
+              days={days}
+              selectedDayNumber={selectedDayNumber}
+              onSelectDay={setSelectedDayNumber}
+              weatherByDate={weatherByDate}
+            />
           </div>
         )}
 
