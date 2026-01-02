@@ -6,8 +6,8 @@ import dynamic from 'next/dynamic';
 import { Loader2 } from 'lucide-react';
 
 // Lazy load map to reduce initial bundle
-const AppleMapView = dynamic(
-  () => import('./AppleMapView').then(mod => ({ default: mod.AppleMapView })),
+const MapcnMapView = dynamic(
+  () => import('./MapcnMapView').then(mod => ({ default: mod.MapcnMapView })),
   {
     ssr: false,
     loading: () => (
@@ -31,7 +31,7 @@ export function HomepageContent() {
   const { viewMode } = useHomepageData();
 
   if (viewMode === 'map') {
-    return <AppleMapView />;
+    return <MapcnMapView />;
   }
 
   return <ClientDestinationGrid />;
