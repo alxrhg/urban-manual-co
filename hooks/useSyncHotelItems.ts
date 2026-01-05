@@ -579,7 +579,7 @@ export function useSyncHotelItems(tripId: string | null): UseSyncHotelItemsRetur
           };
 
           // Update title and time based on item type
-          let updateData: Record<string, unknown> = {
+          const updateData: Record<string, unknown> = {
             notes: stringifyItineraryNotes(updatedNotes),
           };
 

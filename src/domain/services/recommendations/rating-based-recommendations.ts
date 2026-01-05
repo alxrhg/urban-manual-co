@@ -378,7 +378,7 @@ export async function getSimilarToLiked(
     if (!dest) continue;
 
     // Find similar destinations
-    let query = supabase
+    const query = supabase
       .from('destinations')
       .select('id, slug, name, city, category, rating, price_level, image, micro_description, tags')
       .eq('category', dest.category)

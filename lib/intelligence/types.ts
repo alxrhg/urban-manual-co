@@ -444,7 +444,7 @@ export function createTransitBlock(
 export function calculateDayStats(blocks: TimeBlock[]): DayPlanStats {
   let totalWalkingKm = 0;
   let totalTransitMinutes = 0;
-  let estimatedCost = 0;
+  const estimatedCost = 0;
   let activityCount = 0;
   let totalPlannedMinutes = 0;
 

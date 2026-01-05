@@ -1401,7 +1401,7 @@ async function processAIChatRequest(
                 const topResults = results.slice(0, 10); // Increased to 10 for better enrichment coverage
                 const slugsToEnrich = topResults.map((dest: any) => dest.slug);
 
-                let enrichmentDataMap = new Map();
+                const enrichmentDataMap = new Map();
                 if (slugsToEnrich.length > 0) {
                   try {
                     const { data: enrichmentData } = await supabase
@@ -1484,7 +1484,7 @@ async function processAIChatRequest(
 
     // Get intelligence insights only if city detected and we have results (optional feature for performance)
     // Disabled for better performance - can be re-enabled if needed
-    let intelligenceInsights = null;
+    const intelligenceInsights = null;
     // if (intent.city && limitedResults.length > 0) {
     //   try {
     //     const [forecast, opportunities] = await Promise.all([

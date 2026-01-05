@@ -88,7 +88,7 @@ export default function AdminSearchesPage() {
     const cityCounts: Record<string, number> = {};
     const categoryCounts: Record<string, number> = {};
     const noResultQueries: string[] = [];
-    let totalSearches = logs.length;
+    const totalSearches = logs.length;
 
     logs.forEach((log) => {
       const metadata = log.metadata ?? {};

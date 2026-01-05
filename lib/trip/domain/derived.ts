@@ -354,7 +354,7 @@ function sortByTime(events: DayEvent[]): DayEvent[] {
 
 function computeMetrics(events: DayEvent[]): DayMetrics {
   let scheduledMins = 0;
-  let transitMins = 0;
+  const transitMins = 0;
   let fixedCount = 0;
   let flexibleCount = 0;
   const warnings: DayWarning[] = [];

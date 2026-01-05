@@ -125,7 +125,7 @@ export async function generateTravelIntelligence(
 async function generateArchitecturalJourney(
   input: TravelIntelligenceInput
 ): Promise<ArchitecturalJourney> {
-  let query = getSupabase()
+  const query = getSupabase()
     .from('destinations')
     .select(`
       id,
