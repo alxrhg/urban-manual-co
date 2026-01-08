@@ -1202,44 +1202,64 @@ export default function InteractiveHero() {
           <div className="w-full">
             <div className="mb-6">
               <div className="flex flex-wrap gap-x-4 gap-y-2">
-                <button
-                  onClick={() => setSelectedCity('')}
-                  className={`text-xs font-medium transition-colors duration-200 ${
-                    !selectedCity
-                      ? 'text-[var(--editorial-text-primary)]'
-                      : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
-                  }`}
-                >
-                  All Cities
-                </button>
-                {displayedCities.map((city) => (
-                  <button
-                    key={city}
-                    onClick={() => handleCityClick(city)}
-                    className={`text-xs font-medium transition-colors duration-200 ${
-                      selectedCity.toLowerCase() === city.toLowerCase()
-                        ? 'text-[var(--editorial-text-primary)]'
-                        : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
-                    }`}
-                  >
-                    {capitalizeCity(city)}
-                  </button>
-                ))}
-                {cities.length > displayedCities.length && !showAllCities && (
-                  <button
-                    onClick={() => setShowAllCities(true)}
-                    className="text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
-                  >
-                    +{cities.length - displayedCities.length} more
-                  </button>
-                )}
-                {showAllCities && (
-                  <button
-                    onClick={() => setShowAllCities(false)}
-                    className="text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
-                  >
-                    Show less
-                  </button>
+                {/* When a city is selected, show only that city with option to show all */}
+                {selectedCity ? (
+                  <>
+                    <button
+                      onClick={() => handleCityClick(selectedCity)}
+                      className="text-xs font-medium text-[var(--editorial-text-primary)] transition-colors duration-200"
+                    >
+                      {capitalizeCity(selectedCity)}
+                    </button>
+                    <button
+                      onClick={() => setSelectedCity('')}
+                      className="text-xs font-medium text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors duration-200"
+                    >
+                      Show all cities
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setSelectedCity('')}
+                      className={`text-xs font-medium transition-colors duration-200 ${
+                        !selectedCity
+                          ? 'text-[var(--editorial-text-primary)]'
+                          : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
+                      }`}
+                    >
+                      All Cities
+                    </button>
+                    {displayedCities.map((city) => (
+                      <button
+                        key={city}
+                        onClick={() => handleCityClick(city)}
+                        className={`text-xs font-medium transition-colors duration-200 ${
+                          selectedCity.toLowerCase() === city.toLowerCase()
+                            ? 'text-[var(--editorial-text-primary)]'
+                            : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
+                        }`}
+                      >
+                        {capitalizeCity(city)}
+                      </button>
+                    ))}
+                    {cities.length > displayedCities.length && !showAllCities && (
+                      <button
+                        onClick={() => setShowAllCities(true)}
+                        className="text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+                      >
+                        +{cities.length - displayedCities.length} more
+                      </button>
+                    )}
+                    {showAllCities && (
+                      <button
+                        onClick={() => setShowAllCities(false)}
+                        className="text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+                      >
+                        Show less
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
