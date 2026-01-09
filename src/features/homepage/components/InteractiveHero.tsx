@@ -1267,53 +1267,98 @@ export default function InteractiveHero() {
             {/* Category Filters with Icons */}
             {categories.length > 0 && (
               <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-                <button
-                  onClick={() => {
-                    setSelectedCategory('');
-                    setMichelinOnly(false);
-                  }}
-                  className={`font-medium transition-colors duration-200 ${
-                    !selectedCategory && !michelinOnly
-                      ? 'text-[var(--editorial-text-primary)]'
-                      : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
-                  }`}
-                >
-                  All Categories
-                </button>
-                {/* Michelin filter with icon */}
-                <button
-                  onClick={() => setMichelinOnly(!michelinOnly)}
-                  className={`flex items-center gap-1.5 font-medium transition-colors duration-200 ${
-                    michelinOnly
-                      ? 'text-[var(--editorial-text-primary)]'
-                      : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
-                  }`}
-                >
-                  <img
-                    src="/michelin-star.svg"
-                    alt="Michelin"
-                    className="w-4 h-4"
-                  />
-                  Michelin
-                </button>
-                {/* Category filters with icons */}
-                {categories.slice(0, 8).map((category) => {
-                  const IconComponent = getCategoryIconComponent(category);
-                  return (
+                {/* When a category is selected or Michelin filter is active, show only that filter */}
+                {selectedCategory || michelinOnly ? (
+                  <>
+                    {/* Show the selected category */}
+                    {selectedCategory && (
+                      <button
+                        onClick={() => handleCategoryClick(selectedCategory)}
+                        className="flex items-center gap-1.5 font-medium text-[var(--editorial-text-primary)] transition-colors duration-200"
+                      >
+                        {(() => {
+                          const IconComponent = getCategoryIconComponent(selectedCategory);
+                          return IconComponent ? <IconComponent className="w-4 h-4" /> : null;
+                        })()}
+                        {capitalizeCategory(selectedCategory)}
+                      </button>
+                    )}
+                    {/* Show Michelin if active */}
+                    {michelinOnly && (
+                      <button
+                        onClick={() => setMichelinOnly(!michelinOnly)}
+                        className="flex items-center gap-1.5 font-medium text-[var(--editorial-text-primary)] transition-colors duration-200"
+                      >
+                        <img
+                          src="/michelin-star.svg"
+                          alt="Michelin"
+                          className="w-4 h-4"
+                        />
+                        Michelin
+                      </button>
+                    )}
+                    {/* Show all categories button */}
                     <button
-                      key={category}
-                      onClick={() => handleCategoryClick(category)}
-                      className={`flex items-center gap-1.5 font-medium transition-colors duration-200 ${
-                        selectedCategory.toLowerCase() === category.toLowerCase()
+                      onClick={() => {
+                        setSelectedCategory('');
+                        setMichelinOnly(false);
+                      }}
+                      className="font-medium text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors duration-200"
+                    >
+                      Show all categories
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        setSelectedCategory('');
+                        setMichelinOnly(false);
+                      }}
+                      className={`font-medium transition-colors duration-200 ${
+                        !selectedCategory && !michelinOnly
                           ? 'text-[var(--editorial-text-primary)]'
                           : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
                       }`}
                     >
-                      {IconComponent && <IconComponent className="w-4 h-4" />}
-                      {capitalizeCategory(category)}
+                      All Categories
                     </button>
-                  );
-                })}
+                    {/* Michelin filter with icon */}
+                    <button
+                      onClick={() => setMichelinOnly(!michelinOnly)}
+                      className={`flex items-center gap-1.5 font-medium transition-colors duration-200 ${
+                        michelinOnly
+                          ? 'text-[var(--editorial-text-primary)]'
+                          : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
+                      }`}
+                    >
+                      <img
+                        src="/michelin-star.svg"
+                        alt="Michelin"
+                        className="w-4 h-4"
+                      />
+                      Michelin
+                    </button>
+                    {/* Category filters with icons */}
+                    {categories.slice(0, 8).map((category) => {
+                      const IconComponent = getCategoryIconComponent(category);
+                      return (
+                        <button
+                          key={category}
+                          onClick={() => handleCategoryClick(category)}
+                          className={`flex items-center gap-1.5 font-medium transition-colors duration-200 ${
+                            selectedCategory.toLowerCase() === category.toLowerCase()
+                              ? 'text-[var(--editorial-text-primary)]'
+                              : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
+                          }`}
+                        >
+                          {IconComponent && <IconComponent className="w-4 h-4" />}
+                          {capitalizeCategory(category)}
+                        </button>
+                      );
+                    })}
+                  </>
+                )}
               </div>
             )}
           </div>
