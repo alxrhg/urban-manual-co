@@ -149,6 +149,7 @@ const CITY_VARIATIONS: Record<string, string[]> = {
   'london': ['london', 'soho', 'shoreditch', 'mayfair', 'notting hill', 'covent garden', 'chelsea', 'kensington', 'fitzrovia', 'marylebone', 'hackney', 'brixton'],
   'paris': ['paris', 'le marais', 'montmartre', 'saint-germain', 'bastille', 'belleville', 'pigalle', 'opera', 'chatelet'],
   'taipei': ['taipei', 'da\'an', 'xinyi', 'zhongshan', 'songshan', 'wanhua', 'shilin', 'beitou'],
+  'kaohsiung': ['kaohsiung', 'kaohsiung city'],
   'los angeles': ['los angeles', 'la', 'silver lake', 'echo park', 'west hollywood', 'venice', 'santa monica', 'downtown la', 'dtla', 'highland park', 'los feliz', 'koreatown', 'beverly hills', 'culver city'],
   'hong kong': ['hong kong', 'hk', 'central', 'wan chai', 'causeway bay', 'tsim sha tsui', 'mong kok', 'sheung wan'],
   'singapore': ['singapore', 'orchard', 'marina bay', 'chinatown', 'little india', 'tiong bahru', 'kampong glam', 'dempsey'],
