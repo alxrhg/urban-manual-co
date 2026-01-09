@@ -619,7 +619,7 @@ export default function InteractiveHero() {
   }, [destinations]);
 
   return (
-    <div className="w-full">
+    <div className="w-full pr-6 md:pr-10">
       {/* Editorial Two-Column Layout - Of Study Inspired */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
 
@@ -1198,48 +1198,68 @@ export default function InteractiveHero() {
 
       {/* City/Category Filters - Below the grid */}
       {!showChatResults && (
-        <div className="pt-12 lg:pt-16 pr-8 md:pr-16">
+        <div className="pt-12 lg:pt-16">
           <div className="w-full">
             <div className="mb-6">
               <div className="flex flex-wrap gap-x-4 gap-y-2">
-                <button
-                  onClick={() => setSelectedCity('')}
-                  className={`text-xs font-medium transition-colors duration-200 ${
-                    !selectedCity
-                      ? 'text-[var(--editorial-text-primary)]'
-                      : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
-                  }`}
-                >
-                  All Cities
-                </button>
-                {displayedCities.map((city) => (
-                  <button
-                    key={city}
-                    onClick={() => handleCityClick(city)}
-                    className={`text-xs font-medium transition-colors duration-200 ${
-                      selectedCity.toLowerCase() === city.toLowerCase()
-                        ? 'text-[var(--editorial-text-primary)]'
-                        : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
-                    }`}
-                  >
-                    {capitalizeCity(city)}
-                  </button>
-                ))}
-                {cities.length > displayedCities.length && !showAllCities && (
-                  <button
-                    onClick={() => setShowAllCities(true)}
-                    className="text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
-                  >
-                    +{cities.length - displayedCities.length} more
-                  </button>
-                )}
-                {showAllCities && (
-                  <button
-                    onClick={() => setShowAllCities(false)}
-                    className="text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
-                  >
-                    Show less
-                  </button>
+                {/* When a city is selected, show only that city with option to show all */}
+                {selectedCity ? (
+                  <>
+                    <button
+                      onClick={() => handleCityClick(selectedCity)}
+                      className="text-xs font-medium text-[var(--editorial-text-primary)] transition-colors duration-200"
+                    >
+                      {capitalizeCity(selectedCity)}
+                    </button>
+                    <button
+                      onClick={() => setSelectedCity('')}
+                      className="text-xs font-medium text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors duration-200"
+                    >
+                      Show all cities
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setSelectedCity('')}
+                      className={`text-xs font-medium transition-colors duration-200 ${
+                        !selectedCity
+                          ? 'text-[var(--editorial-text-primary)]'
+                          : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
+                      }`}
+                    >
+                      All Cities
+                    </button>
+                    {displayedCities.map((city) => (
+                      <button
+                        key={city}
+                        onClick={() => handleCityClick(city)}
+                        className={`text-xs font-medium transition-colors duration-200 ${
+                          selectedCity.toLowerCase() === city.toLowerCase()
+                            ? 'text-[var(--editorial-text-primary)]'
+                            : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
+                        }`}
+                      >
+                        {capitalizeCity(city)}
+                      </button>
+                    ))}
+                    {cities.length > displayedCities.length && !showAllCities && (
+                      <button
+                        onClick={() => setShowAllCities(true)}
+                        className="text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+                      >
+                        +{cities.length - displayedCities.length} more
+                      </button>
+                    )}
+                    {showAllCities && (
+                      <button
+                        onClick={() => setShowAllCities(false)}
+                        className="text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+                      >
+                        Show less
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -1247,53 +1267,98 @@ export default function InteractiveHero() {
             {/* Category Filters with Icons */}
             {categories.length > 0 && (
               <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-                <button
-                  onClick={() => {
-                    setSelectedCategory('');
-                    setMichelinOnly(false);
-                  }}
-                  className={`font-medium transition-colors duration-200 ${
-                    !selectedCategory && !michelinOnly
-                      ? 'text-[var(--editorial-text-primary)]'
-                      : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
-                  }`}
-                >
-                  All Categories
-                </button>
-                {/* Michelin filter with icon */}
-                <button
-                  onClick={() => setMichelinOnly(!michelinOnly)}
-                  className={`flex items-center gap-1.5 font-medium transition-colors duration-200 ${
-                    michelinOnly
-                      ? 'text-[var(--editorial-text-primary)]'
-                      : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
-                  }`}
-                >
-                  <img
-                    src="/michelin-star.svg"
-                    alt="Michelin"
-                    className="w-4 h-4"
-                  />
-                  Michelin
-                </button>
-                {/* Category filters with icons */}
-                {categories.slice(0, 8).map((category) => {
-                  const IconComponent = getCategoryIconComponent(category);
-                  return (
+                {/* When a category is selected or Michelin filter is active, show only that filter */}
+                {selectedCategory || michelinOnly ? (
+                  <>
+                    {/* Show the selected category */}
+                    {selectedCategory && (
+                      <button
+                        onClick={() => handleCategoryClick(selectedCategory)}
+                        className="flex items-center gap-1.5 font-medium text-[var(--editorial-text-primary)] transition-colors duration-200"
+                      >
+                        {(() => {
+                          const IconComponent = getCategoryIconComponent(selectedCategory);
+                          return IconComponent ? <IconComponent className="w-4 h-4" /> : null;
+                        })()}
+                        {capitalizeCategory(selectedCategory)}
+                      </button>
+                    )}
+                    {/* Show Michelin if active */}
+                    {michelinOnly && (
+                      <button
+                        onClick={() => setMichelinOnly(!michelinOnly)}
+                        className="flex items-center gap-1.5 font-medium text-[var(--editorial-text-primary)] transition-colors duration-200"
+                      >
+                        <img
+                          src="/michelin-star.svg"
+                          alt="Michelin"
+                          className="w-4 h-4"
+                        />
+                        Michelin
+                      </button>
+                    )}
+                    {/* Show all categories button */}
                     <button
-                      key={category}
-                      onClick={() => handleCategoryClick(category)}
-                      className={`flex items-center gap-1.5 font-medium transition-colors duration-200 ${
-                        selectedCategory.toLowerCase() === category.toLowerCase()
+                      onClick={() => {
+                        setSelectedCategory('');
+                        setMichelinOnly(false);
+                      }}
+                      className="font-medium text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)] transition-colors duration-200"
+                    >
+                      Show all categories
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        setSelectedCategory('');
+                        setMichelinOnly(false);
+                      }}
+                      className={`font-medium transition-colors duration-200 ${
+                        !selectedCategory && !michelinOnly
                           ? 'text-[var(--editorial-text-primary)]'
                           : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
                       }`}
                     >
-                      {IconComponent && <IconComponent className="w-4 h-4" />}
-                      {capitalizeCategory(category)}
+                      All Categories
                     </button>
-                  );
-                })}
+                    {/* Michelin filter with icon */}
+                    <button
+                      onClick={() => setMichelinOnly(!michelinOnly)}
+                      className={`flex items-center gap-1.5 font-medium transition-colors duration-200 ${
+                        michelinOnly
+                          ? 'text-[var(--editorial-text-primary)]'
+                          : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
+                      }`}
+                    >
+                      <img
+                        src="/michelin-star.svg"
+                        alt="Michelin"
+                        className="w-4 h-4"
+                      />
+                      Michelin
+                    </button>
+                    {/* Category filters with icons */}
+                    {categories.slice(0, 8).map((category) => {
+                      const IconComponent = getCategoryIconComponent(category);
+                      return (
+                        <button
+                          key={category}
+                          onClick={() => handleCategoryClick(category)}
+                          className={`flex items-center gap-1.5 font-medium transition-colors duration-200 ${
+                            selectedCategory.toLowerCase() === category.toLowerCase()
+                              ? 'text-[var(--editorial-text-primary)]'
+                              : 'text-[var(--editorial-text-tertiary)] hover:text-[var(--editorial-text-primary)]'
+                          }`}
+                        >
+                          {IconComponent && <IconComponent className="w-4 h-4" />}
+                          {capitalizeCategory(category)}
+                        </button>
+                      );
+                    })}
+                  </>
+                )}
               </div>
             )}
           </div>
