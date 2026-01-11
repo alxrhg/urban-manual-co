@@ -190,8 +190,8 @@ export default function MapSidebarCard({
 
     try {
       // Default center - will be overridden by markers or trip destination
-      let center = { lat: 20, lng: 0 };
-      let zoom = 2;
+      const center = { lat: 20, lng: 0 };
+      const zoom = 2;
 
       mapRef.current = new google.maps.Map(mapContainer.current, {
         center,
