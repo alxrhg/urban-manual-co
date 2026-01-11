@@ -49,6 +49,23 @@ export function ConversationalDiscovery() {
     streaming: true,
   });
 
+  // Disable body scroll for 100vh layout
+  useEffect(() => {
+    // Store original styles
+    const originalOverflow = document.body.style.overflow;
+    const originalHeight = document.body.style.height;
+
+    // Set 100vh layout
+    document.body.style.overflow = 'hidden';
+    document.body.style.height = '100vh';
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.height = originalHeight;
+    };
+  }, []);
+
   // Auto-scroll messages to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -107,7 +124,7 @@ export function ConversationalDiscovery() {
   }, []);
 
   return (
-    <div className="flex overflow-hidden bg-[#FAFAF8]" style={{ height: 'calc(100vh - 180px)' }}>
+    <div className="flex overflow-hidden bg-[#FAFAF8]" style={{ height: 'calc(100vh - 200px)' }}>
       {/* LEFT PANEL - Conversational Interface (40%) */}
       <div className="w-[40%] flex flex-col border-r border-gray-200">
         {/* Messages Area */}
