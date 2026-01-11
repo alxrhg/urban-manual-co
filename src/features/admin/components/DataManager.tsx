@@ -515,11 +515,16 @@ export function DataManager({ type }: DataManagerProps) {
             disabled={syncing}
             className="rounded-lg flex-1 sm:flex-none"
             title={`Sync ${type} from existing destinations`}
+                aria-label={`Sync ${type} from existing destinations`}
           >
             <RefreshCw className={cn("w-4 h-4 sm:mr-2", syncing && "animate-spin")} />
             <span className="hidden sm:inline">{syncing ? 'Syncing...' : 'Sync'}</span>
           </Button>
-          <Button onClick={openCreateDrawer} className="rounded-lg flex-1 sm:flex-none">
+          <Button
+            onClick={openCreateDrawer}
+            className="rounded-lg flex-1 sm:flex-none"
+            aria-label={`Add new ${config.singular.toLowerCase()}`}
+          >
             <Plus className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">Add New</span>
           </Button>
@@ -569,6 +574,7 @@ export function DataManager({ type }: DataManagerProps) {
               onClick={handleBulkDelete}
               disabled={bulkActionLoading}
               className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 shrink-0"
+              aria-label="Delete selected items"
             >
               {bulkActionLoading ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin sm:mr-1.5" />
@@ -733,7 +739,12 @@ export function DataManager({ type }: DataManagerProps) {
                   <td className="px-2 py-3">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          aria-label="More actions"
+                        >
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -791,6 +802,7 @@ export function DataManager({ type }: DataManagerProps) {
                 <button
                   onClick={closeDrawer}
                   className="p-1.5 -ml-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-500 dark:text-gray-400"
+                  aria-label="Back"
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
@@ -801,6 +813,7 @@ export function DataManager({ type }: DataManagerProps) {
               <button
                 onClick={closeDrawer}
                 className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-500 dark:text-gray-400"
+                aria-label="Close drawer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1136,6 +1149,7 @@ export function DataManager({ type }: DataManagerProps) {
                 <button
                   onClick={closeMergeModal}
                   className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-500"
+                  aria-label="Close modal"
                 >
                   <X className="h-5 w-5" />
                 </button>
