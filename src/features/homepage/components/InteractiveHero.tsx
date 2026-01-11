@@ -892,7 +892,7 @@ export default function InteractiveHero() {
 
           {/* Inline Chat Results */}
           {showChatResults && (
-            <div className="max-w-xl mb-8 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="max-w-xl mt-6 mb-8 animate-in fade-in slide-in-from-top-2 duration-300">
               {/* Response header with close button */}
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2 text-sm text-[var(--editorial-text-secondary)]">

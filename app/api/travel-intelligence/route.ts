@@ -143,16 +143,176 @@ const OCCASION_KEYWORDS: Record<string, string[]> = {
 
 // City name variations
 const CITY_VARIATIONS: Record<string, string[]> = {
+  // Taiwan
+  'taipei': ['taipei', 'da\'an', 'xinyi', 'zhongshan', 'songshan', 'wanhua', 'shilin', 'beitou'],
+  'kaohsiung': ['kaohsiung', 'kaohsiung city'],
+  'taichung': ['taichung'],
+  'tainan': ['tainan'],
+  'pintung': ['pintung'],
+  'chiayi': ['chiayi'],
+
+  // Japan
   'tokyo': ['tokyo', 'tōkyō', 'shibuya', 'shinjuku', 'ginza', 'roppongi', 'harajuku', 'ebisu', 'nakameguro', 'aoyama', 'daikanyama'],
   'kyoto': ['kyoto', 'kyōto', 'gion', 'arashiyama', 'higashiyama'],
-  'new york': ['new york', 'nyc', 'manhattan', 'brooklyn', 'soho', 'tribeca', 'williamsburg', 'greenwich village', 'east village', 'west village', 'lower east side', 'upper east side', 'upper west side', 'chelsea', 'flatiron', 'nolita', 'noho'],
+  'osaka': ['osaka'],
+  'fukuoka': ['fukuoka'],
+  'sapporo': ['sapporo'],
+  'nagoya': ['nagoya'],
+  'kobe': ['kobe'],
+  'yokohama': ['yokohama'],
+  'nara': ['nara'],
+  'hiroshima': ['hiroshima'],
+  'kyushu': ['kyushu'],
+  'nagato': ['nagato'],
+  'karuizawa': ['karuizawa'],
+  'okinawa': ['okinawa'],
+  'kamakura': ['kamakura'],
+  'kanazawa': ['kanazawa'],
+  'atami': ['atami'],
+  'hakone': ['hakone'],
+
+  // USA
+  'new york': ['new york', 'nyc', 'manhattan', 'brooklyn', 'soho', 'tribeca', 'williamsburg', 'greenwich village', 'east village', 'west village', 'lower east side', 'upper east side', 'upper west side', 'chelsea', 'flatiron', 'nolita', 'noho', 'new-york'],
+  'los angeles': ['los angeles', 'la', 'silver lake', 'echo park', 'west hollywood', 'venice', 'santa monica', 'downtown la', 'dtla', 'highland park', 'los feliz', 'koreatown', 'beverly hills', 'culver city', 'los-angeles'],
+  'san francisco': ['san francisco', 'sf', 'san-francisco'],
+  'chicago': ['chicago'],
+  'miami': ['miami'],
+  'seattle': ['seattle'],
+  'boston': ['boston'],
+  'portland': ['portland'],
+  'austin': ['austin'],
+  'denver': ['denver'],
+  'las vegas': ['las vegas', 'vegas', 'las-vegas'],
+  'washington dc': ['washington dc', 'washington', 'dc', 'washington-dc'],
+  'philadelphia': ['philadelphia', 'philly'],
+  'san diego': ['san diego', 'san-diego'],
+  'nashville': ['nashville'],
+  'new orleans': ['new orleans', 'new-orleans', 'nola'],
+  'colorado': ['colorado'],
+  'charleston': ['charleston'],
+  'hawaii': ['hawaii'],
+  'orlando': ['orlando'],
+  'hudson valley': ['hudson valley', 'hudson-valley'],
+
+  // UK
   'london': ['london', 'soho', 'shoreditch', 'mayfair', 'notting hill', 'covent garden', 'chelsea', 'kensington', 'fitzrovia', 'marylebone', 'hackney', 'brixton'],
+  'edinburgh': ['edinburgh'],
+  'manchester': ['manchester'],
+  'liverpool': ['liverpool'],
+  'bristol': ['bristol'],
+  'oxford': ['oxford'],
+  'cambridge': ['cambridge'],
+
+  // France
   'paris': ['paris', 'le marais', 'montmartre', 'saint-germain', 'bastille', 'belleville', 'pigalle', 'opera', 'chatelet'],
-  'taipei': ['taipei', 'da\'an', 'xinyi', 'zhongshan', 'songshan', 'wanhua', 'shilin', 'beitou'],
-  'los angeles': ['los angeles', 'la', 'silver lake', 'echo park', 'west hollywood', 'venice', 'santa monica', 'downtown la', 'dtla', 'highland park', 'los feliz', 'koreatown', 'beverly hills', 'culver city'],
-  'hong kong': ['hong kong', 'hk', 'central', 'wan chai', 'causeway bay', 'tsim sha tsui', 'mong kok', 'sheung wan'],
+  'lyon': ['lyon'],
+  'marseille': ['marseille'],
+  'nice': ['nice'],
+  'bordeaux': ['bordeaux'],
+  'cannes': ['cannes'],
+
+  // Italy
+  'rome': ['rome', 'roma'],
+  'milan': ['milan', 'milano'],
+  'florence': ['florence', 'firenze'],
+  'venice': ['venice', 'venezia'],
+  'naples': ['naples', 'napoli'],
+  'bologna': ['bologna'],
+  'turin': ['turin', 'torino'],
+  'como': ['como'],
+  'lake como': ['lake como', 'lake-como'],
+
+  // Spain
+  'barcelona': ['barcelona'],
+  'madrid': ['madrid'],
+  'seville': ['seville', 'sevilla'],
+  'valencia': ['valencia'],
+  'bilbao': ['bilbao'],
+  'san sebastian': ['san sebastian', 'san-sebastian'],
+
+  // Germany
+  'berlin': ['berlin'],
+  'munich': ['munich', 'münchen'],
+  'hamburg': ['hamburg'],
+  'frankfurt': ['frankfurt'],
+  'cologne': ['cologne', 'köln'],
+  'dresden': ['dresden'],
+
+  // Netherlands
+  'amsterdam': ['amsterdam'],
+  'rotterdam': ['rotterdam'],
+  'the hague': ['the hague', 'the-hague', 'den haag'],
+  'utrecht': ['utrecht'],
+
+  // Switzerland
+  'zurich': ['zurich', 'zürich'],
+  'geneva': ['geneva', 'genève'],
+  'basel': ['basel'],
+  'bern': ['bern'],
+  'lausanne': ['lausanne'],
+  'luzern': ['luzern', 'lucerne'],
+  'valais': ['valais'],
+
+  // Austria
+  'vienna': ['vienna', 'wien'],
+  'salzburg': ['salzburg'],
+  'innsbruck': ['innsbruck'],
+
+  // Belgium
+  'brussels': ['brussels', 'bruxelles'],
+  'bruges': ['bruges', 'brugge'],
+  'antwerp': ['antwerp', 'antwerpen'],
+  'ghent': ['ghent', 'gent'],
+
+  // Scandinavia
+  'copenhagen': ['copenhagen', 'københavn'],
+  'stockholm': ['stockholm'],
+  'oslo': ['oslo'],
+  'helsinki': ['helsinki'],
+  'reykjavik': ['reykjavik', 'reykjavík'],
+
+  // Southern Europe
+  'lisbon': ['lisbon', 'lisboa'],
+  'porto': ['porto'],
+  'athens': ['athens'],
+  'santorini': ['santorini'],
+  'mykonos': ['mykonos'],
+  'istanbul': ['istanbul'],
+
+  // Middle East
+  'dubai': ['dubai'],
+  'abu dhabi': ['abu dhabi', 'abu-dhabi'],
+
+  // Asia
   'singapore': ['singapore', 'orchard', 'marina bay', 'chinatown', 'little india', 'tiong bahru', 'kampong glam', 'dempsey'],
+  'hong kong': ['hong kong', 'hk', 'central', 'wan chai', 'causeway bay', 'tsim sha tsui', 'mong kok', 'sheung wan', 'hong-kong'],
+  'seoul': ['seoul'],
+  'busan': ['busan'],
+  'beijing': ['beijing'],
+  'shanghai': ['shanghai'],
   'bangkok': ['bangkok', 'sukhumvit', 'silom', 'sathorn', 'thonglor', 'ekkamai', 'ari', 'chinatown'],
+  'kuala lumpur': ['kuala lumpur', 'kuala-lumpur', 'kl'],
+  'bali': ['bali'],
+  'hanoi': ['hanoi'],
+  'ho chi minh city': ['ho chi minh city', 'ho-chi-minh-city', 'saigon'],
+
+  // Oceania
+  'sydney': ['sydney'],
+  'melbourne': ['melbourne'],
+  'auckland': ['auckland'],
+
+  // Americas
+  'toronto': ['toronto'],
+  'vancouver': ['vancouver'],
+  'montreal': ['montreal'],
+  'mexico city': ['mexico city', 'mexico-city', 'cdmx'],
+  'buenos aires': ['buenos aires', 'buenos-aires'],
+  'sao paulo': ['sao paulo', 'são paulo', 'sao-paulo'],
+  'rio de janeiro': ['rio de janeiro', 'rio-de-janeiro', 'rio'],
+
+  // Africa
+  'cape town': ['cape town', 'cape-town'],
+  'marrakech': ['marrakech', 'marrakesh'],
 };
 
 // Category variations
@@ -631,10 +791,14 @@ async function generateItinerary(
 
   // Fetch destinations for each slot
   for (const timeSlot of timeSlots) {
+    // Handle both "New York" and "new-york" formats
+    const cityWithSpace = city;
+    const cityWithHyphen = city.replace(/\s+/g, '-');
+
     let query = supabase
       .from('destinations')
       .select('*')
-      .ilike('city', `%${city}%`)
+      .or(`city.ilike.%${cityWithSpace}%,city.ilike.%${cityWithHyphen}%`)
       .ilike('category', `%${timeSlot.category}%`);
 
     // Apply vibe filtering if specified
@@ -1100,7 +1264,8 @@ function buildDeterministicUI(
   // === Build Question Card (when ambiguous) ===
   // Missing city but has category
   if (!city && category) {
-    const topCities = Object.keys(CITY_VARIATIONS).slice(0, 6);
+    // Show popular cities from diverse regions
+    const topCities = ['taipei', 'tokyo', 'new york', 'london', 'paris', 'singapore'];
     question = {
       prompt: 'Which city?',
       options: topCities.map(c => ({
@@ -1297,8 +1462,11 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     // 2. Check if clarification is needed
     const clarification = checkNeedsClarification(query, intent, conversationHistory);
     if (clarification.needsClarification) {
+      // Popular cities to show in clarification (diverse selection)
+      const popularCities = ['taipei', 'tokyo', 'new york', 'london', 'paris', 'singapore', 'hong kong', 'bangkok'];
+
       // Generate city suggestion patches for clarification
-      const cityPatches: ActionPatch[] = Object.keys(CITY_VARIATIONS).slice(0, 4).map(city => {
+      const cityPatches: ActionPatch[] = popularCities.slice(0, 4).map(city => {
         const capitalizedCity = city.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         return {
           label: capitalizedCity,
@@ -1320,7 +1488,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         question: clarification.clarificationType === 'city'
           ? {
               prompt: 'Which city?',
-              options: Object.keys(CITY_VARIATIONS).slice(0, 6).map(c => ({
+              options: popularCities.slice(0, 8).map(c => ({
                 label: c.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
                 patch: { city: c.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') },
               })),
@@ -1464,7 +1632,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         .ilike('category', '%restaurant%');
 
       if (intent.filters.city) {
-        dbQuery = dbQuery.ilike('city', `%${intent.filters.city}%`);
+        // Handle both "New York" and "new-york" formats
+        const cityWithSpace = intent.filters.city;
+        const cityWithHyphen = intent.filters.city.replace(/\s+/g, '-');
+        dbQuery = dbQuery.or(`city.ilike.%${cityWithSpace}%,city.ilike.%${cityWithHyphen}%`);
       }
 
       // Search for places mentioning multiple cuisines or fusion
@@ -1683,7 +1854,12 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
           // Apply filters - use ilike for case-insensitive matching
           if (intent.filters.city) {
-            dbQuery = dbQuery.ilike('city', `%${intent.filters.city}%`);
+            // Handle both "New York" and "new-york" formats
+            const cityWithSpace = intent.filters.city;
+            const cityWithHyphen = intent.filters.city.replace(/\s+/g, '-');
+
+            // Try both patterns: "New York" OR "new-york"
+            dbQuery = dbQuery.or(`city.ilike.%${cityWithSpace}%,city.ilike.%${cityWithHyphen}%`);
           }
           if (intent.filters.category) {
             dbQuery = dbQuery.ilike('category', `%${intent.filters.category}%`);
@@ -1736,9 +1912,12 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
             if (intent.filters.city) {
               const cityLower = intent.filters.city.toLowerCase();
-              filteredHits = filteredHits.filter(r =>
-                r.metadata.city?.toLowerCase().includes(cityLower)
-              );
+              const cityWithHyphen = cityLower.replace(/\s+/g, '-');
+              filteredHits = filteredHits.filter(r => {
+                const metaCity = r.metadata.city?.toLowerCase() || '';
+                // Match either "new york" or "new-york" format
+                return metaCity.includes(cityLower) || metaCity.includes(cityWithHyphen);
+              });
             }
 
             if (intent.filters.category) {
