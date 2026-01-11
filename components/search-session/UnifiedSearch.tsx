@@ -484,22 +484,6 @@ function ChatContent({
         </div>
       )}
 
-      {/* Destination Cards (horizontal scroll in chat) */}
-      {destinations.length > 0 && (
-        <div className="destination-scroll">
-          {destinations.map((dest) => (
-            <DestinationCard
-              key={dest.destination.slug}
-              destination={dest}
-              compact={false}
-              showReasoning={!!dest.reasoning}
-              onClick={() => onDestinationClick(dest)}
-              onSave={() => onDestinationSave(dest)}
-            />
-          ))}
-        </div>
-      )}
-
       {/* Contextual Hints */}
       {presentation?.hints && presentation.hints.length > 0 && (
         <div className="hints">
@@ -563,20 +547,6 @@ function ChatContent({
 
         @keyframes blink {
           50% { opacity: 0; }
-        }
-
-        .destination-scroll {
-          display: flex;
-          gap: 1rem;
-          overflow-x: auto;
-          padding: 0.5rem 0;
-          scroll-snap-type: x mandatory;
-        }
-
-        .destination-scroll > :global(*) {
-          scroll-snap-align: start;
-          flex-shrink: 0;
-          width: 280px;
         }
 
         .hints {

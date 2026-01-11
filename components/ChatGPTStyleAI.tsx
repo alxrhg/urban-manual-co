@@ -154,56 +154,6 @@ export function ChatGPTStyleAI() {
                         );
                       })}
                     </div>
-
-                    {/* Destination Cards */}
-                    {message.destinations && message.destinations.length > 0 && (
-                      <div className="mt-3 grid grid-cols-2 gap-3">
-                        {message.destinations.map((dest) => (
-                          <a
-                            key={dest.slug}
-                            href={`/destination/${dest.slug}`}
-                            className="group block"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              window.location.href = `/destination/${dest.slug}`;
-                            }}
-                          >
-                            <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2">
-                              {dest.image ? (
-                                <img
-                                  src={dest.image}
-                                  alt={dest.name}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                  <MapPin className="h-8 w-8 opacity-20" />
-                                </div>
-                              )}
-                              {dest.crown && (
-                                <div className="absolute top-2 left-2 text-lg">👑</div>
-                              )}
-                              {dest.michelin_stars && dest.michelin_stars > 0 && (
-                                <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                                  <img
-                                    src="/michelin-star.svg"
-                                    alt="Michelin star"
-                                    className="h-3 w-3"
-                                  />
-                                  <span>{dest.michelin_stars}</span>
-                                </div>
-                              )}
-                            </div>
-                            <h4 className="font-medium text-xs leading-tight line-clamp-2 mb-1 text-black dark:text-white">
-                              {dest.name}
-                            </h4>
-                            <span className="text-xs text-gray-500 capitalize">
-                              {dest.city.replace(/-/g, ' ')} · {dest.category}
-                            </span>
-                          </a>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </div>
               ))}
