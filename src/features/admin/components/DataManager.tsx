@@ -22,6 +22,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/ui/tooltip";
 
 // Use API route for admin operations to bypass RLS
 async function apiRequest<T>(method: string, params: Record<string, unknown>): Promise<T> {
@@ -455,7 +460,7 @@ export function DataManager({ type }: DataManagerProps) {
           {/* Column Toggle */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="rounded-lg flex-1 sm:flex-none">
+              <Button variant="outline" className="rounded-lg flex-1 sm:flex-none" aria-label="Columns">
                 <Settings2 className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Columns</span>
               </Button>
@@ -509,20 +514,34 @@ export function DataManager({ type }: DataManagerProps) {
               </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button
-            variant="outline"
-            onClick={handleSync}
-            disabled={syncing}
-            className="rounded-lg flex-1 sm:flex-none"
-            title={`Sync ${type} from existing destinations`}
-          >
-            <RefreshCw className={cn("w-4 h-4 sm:mr-2", syncing && "animate-spin")} />
-            <span className="hidden sm:inline">{syncing ? 'Syncing...' : 'Sync'}</span>
-          </Button>
-          <Button onClick={openCreateDrawer} className="rounded-lg flex-1 sm:flex-none">
-            <Plus className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">Add New</span>
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                onClick={handleSync}
+                disabled={syncing}
+                className="rounded-lg flex-1 sm:flex-none"
+                aria-label={`Sync ${type}`}
+              >
+                <RefreshCw className={cn("w-4 h-4 sm:mr-2", syncing && "animate-spin")} />
+                <span className="hidden sm:inline">{syncing ? 'Syncing...' : 'Sync'}</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              Sync {type} from existing destinations
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button onClick={openCreateDrawer} className="rounded-lg flex-1 sm:flex-none" aria-label={`Add new ${config.singular.toLowerCase()}`}>
+                <Plus className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Add New</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              Add new {config.singular.toLowerCase()}
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
 
@@ -563,20 +582,28 @@ export function DataManager({ type }: DataManagerProps) {
 
           <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto -mx-1 px-1">
             {/* Delete */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBulkDelete}
-              disabled={bulkActionLoading}
-              className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 shrink-0"
-            >
-              {bulkActionLoading ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin sm:mr-1.5" />
-              ) : (
-                <Trash2 className="w-3.5 h-3.5 sm:mr-1.5" />
-              )}
-              <span className="hidden sm:inline">Delete</span>
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleBulkDelete}
+                  disabled={bulkActionLoading}
+                  className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 shrink-0"
+                  aria-label="Delete selected items"
+                >
+                  {bulkActionLoading ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin sm:mr-1.5" />
+                  ) : (
+                    <Trash2 className="w-3.5 h-3.5 sm:mr-1.5" />
+                  )}
+                  <span className="hidden sm:inline">Delete</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Delete selected items
+              </TooltipContent>
+            </Tooltip>
           </div>
 
           <div className="hidden sm:block sm:ml-auto">
@@ -733,7 +760,7 @@ export function DataManager({ type }: DataManagerProps) {
                   <td className="px-2 py-3">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Actions">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
