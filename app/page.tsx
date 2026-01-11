@@ -83,13 +83,15 @@ export default async function HomePage() {
             </div>
           </section>
 
-          {/* Content Section - Full width */}
+          {/* Content Section */}
           <div className="w-full px-4 sm:px-6 md:px-10 mt-6 sm:mt-8">
-            {/* Navigation bar */}
-            <NavigationBar />
+            <div className="max-w-[1800px] mx-auto">
+              {/* Navigation bar */}
+              <NavigationBar />
 
-            {/* Grid or Map view - switches based on viewMode */}
-            <HomepageContent />
+              {/* Grid or Map view - switches based on viewMode */}
+              <HomepageContent />
+            </div>
           </div>
         </main>
 
