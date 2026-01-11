@@ -791,10 +791,14 @@ async function generateItinerary(
 
   // Fetch destinations for each slot
   for (const timeSlot of timeSlots) {
+    // Handle both "New York" and "new-york" formats
+    const cityWithSpace = city;
+    const cityWithHyphen = city.replace(/\s+/g, '-');
+
     let query = supabase
       .from('destinations')
       .select('*')
-      .ilike('city', `%${city}%`)
+      .or(`city.ilike.%${cityWithSpace}%,city.ilike.%${cityWithHyphen}%`)
       .ilike('category', `%${timeSlot.category}%`);
 
     // Apply vibe filtering if specified
@@ -1628,7 +1632,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         .ilike('category', '%restaurant%');
 
       if (intent.filters.city) {
-        dbQuery = dbQuery.ilike('city', `%${intent.filters.city}%`);
+        // Handle both "New York" and "new-york" formats
+        const cityWithSpace = intent.filters.city;
+        const cityWithHyphen = intent.filters.city.replace(/\s+/g, '-');
+        dbQuery = dbQuery.or(`city.ilike.%${cityWithSpace}%,city.ilike.%${cityWithHyphen}%`);
       }
 
       // Search for places mentioning multiple cuisines or fusion
@@ -1847,7 +1854,12 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
           // Apply filters - use ilike for case-insensitive matching
           if (intent.filters.city) {
-            dbQuery = dbQuery.ilike('city', `%${intent.filters.city}%`);
+            // Handle both "New York" and "new-york" formats
+            const cityWithSpace = intent.filters.city;
+            const cityWithHyphen = intent.filters.city.replace(/\s+/g, '-');
+
+            // Try both patterns: "New York" OR "new-york"
+            dbQuery = dbQuery.or(`city.ilike.%${cityWithSpace}%,city.ilike.%${cityWithHyphen}%`);
           }
           if (intent.filters.category) {
             dbQuery = dbQuery.ilike('category', `%${intent.filters.category}%`);
@@ -1900,9 +1912,12 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
             if (intent.filters.city) {
               const cityLower = intent.filters.city.toLowerCase();
-              filteredHits = filteredHits.filter(r =>
-                r.metadata.city?.toLowerCase().includes(cityLower)
-              );
+              const cityWithHyphen = cityLower.replace(/\s+/g, '-');
+              filteredHits = filteredHits.filter(r => {
+                const metaCity = r.metadata.city?.toLowerCase() || '';
+                // Match either "new york" or "new-york" format
+                return metaCity.includes(cityLower) || metaCity.includes(cityWithHyphen);
+              });
             }
 
             if (intent.filters.category) {
