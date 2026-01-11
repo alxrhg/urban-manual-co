@@ -107,7 +107,7 @@ export function ConversationalDiscovery() {
   }, []);
 
   return (
-    <div className="h-screen flex overflow-hidden bg-[#FAFAF8]">
+    <div className="flex overflow-hidden bg-[#FAFAF8]" style={{ height: 'calc(100vh - 180px)' }}>
       {/* LEFT PANEL - Conversational Interface (40%) */}
       <div className="w-[40%] flex flex-col border-r border-gray-200">
         {/* Messages Area */}

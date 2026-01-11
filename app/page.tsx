@@ -56,14 +56,12 @@ export default async function HomePage() {
         }}
       />
 
-      <main className="relative">
-        <h1 className="sr-only">
-          Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual
-        </h1>
+      <h1 className="sr-only">
+        Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual
+      </h1>
 
-        {/* Split-Screen Conversational Discovery Interface */}
-        <ConversationalDiscovery />
-      </main>
+      {/* Split-Screen Conversational Discovery Interface */}
+      <ConversationalDiscovery />
     </>
   );
 }
