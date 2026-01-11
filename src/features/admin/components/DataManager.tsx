@@ -733,7 +733,7 @@ export function DataManager({ type }: DataManagerProps) {
                   <td className="px-2 py-3">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Actions">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -791,6 +791,7 @@ export function DataManager({ type }: DataManagerProps) {
                 <button
                   onClick={closeDrawer}
                   className="p-1.5 -ml-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-500 dark:text-gray-400"
+                  aria-label="Back"
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
@@ -801,6 +802,7 @@ export function DataManager({ type }: DataManagerProps) {
               <button
                 onClick={closeDrawer}
                 className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-500 dark:text-gray-400"
+                aria-label="Close"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1104,9 +1106,9 @@ export function DataManager({ type }: DataManagerProps) {
               </Button>
               <Button
                 onClick={handleSave}
-                disabled={saving || !formData.name}
+                isLoading={saving}
+                disabled={!formData.name}
               >
-                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 {editingItem ? 'Save Changes' : 'Create'}
               </Button>
             </div>
