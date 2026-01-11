@@ -1,11 +1,6 @@
 import { Metadata } from 'next';
-import { prefetchHomepageData } from '@/lib/data/fetch-destinations';
 import { generateHomeBreadcrumb } from '@/lib/metadata';
-import { HomepageDataProvider } from '@/features/homepage/components/HomepageDataProvider';
-import { HomepageContent } from '@/features/homepage/components/HomepageContent';
-import { AISearchChatWrapper } from '@/features/homepage/components/AISearchChatWrapper';
-import InteractiveHero from '@/features/homepage/components/InteractiveHero';
-import NavigationBar from '@/features/homepage/components/NavigationBar';
+import { ConversationalDiscovery } from '@/features/homepage/components/ConversationalDiscovery';
 
 /**
  * Homepage - Progressive Loading Architecture with Client Fallback
@@ -47,10 +42,6 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  // Fetch data on server - this is cached via ISR
-  // If fetch fails or returns empty, client-side fallback will handle it
-  const { destinations, cities, categories } = await prefetchHomepageData();
-
   // Generate homepage breadcrumb schema for SEO
   // Note: Organization and WebSite schemas are now in layout.tsx for site-wide presence
   const breadcrumbSchema = generateHomeBreadcrumb();
@@ -65,39 +56,14 @@ export default async function HomePage() {
         }}
       />
 
-      {/* Data Provider wraps all components needing destination data */}
-      <HomepageDataProvider
-        serverDestinations={destinations}
-        serverCities={cities}
-        serverCategories={categories}
-      >
-        <main className="relative min-h-screen bg-[var(--editorial-bg)] text-[var(--editorial-text-primary)]">
-          <h1 className="sr-only">
-            Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual
-          </h1>
+      <main className="relative">
+        <h1 className="sr-only">
+          Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual
+        </h1>
 
-          {/* Hero Section - Full width layout */}
-          <section className="min-h-[50vh] flex flex-col pl-6 md:pl-10 pr-0 py-10 pb-6 md:pb-10">
-            <div className="w-full flex md:justify-start flex-1 items-center">
-              <InteractiveHero />
-            </div>
-          </section>
-
-          {/* Content Section - Full width */}
-          <div className="w-full px-4 sm:px-6 md:px-10 mt-6 sm:mt-8">
-            {/* Navigation bar */}
-            <NavigationBar />
-
-            {/* Grid or Map view - switches based on viewMode */}
-            <HomepageContent />
-          </div>
-        </main>
-
-        {/* Destination Drawer - now handled by IntelligentDrawer in layout.tsx */}
-
-        {/* AI Search Chat - modal chat interface */}
-        <AISearchChatWrapper />
-      </HomepageDataProvider>
+        {/* Split-Screen Conversational Discovery Interface */}
+        <ConversationalDiscovery />
+      </main>
     </>
   );
 }
